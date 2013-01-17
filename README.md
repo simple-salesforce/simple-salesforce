@@ -1,5 +1,8 @@
 #Simple Salesforce
-A Basic Salesforce.com REST API Client for Python
+
+Simple Salesforce is a basic Salesforce.com REST API client. The goal is to provide a very low-level interface to the API, returning a dictionary of the API JSON response.
+
+You can find out more regarding the format of the results in the [Official Salesforce.com REST API Documentation](http://www.salesforce.com/us/developer/docs/api_rest/index.htm)
 
 ## Example
 To login, simply include the SalesforceAPI method and pass in your Salesforce username, password and token (this is usually provided when you change your password)
@@ -27,6 +30,8 @@ To delete the contact
 
     sf.Contact.delete('003e0000003GuNXAA0')
 
+Note that Update, Delete and Upsert actions return the associated [Salesforce HTTP Status Code](http://www.salesforce.com/us/developer/docs/api_rest/Content/errorcodes.htm)
+
 #### Queries
 
 It's also possible to write select queries in Salesforce Object Query Language (SOQL) and search queries in Salesforce Object Search Language (SOSL).
@@ -35,7 +40,7 @@ SOQL queries are done via
 
     sf.query("SELECT Id, Email FROM Contact WHERE LastName = 'Jones'")
 
-If, due to an especially large result, Salesforce adds a `nextRecordsUrl` such as `"nextRecordsUrl" : "/services/data/v26.0/query/01gD0000002HU6KIAW-2000"`, you can pull the additional results with either the ID or the full URL (if using the full URL, you must pass 'True' as your second argument)
+If, due to an especially large result, Salesforce adds a `nextRecordsUrl` to your query result, such as `"nextRecordsUrl" : "/services/data/v26.0/query/01gD0000002HU6KIAW-2000"`, you can pull the additional results with either the ID or the full URL (if using the full URL, you must pass 'True' as your second argument)
 
     sf.query_more("01gD0000002HU6KIAW-2000")
     sf.query_more("/services/data/v26.0/query/01gD0000002HU6KIAW-2000", True)
