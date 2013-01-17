@@ -134,7 +134,7 @@ class SalesforceRefusedRequest(Exception):
 class SalesforceResourceNotFound(Exception):
     """
     Error Code: 404
-    The requested resource couldn’t be found. Check the URI for errors, and verify that there are no sharing issues.
+    The requested resource couldn't be found. Check the URI for errors, and verify that there are no sharing issues.
     """
     pass
 
