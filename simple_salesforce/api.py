@@ -17,7 +17,7 @@ class SalesforceAPI(object):
 
     # SObject Handler
     def __getattr__(self, name):
-        return SObject(name, self.sessionId, self.sfInstance)
+        return SFType(name, self.sessionId, self.sfInstance)
 
     # Search Functions
     def search(self, search):
@@ -53,7 +53,7 @@ class SalesforceAPI(object):
         return result.json()
 
 
-class SObject(object):
+class SFType(object):
     """A Salesforce.com Object"""
 
     def __init__(self, objectName, sessionId, sfInstance):
