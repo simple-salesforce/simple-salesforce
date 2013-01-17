@@ -6,7 +6,7 @@ from login import login as SalesforceLogin
 
 
 class SalesforceAPI(object):
-    """Salesforce API Calls"""
+    """Salesforce API Instance"""
     def __init__(self, username, password, securitytoken, sandbox=False):
         self.sessionId, self.sfInstance = SalesforceLogin(username, password, securitytoken, sandbox)
         self.headers = {
@@ -54,7 +54,7 @@ class SalesforceAPI(object):
 
 
 class SFType(object):
-    """A Salesforce.com Object"""
+    """An interface to a specific type of SObject"""
 
     def __init__(self, objectName, sessionId, sfInstance):
         self.sessionid = sessionId

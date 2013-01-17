@@ -35,6 +35,11 @@ SOQL queries are done via
 
     sf.query("SELECT Id, Email FROM Contact WHERE LastName = 'Jones'")
 
+If, due to an especially large result, Salesforce adds a `nextRecordsUrl` such as `"nextRecordsUrl" : "/services/data/v26.0/query/01gD0000002HU6KIAW-2000"`, you can pull the additional results with either the ID or the full URL (if using the full URL, you must pass 'True' as your second argument)
+
+    sf.query_more("01gD0000002HU6KIAW-2000")
+    sf.query_more("/services/data/v26.0/query/01gD0000002HU6KIAW-2000", True)
+
 SOSL queries are done via
 
     sf.search("FIND {Jones}")
