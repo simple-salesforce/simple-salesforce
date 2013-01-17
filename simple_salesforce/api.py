@@ -46,8 +46,11 @@ class SalesforceAPI(object):
             raise SalesforceGeneralError(result.content)
         return result.json()
 
-    def query_more(self, nextRecordsId):
-        result = requests.get('https://{instance}/services/data/v20.0/query/{next_record_id}'.format(instance=self.sfInstance,next_record_id=nextRecordsId), headers=self.headers)
+    def query_more(self, nextRecordsIdentifier, identifier_is_url=False):
+        if identifier_is_url:
+            result = requests.get('https://{instance}{next_record_url}'.format(instance=self.sfInstance,next_record_url=nextRecordsIdentifier), headers=self.headers)
+        else:
+            result = requests.get('https://{instance}/services/data/v20.0/query/{next_record_id}'.format(instance=self.sfInstance,next_record_id=nextRecordsIdentifier), headers=self.headers)
         if result.status_code != 200:
             raise SalesforceGeneralError(result.content)
         return result.json()
