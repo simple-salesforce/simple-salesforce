@@ -10,14 +10,14 @@ You can find out more regarding the format of the results in the `Official Sales
 
 Example
 -------
-To login, simply include the SalesforceAPI method and pass in your Salesforce username, password and token (this is usually provided when you change your password)
+To login, simply include the SalesforceAPI method and pass in your Salesforce username, password and token (this is usually provided when you change your password)::
 
     from simple_salesforce import SalesforceAPI
     sf = SalesforceAPI('myemail@example.com', 'password', 'token')
 
 If you'd like to enter a sandbox, simply append ``True`` to your ``SalesforceAPI()`` call.
 
-For example:
+For example::
 
     from simple_salesforce import SalesforceAPI
     sf = SalesforceAPI('myemail@example.com.sandbox', 'password', 'token', True)
@@ -25,21 +25,21 @@ For example:
 Record Management
 -----------------
 
-To create a new 'Contact' in Salesforce
+To create a new 'Contact' in Salesforce::
 
     sf.Contact.create({'LastName':'Smith','Email':'example@example.com'})
 
 This will return a dictionary such as ``{u'errors': [], u'id': u'003e0000003GuNXAA0', u'success': True}``
 
-To get a dictionary with all the information regarding that record, use 
+To get a dictionary with all the information regarding that record, use::
 
     contact = sf.Contact.get('003e0000003GuNXAA0')
 
-To change that contact's last name from 'Smith' to 'Jones' and add a first name of 'John' use
+To change that contact's last name from 'Smith' to 'Jones' and add a first name of 'John' use::
 
     sf.Contact.update('003e0000003GuNXAA0',{'LastName': 'Jones', 'FirstName': 'John'})
 
-To delete the contact
+To delete the contact::
 
     sf.Contact.delete('003e0000003GuNXAA0')
 
@@ -54,18 +54,24 @@ It's also possible to write select queries in Salesforce Object Query Language (
 
 SOQL queries are done via
 
+::
+
     sf.query("SELECT Id, Email FROM Contact WHERE LastName = 'Jones'")
 
 If, due to an especially large result, Salesforce adds a ``nextRecordsUrl`` to your query result, such as ``"nextRecordsUrl" : "/services/data/v26.0/query/01gD0000002HU6KIAW-2000"``, you can pull the additional results with either the ID or the full URL (if using the full URL, you must pass 'True' as your second argument)
 
+::
+
     sf.query_more("01gD0000002HU6KIAW-2000")
     sf.query_more("/services/data/v26.0/query/01gD0000002HU6KIAW-2000", True)
 
-SOSL queries are done via
+SOSL queries are done via::
 
     sf.search("FIND {Jones}")
 
 There is also 'Quick Search', which inserts your query inside the {} in the SOSL syntax. Be careful, there is no escaping!
+
+::
 
     sf.quick_search("Jones")
 
@@ -78,15 +84,15 @@ More details about syntax is available on the `Salesforce Query Language Documen
 Other Options
 -------------
 
-To insert or update (upsert) a record using an external ID, use
+To insert or update (upsert) a record using an external ID, use::
 
     sf.Contact.upsert('customExtIdField__c/11999',{'LastName': 'Smith','Email': 'smith@example.com'})
 
-To retrieve basic metadata use
+To retrieve basic metadata use::
 
     sf.Contact.metadata()
 
-To retrieve a description of the object, use
+To retrieve a description of the object, use::
 
     sf.Contact.describe()
 
