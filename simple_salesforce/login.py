@@ -6,15 +6,15 @@ from util import getUniqueElementValueFromXmlString
 import requests
 
 
-def login(username, password, securityToken, sandbox=False,
+def login(username, password, security_token, sandbox=False,
           sf_version='23.0'):
-    soapUrl = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
+    soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
     domain = 'test'
     if not sandbox:
         domain = 'login'
-    soapUrl = soapUrl.format(domain=domain, sf_version=sf_version)
+    soap_url = soap_url.format(domain=domain, sf_version=sf_version)
 
-    loginSoapRequestBody = """<?xml version="1.0" encoding="utf-8" ?>
+    login_soap_request_body = """<?xml version="1.0" encoding="utf-8" ?>
         <env:Envelope
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -25,15 +25,15 @@ def login(username, password, securityToken, sandbox=False,
                     <n1:password>%s%s</n1:password>
                 </n1:login>
             </env:Body>
-        </env:Envelope>""" % (username, password, securityToken)
+        </env:Envelope>""" % (username, password, security_token)
 
-    loginSoapRequestHeaders = {
+    login_soap_request_headers = {
         'content-type': 'text/xml',
         'charset': 'UTF-8',
         'SOAPAction': 'login'
     }
-    response = requests.post(soapUrl, loginSoapRequestBody,
-                             headers=loginSoapRequestHeaders)
+    response = requests.post(soap_url, login_soap_request_body,
+                             headers=login_soap_request_headers)
 
     if response.status_code != 200:
         except_code = getUniqueElementValueFromXmlString(response.content,
@@ -43,17 +43,17 @@ def login(username, password, securityToken, sandbox=False,
         raise SalesforceAuthenticationFailed('%s: %s' % (except_code,
                                                          except_msg))
 
-    sessionId = getUniqueElementValueFromXmlString(response.content,
+    session_id = getUniqueElementValueFromXmlString(response.content,
                                                    'sessionId')
-    serverUrl = getUniqueElementValueFromXmlString(response.content,
+    server_url = getUniqueElementValueFromXmlString(response.content,
                                                    'serverUrl')
-    sfInstance = (serverUrl
+    sf_instance = (server_url
                   .replace('http://', '')
                   .replace('https://', '')
                   .split('/')[0]
                   .replace('-api', ''))
 
-    return (sessionId, sfInstance)
+    return (session_id, sf_instance)
 
 
 class SalesforceAuthenticationFailed(Exception):

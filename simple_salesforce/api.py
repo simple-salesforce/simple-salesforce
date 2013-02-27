@@ -6,25 +6,25 @@ from login import login as SalesforceLogin
 
 class SalesforceAPI(object):
     """Salesforce API Instance"""
-    def __init__(self, username, password, securitytoken, sandbox=False,
+    def __init__(self, username, password, security_token, sandbox=False,
                  sf_version='23.0'):
-        self.sessionId, self.sfInstance = SalesforceLogin(username, password,
-                                                          securitytoken,
-                                                          sandbox,
-                                                          sf_version)
+        self.session_id, self.sf_instance = SalesforceLogin(username, password,
+                                                            security_token,
+                                                            sandbox,
+                                                            sf_version)
         self.sf_version = sf_version
         self.headers = {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + self.sessionId,
+            'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
         }
         self.base_url = ('https://{instance}/services/data/v{version}/'
-                         .format(instance=self.sfInstance,
+                         .format(instance=self.sf_instance,
                                  version=self.sf_version))
 
     # SObject Handler
     def __getattr__(self, name):
-        return SFType(name, self.sessionId, self.sfInstance, self.sf_version)
+        return SFType(name, self.session_id, self.sf_instance, self.sf_version)
 
     # Search Functions
     def search(self, search):
@@ -55,10 +55,10 @@ class SalesforceAPI(object):
             raise SalesforceGeneralError(result.content)
         return result.json()
 
-    def query_more(self, nextRecordsIdentifier, identifier_is_url=False):
+    def query_more(self, next_records_identifier, identifier_is_url=False):
         if identifier_is_url:
             url = ('https://{instance}{next_record_url}'
-                   .format(instance=self.sfInstance,
+                   .format(instance=self.sf_instance,
                            next_record_url=next_records_identifer))
         else:
             url = self.base_url + 'query/{next_record_id}'
@@ -72,49 +72,49 @@ class SalesforceAPI(object):
 class SFType(object):
     """An interface to a specific type of SObject"""
 
-    def __init__(self, objectName, sessionId, sfInstance, sf_version):
-        self.sessionid = sessionId
-        self.name = objectName
-        self.baseurl = ('https://{instance}/services/data/v{sf_version}/sobjects/{object_name}/'
-                        .format(instance=sfInstance,
-                                object_name=objectName,
-                                sf_version=sf_version))
+    def __init__(self, object_name, session_id, sf_instance, sf_version):
+        self.session_id = session_id
+        self.name = object_name
+        self.base_url = ('https://{instance}/services/data/v{sf_version}/sobjects/{object_name}/'
+                         .format(instance=sf_instance,
+                                 object_name=object_name,
+                                 sf_version=sf_version))
 
     def metadata(self):
-        result = self._call_salesforce('GET', self.baseurl)
+        result = self._call_salesforce('GET', self.base_url)
         return result.json()
 
     def describe(self):
-        result = self._call_salesforce('GET', self.baseurl + 'describe')
+        result = self._call_salesforce('GET', self.base_url + 'describe')
         return result.json()
 
-    def get(self, recordId):
-        result = self._call_salesforce('GET', self.baseurl + recordId)
+    def get(self, record_id):
+        result = self._call_salesforce('GET', self.base_url + record_id)
         return result.json()
 
     def create(self, data):
-        result = self._call_salesforce('POST', self.baseurl,
+        result = self._call_salesforce('POST', self.base_url,
                                        data=json.dumps(data))
         return result.json()
 
-    def upsert(self, recordId, data):
-        result = self._call_salesforce('PATCH', self.baseurl + recordId,
+    def upsert(self, record_id, data):
+        result = self._call_salesforce('PATCH', self.base_url + record_id,
                                        data=json.dumps(data))
         return result.status_code
 
-    def update(self, recordId, data):
-        result = self._call_salesforce('PATCH', self.baseurl + recordId,
+    def update(self, record_id, data):
+        result = self._call_salesforce('PATCH', self.base_url + record_id,
                                        data=json.dumps(data))
         return result.status_code
 
-    def delete(self, recordId):
-        result = self._call_salesforce('DELETE', self.baseurl + recordId)
+    def delete(self, record_id):
+        result = self._call_salesforce('DELETE', self.base_url + record_id)
         return result.status_code
 
     def _call_salesforce(self, method, url, **kwargs):
         headers = {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + self.sessionid,
+            'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
         }
         result = requests.request(method, url, headers=headers, **kwargs)
