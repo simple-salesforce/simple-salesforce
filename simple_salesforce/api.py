@@ -120,19 +120,18 @@ class SFType(object):
         }
         result = requests.request(method, url, headers=headers, **kwargs)
 
-        if result.status_code >= 300:
-            if result.status_code == 300:
-                raise SalesforceMoreThanOneRecord()
-            elif result.status_code == 401:
-                raise SalesforceExpiredSession()
-            elif result.status_code == 403:
-                raise SalesforceRefusedRequest()
-            elif result.status_code == 404:
-                message = 'Resource %s Not Found' % self.name
-                raise SalesforceResourceNotFound(message)
-            else:
-                message = 'Error Code %s' % result.status_code
-                raise SalesforceGeneralError(message)
+        if result.status_code == 300:
+            raise SalesforceMoreThanOneRecord()
+        elif result.status_code == 401:
+            raise SalesforceExpiredSession()
+        elif result.status_code == 403:
+            raise SalesforceRefusedRequest()
+        elif result.status_code == 404:
+            message = 'Resource %s Not Found' % self.name
+            raise SalesforceResourceNotFound(message)
+        elif result.status_code >= 300:
+            message = 'Error Code %s' % result.status_code
+            raise SalesforceGeneralError(message)
 
         return result
 
