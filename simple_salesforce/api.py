@@ -68,6 +68,26 @@ class SalesforceAPI(object):
             raise SalesforceGeneralError(result.content)
         return result.json()
 
+    def query_all(self, query):
+        def get_all_results(previous_result):
+            if previous_result['done']:
+                return previous_result
+            else:
+                result = self.query_more(result['nextRecordsUrl'],
+                                         identifier_is_url=True)
+                result['totalSize'] += previous_result['totalSize']
+                # Include the new list of records with the previous list
+                previous_result['records'].extend(result['records'])
+                result['records'] = previous_result['records']
+                # Continue the recursion
+                return get_all_results(result)
+
+        # Make the initial query to Salesforce
+        result = self.query(query)
+        # The number of results might have exceeded the Salesforce batch limit
+        # so check whether there are more results and retrieve them if so.
+        return get_all_results(result)
+
 
 class SFType(object):
     """An interface to a specific type of SObject"""
@@ -120,10 +140,13 @@ class SFType(object):
         result = requests.request(method, url, headers=headers, **kwargs)
 
         if result.status_code == 300:
-            raise SalesforceMoreThanOneRecord()
+            message = "More than one record for %s" % url
+            raise SalesforceMoreThanOneRecord(message)
         elif result.status_code == 401:
-            raise SalesforceExpiredSession()
+            message = "Expired session for %s" % url
+            raise SalesforceExpiredSession(message)
         elif result.status_code == 403:
+            message = "Request refused for %s" % url
             raise SalesforceRefusedRequest()
         elif result.status_code == 404:
             message = 'Resource %s Not Found' % self.name
