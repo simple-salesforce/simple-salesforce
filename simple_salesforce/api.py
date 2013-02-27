@@ -7,29 +7,33 @@ from login import login as SalesforceLogin
 
 class SalesforceAPI(object):
     """Salesforce API Instance"""
-    def __init__(self, username, password, securitytoken, sandbox=False):
-        self.sessionId, self.sfInstance = SalesforceLogin(username, password, securitytoken, sandbox)
+    def __init__(self, username, password, securitytoken, sandbox=False,
+                 sf_version="23.0"):
+        self.sessionId, self.sfInstance = SalesforceLogin(username, password,
+                                                          securitytoken,
+                                                          sandbox,
+                                                          sf_version)
+        self.sf_version = sf_version
         self.headers = {
             "Content-Type":"application/json",
             "Authorization":"Bearer " + self.sessionId,
             "X-PrettyPrint":"1"
         }
+        self.base_url = ('https://{instance}/services/data/v{version}/'
+                         .format(instance=self.sfInstance,
+                                 version=self.sf_version))
 
     # SObject Handler
     def __getattr__(self, name):
-        return SFType(name, self.sessionId, self.sfInstance)
+        return SFType(name, self.sessionId, self.sfInstance, self.sf_version)
 
     # Search Functions
     def search(self, search):
-        search_string = urllib.quote_plus(search)
-        return self._raw_search(search_string)
+        url = self.base_url + 'search/'
 
-    def quick_search(self, search):
-        search_string = urllib.quote_plus('FIND {{search_string}}'.format(search_string=search))
-        return self._raw_search(search_string)
-
-    def _raw_search(self, search_string):
-        result = requests.get('https://{instance}/services/data/v26.0/search/?q={query}'.format(instance=self.sfInstance,query=search_string), headers=self.headers)
+        # `requests` will correctly encode the query string passed as `params`
+        params = { 'q': search }
+        result = requests.get(url, headers=self.headers, params=params)
         if result.status_code != 200:
             raise SalesforceGeneralError(result.content)
         json_result = result.json()
@@ -38,19 +42,29 @@ class SalesforceAPI(object):
         else:
             return json_result
 
+    def quick_search(self, search):
+        search_string = 'FIND {{{search_string}}}'.format(search_string=search)
+        return self.search(search_string)
+
     # Query Handler
     def query(self, query):
-        query_string = urllib.quote_plus(query)
-        result = requests.get('https://{instance}/services/data/v20.0/query/?q={query}'.format(instance=self.sfInstance,query=query_string), headers=self.headers)
+        url = self.base_url + 'query/'
+        params = {'q': query}
+        # `requests` will correctly encode the query string passed as `params`
+        result = requests.get(url, headers=self.headers, params=params)
         if result.status_code != 200:
             raise SalesforceGeneralError(result.content)
         return result.json()
 
     def query_more(self, nextRecordsIdentifier, identifier_is_url=False):
         if identifier_is_url:
-            result = requests.get('https://{instance}{next_record_url}'.format(instance=self.sfInstance,next_record_url=nextRecordsIdentifier), headers=self.headers)
+            url = 'https://{instance}{next_record_url}'.format(
+                    instance=self.sfInstance,
+                    next_record_url=next_records_identifer)
         else:
-            result = requests.get('https://{instance}/services/data/v20.0/query/{next_record_id}'.format(instance=self.sfInstance,next_record_id=nextRecordsIdentifier), headers=self.headers)
+            url = self.base_url + 'query/{next_record_id}'
+            url = url.format(next_record_id=next_records_identifer)
+        result = requests.get(url, headers=self.headers)
         if result.status_code != 200:
             raise SalesforceGeneralError(result.content)
         return result.json()
@@ -59,10 +73,13 @@ class SalesforceAPI(object):
 class SFType(object):
     """An interface to a specific type of SObject"""
 
-    def __init__(self, objectName, sessionId, sfInstance):
+    def __init__(self, objectName, sessionId, sfInstance, sf_version):
         self.sessionid = sessionId
         self.name = objectName
-        self.baseurl = 'https://{instance}/services/data/v20.0/sobjects/{object_name}/'.format(instance=sfInstance, object_name=objectName)
+        self.baseurl = 'https://{instance}/services/data/v{sf_version}/sobjects/{object_name}/'.format(
+                instance=sfInstance,
+                object_name=objectName,
+                sf_version=sf_version)
 
     def metadata(self):
         result = self._call_salesforce('GET',self.baseurl)
