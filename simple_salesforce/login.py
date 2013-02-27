@@ -44,14 +44,14 @@ def login(username, password, security_token, sandbox=False,
                                                          except_msg))
 
     session_id = getUniqueElementValueFromXmlString(response.content,
-                                                   'sessionId')
+                                                    'sessionId')
     server_url = getUniqueElementValueFromXmlString(response.content,
-                                                   'serverUrl')
+                                                    'serverUrl')
     sf_instance = (server_url
-                  .replace('http://', '')
-                  .replace('https://', '')
-                  .split('/')[0]
-                  .replace('-api', ''))
+                   .replace('http://', '')
+                   .replace('https://', '')
+                   .split('/')[0]
+                   .replace('-api', ''))
 
     return (session_id, sf_instance)
 
