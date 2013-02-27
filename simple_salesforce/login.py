@@ -34,7 +34,7 @@ def login(username, password, securityToken, sandbox=False):
     if response.status_code != 200:
         exception_code = getUniqueElementValueFromXmlString(response.content, 'sf:exceptionCode')
         exception_message = getUniqueElementValueFromXmlString(response.content, 'sf:exceptionMessage')
-        raise SalesforceAuthenticationFailedException('%s: %s' % (exception_code, exception_message)) 
+        raise SalesforceAuthenticationFailed('%s: %s' % (exception_code, exception_message)) 
 
     sessionId = getUniqueElementValueFromXmlString(response.content, 'sessionId')
     serverUrl = getUniqueElementValueFromXmlString(response.content, 'serverUrl')
