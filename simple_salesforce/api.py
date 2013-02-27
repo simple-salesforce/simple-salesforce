@@ -8,16 +8,16 @@ from login import login as SalesforceLogin
 class SalesforceAPI(object):
     """Salesforce API Instance"""
     def __init__(self, username, password, securitytoken, sandbox=False,
-                 sf_version="23.0"):
+                 sf_version='23.0'):
         self.sessionId, self.sfInstance = SalesforceLogin(username, password,
                                                           securitytoken,
                                                           sandbox,
                                                           sf_version)
         self.sf_version = sf_version
         self.headers = {
-            "Content-Type":"application/json",
-            "Authorization":"Bearer " + self.sessionId,
-            "X-PrettyPrint":"1"
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + self.sessionId,
+            'X-PrettyPrint': '1'
         }
         self.base_url = ('https://{instance}/services/data/v{version}/'
                          .format(instance=self.sfInstance,
@@ -32,7 +32,7 @@ class SalesforceAPI(object):
         url = self.base_url + 'search/'
 
         # `requests` will correctly encode the query string passed as `params`
-        params = { 'q': search }
+        params = {'q': search}
         result = requests.get(url, headers=self.headers, params=params)
         if result.status_code != 200:
             raise SalesforceGeneralError(result.content)
@@ -58,9 +58,9 @@ class SalesforceAPI(object):
 
     def query_more(self, nextRecordsIdentifier, identifier_is_url=False):
         if identifier_is_url:
-            url = 'https://{instance}{next_record_url}'.format(
-                    instance=self.sfInstance,
-                    next_record_url=next_records_identifer)
+            url = ('https://{instance}{next_record_url}'
+                   .format(instance=self.sfInstance,
+                           next_record_url=next_records_identifer))
         else:
             url = self.base_url + 'query/{next_record_id}'
             url = url.format(next_record_id=next_records_identifer)
@@ -76,44 +76,47 @@ class SFType(object):
     def __init__(self, objectName, sessionId, sfInstance, sf_version):
         self.sessionid = sessionId
         self.name = objectName
-        self.baseurl = 'https://{instance}/services/data/v{sf_version}/sobjects/{object_name}/'.format(
-                instance=sfInstance,
-                object_name=objectName,
-                sf_version=sf_version)
+        self.baseurl = ('https://{instance}/services/data/v{sf_version}/sobjects/{object_name}/'
+                        .format(instance=sfInstance,
+                                object_name=objectName,
+                                sf_version=sf_version))
 
     def metadata(self):
-        result = self._call_salesforce('GET',self.baseurl)
+        result = self._call_salesforce('GET', self.baseurl)
         return result.json()
 
     def describe(self):
-        result = self._call_salesforce('GET',self.baseurl + 'describe')
+        result = self._call_salesforce('GET', self.baseurl + 'describe')
         return result.json()
 
-    def get(self,recordId):
-        result = self._call_salesforce('GET',self.baseurl + recordId)
+    def get(self, recordId):
+        result = self._call_salesforce('GET', self.baseurl + recordId)
         return result.json()
 
-    def create(self,data):
-        result = self._call_salesforce('POST',self.baseurl, data=json.dumps(data))
+    def create(self, data):
+        result = self._call_salesforce('POST', self.baseurl,
+                                       data=json.dumps(data))
         return result.json()
 
-    def upsert(self,recordId,data):
-        result = self._call_salesforce('PATCH',self.baseurl + recordId, data=json.dumps(data))
+    def upsert(self, recordId, data):
+        result = self._call_salesforce('PATCH', self.baseurl + recordId,
+                                       data=json.dumps(data))
         return result.status_code
 
-    def update(self,recordId,data):
-        result = self._call_salesforce('PATCH',self.baseurl + recordId, data=json.dumps(data))
+    def update(self, recordId, data):
+        result = self._call_salesforce('PATCH', self.baseurl + recordId,
+                                       data=json.dumps(data))
         return result.status_code
 
     def delete(self, recordId):
-        result = self._call_salesforce('DELETE',self.baseurl + recordId)
+        result = self._call_salesforce('DELETE', self.baseurl + recordId)
         return result.status_code
 
     def _call_salesforce(self, method, url, **kwargs):
         headers = {
-            "Content-Type":"application/json",
-            "Authorization":"Bearer " + self.sessionid,
-            "X-PrettyPrint":"1"
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + self.sessionid,
+            'X-PrettyPrint': '1'
         }
         result = requests.request(method, url, headers=headers, **kwargs)
 
@@ -125,9 +128,11 @@ class SFType(object):
             elif result.status_code == 403:
                 raise SalesforceRefusedRequest()
             elif result.status_code == 404:
-                raise SalesforceResourceNotFound('Resource %s Not Found' % (self.name))
+                message = 'Resource %s Not Found' % self.name
+                raise SalesforceResourceNotFound(message)
             else:
-                raise SalesforceGeneralError('Error Code %s' % result.status_code)
+                message = 'Error Code %s' % result.status_code
+                raise SalesforceGeneralError(message)
 
         return result
 
@@ -135,28 +140,38 @@ class SFType(object):
 class SalesforceMoreThanOneRecord(Exception):
     """
     Error Code: 300
-    The value returned when an external ID exists in more than one record. The response body contains the list of matching records.
+    The value returned when an external ID exists in more than one record. The
+    response body contains the list of matching records.
     """
     pass
+
 
 class SalesforceExpiredSession(Exception):
     """
     Error Code: 401
-    The session ID or OAuth token used has expired or is invalid. The response body contains the message and errorCode.
+    The session ID or OAuth token used has expired or is invalid. The response
+    body contains the message and errorCode.
     """
+    pass
+
 
 class SalesforceRefusedRequest(Exception):
     """
     Error Code: 403
-    The request has been refused. Verify that the logged-in user has appropriate permissions.
+    The request has been refused. Verify that the logged-in user has
+    appropriate permissions.
     """
+    pass
+
 
 class SalesforceResourceNotFound(Exception):
     """
     Error Code: 404
-    The requested resource couldn't be found. Check the URI for errors, and verify that there are no sharing issues.
+    The requested resource couldn't be found. Check the URI for errors, and
+    verify that there are no sharing issues.
     """
     pass
+
 
 class SalesforceGeneralError(Exception):
     pass
