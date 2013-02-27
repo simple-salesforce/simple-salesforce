@@ -1,6 +1,5 @@
 import requests
 import json
-import urllib
 
 from login import login as SalesforceLogin
 
