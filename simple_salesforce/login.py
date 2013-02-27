@@ -5,11 +5,12 @@ Heavily Modified from RestForce 1.0.0
 from util import getUniqueElementValueFromXmlString
 import requests
 
-def login(username, password, securityToken, sandbox=False):
+def login(username, password, securityToken, sandbox=False,
+          sf_version="23.0"):
     if sandbox:
-        soapUrl = "https://test.salesforce.com/services/Soap/u/23.0"
+        soapUrl = "https://test.salesforce.com/services/Soap/u/" + sf_version
     else:
-        soapUrl = "https://login.salesforce.com/services/Soap/u/23.0"
+        soapUrl = "https://login.salesforce.com/services/Soap/u/" + sf_version
 
     loginSoapRequestBody = """<?xml version="1.0" encoding="utf-8" ?> 
         <env:Envelope 
