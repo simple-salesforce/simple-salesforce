@@ -8,6 +8,20 @@ import requests
 
 def login(username, password, security_token, sandbox=False,
           sf_version='23.0'):
+    '''Return a tuple of `(session_id, sf_instance)` where `session_id` is the
+    session ID to use for authentication to Salesforce and `sf_instance` is
+    the domain of the instance of Salesforce to use for the session.
+
+    Arguments:
+
+    * username -- the Salesforce username to use for authentication
+    * password -- the password for the username
+    * security_token -- the security token for the username
+    * sandbox -- True if you want to login to `test.salesforce.com`, False if
+                 you want to login to `login.salesforce.com`.
+    * sf_version -- the version of the Salesforce API to use, for example
+                    "27.0"
+    '''
     soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
     domain = 'test'
     if not sandbox:
