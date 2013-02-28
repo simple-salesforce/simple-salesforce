@@ -65,6 +65,12 @@ If, due to an especially large result, Salesforce adds a ``nextRecordsUrl`` to y
     sf.query_more("01gD0000002HU6KIAW-2000")
     sf.query_more("/services/data/v26.0/query/01gD0000002HU6KIAW-2000", True)
 
+As a convenience, to retrieve all of the results in a single local method call use
+
+::
+
+    sf.query_all("SELECT Id, Email FROM Contact WHERE LastName = 'Jones'")
+
 SOSL queries are done via::
 
     sf.search("FIND {Jones}")
@@ -100,10 +106,12 @@ To retrieve a description of the object, use::
 Authors & License
 -----------------
 
-This plugin was built in-house by the team at `New Organizing Institute`_ led by `Nick Catalano`_ and is released under an open source Apache 2.0 license.
+This plugin was built in-house by the team at `New Organizing Institute`_ led by `Nick Catalano`_ and is released under an open source Apache 2.0 license. The team at `Cedexis`_, in particular `Greg Unrein`_, has contributed to the project as well.
 
 Authentication mechanisms were adapted from Dave Wingate's `RestForce`_ and licensed under a MIT license
 
 .. _New Organizing Institute: http://neworganizing.com/
 .. _Nick Catalano: https://github.com/nickcatal
 .. _RestForce: http://pypi.python.org/pypi/RestForce/
+.. _Cedexis: http://www.cedexis.com/
+.. _Greg Unrein: http://github.com/gunrein
