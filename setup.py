@@ -3,7 +3,7 @@ import textwrap
 
 setup(
     name='simple-salesforce',
-    version='0.2',
+    version='0.3',
     author='Nick Catalano',
     packages=['simple_salesforce',],
     url='https://github.com/neworganizing/simple-salesforce',
