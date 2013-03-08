@@ -18,11 +18,11 @@ def login(username, password, securityToken, sandbox=False):
             xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
             <env:Body>
                 <n1:login xmlns:n1="urn:partner.soap.sforce.com">
-                    <n1:username>%s</n1:username>
-                    <n1:password>%s%s</n1:password>
+                    <n1:username>{username}</n1:username>
+                    <n1:password>{password}{token}</n1:password>
                 </n1:login>
             </env:Body>
-        </env:Envelope>""" % (username, password, securityToken)
+        </env:Envelope>""".format(username=username,password=password,token=securityToken)
 
     loginSoapRequestHeaders = {
         "content-type":"text/xml",
@@ -34,7 +34,7 @@ def login(username, password, securityToken, sandbox=False):
     if response.status_code != 200:
         exception_code = getUniqueElementValueFromXmlString(response.content, 'sf:exceptionCode')
         exception_message = getUniqueElementValueFromXmlString(response.content, 'sf:exceptionMessage')
-        raise SalesforceAuthenticationFailed('%s: %s' % (exception_code, exception_message)) 
+        raise SalesforceAuthenticationFailed('{code}: {message}'.format(code=exception_code,message=exception_message)) 
 
     sessionId = getUniqueElementValueFromXmlString(response.content, 'sessionId')
     serverUrl = getUniqueElementValueFromXmlString(response.content, 'serverUrl')
