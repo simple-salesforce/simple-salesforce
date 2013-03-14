@@ -106,7 +106,7 @@ To retrieve a description of the object, use::
 Authors & License
 -----------------
 
-This plugin was built in-house by the team at `New Organizing Institute`_ led by `Nick Catalano`_ and is released under an open source Apache 2.0 license. The team at `Cedexis`_, in particular `Greg Unrein`_, has contributed to the project as well.
+This plugin was built in-house by the team at `New Organizing Institute`_ led by `Nick Catalano`_ and is released under an open source Apache 2.0 license. The team at `Cedexis`_ has contributed to the project as well.
 
 Authentication mechanisms were adapted from Dave Wingate's `RestForce`_ and licensed under a MIT license
 
@@ -114,4 +114,3 @@ Authentication mechanisms were adapted from Dave Wingate's `RestForce`_ and lice
 .. _Nick Catalano: https://github.com/nickcatal
 .. _RestForce: http://pypi.python.org/pypi/RestForce/
 .. _Cedexis: http://www.cedexis.com/
-.. _Greg Unrein: http://github.com/gunrein

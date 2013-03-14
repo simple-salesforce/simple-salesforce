@@ -1,7 +1,7 @@
 import requests
 import json
 
-from login import login as SalesforceLogin
+from simple_salesforce.login import login as SalesforceLogin
 
 
 class SalesforceAPI(object):
@@ -26,8 +26,8 @@ class SalesforceAPI(object):
         '''
         self.session_id, self.sf_instance = SalesforceLogin(username, password,
                                                             security_token,
-                                                            sandbox,
-                                                            sf_version)
+                                                            sandbox=sandbox,
+                                                            sf_version=sf_version)
         self.sf_version = sf_version
         self.headers = {
             'Content-Type': 'application/json',
@@ -127,10 +127,10 @@ class SalesforceAPI(object):
             # Don't use `self.base_url` here because the full URI is provided
             url = ('https://{instance}{next_record_url}'
                    .format(instance=self.sf_instance,
-                           next_record_url=next_records_identifer))
+                           next_record_url=next_records_identifier))
         else:
             url = self.base_url + 'query/{next_record_id}'
-            url = url.format(next_record_id=next_records_identifer)
+            url = url.format(next_record_id=next_records_identifier)
         result = requests.get(url, headers=self.headers)
         if result.status_code != 200:
             raise SalesforceGeneralError(result.content)
@@ -164,7 +164,7 @@ class SalesforceAPI(object):
             if previous_result['done']:
                 return previous_result
             else:
-                result = self.query_more(result['nextRecordsUrl'],
+                result = self.query_more(previous_result['nextRecordsUrl'],
                                          identifier_is_url=True)
                 result['totalSize'] += previous_result['totalSize']
                 # Include the new list of records with the previous list
@@ -269,9 +269,6 @@ class SFType(object):
         * data -- a dict of the data to update the SObject from. It will be
                   JSON-encoded before being transmitted.
         '''
-        result = self._call_salesforce('PATCH', self.base_url + record_id,
-                                       data=json.dumps(data))
-        return result.status_code
         result = self._call_salesforce('PATCH', self.base_url + record_id,
                                        data=json.dumps(data))
         return result.status_code

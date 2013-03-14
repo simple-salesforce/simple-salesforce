@@ -2,7 +2,7 @@
 Heavily Modified from RestForce 1.0.0
 '''
 
-from util import getUniqueElementValueFromXmlString
+from simple_salesforce.util import getUniqueElementValueFromXmlString
 import requests
 
 
