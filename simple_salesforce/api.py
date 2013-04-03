@@ -105,7 +105,11 @@ class SalesforceAPI(object):
         # `requests` will correctly encode the query string passed as `params`
         result = requests.get(url, headers=self.headers, params=params)
         if result.status_code != 200:
-            raise SalesforceGeneralError(result.content)
+            try:
+                message = result.json()[0]['message']
+            except Exception:
+                message = result.content
+            raise SalesforceGeneralError(message)
         return result.json()
 
     def query_more(self, next_records_identifier, identifier_is_url=False):
@@ -133,7 +137,11 @@ class SalesforceAPI(object):
             url = url.format(next_record_id=next_records_identifier)
         result = requests.get(url, headers=self.headers)
         if result.status_code != 200:
-            raise SalesforceGeneralError(result.content)
+            try:
+                message = result.json()[0]['message']
+            except Exception:
+                message = result.content
+            raise SalesforceGeneralError(message)
         return result.json()
 
     def query_all(self, query):
