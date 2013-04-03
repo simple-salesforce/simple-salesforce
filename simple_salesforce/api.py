@@ -1,34 +1,81 @@
 import requests
 import json
 
-from simple_salesforce.login import login as SalesforceLogin
+from urlparse import urlparse
 
+from simple_salesforce.login import SalesforceLogin
 
-class SalesforceAPI(object):
-    '''# Salesforce API Instance
+class Salesforce(object):
+    ''' # Salesforce Instance
 
-    An instance of SalesforceAPI is a handy way to wrap a Salesforce session
+    An instance of Salesforce is a handy way to wrap a Salesforce session
     for easy use of the Salesforce REST API.
     '''
-    def __init__(self, username, password, security_token, sandbox=False,
-                 sf_version='23.0'):
+    def __init__(self, **kwargs):
         '''Initialize the instance with the given parameters.
 
-        Arguments:
+        Available kwargs
+
+        Password Authentication:
 
         * username -- the Salesforce username to use for authentication
         * password -- the password for the username
         * security_token -- the security token for the username
         * sandbox -- True if you want to login to `test.salesforce.com`, False
                      if you want to login to `login.salesforce.com`.
-        * sf_version -- the version of the Salesforce API to use, for example
-                        "27.0"
+
+        Direct Session and Instance Access:
+
+        * session_id -- Access token for this session
+
+        Then either
+        * instance -- Domain of your Salesforce instance, i.e. `na1.salesforce.com`
+        OR
+        * instance_url -- Full URL of your instance i.e. `https://na1.salesforce.com
+
+
+        Universal Kwargs:
+        * version -- the version of the Salesforce API to use, for example `27.0`
         '''
-        self.session_id, self.sf_instance = SalesforceLogin(username, password,
-                                                            security_token,
-                                                            sandbox=sandbox,
-                                                            sf_version=sf_version)
-        self.sf_version = sf_version
+
+        # Determine if the user passed in the optional version and/or sandbox kwargs
+        self.sf_version = kwargs.get('version', '27.0')
+        self.sandbox = kwargs.get('sandbox', False)
+
+        # Determine if the user wants to use our username/password auth or pass in their own information
+        if ('username' in kwargs) and ('password' in kwargs) and ('security_token' in kwargs):
+            self.auth_type = "password"
+            username = kwargs['username']
+            password = kwargs['password']
+            security_token = kwargs['security_token']
+
+            # Pass along the username/password to our login helper
+            self.session_id, self.sf_instance = SalesforceLogin(
+                username, password,
+                security_token,
+                sandbox=self.sandbox,
+                sf_version=self.sf_version)
+
+        elif ('session_id' in kwargs) and (('instance' in kwargs) or ('instance_url' in kwargs)):
+            self.auth_type = "direct"
+            self.session_id = kwargs['session_id']
+
+            # If the user provides the full url (as returned by the OAuth interface for 
+            # example) extract the hostname (which we rely on)
+            if ('instance_url' in kwargs):
+                self.sf_instance = urlparse(kwargs['instance_url']).hostname
+            else:
+                self.sf_instance = kwargs['instance']
+
+        else:
+            raise SalesforceGeneralError(
+                'You must provide login information or an instance and token')
+
+        if self.sandbox:
+            self.auth_site = 'https://test.salesforce.com'
+        else:
+            self.auth_site = 'https://login.salesforce.com'
+
         self.headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
@@ -191,7 +238,7 @@ class SalesforceAPI(object):
 class SFType(object):
     '''An interface to a specific type of SObject'''
 
-    def __init__(self, object_name, session_id, sf_instance, sf_version):
+    def __init__(self, object_name, session_id, sf_instance, sf_version='27.0'):
         '''Initialize the instance with the given parameters.
 
         Arguments:
@@ -323,6 +370,36 @@ class SFType(object):
             raise SalesforceGeneralError(message)
 
         return result
+
+
+class SalesforceAPI(Salesforce):
+    """# Depreciated SalesforceAPI Instance
+
+    This class implements the Username/Password Authentication Mechanism using Arguments
+    It has since been surpassed by the 'Salesforce' class, which relies on kwargs
+
+    """
+    def __init__(self, username, password, security_token, sandbox=False,
+                 sf_version='27.0'):
+        '''Initialize the instance with the given parameters.
+
+        Arguments:
+
+        * username -- the Salesforce username to use for authentication
+        * password -- the password for the username
+        * security_token -- the security token for the username
+        * sandbox -- True if you want to login to `test.salesforce.com`, False
+                     if you want to login to `login.salesforce.com`.
+        * sf_version -- the version of the Salesforce API to use, for example
+                        "27.0"
+        '''
+        import warnings
+        warnings.warn(
+            "Use of login arguments has been depreciated. Please use kwargs", DeprecationWarning)
+
+        super(
+            SalesforceAPI, self).__init__(username=username, password=password,
+                                          security_token=security_token, sandbox=sandbox, version=sf_version)
 
 
 class SalesforceMoreThanOneRecord(Exception):

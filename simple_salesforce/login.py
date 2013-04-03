@@ -6,8 +6,8 @@ from simple_salesforce.util import getUniqueElementValueFromXmlString
 import requests
 
 
-def login(username, password, security_token, sandbox=False,
-          sf_version='23.0'):
+def SalesforceLogin(username, password, security_token, sandbox=False,
+                    sf_version='23.0'):
     '''Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
     the domain of the instance of Salesforce to use for the session.
@@ -39,7 +39,7 @@ def login(username, password, security_token, sandbox=False,
                     <n1:password>{password}{token}</n1:password>
                 </n1:login>
             </env:Body>
-        </env:Envelope>""".format(username=username,password=password,token=security_token)
+        </env:Envelope>""".format(username=username, password=password, token=security_token)
 
     login_soap_request_headers = {
         'content-type': 'text/xml',

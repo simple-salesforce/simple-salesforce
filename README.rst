@@ -10,17 +10,33 @@ You can find out more regarding the format of the results in the `Official Sales
 
 Example
 -------
+There are two ways to gain access to Salesforce
+
+The first is to simply pass the domain of your Salesforce instance and an access token straight to ``Salesforce()``
+
+For example::
+
+    from simple_salesforce import Salesforce
+    sf = Salesforce(instance='na1.salesforce.com', session_id='')
+
+If you have the full URL of your instance (perhaps including the schema, as is included in the OAuth2 request process), you can pass that in instead using ``instance_url``::
+
+    from simple_salesforce import Salesforce
+    sf = Salesforce(instance_url='https://na1.salesforce.com', session_id='')
+
 To login, simply include the SalesforceAPI method and pass in your Salesforce username, password and token (this is usually provided when you change your password)::
 
-    from simple_salesforce import SalesforceAPI
-    sf = SalesforceAPI('myemail@example.com', 'password', 'token')
+    from simple_salesforce import Salesforce
+    sf = Salesforce(username='myemail@example.com', password='password', security_token='token')
 
-If you'd like to enter a sandbox, simply append ``True`` to your ``SalesforceAPI()`` call.
+If you'd like to enter a sandbox, simply add ``sandbox=True`` to your ``Salesforce()`` call.
 
 For example::
 
     from simple_salesforce import SalesforceAPI
-    sf = SalesforceAPI('myemail@example.com.sandbox', 'password', 'token', True)
+    sf = Salesforce(username='myemail@example.com.sandbox', password='password', password_token='token', sandbox=True)
+
+Note that specifying if you want to use a sandbox is only necessary if you are using the built-in username/password/security token authentication and is used exclusively during the authentication step.
 
 Record Management
 -----------------
@@ -101,6 +117,29 @@ To retrieve basic metadata use::
 To retrieve a description of the object, use::
 
     sf.Contact.describe()
+
+
+Additional Features
+-------------------
+
+There are a few helper classes that are used internally and available to you.
+
+Included in them are ``SalesforceLogin``, which takes in a username, password, security token, optional boolean sandbox indicator and optional version and returns a touple of ``(session_id, sf_instance)`` where `session_id` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
+
+For example, to use SalesforceLogin for a sandbox account you'd use::
+
+    from simple_salesforce import SalesforceLogin
+    session_id, instance = SalesforceLogin('myemail@example.com.sandbox', 'password', 'token', True)
+
+Simply leave off the final ``True`` if you do not wish to use a sandbox.
+
+Also exposed is the ``SFType`` class, which is used internally by the ``__getattr__()`` method in the ``Salesforce()`` class and represents a specific SObject type. ``SFType`` requires ``object_name`` (i.e. ``Contact``), ``session_id`` (an authentication ID), ``sf_instance`` (hostname of your Salesforce instance), and an optional ``sf_version``
+
+To add a Contact using the default version of the API you'd use::
+
+    from simple_salesforce import SFType
+    contact = SFType('Contact','sesssionid','na1.salesforce.com')
+    contact.create({'LastName':'Smith','Email':'example@example.com'})
 
 
 Authors & License
