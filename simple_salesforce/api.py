@@ -354,19 +354,28 @@ class SFType(object):
         result = requests.request(method, url, headers=headers, **kwargs)
 
         if result.status_code == 300:
-            message = "More than one record for %s" % url
+            message = "More than one record for {url}. Response content: {content}"
+            message = message.format(url=url, content=result.text)
             raise SalesforceMoreThanOneRecord(message)
+        elif result.status_code == 400:
+            message = "Malformed request {url}. Response content: {content}"
+            message = message.format(url=url, content=result.text)
+            raise SalesforceMalformedRequest(message)
         elif result.status_code == 401:
-            message = "Expired session for %s" % url
+            message = "Expired session for {url}. Response content: {content}"
+            message = message.format(url=url, content=result.text)
             raise SalesforceExpiredSession(message)
         elif result.status_code == 403:
-            message = "Request refused for %s" % url
-            raise SalesforceRefusedRequest()
+            message = "Request refused for {url}. Resonse content: {content}"
+            message = message.format(url=url, content=result.text)
+            raise SalesforceRefusedRequest(message)
         elif result.status_code == 404:
-            message = 'Resource %s Not Found' % self.name
+            message = 'Resource {name} Not Found. Response content: {content}'
+            message = message.format(name=self.name, content=result.text)
             raise SalesforceResourceNotFound(message)
         elif result.status_code >= 300:
-            message = 'Error Code %s' % result.status_code
+            message = 'Error Code {status}. Response content: {content}'
+            message = message.format(status=result.status_code, content=result.text)
             raise SalesforceGeneralError(message)
 
         return result
@@ -407,6 +416,14 @@ class SalesforceMoreThanOneRecord(Exception):
     Error Code: 300
     The value returned when an external ID exists in more than one record. The
     response body contains the list of matching records.
+    '''
+    pass
+
+
+class SalesforceMalformedRequest(Exception):
+    '''
+    Error Code: 400
+    The request couldn't be understood, usually becaue the JSON or XML body contains an error.
     '''
     pass
 
