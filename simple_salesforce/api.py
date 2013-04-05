@@ -151,12 +151,10 @@ class Salesforce(object):
         params = {'q': query}
         # `requests` will correctly encode the query string passed as `params`
         result = requests.get(url, headers=self.headers, params=params)
+        
         if result.status_code != 200:
-            try:
-                message = result.json()[0]['message']
-            except Exception:
-                message = result.content
-            raise SalesforceGeneralError(message)
+            _exception_handler(result)
+
         return result.json()
 
     def query_more(self, next_records_identifier, identifier_is_url=False):
@@ -183,12 +181,10 @@ class Salesforce(object):
             url = self.base_url + 'query/{next_record_id}'
             url = url.format(next_record_id=next_records_identifier)
         result = requests.get(url, headers=self.headers)
+
         if result.status_code != 200:
-            try:
-                message = result.json()[0]['message']
-            except Exception:
-                message = result.content
-            raise SalesforceGeneralError(message)
+            _exception_handler(result)
+
         return result.json()
 
     def query_all(self, query):
@@ -353,30 +349,8 @@ class SFType(object):
         }
         result = requests.request(method, url, headers=headers, **kwargs)
 
-        if result.status_code == 300:
-            message = "More than one record for {url}. Response content: {content}"
-            message = message.format(url=url, content=result.text)
-            raise SalesforceMoreThanOneRecord(message)
-        elif result.status_code == 400:
-            message = "Malformed request {url}. Response content: {content}"
-            message = message.format(url=url, content=result.text)
-            raise SalesforceMalformedRequest(message)
-        elif result.status_code == 401:
-            message = "Expired session for {url}. Response content: {content}"
-            message = message.format(url=url, content=result.text)
-            raise SalesforceExpiredSession(message)
-        elif result.status_code == 403:
-            message = "Request refused for {url}. Resonse content: {content}"
-            message = message.format(url=url, content=result.text)
-            raise SalesforceRefusedRequest(message)
-        elif result.status_code == 404:
-            message = 'Resource {name} Not Found. Response content: {content}'
-            message = message.format(name=self.name, content=result.text)
-            raise SalesforceResourceNotFound(message)
-        elif result.status_code >= 300:
-            message = 'Error Code {status}. Response content: {content}'
-            message = message.format(status=result.status_code, content=result.text)
-            raise SalesforceGeneralError(message)
+        if result.status_code >= 300:
+            _exception_handler(result, self.name)
 
         return result
 
@@ -409,7 +383,37 @@ class SalesforceAPI(Salesforce):
         super(
             SalesforceAPI, self).__init__(username=username, password=password,
                                           security_token=security_token, sandbox=sandbox, version=sf_version)
+def _exception_handler(result, name=""):
+    url = result.url
+    try:
+        response_content = result.json()
+    except Exception:
+        response_content = result.text
 
+    if result.status_code == 300:
+        message = "More than one record for {url}. Response content: {content}"
+        message = message.format(url=url, content=response_content)
+        raise SalesforceMoreThanOneRecord(message)
+    elif result.status_code == 400:
+        message = "Malformed request {url}. Response content: {content}"
+        message = message.format(url=url, content=response_content)
+        raise SalesforceMalformedRequest(message)
+    elif result.status_code == 401:
+        message = "Expired session for {url}. Response content: {content}"
+        message = message.format(url=url, content=response_content)
+        raise SalesforceExpiredSession(message)
+    elif result.status_code == 403:
+        message = "Request refused for {url}. Resonse content: {content}"
+        message = message.format(url=url, content=response_content)
+        raise SalesforceRefusedRequest(message)
+    elif result.status_code == 404:
+        message = 'Resource {name} Not Found. Response content: {content}'
+        message = message.format(name=name, content=response_content)
+        raise SalesforceResourceNotFound(message)
+    else:
+        message = 'Error Code {status}. Response content: {content}'
+        message = message.format(status=result.status_code, content=response_content)
+        raise SalesforceGeneralError(message)
 
 class SalesforceMoreThanOneRecord(Exception):
     '''
