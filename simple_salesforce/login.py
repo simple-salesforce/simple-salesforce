@@ -3,6 +3,7 @@ Heavily Modified from RestForce 1.0.0
 '''
 
 from simple_salesforce.util import getUniqueElementValueFromXmlString
+import cgi
 import requests
 
 
@@ -28,6 +29,8 @@ def SalesforceLogin(username, password, security_token, sandbox=False,
         domain = 'login'
     soap_url = soap_url.format(domain=domain, sf_version=sf_version)
 
+    username = cgi.escape(username)
+    password = cgi.escape(password)
     login_soap_request_body = """<?xml version="1.0" encoding="utf-8" ?>
         <env:Envelope
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
