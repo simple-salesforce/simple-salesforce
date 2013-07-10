@@ -31,7 +31,6 @@ def SalesforceLogin(username, password, security_token, sandbox=False,
 
     username = cgi.escape(username)
     password = cgi.escape(password)
-    print(username, password)
     login_soap_request_body = """<?xml version="1.0" encoding="utf-8" ?>
         <env:Envelope
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
