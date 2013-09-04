@@ -5,14 +5,15 @@ from urlparse import urlparse
 
 from simple_salesforce.login import SalesforceLogin
 
+
 class Salesforce(object):
-    ''' # Salesforce Instance
+    """ # Salesforce Instance
 
     An instance of Salesforce is a handy way to wrap a Salesforce session
     for easy use of the Salesforce REST API.
-    '''
+    """
     def __init__(self, **kwargs):
-        '''Initialize the instance with the given parameters.
+        """Initialize the instance with the given parameters.
 
         Available kwargs
 
@@ -36,14 +37,15 @@ class Salesforce(object):
 
         Universal Kwargs:
         * version -- the version of the Salesforce API to use, for example `27.0`
-        '''
+        """
 
         # Determine if the user passed in the optional version and/or sandbox kwargs
         self.sf_version = kwargs.get('version', '27.0')
         self.sandbox = kwargs.get('sandbox', False)
+        self.is_apex = kwargs.get('apex', False)
 
         # Determine if the user wants to use our username/password auth or pass in their own information
-        if ('username' in kwargs) and ('password' in kwargs) and ('security_token' in kwargs):
+        if 'username' in kwargs and 'password' in kwargs and 'security_token' in kwargs:
             self.auth_type = "password"
             username = kwargs['username']
             password = kwargs['password']
@@ -56,13 +58,13 @@ class Salesforce(object):
                 sandbox=self.sandbox,
                 sf_version=self.sf_version)
 
-        elif ('session_id' in kwargs) and (('instance' in kwargs) or ('instance_url' in kwargs)):
+        elif 'session_id' in kwargs and ('instance' in kwargs or 'instance_url' in kwargs):
             self.auth_type = "direct"
             self.session_id = kwargs['session_id']
 
-            # If the user provides the full url (as returned by the OAuth interface for 
+            # If the user provides the full url (as returned by the OAuth interface for
             # example) extract the hostname (which we rely on)
-            if ('instance_url' in kwargs):
+            if 'instance_url' in kwargs:
                 self.sf_instance = urlparse(kwargs['instance_url']).hostname
             else:
                 self.sf_instance = kwargs['instance']
@@ -81,13 +83,19 @@ class Salesforce(object):
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
         }
-        self.base_url = ('https://{instance}/services/data/v{version}/'
-                         .format(instance=self.sf_instance,
-                                 version=self.sf_version))
+
+        if not self.is_apex:
+            self.base_url = ('https://{instance}/services/data/v{version}/'
+                             .format(instance=self.sf_instance,
+                                     version=self.sf_version))
+        else:
+            self.base_url = ('https://{instance}/services/apexrest/'
+                             .format(instance=self.sf_instance,
+                                     version=self.sf_version))
 
     # SObject Handler
     def __getattr__(self, name):
-        '''Returns an `SFType` instance for the given Salesforce object type
+        """Returns an `SFType` instance for the given Salesforce object type
         (given in `name`).
 
         The magic part of the SalesforceAPI, this function translates
@@ -98,19 +106,19 @@ class Salesforce(object):
         Arguments:
 
         * name -- the name of a Salesforce object type, e.g. Lead or Contact
-        '''
-        return SFType(name, self.session_id, self.sf_instance, self.sf_version)
+        """
+        return SFType(name, self.session_id, self.sf_instance, self.sf_version, self.is_apex)
 
     # Search Functions
     def search(self, search):
-        '''Returns the result of a Salesforce search as a dict decoded from
+        """Returns the result of a Salesforce search as a dict decoded from
         the Salesforce response JSON payload.
 
         Arguments:
 
         * search -- the fully formatted SOSL search string, e.g.
                     `FIND {Waldo}`
-        '''
+        """
         url = self.base_url + 'search/'
 
         # `requests` will correctly encode the query string passed as `params`
@@ -125,7 +133,7 @@ class Salesforce(object):
             return json_result
 
     def quick_search(self, search):
-        '''Returns the result of a Salesforce search as a dict decoded from
+        """Returns the result of a Salesforce search as a dict decoded from
         the Salesforce response JSON payload.
 
         Arguments:
@@ -133,32 +141,32 @@ class Salesforce(object):
         * search -- the non-SOSL search string, e.g. `Waldo`. This search
                     string will be wrapped to read `FIND {Waldo}` before being
                     sent to Salesforce
-        '''
+        """
         search_string = 'FIND {{{search_string}}}'.format(search_string=search)
         return self.search(search_string)
 
     # Query Handler
     def query(self, query):
-        '''Return the result of a Salesforce SOQL query as a dict decoded from
+        """Return the result of a Salesforce SOQL query as a dict decoded from
         the Salesforce response JSON payload.
 
         Arguments:
 
         * query -- the SOQL query to send to Salesforce, e.g.
                    `SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"`
-        '''
+        """
         url = self.base_url + 'query/'
         params = {'q': query}
         # `requests` will correctly encode the query string passed as `params`
         result = requests.get(url, headers=self.headers, params=params)
-        
+
         if result.status_code != 200:
             _exception_handler(result)
 
         return result.json()
 
     def query_more(self, next_records_identifier, identifier_is_url=False):
-        '''Retrieves more results from a query that returned more results
+        """Retrieves more results from a query that returned more results
         than the batch maximum. Returns a dict decoded from the Salesforce
         response JSON payload.
 
@@ -171,7 +179,7 @@ class Salesforce(object):
                                treated as a URL, False if
                                `next_records_identifer` should be treated as
                                an Id.
-        '''
+        """
         if identifier_is_url:
             # Don't use `self.base_url` here because the full URI is provided
             url = ('https://{instance}{next_record_url}'
@@ -188,7 +196,7 @@ class Salesforce(object):
         return result.json()
 
     def query_all(self, query):
-        '''Returns the full set of results for the `query`. This is a
+        """Returns the full set of results for the `query`. This is a
         convenience wrapper around `query(...)` and `query_more(...)`.
 
         The returned dict is the decoded JSON payload from the final call to
@@ -200,9 +208,9 @@ class Salesforce(object):
 
         * query -- the SOQL query to send to Salesforce, e.g.
                    `SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"`
-        '''
+        """
         def get_all_results(previous_result):
-            '''Inner function for recursing until there are no more results.
+            """Inner function for recursing until there are no more results.
 
             Returns the full set of results that will be the return value for
             `query_all(...)`
@@ -211,7 +219,7 @@ class Salesforce(object):
 
             * previous_result -- the modified result of previous calls to
                                  Salesforce for this query
-            '''
+            """
             if previous_result['done']:
                 return previous_result
             else:
@@ -232,10 +240,10 @@ class Salesforce(object):
 
 
 class SFType(object):
-    '''An interface to a specific type of SObject'''
+    """An interface to a specific type of SObject"""
 
-    def __init__(self, object_name, session_id, sf_instance, sf_version='27.0'):
-        '''Initialize the instance with the given parameters.
+    def __init__(self, object_name, session_id, sf_instance, sf_version='27.0', apex=False):
+        """Initialize the instance with the given parameters.
 
         Arguments:
 
@@ -244,41 +252,47 @@ class SFType(object):
         * session_id -- the session ID for authenticating to Salesforce
         * sf_instance -- the domain of the instance of Salesforce to use
         * sf_version -- the version of the Salesforce API to use
-        '''
+        """
         self.session_id = session_id
         self.name = object_name
-        self.base_url = ('https://{instance}/services/data/v{sf_version}/sobjects/{object_name}/'
-                         .format(instance=sf_instance,
-                                 object_name=object_name,
-                                 sf_version=sf_version))
+
+        if not apex:
+            self.base_url = ('https://{instance}/services/data/v{sf_version}/sobjects/{object_name}/'
+                             .format(instance=sf_instance,
+                                     object_name=object_name,
+                                     sf_version=sf_version))
+        else:
+            self.base_url = ('https://{instance}/services/apexrest/{object_name}/'
+                             .format(instance=sf_instance,
+                                     object_name=object_name))
 
     def metadata(self):
-        '''Returns the result of a GET to `.../{object_name}/` as a dict
+        """Returns the result of a GET to `.../{object_name}/` as a dict
         decoded from the JSON payload returned by Salesforce.
-        '''
+        """
         result = self._call_salesforce('GET', self.base_url)
         return result.json()
 
     def describe(self):
-        '''Returns the result of a GET to `.../{object_name}/describe` as a
+        """Returns the result of a GET to `.../{object_name}/describe` as a
         dict decoded from the JSON payload returned by Salesforce.
-        '''
+        """
         result = self._call_salesforce('GET', self.base_url + 'describe')
         return result.json()
 
     def get(self, record_id):
-        '''Returns the result of a GET to `.../{object_name}/{record_id}` as a
+        """Returns the result of a GET to `.../{object_name}/{record_id}` as a
         dict decoded from the JSON payload returned by Salesforce.
 
         Arguments:
 
         * record_id -- the Id of the SObject to get
-        '''
+        """
         result = self._call_salesforce('GET', self.base_url + record_id)
         return result.json()
 
     def create(self, data):
-        '''Creates a new SObject using a POST to `.../{object_name}/`.
+        """Creates a new SObject using a POST to `.../{object_name}/`.
 
         Returns a dict decoded from the JSON payload returned by Salesforce.
 
@@ -286,13 +300,13 @@ class SFType(object):
 
         * data -- a dict of the data to create the SObject from. It will be
                   JSON-encoded before being transmitted.
-        '''
+        """
         result = self._call_salesforce('POST', self.base_url,
                                        data=json.dumps(data))
         return result.json()
 
     def upsert(self, record_id, data):
-        '''Creates or updates an SObject using a PATCH to
+        """Creates or updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
 
         Returns a dict decoded from the JSON payload returned by Salesforce.
@@ -303,13 +317,13 @@ class SFType(object):
                        Salesforce documentation
         * data -- a dict of the data to create or update the SObject from. It
                   will be JSON-encoded before being transmitted.
-        '''
+        """
         result = self._call_salesforce('PATCH', self.base_url + record_id,
                                        data=json.dumps(data))
         return result.status_code
 
     def update(self, record_id, data):
-        '''Updates an SObject using a PATCH to
+        """Updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
 
         Returns a dict decoded from the JSON payload returned by Salesforce.
@@ -319,13 +333,13 @@ class SFType(object):
         * record_id -- the Id of the SObject to update
         * data -- a dict of the data to update the SObject from. It will be
                   JSON-encoded before being transmitted.
-        '''
+        """
         result = self._call_salesforce('PATCH', self.base_url + record_id,
                                        data=json.dumps(data))
         return result.status_code
 
     def delete(self, record_id):
-        '''Deletess an SObject using a DELETE to
+        """Deletess an SObject using a DELETE to
         `.../{object_name}/{record_id}`.
 
         Returns a dict decoded from the JSON payload returned by Salesforce.
@@ -333,15 +347,15 @@ class SFType(object):
         Arguments:
 
         * record_id -- the Id of the SObject to delete
-        '''
+        """
         result = self._call_salesforce('DELETE', self.base_url + record_id)
         return result.status_code
 
     def _call_salesforce(self, method, url, **kwargs):
-        '''Utility method for performing HTTP call to Salesforce.
+        """Utility method for performing HTTP call to Salesforce.
 
         Returns a `requests.result` object.
-        '''
+        """
         headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
@@ -354,6 +368,16 @@ class SFType(object):
 
         return result
 
+    def apexecute(self, action, method='GET', data=None):
+        result = self._call_salesforce(method, self.base_url + action, data=json.dumps(data))
+
+        if result.status_code == 200:
+            try:
+                response_content = result.json()
+            except Exception:
+                response_content = result.text
+            return response_content
+
 
 class SalesforceAPI(Salesforce):
     """# Depreciated SalesforceAPI Instance
@@ -364,7 +388,7 @@ class SalesforceAPI(Salesforce):
     """
     def __init__(self, username, password, security_token, sandbox=False,
                  sf_version='27.0'):
-        '''Initialize the instance with the given parameters.
+        """Initialize the instance with the given parameters.
 
         Arguments:
 
@@ -375,7 +399,7 @@ class SalesforceAPI(Salesforce):
                      if you want to login to `login.salesforce.com`.
         * sf_version -- the version of the Salesforce API to use, for example
                         "27.0"
-        '''
+        """
         import warnings
         warnings.warn(
             "Use of login arguments has been depreciated. Please use kwargs", DeprecationWarning)
@@ -383,6 +407,8 @@ class SalesforceAPI(Salesforce):
         super(
             SalesforceAPI, self).__init__(username=username, password=password,
                                           security_token=security_token, sandbox=sandbox, version=sf_version)
+
+
 def _exception_handler(result, name=""):
     url = result.url
     try:
@@ -415,52 +441,53 @@ def _exception_handler(result, name=""):
         message = message.format(status=result.status_code, content=response_content)
         raise SalesforceGeneralError(message)
 
+
 class SalesforceMoreThanOneRecord(Exception):
-    '''
+    """
     Error Code: 300
     The value returned when an external ID exists in more than one record. The
     response body contains the list of matching records.
-    '''
+    """
     pass
 
 
 class SalesforceMalformedRequest(Exception):
-    '''
+    """
     Error Code: 400
     The request couldn't be understood, usually becaue the JSON or XML body contains an error.
-    '''
+    """
     pass
 
 
 class SalesforceExpiredSession(Exception):
-    '''
+    """
     Error Code: 401
     The session ID or OAuth token used has expired or is invalid. The response
     body contains the message and errorCode.
-    '''
+    """
     pass
 
 
 class SalesforceRefusedRequest(Exception):
-    '''
+    """
     Error Code: 403
     The request has been refused. Verify that the logged-in user has
     appropriate permissions.
-    '''
+    """
     pass
 
 
 class SalesforceResourceNotFound(Exception):
-    '''
+    """
     Error Code: 404
     The requested resource couldn't be found. Check the URI for errors, and
     verify that there are no sharing issues.
-    '''
+    """
     pass
 
 
 class SalesforceGeneralError(Exception):
-    '''
+    """
     A non-specific Salesforce error.
-    '''
+    """
     pass

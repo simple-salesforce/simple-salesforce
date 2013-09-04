@@ -1,6 +1,6 @@
-'''
+"""
 Heavily Modified from RestForce 1.0.0
-'''
+"""
 
 from simple_salesforce.util import getUniqueElementValueFromXmlString
 import cgi
@@ -9,7 +9,7 @@ import requests
 
 def SalesforceLogin(username, password, security_token, sandbox=False,
                     sf_version='23.0'):
-    '''Return a tuple of `(session_id, sf_instance)` where `session_id` is the
+    """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
     the domain of the instance of Salesforce to use for the session.
 
@@ -22,7 +22,7 @@ def SalesforceLogin(username, password, security_token, sandbox=False,
                  you want to login to `login.salesforce.com`.
     * sf_version -- the version of the Salesforce API to use, for example
                     "27.0"
-    '''
+    """
     soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
     domain = 'test'
     if not sandbox:
@@ -70,11 +70,11 @@ def SalesforceLogin(username, password, security_token, sandbox=False,
                    .split('/')[0]
                    .replace('-api', ''))
 
-    return (session_id, sf_instance)
+    return session_id, sf_instance
 
 
 class SalesforceAuthenticationFailed(Exception):
-    '''
+    """
     Thrown to indicate that authentication with Salesforce failed.
-    '''
+    """
     pass

@@ -1,5 +1,6 @@
 import xml.dom.minidom
 
+
 def getUniqueElementValueFromXmlString(xmlString, elementName):
     """
     Extracts an element value from an XML string.
@@ -12,5 +13,6 @@ def getUniqueElementValueFromXmlString(xmlString, elementName):
     elementsByName = xmlStringAsDom.getElementsByTagName(elementName)
     elementValue = None
     if len(elementsByName) > 0:
-        elementValue = elementsByName[0].toxml().replace('<' + elementName + '>','').replace('</' + elementName + '>','')
+        elementValue = elementsByName[0].toxml().replace('<' + elementName + '>', '')\
+            .replace('</' + elementName + '>', '')
     return elementValue
