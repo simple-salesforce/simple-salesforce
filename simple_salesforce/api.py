@@ -44,17 +44,17 @@ class Salesforce(object):
 
         # Determine if the user wants to use our username/password auth or pass in their own information
         if ('username' in kwargs) and ('password' in kwargs) and ('security_token' in kwargs):
-            self.auth_type = "password"
-            username = kwargs['username']
-            password = kwargs['password']
-            security_token = kwargs['security_token']
+			self.auth_type = "password"
+			username = kwargs['username']
+			password = kwargs['password']
+			security_token = kwargs['security_token']
 
             # Pass along the username/password to our login helper
-            self.session_id, self.sf_instance = SalesforceLogin(
-                username, password,
-                security_token,
-                sandbox=self.sandbox,
-                sf_version=self.sf_version)
+			self.session_id, self.sf_instance = SalesforceLogin(
+			username, password,
+			security_token,
+			sandbox=self.sandbox,
+			sf_version=self.sf_version)
 
         elif ('session_id' in kwargs) and (('instance' in kwargs) or ('instance_url' in kwargs)):
             self.auth_type = "direct"
@@ -66,6 +66,19 @@ class Salesforce(object):
                 self.sf_instance = urlparse(kwargs['instance_url']).hostname
             else:
                 self.sf_instance = kwargs['instance']
+                
+    	elif ('username' in kwargs) and ('password' in kwargs) and ('organizationId' in kwargs):
+			self.auth_type = 'ipfilter'
+			username = kwargs['username']
+			password = kwargs['password']
+			organizationId = kwargs['organizationId']
+            
+            # Pass along the username/password to our login helper
+			self.session_id, self.sf_instance = SalesforceLogin(
+							username, password,
+							organizationId,
+							sandbox=self.sandbox,
+							sf_version=self.sf_version)
 
         else:
             raise SalesforceGeneralError(
