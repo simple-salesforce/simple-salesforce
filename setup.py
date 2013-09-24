@@ -15,4 +15,5 @@ setup(
     ],
     keywords = "python salesforce salesforce.com",
     classifiers=['Development Status :: 4 - Beta', 'Environment :: Console', 'Intended Audience :: Developers', 'Natural Language :: English', 'Operating System :: OS Independent', 'Topic :: Internet :: WWW/HTTP'],
+    use_2to3=True,
 )
