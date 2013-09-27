@@ -24,10 +24,16 @@ If you have the full URL of your instance (perhaps including the schema, as is i
     from simple_salesforce import Salesforce
     sf = Salesforce(instance_url='https://na1.salesforce.com', session_id='')
 
-To login, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password)::
+There are also two means of autentication, one that uses username, password and security token and the other that uses IP filtering, username, password  and organizationId
+    
+To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password)::
 
     from simple_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com', password='password', security_token='token')
+
+To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and organizationId::
+    from simple_salesforce import Salesforce
+    sf = Salesforce(password='password', username='myemail@example.com', organizationId='OrgId')
 
 If you'd like to enter a sandbox, simply add ``sandbox=True`` to your ``Salesforce()`` call.
 
