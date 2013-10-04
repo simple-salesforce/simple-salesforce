@@ -51,10 +51,11 @@ class Salesforce(object):
 
             # Pass along the username/password to our login helper
 			self.session_id, self.sf_instance = SalesforceLogin(
-			username, password,
-			security_token,
-			sandbox=self.sandbox,
-			sf_version=self.sf_version)
+						username = username, 
+						password = password,
+						security_token = security_token,
+						sandbox = self.sandbox,
+						sf_version = self.sf_version)
 
         elif ('session_id' in kwargs) and (('instance' in kwargs) or ('instance_url' in kwargs)):
             self.auth_type = "direct"
@@ -75,10 +76,11 @@ class Salesforce(object):
             
             # Pass along the username/password to our login helper
 			self.session_id, self.sf_instance = SalesforceLogin(
-							username, password,
-							organizationId,
-							sandbox=self.sandbox,
-							sf_version=self.sf_version)
+							username = username, 
+							password = password,
+							organizationId = organizationId,
+							sandbox = self.sandbox,
+							sf_version = self.sf_version)
 
         else:
             raise SalesforceGeneralError(
