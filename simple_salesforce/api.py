@@ -91,6 +91,7 @@ class Salesforce(object):
         else:
             self.auth_site = 'https://login.salesforce.com'
 
+        self.request = requests.Session()
         self.headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
@@ -130,7 +131,7 @@ class Salesforce(object):
 
         # `requests` will correctly encode the query string passed as `params`
         params = {'q': search}
-        result = requests.get(url, headers=self.headers, params=params)
+        result = self.request.get(url, headers=self.headers, params=params)
         if result.status_code != 200:
             raise SalesforceGeneralError(result.content)
         json_result = result.json()
@@ -165,8 +166,8 @@ class Salesforce(object):
         url = self.base_url + 'query/'
         params = {'q': query}
         # `requests` will correctly encode the query string passed as `params`
-        result = requests.get(url, headers=self.headers, params=params)
-        
+        result = self.request.get(url, headers=self.headers, params=params)
+ 
         if result.status_code != 200:
             _exception_handler(result)
 
@@ -195,7 +196,7 @@ class Salesforce(object):
         else:
             url = self.base_url + 'query/{next_record_id}'
             url = url.format(next_record_id=next_records_identifier)
-        result = requests.get(url, headers=self.headers)
+        result = self.request.get(url, headers=self.headers)
 
         if result.status_code != 200:
             _exception_handler(result)
@@ -362,7 +363,7 @@ class SFType(object):
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
         }
-        result = requests.request(method, url, headers=headers, **kwargs)
+        result = self.request.request(method, url, headers=headers, **kwargs)
 
         if result.status_code >= 300:
             _exception_handler(result, self.name)
