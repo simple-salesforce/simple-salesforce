@@ -65,6 +65,11 @@ To delete the contact::
 
     sf.Contact.delete('003e0000003GuNXAA0')
 
+To retrieve a list of deleted contacts between 2013-10-20 to 2013-10-29
+
+    import urllib
+    sf.Contact.deleted(urllib.quote('2013-10-20T00:00:00+00:00'), urllib.quote('2013-10-29T00:00:00+00:00'))
+
 Note that Update, Delete and Upsert actions return the associated `Salesforce HTTP Status Code`_
 
 .. _Salesforce HTTP Status Code: http://www.salesforce.com/us/developer/docs/api_rest/Content/errorcodes.htm
