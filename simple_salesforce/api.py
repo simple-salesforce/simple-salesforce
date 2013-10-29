@@ -35,11 +35,11 @@ class Salesforce(object):
 
 
         Universal Kwargs:
-        * version -- the version of the Salesforce API to use, for example `27.0`
+        * version -- the version of the Salesforce API to use, for example `29.0`
         '''
 
         # Determine if the user passed in the optional version and/or sandbox kwargs
-        self.sf_version = kwargs.get('version', '27.0')
+        self.sf_version = kwargs.get('version', '29.0')
         self.sandbox = kwargs.get('sandbox', False)
 
         # Determine if the user wants to use our username/password auth or pass in their own information
@@ -353,6 +353,17 @@ class SFType(object):
         '''
         result = self._call_salesforce('DELETE', self.base_url + record_id)
         return result.status_code
+
+    def deleted(self, start, end):
+        '''Use the SObject Get Deleted resource to get a list of deleted records for the specified object.
+         .../deleted/?start=2013-05-05T00:00:00+00:00&end=2013-05-10T00:00:00+00:00
+
+        * start -- start datetime string with format, ex: urllib.quote('2013-10-20T00:00:00+00:00')
+        * end -- end dattime string with format ex: urllib.quote('2013-10-20T00:00:00+00:00')
+        '''
+        url = self.base_url + 'deleted/?start=%s&end=%s' % (start, end)
+        result = self._call_salesforce('GET', url)
+        return result.json()
 
     def _call_salesforce(self, method, url, **kwargs):
         '''Utility method for performing HTTP call to Salesforce.
