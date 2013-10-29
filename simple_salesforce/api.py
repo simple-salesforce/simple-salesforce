@@ -267,6 +267,7 @@ class SFType(object):
                          .format(instance=sf_instance,
                                  object_name=object_name,
                                  sf_version=sf_version))
+        self.request = requests.Session()
 
     def metadata(self):
         '''Returns the result of a GET to `.../{object_name}/` as a dict
