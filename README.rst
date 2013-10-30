@@ -31,7 +31,8 @@ To login using the security token method, simply include the Salesforce method a
     from simple_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com', password='password', security_token='token')
 
-To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and organizationId::
+To login using IP-whitelist Organization ID method, simply use your Salesforce username, password and organizationId::
+
     from simple_salesforce import Salesforce
     sf = Salesforce(password='password', username='myemail@example.com', organizationId='OrgId')
 
@@ -65,7 +66,7 @@ To delete the contact::
 
     sf.Contact.delete('003e0000003GuNXAA0')
 
-To retrieve a list of deleted contacts between 2013-10-20 to 2013-10-29
+To retrieve a list of deleted contacts between ``2013-10-20`` to ``2013-10-29``::
 
     import urllib
     sf.Contact.deleted(urllib.quote('2013-10-20T00:00:00+00:00'), urllib.quote('2013-10-29T00:00:00+00:00'))
@@ -156,11 +157,11 @@ To add a Contact using the default version of the API you'd use::
 Authors & License
 -----------------
 
-This plugin was built in-house by the team at `New Organizing Institute`_ led by `Nick Catalano`_ and is released under an open source Apache 2.0 license. The team at `Cedexis`_ has contributed to the project as well.
+This plugin was originally built in-house by the team at `New Organizing Institute`_ led by `Nick Catalano`_ and is released under an open source Apache 2.0 license. Contributions are welcome and can be submitted via a pull request on the official `GitHub Repo`_.
 
 Authentication mechanisms were adapted from Dave Wingate's `RestForce`_ and licensed under a MIT license
 
 .. _New Organizing Institute: http://neworganizing.com/
 .. _Nick Catalano: https://github.com/nickcatal
 .. _RestForce: http://pypi.python.org/pypi/RestForce/
-.. _Cedexis: http://www.cedexis.com/
+.. _GitHub Repo: https://github.com/neworganizing/simple-salesforce
