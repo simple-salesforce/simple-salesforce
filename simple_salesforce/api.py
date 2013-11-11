@@ -39,6 +39,7 @@ class Salesforce(object):
 
         Universal Kwargs:
         * version -- the version of the Salesforce API to use, for example `29.0`
+        * proxies -- the optional map of scheme to proxy server
         """
 
         # Determine if the user passed in the optional version and/or sandbox kwargs
@@ -267,6 +268,7 @@ class SFType(object):
         * session_id -- the session ID for authenticating to Salesforce
         * sf_instance -- the domain of the instance of Salesforce to use
         * sf_version -- the version of the Salesforce API to use
+        * proxies -- the optional map of scheme to proxy server
         """
         self.session_id = session_id
         self.name = object_name
