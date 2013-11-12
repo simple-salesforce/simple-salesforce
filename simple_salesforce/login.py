@@ -23,6 +23,7 @@ def SalesforceLogin(**kwargs):
                  you want to login to `login.salesforce.com`.
     * sf_version -- the version of the Salesforce API to use, for example
                     "27.0"
+    * proxies -- the optional map of scheme to proxy server
     """
 
     if 'sandbox' not in kwargs:
@@ -104,7 +105,10 @@ def SalesforceLogin(**kwargs):
                     'charset': 'UTF-8',
                     'SOAPAction': 'login'
                     }
-    response = requests.post(soap_url, login_soap_request_body, headers=login_soap_request_headers)
+    response = requests.post(soap_url,
+                             login_soap_request_body,
+                             headers=login_soap_request_headers,
+                             proxies=kwargs.get('proxies', None))
 
     if response.status_code != 200:
         except_code = getUniqueElementValueFromXmlString(response.content, 'sf:exceptionCode')

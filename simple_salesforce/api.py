@@ -39,11 +39,13 @@ class Salesforce(object):
 
         Universal Kwargs:
         * version -- the version of the Salesforce API to use, for example `29.0`
+        * proxies -- the optional map of scheme to proxy server
         """
 
         # Determine if the user passed in the optional version and/or sandbox kwargs
         self.sf_version = kwargs.get('version', '29.0')
         self.sandbox = kwargs.get('sandbox', False)
+        self.proxies = kwargs.get('proxies')
 
         # Determine if the user wants to use our username/password auth or pass in their own information
         if ('username' in kwargs) and ('password' in kwargs) and ('security_token' in kwargs):
@@ -58,7 +60,8 @@ class Salesforce(object):
                         password = password,
                         security_token = security_token,
                         sandbox = self.sandbox,
-                        sf_version = self.sf_version)
+                        sf_version = self.sf_version,
+                        proxies = self.proxies)
 
         elif ('session_id' in kwargs) and (('instance' in kwargs) or ('instance_url' in kwargs)):
             self.auth_type = "direct"
@@ -83,7 +86,8 @@ class Salesforce(object):
                             password = password,
                             organizationId = organizationId,
                             sandbox = self.sandbox,
-                            sf_version = self.sf_version)
+                            sf_version = self.sf_version,
+                            proxies = self.proxies)
 
         else:
             raise SalesforceGeneralError(
@@ -95,6 +99,7 @@ class Salesforce(object):
             self.auth_site = 'https://login.salesforce.com'
 
         self.request = requests.Session()
+        self.request.proxies = self.proxies
         self.headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
@@ -118,7 +123,7 @@ class Salesforce(object):
 
         * name -- the name of a Salesforce object type, e.g. Lead or Contact
         """
-        return SFType(name, self.session_id, self.sf_instance, self.sf_version)
+        return SFType(name, self.session_id, self.sf_instance, self.sf_version, self.proxies)
 
     # Search Functions
     def search(self, search):
@@ -253,7 +258,7 @@ class Salesforce(object):
 class SFType(object):
     """An interface to a specific type of SObject"""
 
-    def __init__(self, object_name, session_id, sf_instance, sf_version='27.0'):
+    def __init__(self, object_name, session_id, sf_instance, sf_version='27.0', proxies=None):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -263,6 +268,7 @@ class SFType(object):
         * session_id -- the session ID for authenticating to Salesforce
         * sf_instance -- the domain of the instance of Salesforce to use
         * sf_version -- the version of the Salesforce API to use
+        * proxies -- the optional map of scheme to proxy server
         """
         self.session_id = session_id
         self.name = object_name
@@ -271,6 +277,7 @@ class SFType(object):
                                  object_name=object_name,
                                  sf_version=sf_version))
         self.request = requests.Session()
+        self.request.proxies = proxies
 
     def metadata(self):
         """Returns the result of a GET to `.../{object_name}/` as a dict
