@@ -4,10 +4,12 @@ import requests
 import json
 
 from urlparse import urlparse
-import collections
-
 from simple_salesforce.login import SalesforceLogin
 
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 
 class Salesforce(object):
     """Salesforce Instance
@@ -115,7 +117,7 @@ class Salesforce(object):
         result = self.request.get(url, headers=self.headers)
         if result.status_code != 200:
             raise SalesforceGeneralError(result.content)
-        json_result = result.json(object_pairs_hook=collections.OrderedDict)
+        json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
         else:
@@ -155,7 +157,7 @@ class Salesforce(object):
         result = self.request.get(url, headers=self.headers, params=params)
         if result.status_code != 200:
             raise SalesforceGeneralError(result.content)
-        json_result = result.json(object_pairs_hook=collections.OrderedDict)
+        json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
         else:
@@ -192,7 +194,7 @@ class Salesforce(object):
         if result.status_code != 200:
             _exception_handler(result)
 
-        return result.json(object_pairs_hook=collections.OrderedDict)
+        return result.json(object_pairs_hook=OrderedDict)
 
     def query_more(self, next_records_identifier, identifier_is_url=False):
         """Retrieves more results from a query that returned more results
@@ -222,7 +224,7 @@ class Salesforce(object):
         if result.status_code != 200:
             _exception_handler(result)
 
-        return result.json(object_pairs_hook=collections.OrderedDict)
+        return result.json(object_pairs_hook=OrderedDict)
 
     def query_all(self, query):
         """Returns the full set of results for the `query`. This is a
@@ -297,21 +299,21 @@ class SFType(object):
         decoded from the JSON payload returned by Salesforce.
         """
         result = self._call_salesforce('GET', self.base_url)
-        return result.json(object_pairs_hook=collections.OrderedDict)
+        return result.json(object_pairs_hook=OrderedDict)
 
     def describe(self):
         """Returns the result of a GET to `.../{object_name}/describe` as a
         dict decoded from the JSON payload returned by Salesforce.
         """
         result = self._call_salesforce('GET', self.base_url + 'describe')
-        return result.json(object_pairs_hook=collections.OrderedDict)
+        return result.json(object_pairs_hook=OrderedDict)
 
     def describe_layout(self,record_id):
         """Returns the result of a GET to `.../{object_name}/describe/layouts/<recordid>` as a
         dict decoded from the JSON payload returned by Salesforce.
         """
         result = self._call_salesforce('GET', self.base_url + 'describe/layouts/' + record_id)
-        return result.json(object_pairs_hook=collections.OrderedDict)
+        return result.json(object_pairs_hook=OrderedDict)
 
     def get(self, record_id):
         """Returns the result of a GET to `.../{object_name}/{record_id}` as a
@@ -322,7 +324,7 @@ class SFType(object):
         * record_id -- the Id of the SObject to get
         """
         result = self._call_salesforce('GET', self.base_url + record_id)
-        return result.json(object_pairs_hook=collections.OrderedDict)
+        return result.json(object_pairs_hook=OrderedDict)
 
     def create(self, data):
         """Creates a new SObject using a POST to `.../{object_name}/`.
@@ -336,7 +338,7 @@ class SFType(object):
         """
         result = self._call_salesforce('POST', self.base_url,
                                        data=json.dumps(data))
-        return result.json(object_pairs_hook=collections.OrderedDict)
+        return result.json(object_pairs_hook=OrderedDict)
 
     def upsert(self, record_id, data):
         """Creates or updates an SObject using a PATCH to
@@ -393,7 +395,7 @@ class SFType(object):
         """
         url = self.base_url + 'deleted/?start=%s&end=%s' % (start, end)
         result = self._call_salesforce('GET', url)
-        return result.json(object_pairs_hook=collections.OrderedDict)
+        return result.json(object_pairs_hook=OrderedDict)
 
     def _call_salesforce(self, method, url, **kwargs):
         """Utility method for performing HTTP call to Salesforce.
