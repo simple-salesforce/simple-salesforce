@@ -10,6 +10,8 @@ if sys.version_info < (2, 7):
     extra_install_requires.append('ordereddict>=1.1')
     extra_tests_require.append('unittest2>=0.5.1')
 
+if sys.version_info < (3, 0):
+    extra_tests_require.append('mock==1.0.1')
 
 setup(
     name='simple-salesforce',
@@ -23,10 +25,9 @@ setup(
         "returning a dictionary of the API JSON response."),
     long_description=textwrap.dedent(open('README.rst', 'r').read()),
     install_requires=[
-        'requests',
+        'requests'
     ] + extra_install_requires,
     tests_require=[
-        'mock==1.0.1',
         'nose==1.3.0'
     ] + extra_tests_require,
     test_suite = 'nose.collector',
