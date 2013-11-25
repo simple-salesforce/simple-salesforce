@@ -3,13 +3,19 @@
 import requests
 import json
 
-from urlparse import urlparse
+try:
+    from urlparse import urlparse
+except ImportError:
+    # Python 3+
+    from urllib.parse import urlparse
 from simple_salesforce.login import SalesforceLogin
 
 try:
     from collections import OrderedDict
 except ImportError:
+    # Python < 2.7
     from ordereddict import OrderedDict
+
 
 class Salesforce(object):
     """Salesforce Instance
