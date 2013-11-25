@@ -3,8 +3,10 @@ import textwrap
 import sys
 
 extra_install_requires = []
+extra_tests_require=[]
 if sys.version_info < (2, 7):
     extra_install_requires.append('ordereddict>=1.1')
+    extra_tests_require.append('unittest2>=0.5.1')
 
 setup(
     name='simple-salesforce',
@@ -18,6 +20,11 @@ setup(
     install_requires=[
         'requests',
     ] + extra_install_requires,
+    tests_require=[
+        'mock==1.0.1',
+        'nose==1.3.0'
+    ] + extra_tests_require,
+    test_suite = 'nose.collector',
     keywords = "python salesforce salesforce.com",
     classifiers=['Development Status :: 4 - Beta', 'Environment :: Console', 'Intended Audience :: Developers', 'Natural Language :: English', 'Operating System :: OS Independent', 'Topic :: Internet :: WWW/HTTP'],
     use_2to3=True,
