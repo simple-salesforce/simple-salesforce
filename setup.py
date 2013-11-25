@@ -8,6 +8,10 @@ if sys.version_info < (2, 7):
     extra_install_requires.append('ordereddict>=1.1')
     extra_tests_require.append('unittest2>=0.5.1')
 
+kwargs = {}
+if sys.version_info > (3, 0):
+    kwargs['use_2to3'] = True
+
 setup(
     name='simple-salesforce',
     version='0.61',
@@ -27,5 +31,5 @@ setup(
     test_suite = 'nose.collector',
     keywords = "python salesforce salesforce.com",
     classifiers=['Development Status :: 4 - Beta', 'Environment :: Console', 'Intended Audience :: Developers', 'Natural Language :: English', 'Operating System :: OS Independent', 'Topic :: Internet :: WWW/HTTP'],
-    use_2to3=True,
+    **kwargs
 )
