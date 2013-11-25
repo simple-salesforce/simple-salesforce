@@ -11,7 +11,8 @@ install:
   - pip install pylint
 # command to run tests
 script: python setup.py test
-script: pylint --rcfile=.pylintrc simple_salesforce
+after_success:
+  - pylint --rcfile=.pylintrc simple_salesforce
 # turn off email notifications
 notifications:
   email: false
