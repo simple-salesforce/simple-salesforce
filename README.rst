@@ -130,6 +130,17 @@ To retrieve a description of the object, use::
 
     sf.Contact.describe()
 
+To retrieve a description of the record layout of an object by its record layout unique id, use::
+
+    sf.Contact.describe_layout('39wmxcw9r23r492')
+
+To retrieve a list of top level description of instance metadata, user::
+
+    sf.describe()
+
+    for x in sf.describe()["sobjects"]:
+      print x["label"]
+
 
 Additional Features
 -------------------
@@ -161,6 +172,8 @@ The proxy argument is the same as what requests uses, a map of scheme to proxy U
       "https": "http://10.10.1.10:1080",
     }
     SalesForce(instance='na1.salesforce.com', session_id='', proxies=proxies)
+
+All results are returned as JSON converted OrderedDict to preserve order of keys from REST responses.
 
 Authors & License
 -----------------
