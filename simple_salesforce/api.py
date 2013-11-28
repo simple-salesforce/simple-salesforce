@@ -472,7 +472,7 @@ def _exception_handler(result, name=""):
         message = message.format(url=url, content=response_content)
         raise SalesforceExpiredSession(message)
     elif result.status_code == 403:
-        message = "Request refused for {url}. Resonse content: {content}"
+        message = "Request refused for {url}. Response content: {content}"
         message = message.format(url=url, content=response_content)
         raise SalesforceRefusedRequest(message)
     elif result.status_code == 404:
