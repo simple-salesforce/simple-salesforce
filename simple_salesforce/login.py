@@ -4,7 +4,11 @@ Heavily Modified from RestForce 1.0.0
 """
 
 from simple_salesforce.util import getUniqueElementValueFromXmlString
-import cgi
+try:
+    # Python 3+
+    from html import escape
+except ImportError:
+    from cgi import escape
 import requests
 
 def SalesforceLogin(**kwargs):
@@ -47,8 +51,8 @@ def SalesforceLogin(**kwargs):
 
     soap_url = soap_url.format(domain=domain, sf_version=sf_version)
 
-    username = cgi.escape(username)
-    password = cgi.escape(password)
+    username = escape(username)
+    password = escape(password)
 
     # Check if token authentication is used
     if ('security_token' in kwargs):
