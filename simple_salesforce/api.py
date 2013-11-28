@@ -3,13 +3,19 @@
 import requests
 import json
 
-from urlparse import urlparse
+try:
+    from urlparse import urlparse
+except ImportError:
+    # Python 3+
+    from urllib.parse import urlparse
 from simple_salesforce.login import SalesforceLogin
 
 try:
     from collections import OrderedDict
 except ImportError:
+    # Python < 2.7
     from ordereddict import OrderedDict
+
 
 class Salesforce(object):
     """Salesforce Instance
@@ -466,7 +472,7 @@ def _exception_handler(result, name=""):
         message = message.format(url=url, content=response_content)
         raise SalesforceExpiredSession(message)
     elif result.status_code == 403:
-        message = "Request refused for {url}. Resonse content: {content}"
+        message = "Request refused for {url}. Response content: {content}"
         message = message.format(url=url, content=response_content)
         raise SalesforceRefusedRequest(message)
     elif result.status_code == 404:
