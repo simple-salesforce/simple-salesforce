@@ -94,5 +94,5 @@ class TestExceptionHandler(unittest.TestCase):
         with self.assertRaises(SalesforceGeneralError) as cm:
             _exception_handler(self.mockresult)
 
-        self.assertEqual(str(cm.exception), ('Error Code 500. Response content: '
-            'Example Content'))
+        self.assertEqual(str(cm.exception), ('Error Code 500. Response content'
+            ': Example Content'))
