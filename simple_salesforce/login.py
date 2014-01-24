@@ -3,13 +3,16 @@
 Heavily Modified from RestForce 1.0.0
 """
 
-from simple_salesforce.util import getUniqueElementValueFromXmlString
+from simple_salesforce.util import getUniqueElementValueFromXmlString, RequestSession
 try:
     # Python 3+
     from html import escape
 except ImportError:
     from cgi import escape
-import requests
+
+import contextlib as clib
+
+# import requests
 
 def SalesforceLogin(**kwargs):
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
@@ -109,18 +112,24 @@ def SalesforceLogin(**kwargs):
                     'charset': 'UTF-8',
                     'SOAPAction': 'login'
                     }
-    response = requests.post(soap_url,
-                             login_soap_request_body,
-                             headers=login_soap_request_headers,
-                             proxies=kwargs.get('proxies', None))
+    session = RequestSession(proxies=kwargs.get('proxies'))
+    response = session.post(soap_url,
+                            login_soap_request_body,
+                            headers=login_soap_request_headers)
+    print 'response:', response
+    with clib.closing(response):
+        content = response.read()
 
-    if response.status_code != 200:
-        except_code = getUniqueElementValueFromXmlString(response.content, 'sf:exceptionCode')
-        except_msg = getUniqueElementValueFromXmlString(response.content, 'sf:exceptionMessage')
-        raise SalesforceAuthenticationFailed('%s: %s' % (except_code, except_msg))
+        if response.getcode() != 200:
+            except_code = getUniqueElementValueFromXmlString(
+                content, 'sf:exceptionCode')
+            except_msg = getUniqueElementValueFromXmlString(
+                content, 'sf:exceptionMessage')
+            raise SalesforceAuthenticationFailed(
+                '%s: %s' % (except_code, except_msg))
 
-    session_id = getUniqueElementValueFromXmlString(response.content, 'sessionId')
-    server_url = getUniqueElementValueFromXmlString(response.content, 'serverUrl')
+    session_id = getUniqueElementValueFromXmlString(content, 'sessionId')
+    server_url = getUniqueElementValueFromXmlString(content, 'serverUrl')
 
     sf_instance = (server_url
                     .replace('http://', '')

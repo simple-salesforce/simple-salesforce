@@ -1,7 +1,9 @@
 """Core classes and exceptions for Simple-Salesforce"""
 
-import requests
+#import requests
+
 import json
+from .util import RequestSession
 
 try:
     from urlparse import urlparse
@@ -15,6 +17,8 @@ try:
 except ImportError:
     # Python < 2.7
     from ordereddict import OrderedDict
+
+import contextlib as clib
 
 
 class Salesforce(object):
@@ -107,8 +111,7 @@ class Salesforce(object):
         else:
             self.auth_site = 'https://login.salesforce.com'
 
-        self.request = requests.Session()
-        self.request.proxies = self.proxies
+        self.request = RequestSession(proxies=self.proxies)
         self.headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
@@ -121,14 +124,12 @@ class Salesforce(object):
     def describe(self):
         url = self.base_url + "sobjects"
         result = self.request.get(url, headers=self.headers)
-        if result.status_code != 200:
-            raise SalesforceGeneralError(result.content)
-        json_result = result.json(object_pairs_hook=OrderedDict)
-        if len(json_result) == 0:
-            return None
-        else:
-            return json_result
-
+        with clib.closing(result):
+            if int(result.getcode()) != 200:
+                raise SalesforceGeneralError(result.read())
+            json_result = json.load(result,
+                                     object_pairs_hook=OrderedDict)
+        return json_result if json_result else None
 
     # SObject Handler
     def __getattr__(self, name):
@@ -161,13 +162,11 @@ class Salesforce(object):
         # `requests` will correctly encode the query string passed as `params`
         params = {'q': search}
         result = self.request.get(url, headers=self.headers, params=params)
-        if result.status_code != 200:
-            raise SalesforceGeneralError(result.content)
-        json_result = result.json(object_pairs_hook=OrderedDict)
-        if len(json_result) == 0:
-            return None
-        else:
-            return json_result
+        with clib.closing(result):
+            if int(result.getcode()) != 200:
+                raise SalesforceGeneralError(result.read())
+            json_result = json.load(result, object_pairs_hook=OrderedDict)
+        return json_result if json_result else None
 
     def quick_search(self, search):
         """Returns the result of a Salesforce search as a dict decoded from
@@ -197,10 +196,11 @@ class Salesforce(object):
         # `requests` will correctly encode the query string passed as `params`
         result = self.request.get(url, headers=self.headers, params=params)
 
-        if result.status_code != 200:
+        if int(result.getcode()) != 200:
             _exception_handler(result)
 
-        return result.json(object_pairs_hook=OrderedDict)
+        with clib.closing(result):
+            return json.load(result, object_pairs_hook=OrderedDict)
 
     def query_more(self, next_records_identifier, identifier_is_url=False):
         """Retrieves more results from a query that returned more results
@@ -227,10 +227,10 @@ class Salesforce(object):
             url = url.format(next_record_id=next_records_identifier)
         result = self.request.get(url, headers=self.headers)
 
-        if result.status_code != 200:
-            _exception_handler(result)
-
-        return result.json(object_pairs_hook=OrderedDict)
+        with clib.closing(result):
+            if int(result.getcode()) != 200:
+                _exception_handler(result)
+            return json.load(result, object_pairs_hook=OrderedDict)
 
     def query_all(self, query):
         """Returns the full set of results for the `query`. This is a
@@ -297,29 +297,31 @@ class SFType(object):
                          .format(instance=sf_instance,
                                  object_name=object_name,
                                  sf_version=sf_version))
-        self.request = requests.Session()
-        self.request.proxies = proxies
+        self.request = RequestSession(proxies=proxies)
 
     def metadata(self):
         """Returns the result of a GET to `.../{object_name}/` as a dict
         decoded from the JSON payload returned by Salesforce.
         """
         result = self._call_salesforce('GET', self.base_url)
-        return result.json(object_pairs_hook=OrderedDict)
+        with clib.closing(result):
+            return json.load(result, object_pairs_hook=OrderedDict)
 
     def describe(self):
         """Returns the result of a GET to `.../{object_name}/describe` as a
         dict decoded from the JSON payload returned by Salesforce.
         """
         result = self._call_salesforce('GET', self.base_url + 'describe')
-        return result.json(object_pairs_hook=OrderedDict)
+        with clib.closing(result):
+            return json.load(result, object_pairs_hook=OrderedDict)
 
     def describe_layout(self,record_id):
         """Returns the result of a GET to `.../{object_name}/describe/layouts/<recordid>` as a
         dict decoded from the JSON payload returned by Salesforce.
         """
         result = self._call_salesforce('GET', self.base_url + 'describe/layouts/' + record_id)
-        return result.json(object_pairs_hook=OrderedDict)
+        with clib.closing(result):
+            return json.load(result, object_pairs_hook=OrderedDict)
 
     def get(self, record_id):
         """Returns the result of a GET to `.../{object_name}/{record_id}` as a
@@ -330,7 +332,8 @@ class SFType(object):
         * record_id -- the Id of the SObject to get
         """
         result = self._call_salesforce('GET', self.base_url + record_id)
-        return result.json(object_pairs_hook=OrderedDict)
+        with clib.closing(result):
+            return json.load(result, object_pairs_hook=OrderedDict)
 
     def create(self, data):
         """Creates a new SObject using a POST to `.../{object_name}/`.
@@ -344,7 +347,8 @@ class SFType(object):
         """
         result = self._call_salesforce('POST', self.base_url,
                                        data=json.dumps(data))
-        return result.json(object_pairs_hook=OrderedDict)
+        with clib.closing(result):
+            return json.load(result, object_pairs_hook=OrderedDict)
 
     def upsert(self, record_id, data):
         """Creates or updates an SObject using a PATCH to
@@ -361,7 +365,8 @@ class SFType(object):
         """
         result = self._call_salesforce('PATCH', self.base_url + record_id,
                                        data=json.dumps(data))
-        return result.status_code
+        with clib.closing(result):
+            return int(result.getcode())
 
     def update(self, record_id, data):
         """Updates an SObject using a PATCH to
@@ -377,7 +382,8 @@ class SFType(object):
         """
         result = self._call_salesforce('PATCH', self.base_url + record_id,
                                        data=json.dumps(data))
-        return result.status_code
+        with clib.closing(result):
+            return int(result.getcode())
 
     def delete(self, record_id):
         """Deletess an SObject using a DELETE to
@@ -390,7 +396,8 @@ class SFType(object):
         * record_id -- the Id of the SObject to delete
         """
         result = self._call_salesforce('DELETE', self.base_url + record_id)
-        return result.status_code
+        with clib.closing(result):
+            return int(result.getcode())
 
     def deleted(self, start, end):
         """Use the SObject Get Deleted resource to get a list of deleted records for the specified object.
@@ -401,12 +408,16 @@ class SFType(object):
         """
         url = self.base_url + 'deleted/?start=%s&end=%s' % (start, end)
         result = self._call_salesforce('GET', url)
-        return result.json(object_pairs_hook=OrderedDict)
+        with clib.closing(result):
+            return json.load(result, object_pairs_hook=OrderedDict)
 
     def _call_salesforce(self, method, url, **kwargs):
         """Utility method for performing HTTP call to Salesforce.
 
-        Returns a `requests.result` object.
+        Returns a "filelike" object with 3 additional methods:
+        * geturl() -> URL where data came from
+        * getcode() -> HTTP status code
+        * info() -> HTTP response header info
         """
         headers = {
             'Content-Type': 'application/json',
@@ -414,9 +425,9 @@ class SFType(object):
             'X-PrettyPrint': '1'
         }
         result = self.request.request(method, url, headers=headers, **kwargs)
-
-        if result.status_code >= 300:
-            _exception_handler(result, self.name)
+        if int(result.getcode()) >= 300:
+            with clib.closing(result):
+                _exception_handler(result, self.name)
 
         return result
 
@@ -453,13 +464,14 @@ class SalesforceAPI(Salesforce):
 
 def _exception_handler(result, name=""):
     """Exception router. Determines which error to raise for bad results"""
-    url = result.url
+    url = result.geturl()
     try:
-        response_content = result.json()
+        response_content = json.load(result)
     except Exception:
-        response_content = result.text
+        response_content = result.read()
+    status_code = int(result.getcode())
 
-    if result.status_code == 300:
+    if status_code == 300:
         message = "More than one record for {url}. Response content: {content}"
         message = message.format(url=url, content=response_content)
         raise SalesforceMoreThanOneRecord(message)
