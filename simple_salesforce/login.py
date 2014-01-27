@@ -116,7 +116,6 @@ def SalesforceLogin(**kwargs):
     response = session.post(soap_url,
                             login_soap_request_body,
                             headers=login_soap_request_headers)
-    print 'response:', response
     with clib.closing(response):
         content = response.read()
 

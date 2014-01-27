@@ -475,25 +475,25 @@ def _exception_handler(result, name=""):
         message = "More than one record for {url}. Response content: {content}"
         message = message.format(url=url, content=response_content)
         raise SalesforceMoreThanOneRecord(message)
-    elif result.status_code == 400:
+    elif status_code == 400:
         message = "Malformed request {url}. Response content: {content}"
         message = message.format(url=url, content=response_content)
         raise SalesforceMalformedRequest(message)
-    elif result.status_code == 401:
+    elif status_code == 401:
         message = "Expired session for {url}. Response content: {content}"
         message = message.format(url=url, content=response_content)
         raise SalesforceExpiredSession(message)
-    elif result.status_code == 403:
+    elif status_code == 403:
         message = "Request refused for {url}. Response content: {content}"
         message = message.format(url=url, content=response_content)
         raise SalesforceRefusedRequest(message)
-    elif result.status_code == 404:
+    elif status_code == 404:
         message = 'Resource {name} Not Found. Response content: {content}'
         message = message.format(name=name, content=response_content)
         raise SalesforceResourceNotFound(message)
     else:
         message = 'Error Code {status}. Response content: {content}'
-        message = message.format(status=result.status_code, content=response_content)
+        message = message.format(status=status_code, content=response_content)
         raise SalesforceGeneralError(message)
 
 

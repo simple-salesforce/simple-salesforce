@@ -30,7 +30,7 @@ class TestSalesforce(unittest.TestCase):
     """Tests for the Salesforce instance"""
     def setUp(self):
         """Setup the SalesforceLogin tests"""
-        request_patcher = patch('simple_salesforce.api.requests')
+        request_patcher = patch('simple_salesforce.RequestSession')
         self.mockrequest = request_patcher.start()
         self.addCleanup(request_patcher.stop)
 
@@ -40,12 +40,12 @@ class TestExceptionHandler(unittest.TestCase):
     def setUp(self):
         """Setup the exception router tests"""
         self.mockresult = Mock()
-        self.mockresult.url = 'http://www.example.com/'
-        self.mockresult.json.return_value = 'Example Content'
+        self.mockresult.geturl.return_value = 'http://www.example.com/'
+        self.mockresult.read.return_value = 'Example Content'
 
     def test_multiple_records_returned(self):
         """Test multiple records returned (a 300 code)"""
-        self.mockresult.status_code = 300
+        self.mockresult.getcode.return_value = 300
         with self.assertRaises(SalesforceMoreThanOneRecord) as cm:
             _exception_handler(self.mockresult)
 
@@ -54,7 +54,7 @@ class TestExceptionHandler(unittest.TestCase):
 
     def test_malformed_request(self):
         """Test a malformed request (400 code)"""
-        self.mockresult.status_code = 400
+        self.mockresult.getcode.return_value = 400
         with self.assertRaises(SalesforceMalformedRequest) as cm:
             _exception_handler(self.mockresult)
 
@@ -63,7 +63,7 @@ class TestExceptionHandler(unittest.TestCase):
 
     def test_expired_session(self):
         """Test an expired session (401 code)"""
-        self.mockresult.status_code = 401
+        self.mockresult.getcode.return_value = 401
         with self.assertRaises(SalesforceExpiredSession) as cm:
             _exception_handler(self.mockresult)
 
@@ -72,7 +72,7 @@ class TestExceptionHandler(unittest.TestCase):
 
     def test_request_refused(self):
         """Test a refused request (403 code)"""
-        self.mockresult.status_code = 403
+        self.mockresult.getcode.return_value = 403
         with self.assertRaises(SalesforceRefusedRequest) as cm:
             _exception_handler(self.mockresult)
 
@@ -81,7 +81,7 @@ class TestExceptionHandler(unittest.TestCase):
 
     def test_resource_not_found(self):
         """Test resource not found (404 code)"""
-        self.mockresult.status_code = 404
+        self.mockresult.getcode.return_value = 404
         with self.assertRaises(SalesforceResourceNotFound) as cm:
             _exception_handler(self.mockresult, 'SpecialContacts')
 
@@ -90,7 +90,7 @@ class TestExceptionHandler(unittest.TestCase):
 
     def test_generic_error_code(self):
         """Test an error code that is otherwise not caught"""
-        self.mockresult.status_code = 500
+        self.mockresult.getcode.return_value = 500
         with self.assertRaises(SalesforceGeneralError) as cm:
             _exception_handler(self.mockresult)
 
