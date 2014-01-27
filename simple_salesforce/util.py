@@ -75,7 +75,6 @@ class RequestSession(object):
             not isinstance(data, basestring)):
             data = urlencode(data)
         request = Request(url, data, headers)
-        print "HELLOOOOOOOOO", request
         return self.director.open(request)
 
     def get(self, url, headers=(), params=()):
