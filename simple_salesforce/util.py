@@ -42,6 +42,16 @@ def getUniqueElementValueFromXmlString(xmlString, elementName):
     return elementValue
 
 
+class PatchRequest(Request):
+    def get_method(self):
+        return 'PATCH'
+
+
+class DeleteRequest(Request):
+    def get_method(self):
+        return 'DELETE'
+
+
 class RequestSession(object):
     """
     Simple wrapper around urllib2/urllib.request.
@@ -62,6 +72,32 @@ class RequestSession(object):
         if proxies is not None:
             self.director.add_handler(ProxyHandler(proxies))
 
+    def _format_data(self, data):
+        if (isinstance(data, (Mapping, Sequence)) and 
+            not isinstance(data, basestring)):
+            return urlencode(data)
+        return data
+
+    def patch(self, url, data, headers):
+        """Issue an HTTP PATCH request.
+
+        Returns a "filelike" object with 3 additional methods:
+        * geturl() -> URL where data came from
+        * getcode() -> HTTP status code
+        * info() -> HTTP response header info
+        """
+        data = self._format_data(data)
+        print url
+        print data, type(data)
+        print headers
+        
+        request = PatchRequest(url, headers)
+        for k, v in dict(headers).items():
+            request.add_header(k, v)
+        request.add_data(data)
+
+        return self.director.open(request)
+
     def post(self, url, data, headers):
         """
         Issue an HTTP POST request.
@@ -71,9 +107,7 @@ class RequestSession(object):
         * getcode() -> HTTP status code
         * info() -> HTTP response header info
         """
-        if (isinstance(data, (Mapping, Sequence)) and 
-            not isinstance(data, basestring)):
-            data = urlencode(data)
+        data = self._format_data(data)
         request = Request(url, data, headers)
         return self.director.open(request)
 
@@ -97,6 +131,25 @@ class RequestSession(object):
         if params:
             url += '?' + urlencode(params)
         request = Request(url)
+        for k, v in dict(headers).items():
+            request.add_header(k, v)
+        return self.director.open(request)
+
+    def delete(self, url, headers):
+        """
+        Issue an HTTP DELETE request.
+
+        Returns a "filelike" object with 3 additional methods:
+        * geturl() -> URL where data came from
+        * getcode() -> HTTP status code
+        * info() -> HTTP response header info
+
+        Arguments:
+
+        * url -- url to issue DELETE call to.
+        * headers -- Any additional headers
+        """
+        request = DeleteRequest(url)
         for k, v in dict(headers).items():
             request.add_header(k, v)
         return self.director.open(request)
