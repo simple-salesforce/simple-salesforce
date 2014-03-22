@@ -402,6 +402,19 @@ class SFType(object):
         result = self._call_salesforce('GET', url)
         return result.json(object_pairs_hook=OrderedDict)
 
+    def updated(self, start, end):
+        """Use the SObject Get Updated resource to get a list of updated (modified or added)
+        records for the specified object.
+
+         .../updated/?start=2014-03-20T00:00:00+00:00&end=2014-03-22T00:00:00+00:00
+
+        * start -- start datetime string with format, ex: urllib.quote('2013-10-20T00:00:00+00:00')
+        * end -- end dattime string with format ex: urllib.quote('2013-10-20T00:00:00+00:00')
+        """
+        url = self.base_url + 'updated/?start=%s&end=%s' % (start, end)
+        result = self._call_salesforce('GET', url)
+        return result.json(object_pairs_hook=OrderedDict)
+
     def _call_salesforce(self, method, url, **kwargs):
         """Utility method for performing HTTP call to Salesforce.
 

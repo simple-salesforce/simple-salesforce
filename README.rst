@@ -25,7 +25,7 @@ If you have the full URL of your instance (perhaps including the schema, as is i
     sf = Salesforce(instance_url='https://na1.salesforce.com', session_id='')
 
 There are also two means of autentication, one that uses username, password and security token and the other that uses IP filtering, username, password  and organizationId
-    
+
 To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password)::
 
     from simple_salesforce import Salesforce
@@ -70,6 +70,11 @@ To retrieve a list of deleted contacts between ``2013-10-20`` to ``2013-10-29``:
 
     import urllib
     sf.Contact.deleted(urllib.quote('2013-10-20T00:00:00+00:00'), urllib.quote('2013-10-29T00:00:00+00:00'))
+
+To retrieve a list of updated contacts between ``2014-03-20`` to ``2014-03-22``::
+
+    import urllib
+    sf.Contact.updated(urllib.quote('2014-03-20T00:00:00+00:00'), urllib.quote('2014-03-22T00:00:00+00:00'))
 
 Note that Update, Delete and Upsert actions return the associated `Salesforce HTTP Status Code`_
 
