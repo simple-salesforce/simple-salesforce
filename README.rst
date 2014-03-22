@@ -68,13 +68,17 @@ To delete the contact::
 
 To retrieve a list of deleted records between ``2013-10-20`` to ``2013-10-29``::
 
-    import urllib
-    sf.Contact.deleted(urllib.quote('2013-10-20T00:00:00+00:00'), urllib.quote('2013-10-29T00:00:00+00:00'))
+    import pytz
+    import datetime
+    end = datetime.datetime.now(pytz.UTC)
+    sf.Contact.deleted(end - datetime.timedelta(days=10), end)
 
 To retrieve a list of updated records between ``2014-03-20`` to ``2014-03-22``::
 
-    import urllib
-    sf.Contact.updated(urllib.quote('2014-03-20T00:00:00+00:00'), urllib.quote('2014-03-22T00:00:00+00:00'))
+    import pytz
+    import datetime
+    end = datetime.datetime.now(pytz.UTC)
+    sf.Contact.updated(end - datetime.timedelta(days=10), end)
 
 Note that Update, Delete and Upsert actions return the associated `Salesforce HTTP Status Code`_
 

@@ -2,6 +2,7 @@
 
 import xml.dom.minidom
 
+
 def getUniqueElementValueFromXmlString(xmlString, elementName):
     """
     Extracts an element value from an XML string.
@@ -14,5 +15,15 @@ def getUniqueElementValueFromXmlString(xmlString, elementName):
     elementsByName = xmlStringAsDom.getElementsByTagName(elementName)
     elementValue = None
     if len(elementsByName) > 0:
-        elementValue = elementsByName[0].toxml().replace('<' + elementName + '>','').replace('</' + elementName + '>','')
+        elementValue = elementsByName[0].toxml().replace('<' + elementName + '>', '').replace('</' + elementName + '>', '')
     return elementValue
+
+
+def date_to_iso8601(date):
+    """
+        Returns an ISO8601 string from a date
+    """
+    datetimestr = date.strftime('%Y-%m-%dT%H:%M:%S')
+    timezone_sign = date.strftime('%z')[0:1]
+    timezone_str = '%s:%s' % (date.strftime('%z')[1:3], date.strftime('%z')[3:5])
+    return (datetimestr + timezone_sign + timezone_str).replace(':', '%3A').replace('+', '%2B')

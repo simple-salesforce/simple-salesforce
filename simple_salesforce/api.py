@@ -9,6 +9,7 @@ except ImportError:
     # Python 3+
     from urllib.parse import urlparse
 from simple_salesforce.login import SalesforceLogin
+from simple_salesforce.util import date_to_iso8601
 
 try:
     from collections import OrderedDict
@@ -395,10 +396,10 @@ class SFType(object):
         """Use the SObject Get Deleted resource to get a list of deleted records for the specified object.
          .../deleted/?start=2013-05-05T00:00:00+00:00&end=2013-05-10T00:00:00+00:00
 
-        * start -- start datetime string with format, ex: urllib.quote('2013-10-20T00:00:00+00:00')
-        * end -- end dattime string with format ex: urllib.quote('2013-10-20T00:00:00+00:00')
+        * start -- start datetime object
+        * end -- end dattime object
         """
-        url = self.base_url + 'deleted/?start=%s&end=%s' % (start, end)
+        url = self.base_url + 'deleted/?start=%s&end=%s' % (date_to_iso8601(start), date_to_iso8601(end))
         result = self._call_salesforce('GET', url)
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -408,10 +409,10 @@ class SFType(object):
 
          .../updated/?start=2014-03-20T00:00:00+00:00&end=2014-03-22T00:00:00+00:00
 
-        * start -- start datetime string with format, ex: urllib.quote('2013-10-20T00:00:00+00:00')
-        * end -- end dattime string with format ex: urllib.quote('2013-10-20T00:00:00+00:00')
+        * start -- start datetime object
+        * end -- end dattime object
         """
-        url = self.base_url + 'updated/?start=%s&end=%s' % (start, end)
+        url = self.base_url + 'updated/?start=%s&end=%s' % (date_to_iso8601(start), date_to_iso8601(end))
         result = self._call_salesforce('GET', url)
         return result.json(object_pairs_hook=OrderedDict)
 
