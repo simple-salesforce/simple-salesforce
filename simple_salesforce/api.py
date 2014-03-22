@@ -65,12 +65,12 @@ class Salesforce(object):
 
             # Pass along the username/password to our login helper
             self.session_id, self.sf_instance = SalesforceLogin(
-                        username = username,
-                        password = password,
-                        security_token = security_token,
-                        sandbox = self.sandbox,
-                        sf_version = self.sf_version,
-                        proxies = self.proxies)
+                username=username,
+                password=password,
+                security_token=security_token,
+                sandbox=self.sandbox,
+                sf_version=self.sf_version,
+                proxies=self.proxies)
 
         elif ('session_id' in kwargs) and (('instance' in kwargs) or ('instance_url' in kwargs)):
             self.auth_type = "direct"
@@ -91,12 +91,12 @@ class Salesforce(object):
 
             # Pass along the username/password to our login helper
             self.session_id, self.sf_instance = SalesforceLogin(
-                            username = username,
-                            password = password,
-                            organizationId = organizationId,
-                            sandbox = self.sandbox,
-                            sf_version = self.sf_version,
-                            proxies = self.proxies)
+                username=username,
+                password=password,
+                organizationId=organizationId,
+                sandbox=self.sandbox,
+                sf_version=self.sf_version,
+                proxies=self.proxies)
 
         else:
             raise SalesforceGeneralError(
@@ -128,7 +128,6 @@ class Salesforce(object):
             return None
         else:
             return json_result
-
 
     # SObject Handler
     def __getattr__(self, name):
@@ -314,7 +313,7 @@ class SFType(object):
         result = self._call_salesforce('GET', self.base_url + 'describe')
         return result.json(object_pairs_hook=OrderedDict)
 
-    def describe_layout(self,record_id):
+    def describe_layout(self, record_id):
         """Returns the result of a GET to `.../{object_name}/describe/layouts/<recordid>` as a
         dict decoded from the JSON payload returned by Salesforce.
         """

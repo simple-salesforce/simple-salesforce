@@ -11,6 +11,7 @@ except ImportError:
     from cgi import escape
 import requests
 
+
 def SalesforceLogin(**kwargs):
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
@@ -42,7 +43,6 @@ def SalesforceLogin(**kwargs):
 
     username = kwargs['username']
     password = kwargs['password']
-
 
     soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
     domain = 'test'
@@ -98,17 +98,16 @@ def SalesforceLogin(**kwargs):
         </soapenv:Body>
         </soapenv:Envelope>""".format(username=username, password=password, organizationId=organizationId)
 
-
     else:
         except_code = 'INVALID AUTH'
         except_msg = 'You must submit either a security token or organizationId for authentication'
         raise SalesforceAuthenticationFailed('%s: %s' % (except_code, except_msg))
 
     login_soap_request_headers = {
-                    'content-type': 'text/xml',
-                    'charset': 'UTF-8',
-                    'SOAPAction': 'login'
-                    }
+        'content-type': 'text/xml',
+        'charset': 'UTF-8',
+        'SOAPAction': 'login'
+    }
     response = requests.post(soap_url,
                              login_soap_request_body,
                              headers=login_soap_request_headers,
