@@ -14,9 +14,6 @@ except ImportError:
     from unittest.mock import Mock, patch
 
 from simple_salesforce.api import (
-    Salesforce,
-    SFType,
-    SalesforceAPI,
     _exception_handler,
     SalesforceMoreThanOneRecord,
     SalesforceMalformedRequest,
@@ -25,6 +22,7 @@ from simple_salesforce.api import (
     SalesforceResourceNotFound,
     SalesforceGeneralError
 )
+
 
 class TestSalesforce(unittest.TestCase):
     """Tests for the Salesforce instance"""
@@ -49,7 +47,8 @@ class TestExceptionHandler(unittest.TestCase):
         with self.assertRaises(SalesforceMoreThanOneRecord) as cm:
             _exception_handler(self.mockresult)
 
-        self.assertEqual(str(cm.exception), ('More than one record for '
+        self.assertEqual(str(cm.exception), (
+            'More than one record for '
             'http://www.example.com/. Response content: Example Content'))
 
     def test_malformed_request(self):
@@ -58,7 +57,8 @@ class TestExceptionHandler(unittest.TestCase):
         with self.assertRaises(SalesforceMalformedRequest) as cm:
             _exception_handler(self.mockresult)
 
-        self.assertEqual(str(cm.exception), ('Malformed request '
+        self.assertEqual(str(cm.exception), (
+            'Malformed request '
             'http://www.example.com/. Response content: Example Content'))
 
     def test_expired_session(self):
@@ -67,7 +67,8 @@ class TestExceptionHandler(unittest.TestCase):
         with self.assertRaises(SalesforceExpiredSession) as cm:
             _exception_handler(self.mockresult)
 
-        self.assertEqual(str(cm.exception), ('Expired session for '
+        self.assertEqual(str(cm.exception), (
+            'Expired session for '
             'http://www.example.com/. Response content: Example Content'))
 
     def test_request_refused(self):
@@ -76,7 +77,8 @@ class TestExceptionHandler(unittest.TestCase):
         with self.assertRaises(SalesforceRefusedRequest) as cm:
             _exception_handler(self.mockresult)
 
-        self.assertEqual(str(cm.exception), ('Request refused for '
+        self.assertEqual(str(cm.exception), (
+            'Request refused for '
             'http://www.example.com/. Response content: Example Content'))
 
     def test_resource_not_found(self):
@@ -85,7 +87,8 @@ class TestExceptionHandler(unittest.TestCase):
         with self.assertRaises(SalesforceResourceNotFound) as cm:
             _exception_handler(self.mockresult, 'SpecialContacts')
 
-        self.assertEqual(str(cm.exception), ('Resource SpecialContacts Not'
+        self.assertEqual(str(cm.exception), (
+            'Resource SpecialContacts Not'
             ' Found. Response content: Example Content'))
 
     def test_generic_error_code(self):
@@ -94,5 +97,6 @@ class TestExceptionHandler(unittest.TestCase):
         with self.assertRaises(SalesforceGeneralError) as cm:
             _exception_handler(self.mockresult)
 
-        self.assertEqual(str(cm.exception), ('Error Code 500. Response content'
+        self.assertEqual(str(cm.exception), (
+            'Error Code 500. Response content'
             ': Example Content'))

@@ -4,7 +4,10 @@ try:
 except ImportError:
     import unittest
 
-from simple_salesforce.util import getUniqueElementValueFromXmlString
+import datetime
+import pytz
+from simple_salesforce.util import getUniqueElementValueFromXmlString, date_to_iso8601
+
 
 class TestXMLParser(unittest.TestCase):
     """Test the XML parser utility function"""
@@ -13,3 +16,14 @@ class TestXMLParser(unittest.TestCase):
         result = getUniqueElementValueFromXmlString(
             '<?xml version="1.0" encoding="UTF-8"?><foo>bar</foo>', 'foo')
         self.assertEqual(result, 'bar')
+
+    def test_date_to_iso8601(self):
+        date = datetime.datetime(2014, 3, 22, 00, 00, 00, 0, tzinfo=pytz.UTC)
+        result = date_to_iso8601(date)
+        expected = '2014-03-22T00%3A00%3A00%2B00%3A00'
+        self.assertEquals(result, expected)
+
+        date = datetime.datetime(2014, 3, 22, 00, 00, 00, 0, tzinfo=pytz.timezone('America/Chicago'))
+        result = date_to_iso8601(date)
+        expected = '2014-03-22T00%3A00%3A00-06%3A00'
+        self.assertEquals(result, expected)
