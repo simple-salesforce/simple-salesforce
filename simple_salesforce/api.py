@@ -399,7 +399,7 @@ class SFType(object):
         * start -- start datetime object
         * end -- end dattime object
         """
-        url = self.base_url + 'deleted/?start=%s&end=%s' % (date_to_iso8601(start), date_to_iso8601(end))
+        url = self.base_url + 'deleted/?start={start}&end={end}'.format(start=date_to_iso8601(start), end=date_to_iso8601(end))
         result = self._call_salesforce('GET', url)
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -412,7 +412,7 @@ class SFType(object):
         * start -- start datetime object
         * end -- end dattime object
         """
-        url = self.base_url + 'updated/?start=%s&end=%s' % (date_to_iso8601(start), date_to_iso8601(end))
+        url = self.base_url + 'updated/?start={start}&end={end}'.format(start=date_to_iso8601(start), end=date_to_iso8601(end))
         result = self._call_salesforce('GET', url)
         return result.json(object_pairs_hook=OrderedDict)
 
