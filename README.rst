@@ -66,12 +66,12 @@ To delete the contact::
 
     sf.Contact.delete('003e0000003GuNXAA0')
 
-To retrieve a list of deleted contacts between ``2013-10-20`` to ``2013-10-29``::
+To retrieve a list of deleted records between ``2013-10-20`` to ``2013-10-29``::
 
     import urllib
     sf.Contact.deleted(urllib.quote('2013-10-20T00:00:00+00:00'), urllib.quote('2013-10-29T00:00:00+00:00'))
 
-To retrieve a list of updated contacts between ``2014-03-20`` to ``2014-03-22``::
+To retrieve a list of updated records between ``2014-03-20`` to ``2014-03-22``::
 
     import urllib
     sf.Contact.updated(urllib.quote('2014-03-20T00:00:00+00:00'), urllib.quote('2014-03-22T00:00:00+00:00'))
