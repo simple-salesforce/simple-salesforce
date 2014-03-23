@@ -9,6 +9,7 @@ except ImportError:
     # Python 3+
     from urllib.parse import urlparse
 from simple_salesforce.login import SalesforceLogin
+from simple_salesforce.util import date_to_iso8601
 
 try:
     from collections import OrderedDict
@@ -65,12 +66,12 @@ class Salesforce(object):
 
             # Pass along the username/password to our login helper
             self.session_id, self.sf_instance = SalesforceLogin(
-                        username = username,
-                        password = password,
-                        security_token = security_token,
-                        sandbox = self.sandbox,
-                        sf_version = self.sf_version,
-                        proxies = self.proxies)
+                username=username,
+                password=password,
+                security_token=security_token,
+                sandbox=self.sandbox,
+                sf_version=self.sf_version,
+                proxies=self.proxies)
 
         elif ('session_id' in kwargs) and (('instance' in kwargs) or ('instance_url' in kwargs)):
             self.auth_type = "direct"
@@ -91,12 +92,12 @@ class Salesforce(object):
 
             # Pass along the username/password to our login helper
             self.session_id, self.sf_instance = SalesforceLogin(
-                            username = username,
-                            password = password,
-                            organizationId = organizationId,
-                            sandbox = self.sandbox,
-                            sf_version = self.sf_version,
-                            proxies = self.proxies)
+                username=username,
+                password=password,
+                organizationId=organizationId,
+                sandbox=self.sandbox,
+                sf_version=self.sf_version,
+                proxies=self.proxies)
 
         else:
             raise SalesforceGeneralError(
@@ -128,7 +129,6 @@ class Salesforce(object):
             return None
         else:
             return json_result
-
 
     # SObject Handler
     def __getattr__(self, name):
@@ -314,7 +314,7 @@ class SFType(object):
         result = self._call_salesforce('GET', self.base_url + 'describe')
         return result.json(object_pairs_hook=OrderedDict)
 
-    def describe_layout(self,record_id):
+    def describe_layout(self, record_id):
         """Returns the result of a GET to `.../{object_name}/describe/layouts/<recordid>` as a
         dict decoded from the JSON payload returned by Salesforce.
         """
@@ -396,10 +396,23 @@ class SFType(object):
         """Use the SObject Get Deleted resource to get a list of deleted records for the specified object.
          .../deleted/?start=2013-05-05T00:00:00+00:00&end=2013-05-10T00:00:00+00:00
 
-        * start -- start datetime string with format, ex: urllib.quote('2013-10-20T00:00:00+00:00')
-        * end -- end dattime string with format ex: urllib.quote('2013-10-20T00:00:00+00:00')
+        * start -- start datetime object
+        * end -- end dattime object
         """
-        url = self.base_url + 'deleted/?start=%s&end=%s' % (start, end)
+        url = self.base_url + 'deleted/?start={start}&end={end}'.format(start=date_to_iso8601(start), end=date_to_iso8601(end))
+        result = self._call_salesforce('GET', url)
+        return result.json(object_pairs_hook=OrderedDict)
+
+    def updated(self, start, end):
+        """Use the SObject Get Updated resource to get a list of updated (modified or added)
+        records for the specified object.
+
+         .../updated/?start=2014-03-20T00:00:00+00:00&end=2014-03-22T00:00:00+00:00
+
+        * start -- start datetime object
+        * end -- end dattime object
+        """
+        url = self.base_url + 'updated/?start={start}&end={end}'.format(start=date_to_iso8601(start), end=date_to_iso8601(end))
         result = self._call_salesforce('GET', url)
         return result.json(object_pairs_hook=OrderedDict)
 

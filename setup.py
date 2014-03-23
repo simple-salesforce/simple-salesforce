@@ -28,7 +28,8 @@ setup(
         'requests'
     ] + extra_install_requires,
     tests_require=[
-        'nose==1.3.0'
+        'nose==1.3.0',
+        'pytz==2014.1.1'
     ] + extra_tests_require,
     test_suite = 'nose.collector',
     keywords = "python salesforce salesforce.com",
