@@ -96,12 +96,14 @@ def SalesforceLogin(**kwargs):
                 <urn:password>{password}</urn:password>
             </urn:login>
         </soapenv:Body>
-        </soapenv:Envelope>""".format(username=username, password=password, organizationId=organizationId)
+        </soapenv:Envelope>""".format(
+            username=username, password=password, organizationId=organizationId)
 
     else:
         except_code = 'INVALID AUTH'
         except_msg = 'You must submit either a security token or organizationId for authentication'
-        raise SalesforceAuthenticationFailed('%s: %s' % (except_code, except_msg))
+        raise SalesforceAuthenticationFailed('{code}: {message}'.format(
+            code=except_code, message=except_msg))
 
     login_soap_request_headers = {
         'content-type': 'text/xml',
@@ -114,9 +116,12 @@ def SalesforceLogin(**kwargs):
                              proxies=kwargs.get('proxies', None))
 
     if response.status_code != 200:
-        except_code = getUniqueElementValueFromXmlString(response.content, 'sf:exceptionCode')
-        except_msg = getUniqueElementValueFromXmlString(response.content, 'sf:exceptionMessage')
-        raise SalesforceAuthenticationFailed('%s: %s' % (except_code, except_msg))
+        except_code = getUniqueElementValueFromXmlString(
+            response.content, 'sf:exceptionCode')
+        except_msg = getUniqueElementValueFromXmlString(
+            response.content, 'sf:exceptionMessage')
+        raise SalesforceAuthenticationFailed('{code}: {message}'.format(
+            code=except_code, message=except_msg))
 
     session_id = getUniqueElementValueFromXmlString(response.content, 'sessionId')
     server_url = getUniqueElementValueFromXmlString(response.content, 'serverUrl')
