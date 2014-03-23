@@ -66,18 +66,18 @@ To delete the contact::
 
     sf.Contact.delete('003e0000003GuNXAA0')
 
-To retrieve a list of deleted records between ``2013-10-20`` to ``2013-10-29``::
+To retrieve a list of deleted records between ``2013-10-20`` to ``2013-10-29`` (datetimes are required to be in UTC)::
 
     import pytz
     import datetime
-    end = datetime.datetime.now(pytz.UTC)
+    end = datetime.datetime.now(pytz.UTC)  # we need to use UTC as salesforce API requires this!
     sf.Contact.deleted(end - datetime.timedelta(days=10), end)
 
-To retrieve a list of updated records between ``2014-03-20`` to ``2014-03-22``::
+To retrieve a list of updated records between ``2014-03-20`` to ``2014-03-22`` (datetimes are required to be in UTC)::
 
     import pytz
     import datetime
-    end = datetime.datetime.now(pytz.UTC)
+    end = datetime.datetime.now(pytz.UTC) # we need to use UTC as salesforce API requires this
     sf.Contact.updated(end - datetime.timedelta(days=10), end)
 
 Note that Update, Delete and Upsert actions return the associated `Salesforce HTTP Status Code`_
