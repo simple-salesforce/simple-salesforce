@@ -346,10 +346,14 @@ class SFType(object):
                                        data=json.dumps(data))
         return result.json(object_pairs_hook=OrderedDict)
 
-    def upsert(self, record_id, data):
+    def upsert(self, record_id, data, fieldname=None):
         """Creates or updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
-
+        
+        If a fieldname is defined append it to the base url
+        in order to allow the use of an external_id
+        `.../{object_name}/{fieldname}/{record_id}`.
+        
         Returns a dict decoded from the JSON payload returned by Salesforce.
 
         Arguments:
@@ -358,9 +362,22 @@ class SFType(object):
                        Salesforce documentation
         * data -- a dict of the data to create or update the SObject from. It
                   will be JSON-encoded before being transmitted.
+                  
+        * fieldname -- a fieldname for an external id defined in salesforce object
         """
-        result = self._call_salesforce('PATCH', self.base_url + record_id,
-                                       data=json.dumps(data))
+        
+        format_args = dict(
+            base_url=self.base_url,
+            fieldname=fieldname,
+            value=record_id
+        )
+        
+        if fieldname:
+            url = "{base_url}{fieldname}/{value}".format(**args)
+        else:
+            url = "{base_url}{value}".format(**args)
+            
+        result = self._call_salesforce('PATCH', url, data=json.dumps(data))
         return result.status_code
 
     def update(self, record_id, data):
