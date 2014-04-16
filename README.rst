@@ -130,6 +130,12 @@ Other Options
 To insert or update (upsert) a record using an external ID, use::
 
     sf.Contact.upsert('customExtIdField__c/11999',{'LastName': 'Smith','Email': 'smith@example.com'})
+    
+Optionally you can explicitly pass an external ID field name::
+
+    sf.Contact.upsert("11999", {'LastName': 'Smith','Email': 'smith@example.com'}, field="customExtIdField__c")
+    
+The above also applies to get, update and delete methods.
 
 To retrieve basic metadata use::
 
