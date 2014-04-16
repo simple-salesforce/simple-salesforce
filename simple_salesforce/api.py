@@ -337,6 +337,10 @@ class SFType(object):
     def get(self, record_id, field=None):
         """Returns the result of a GET to `.../{object_name}/{record_id}` as a
         dict decoded from the JSON payload returned by Salesforce.
+        
+        If field is defined append it to the base url
+        in order to allow the use of an external_id
+        `.../{object_name}/{field}/{record_id}`
 
         Arguments:
 
@@ -365,7 +369,7 @@ class SFType(object):
         """Creates or updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
         
-        If a fieldname is defined append it to the base url
+        If field is defined append it to the base url
         in order to allow the use of an external_id
         `.../{object_name}/{field}/{record_id}`.
         
@@ -389,6 +393,10 @@ class SFType(object):
     def update(self, record_id, data, field=None):
         """Updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
+        
+        If field is defined append it to the base url
+        in order to allow the use of an external_id
+        `.../{object_name}/{field}/{record_id}`.
 
         Returns a dict decoded from the JSON payload returned by Salesforce.
 
@@ -397,6 +405,7 @@ class SFType(object):
         * record_id -- the Id of the SObject to update
         * data -- a dict of the data to update the SObject from. It will be
                   JSON-encoded before being transmitted.
+        * field -- Optional field to get by external id
         """
             
         result = self._call_salesforce('PATCH',
@@ -407,12 +416,17 @@ class SFType(object):
     def delete(self, record_id, field=None):
         """Deletess an SObject using a DELETE to
         `.../{object_name}/{record_id}`.
+        
+        If field is defined append it to the base url
+        in order to allow the use of an external_id
+        `.../{object_name}/{field}/{record_id}`.
 
         Returns a dict decoded from the JSON payload returned by Salesforce.
 
         Arguments:
 
         * record_id -- the Id of the SObject to delete
+        * field -- Optional field to get by external id
         """
         
         result = self._call_salesforce('DELETE', self.build_url(field, record_id))
