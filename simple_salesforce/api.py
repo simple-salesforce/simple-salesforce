@@ -300,7 +300,7 @@ class SFType(object):
         self.request = requests.Session()
         self.request.proxies = proxies
         
-    def build_url(self, field, value)
+    def build_url(self, field, value):
     
         args = {
             "base_url": self.base_url,
