@@ -299,6 +299,19 @@ class SFType(object):
                                  sf_version=sf_version))
         self.request = requests.Session()
         self.request.proxies = proxies
+        
+    def build_url(self, field, value)
+    
+        args = {
+            "base_url": self.base_url,
+            "field": field,
+            "value": value
+        }
+        
+        if field:
+            return "{base_url}{field}/{value}".format(**args)
+        
+        return "{base_url}{value}".format(**args)
 
     def metadata(self):
         """Returns the result of a GET to `.../{object_name}/` as a dict
@@ -330,18 +343,8 @@ class SFType(object):
         * record_id -- the Id of the SObject to get
         * field -- Optional field to get by external id
         """
-        args = dict(
-            base_url=self.base_url,
-            field=field,
-            value=record_id
-        )
-        
-        if field:
-            url = "{base_url}{field}/{value}".format(**args)
-        else:
-            url = "{base_url}{value}".format(**args)
             
-        result = self._call_salesforce('GET', url)
+        result = self._call_salesforce('GET', self.build_url(field, record_id))
         return result.json(object_pairs_hook=OrderedDict)
 
     def create(self, data):
@@ -377,19 +380,10 @@ class SFType(object):
                   
         * field -- Optional field to upsert by external id
         """
-        
-        args = dict(
-            base_url=self.base_url,
-            field=field,
-            value=record_id
-        )
-        
-        if field:
-            url = "{base_url}{field}/{value}".format(**args)
-        else:
-            url = "{base_url}{value}".format(**args)
             
-        result = self._call_salesforce('PATCH', url, data=json.dumps(data))
+        result = self._call_salesforce('PATCH',
+                                       self.build_url(field, record_id),
+                                       data=json.dumps(data))
         return result.status_code
 
     def update(self, record_id, data, field=None):
@@ -404,19 +398,10 @@ class SFType(object):
         * data -- a dict of the data to update the SObject from. It will be
                   JSON-encoded before being transmitted.
         """
-        
-        args = dict(
-            base_url=self.base_url,
-            field=field,
-            value=record_id
-        )
-        
-        if field:
-            url = "{base_url}{field}/{value}".format(**args)
-        else:
-            url = "{base_url}{value}".format(**args)
             
-        result = self._call_salesforce('PATCH', url, data=json.dumps(data))
+        result = self._call_salesforce('PATCH',
+                                       self.build_url(field, record_id),
+                                       data=json.dumps(data))
         return result.status_code
 
     def delete(self, record_id, field=None):
@@ -429,18 +414,8 @@ class SFType(object):
 
         * record_id -- the Id of the SObject to delete
         """
-        args = dict(
-            base_url=self.base_url,
-            field=field,
-            value=record_id
-        )
         
-        if field:
-            url = "{base_url}{field}/{value}".format(**args)
-        else:
-            url = "{base_url}{value}".format(**args)
-        
-        result = self._call_salesforce('DELETE', url)
+        result = self._call_salesforce('DELETE', self.build_url(field, record_id))
         return result.status_code
 
     def deleted(self, start, end):
