@@ -321,15 +321,27 @@ class SFType(object):
         result = self._call_salesforce('GET', self.base_url + 'describe/layouts/' + record_id)
         return result.json(object_pairs_hook=OrderedDict)
 
-    def get(self, record_id):
+    def get(self, record_id, field=None):
         """Returns the result of a GET to `.../{object_name}/{record_id}` as a
         dict decoded from the JSON payload returned by Salesforce.
 
         Arguments:
 
         * record_id -- the Id of the SObject to get
+        * field -- Optional field to get by external id
         """
-        result = self._call_salesforce('GET', self.base_url + record_id)
+        args = dict(
+            base_url=self.base_url,
+            field=field,
+            value=record_id
+        )
+        
+        if field:
+            url = "{base_url}{field}/{value}".format(**args)
+        else:
+            url = "{base_url}{value}".format(**args)
+            
+        result = self._call_salesforce('GET', url)
         return result.json(object_pairs_hook=OrderedDict)
 
     def create(self, data):
@@ -363,7 +375,7 @@ class SFType(object):
         * data -- a dict of the data to create or update the SObject from. It
                   will be JSON-encoded before being transmitted.
                   
-        * field -- a field for an external id defined in salesforce object
+        * field -- Optional field to upsert by external id
         """
         
         args = dict(
@@ -372,7 +384,7 @@ class SFType(object):
             value=record_id
         )
         
-        if fieldname:
+        if field:
             url = "{base_url}{field}/{value}".format(**args)
         else:
             url = "{base_url}{value}".format(**args)
@@ -380,7 +392,7 @@ class SFType(object):
         result = self._call_salesforce('PATCH', url, data=json.dumps(data))
         return result.status_code
 
-    def update(self, record_id, data):
+    def update(self, record_id, data, field=None):
         """Updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
 
@@ -392,11 +404,22 @@ class SFType(object):
         * data -- a dict of the data to update the SObject from. It will be
                   JSON-encoded before being transmitted.
         """
-        result = self._call_salesforce('PATCH', self.base_url + record_id,
-                                       data=json.dumps(data))
+        
+        args = dict(
+            base_url=self.base_url,
+            field=field,
+            value=record_id
+        )
+        
+        if field:
+            url = "{base_url}{field}/{value}".format(**args)
+        else:
+            url = "{base_url}{value}".format(**args)
+            
+        result = self._call_salesforce('PATCH', url, data=json.dumps(data))
         return result.status_code
 
-    def delete(self, record_id):
+    def delete(self, record_id, field=None):
         """Deletess an SObject using a DELETE to
         `.../{object_name}/{record_id}`.
 
@@ -406,7 +429,18 @@ class SFType(object):
 
         * record_id -- the Id of the SObject to delete
         """
-        result = self._call_salesforce('DELETE', self.base_url + record_id)
+        args = dict(
+            base_url=self.base_url,
+            field=field,
+            value=record_id
+        )
+        
+        if field:
+            url = "{base_url}{field}/{value}".format(**args)
+        else:
+            url = "{base_url}{value}".format(**args)
+        
+        result = self._call_salesforce('DELETE', url)
         return result.status_code
 
     def deleted(self, start, end):
