@@ -2,7 +2,7 @@
 Simple Salesforce
 *****************
 
-Simple Salesforce is a basic Salesforce.com REST API client. The goal is to provide a very low-level interface to the API, returning a dictionary of the API JSON response.
+Simple Salesforce is a basic Salesforce.com REST API client built for Python 2.6, 2.7, 3.2 and 3.3. The goal is to provide a very low-level interface to the API, returning a dictionary of the API JSON response.
 
 You can find out more regarding the format of the results in the `Official Salesforce.com REST API Documentation`_
 
@@ -24,10 +24,17 @@ If you have the full URL of your instance (perhaps including the schema, as is i
     from simple_salesforce import Salesforce
     sf = Salesforce(instance_url='https://na1.salesforce.com', session_id='')
 
-To login, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password)::
+There are also two means of authentication, one that uses username, password and security token and the other that uses IP filtering, username, password  and organizationId
+
+To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password)::
 
     from simple_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com', password='password', security_token='token')
+
+To login using IP-whitelist Organization ID method, simply use your Salesforce username, password and organizationId::
+
+    from simple_salesforce import Salesforce
+    sf = Salesforce(password='password', username='myemail@example.com', organizationId='OrgId')
 
 If you'd like to enter a sandbox, simply add ``sandbox=True`` to your ``Salesforce()`` call.
 
@@ -58,6 +65,20 @@ To change that contact's last name from 'Smith' to 'Jones' and add a first name 
 To delete the contact::
 
     sf.Contact.delete('003e0000003GuNXAA0')
+
+To retrieve a list of deleted records between ``2013-10-20`` to ``2013-10-29`` (datetimes are required to be in UTC)::
+
+    import pytz
+    import datetime
+    end = datetime.datetime.now(pytz.UTC)  # we need to use UTC as salesforce API requires this!
+    sf.Contact.deleted(end - datetime.timedelta(days=10), end)
+
+To retrieve a list of updated records between ``2014-03-20`` to ``2014-03-22`` (datetimes are required to be in UTC)::
+
+    import pytz
+    import datetime
+    end = datetime.datetime.now(pytz.UTC) # we need to use UTC as salesforce API requires this
+    sf.Contact.updated(end - datetime.timedelta(days=10), end)
 
 Note that Update, Delete and Upsert actions return the associated `Salesforce HTTP Status Code`_
 
@@ -118,6 +139,17 @@ To retrieve a description of the object, use::
 
     sf.Contact.describe()
 
+To retrieve a description of the record layout of an object by its record layout unique id, use::
+
+    sf.Contact.describe_layout('39wmxcw9r23r492')
+
+To retrieve a list of top level description of instance metadata, user::
+
+    sf.describe()
+
+    for x in sf.describe()["sobjects"]:
+      print x["label"]
+
 
 Additional Features
 -------------------
@@ -141,15 +173,27 @@ To add a Contact using the default version of the API you'd use::
     contact = SFType('Contact','sesssionid','na1.salesforce.com')
     contact.create({'LastName':'Smith','Email':'example@example.com'})
 
+To use a proxy server between your client and the SalesForce endpoint, use the proxies argument when creating SalesForce object.
+The proxy argument is the same as what requests uses, a map of scheme to proxy URL::
+
+    proxies = {
+      "http": "http://10.10.1.10:3128",
+      "https": "http://10.10.1.10:1080",
+    }
+    SalesForce(instance='na1.salesforce.com', session_id='', proxies=proxies)
+
+All results are returned as JSON converted OrderedDict to preserve order of keys from REST responses.
 
 Authors & License
 -----------------
 
-This plugin was built in-house by the team at `New Organizing Institute`_ led by `Nick Catalano`_ and is released under an open source Apache 2.0 license. The team at `Cedexis`_ has contributed to the project as well.
+This plugin was originally built in-house by the team at `New Organizing Institute`_ and is maintained by `Nick Catalano`_. It is released under an open source Apache 2.0 license. Contributions are welcome and can be submitted via a pull request on the official `GitHub Repo`_.
 
 Authentication mechanisms were adapted from Dave Wingate's `RestForce`_ and licensed under a MIT license
+
+.. image:: https://travis-ci.org/neworganizing/simple-salesforce.png?branch=master   :target: https://travis-ci.org/neworganizing/simple-salesforce
 
 .. _New Organizing Institute: http://neworganizing.com/
 .. _Nick Catalano: https://github.com/nickcatal
 .. _RestForce: http://pypi.python.org/pypi/RestForce/
-.. _Cedexis: http://www.cedexis.com/
+.. _GitHub Repo: https://github.com/neworganizing/simple-salesforce
