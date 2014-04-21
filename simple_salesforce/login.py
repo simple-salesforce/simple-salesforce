@@ -31,23 +31,14 @@ def SalesforceLogin(**kwargs):
     * proxies -- the optional map of scheme to proxy server
     """
 
-    if 'sandbox' not in kwargs:
-        sandbox = False
-    else:
-        sandbox = kwargs['sandbox']
-
-    if 'sf_version' not in kwargs:
-        sf_version = '23.0'
-    else:
-        sf_version = kwargs['sf_version']
+    sandbox = kwargs.get('sandbox', False)
+    sf_version = kwargs.get('sf_version', '23.0')
 
     username = kwargs['username']
     password = kwargs['password']
 
     soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
-    domain = 'test'
-    if not sandbox:
-        domain = 'login'
+    domain = 'test' if sandbox else 'login'
 
     soap_url = soap_url.format(domain=domain, sf_version=sf_version)
 
@@ -55,7 +46,7 @@ def SalesforceLogin(**kwargs):
     password = escape(password)
 
     # Check if token authentication is used
-    if ('security_token' in kwargs):
+    if 'security_token' in kwargs:
         security_token = kwargs['security_token']
 
         # Security Token Soap request body
@@ -91,11 +82,11 @@ def SalesforceLogin(**kwargs):
                 </urn:LoginScopeHeader>
             </soapenv:Header>
             <soapenv:Body>
-            <urn:login>
-                <urn:username>{username}</urn:username>
-                <urn:password>{password}</urn:password>
-            </urn:login>
-        </soapenv:Body>
+                <urn:login>
+                    <urn:username>{username}</urn:username>
+                    <urn:password>{password}</urn:password>
+                </urn:login>
+            </soapenv:Body>
         </soapenv:Envelope>""".format(
             username=username, password=password, organizationId=organizationId)
 
@@ -127,12 +118,12 @@ def SalesforceLogin(**kwargs):
     server_url = getUniqueElementValueFromXmlString(response.content, 'serverUrl')
 
     sf_instance = (server_url
-                    .replace('http://', '')
-                    .replace('https://', '')
-                    .split('/')[0]
-                    .replace('-api', ''))
+                   .replace('http://', '')
+                   .replace('https://', '')
+                   .split('/')[0]
+                   .replace('-api', ''))
 
-    return (session_id, sf_instance)
+    return session_id, sf_instance
 
 
 class SalesforceAuthenticationFailed(Exception):

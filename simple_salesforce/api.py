@@ -58,7 +58,7 @@ class Salesforce(object):
         self.proxies = kwargs.get('proxies')
 
         # Determine if the user wants to use our username/password auth or pass in their own information
-        if ('username' in kwargs) and ('password' in kwargs) and ('security_token' in kwargs):
+        if 'username' in kwargs and 'password' in kwargs and 'security_token' in kwargs:
             self.auth_type = "password"
             username = kwargs['username']
             password = kwargs['password']
@@ -73,18 +73,18 @@ class Salesforce(object):
                 sf_version=self.sf_version,
                 proxies=self.proxies)
 
-        elif ('session_id' in kwargs) and (('instance' in kwargs) or ('instance_url' in kwargs)):
+        elif 'session_id' in kwargs and ('instance' in kwargs or 'instance_url' in kwargs):
             self.auth_type = "direct"
             self.session_id = kwargs['session_id']
 
             # If the user provides the full url (as returned by the OAuth interface for
             # example) extract the hostname (which we rely on)
-            if ('instance_url' in kwargs):
+            if 'instance_url' in kwargs:
                 self.sf_instance = urlparse(kwargs['instance_url']).hostname
             else:
                 self.sf_instance = kwargs['instance']
 
-        elif ('username' in kwargs) and ('password' in kwargs) and ('organizationId' in kwargs):
+        elif 'username' in kwargs and 'password' in kwargs and 'organizationId' in kwargs:
             self.auth_type = 'ipfilter'
             username = kwargs['username']
             password = kwargs['password']
@@ -115,9 +115,12 @@ class Salesforce(object):
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
         }
+
         self.base_url = ('https://{instance}/services/data/v{version}/'
                          .format(instance=self.sf_instance,
                                  version=self.sf_version))
+        self.apex_url = ('https://{instance}/services/apexrest/'
+                         .format(instance=self.sf_instance))
 
     def describe(self):
         url = self.base_url + "sobjects"
@@ -275,6 +278,33 @@ class Salesforce(object):
         # so check whether there are more results and retrieve them if so.
         return get_all_results(result)
 
+    def apexecute(self, action, method='GET', data=None):
+        result = self._call_salesforce(method, self.apex_url + action, data=json.dumps(data))
+
+        if result.status_code == 200:
+            try:
+                response_content = result.json()
+            except Exception:
+                response_content = result.text
+            return response_content
+
+    def _call_salesforce(self, method, url, **kwargs):
+        """Utility method for performing HTTP call to Salesforce.
+
+        Returns a `requests.result` object.
+        """
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + self.session_id,
+            'X-PrettyPrint': '1'
+        }
+        result = self.request.request(method, url, headers=headers, **kwargs)
+
+        if result.status_code >= 300:
+            _exception_handler(result)
+
+        return result
+
 
 class SFType(object):
     """An interface to a specific type of SObject"""
@@ -293,12 +323,13 @@ class SFType(object):
         """
         self.session_id = session_id
         self.name = object_name
+        self.request = requests.Session()
+        self.request.proxies = proxies
+
         self.base_url = ('https://{instance}/services/data/v{sf_version}/sobjects/{object_name}/'
                          .format(instance=sf_instance,
                                  object_name=object_name,
                                  sf_version=sf_version))
-        self.request = requests.Session()
-        self.request.proxies = proxies
 
     def metadata(self):
         """Returns the result of a GET to `.../{object_name}/` as a dict
@@ -380,7 +411,7 @@ class SFType(object):
         return result.status_code
 
     def delete(self, record_id):
-        """Deletess an SObject using a DELETE to
+        """Deletes an SObject using a DELETE to
         `.../{object_name}/{record_id}`.
 
         Returns a dict decoded from the JSON payload returned by Salesforce.
@@ -397,7 +428,7 @@ class SFType(object):
          .../deleted/?start=2013-05-05T00:00:00+00:00&end=2013-05-10T00:00:00+00:00
 
         * start -- start datetime object
-        * end -- end dattime object
+        * end -- end datetime object
         """
         url = self.base_url + 'deleted/?start={start}&end={end}'.format(
             start=date_to_iso8601(start), end=date_to_iso8601(end))
@@ -411,7 +442,7 @@ class SFType(object):
          .../updated/?start=2014-03-20T00:00:00+00:00&end=2014-03-22T00:00:00+00:00
 
         * start -- start datetime object
-        * end -- end dattime object
+        * end -- end datetime object
         """
         url = self.base_url + 'updated/?start={start}&end={end}'.format(
             start=date_to_iso8601(start), end=date_to_iso8601(end))
