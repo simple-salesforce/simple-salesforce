@@ -56,7 +56,6 @@ class Salesforce(object):
         self.sf_version = kwargs.get('version', '29.0')
         self.sandbox = kwargs.get('sandbox', False)
         self.proxies = kwargs.get('proxies')
-        self.is_apex = kwargs.get('apex', False)
 
         # Determine if the user wants to use our username/password auth or pass in their own information
         if 'username' in kwargs and 'password' in kwargs and 'security_token' in kwargs:
