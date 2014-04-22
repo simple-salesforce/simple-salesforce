@@ -177,7 +177,7 @@ class Salesforce(object):
         return self.search(search_string)
 
     # Query Handler
-    def query(self, query):
+    def query(self, query, **kwargs):
         """Return the result of a Salesforce SOQL query as a dict decoded from
         the Salesforce response JSON payload.
 
@@ -189,14 +189,14 @@ class Salesforce(object):
         url = self.base_url + 'query/'
         params = {'q': query}
         # `requests` will correctly encode the query string passed as `params`
-        result = self.request.get(url, headers=self.headers, params=params)
+        result = self.request.get(url, headers=self.headers, params=params, **kwargs)
 
         if result.status_code != 200:
             _exception_handler(result)
 
         return result.json(object_pairs_hook=OrderedDict)
 
-    def query_more(self, next_records_identifier, identifier_is_url=False):
+    def query_more(self, next_records_identifier, identifier_is_url=False, **kwargs):
         """Retrieves more results from a query that returned more results
         than the batch maximum. Returns a dict decoded from the Salesforce
         response JSON payload.
@@ -219,14 +219,14 @@ class Salesforce(object):
         else:
             url = self.base_url + 'query/{next_record_id}'
             url = url.format(next_record_id=next_records_identifier)
-        result = self.request.get(url, headers=self.headers)
+        result = self.request.get(url, headers=self.headers, **kwargs)
 
         if result.status_code != 200:
             _exception_handler(result)
 
         return result.json(object_pairs_hook=OrderedDict)
 
-    def query_all(self, query):
+    def query_all(self, query, **kwargs):
         """Returns the full set of results for the `query`. This is a
         convenience wrapper around `query(...)` and `query_more(...)`.
 
@@ -240,7 +240,7 @@ class Salesforce(object):
         * query -- the SOQL query to send to Salesforce, e.g.
                    `SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"`
         """
-        def get_all_results(previous_result):
+        def get_all_results(previous_result, **kwargs):
             """Inner function for recursing until there are no more results.
 
             Returns the full set of results that will be the return value for
@@ -255,19 +255,19 @@ class Salesforce(object):
                 return previous_result
             else:
                 result = self.query_more(previous_result['nextRecordsUrl'],
-                                         identifier_is_url=True)
+                                         identifier_is_url=True, **kwargs)
                 result['totalSize'] += previous_result['totalSize']
                 # Include the new list of records with the previous list
                 previous_result['records'].extend(result['records'])
                 result['records'] = previous_result['records']
                 # Continue the recursion
-                return get_all_results(result)
+                return get_all_results(result, **kwargs)
 
         # Make the initial query to Salesforce
-        result = self.query(query)
+        result = self.query(query, **kwargs)
         # The number of results might have exceeded the Salesforce batch limit
         # so check whether there are more results and retrieve them if so.
-        return get_all_results(result)
+        return get_all_results(result, **kwargs)
 
 
 class SFType(object):
