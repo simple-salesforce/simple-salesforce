@@ -120,7 +120,7 @@ def SalesforceLogin(**kwargs):
             response.content, 'sf:exceptionCode')
         except_msg = getUniqueElementValueFromXmlString(
             response.content, 'sf:exceptionMessage')
-        raise SalesforceAuthenticationFailed('{code}: {message}'.format(
+        raise SalesforceAuthenticationFailed(u'{code}: {message}'.format(
             code=except_code, message=except_msg))
 
     session_id = getUniqueElementValueFromXmlString(response.content, 'sessionId')
