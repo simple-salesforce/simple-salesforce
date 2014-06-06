@@ -2,7 +2,7 @@
 Simple Salesforce
 *****************
 
-Simple Salesforce is a basic Salesforce.com REST API client built for Python 2.6, 2.7, 3.2 and 3.3. The goal is to provide a very low-level interface to the API, returning a dictionary of the API JSON response.
+Simple Salesforce is a basic Salesforce.com REST API client built for Python 2.6, 2.7, 3.2 and 3.3. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
 
 You can find out more regarding the format of the results in the `Official Salesforce.com REST API Documentation`_
 
@@ -210,7 +210,7 @@ This plugin was originally built in-house by the team at `New Organizing Institu
 
 Authentication mechanisms were adapted from Dave Wingate's `RestForce`_ and licensed under a MIT license
 
-.. image:: https://travis-ci.org/neworganizing/simple-salesforce.png?branch=master   :target: https://travis-ci.org/neworganizing/simple-salesforce
+.. image:: https://travis-ci.org/neworganizing/simple-salesforce.svg?branch=master   :target: https://travis-ci.org/neworganizing/simple-salesforce
 
 .. _New Organizing Institute: http://neworganizing.com/
 .. _Nick Catalano: https://github.com/nickcatal
