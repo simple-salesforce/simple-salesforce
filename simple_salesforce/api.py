@@ -182,7 +182,7 @@ class Salesforce(object):
                     string will be wrapped to read `FIND {Waldo}` before being
                     sent to Salesforce
         """
-        search_string = 'FIND {{{search_string}}}'.format(search_string=search)
+        search_string = u'FIND {{{search_string}}}'.format(search_string=search)
         return self.search(search_string)
 
     # Query Handler
@@ -222,7 +222,7 @@ class Salesforce(object):
         """
         if identifier_is_url:
             # Don't use `self.base_url` here because the full URI is provided
-            url = ('https://{instance}{next_record_url}'
+            url = (u'https://{instance}{next_record_url}'
                    .format(instance=self.sf_instance,
                            next_record_url=next_records_identifier))
         else:
@@ -326,7 +326,7 @@ class SFType(object):
         self.request = requests.Session()
         self.request.proxies = proxies
 
-        self.base_url = ('https://{instance}/services/data/v{sf_version}/sobjects/{object_name}/'
+        self.base_url = (u'https://{instance}/services/data/v{sf_version}/sobjects/{object_name}/'
                          .format(instance=sf_instance,
                                  object_name=object_name,
                                  sf_version=sf_version))
@@ -506,27 +506,27 @@ def _exception_handler(result, name=""):
         response_content = result.text
 
     if result.status_code == 300:
-        message = "More than one record for {url}. Response content: {content}"
+        message = u"More than one record for {url}. Response content: {content}"
         message = message.format(url=url, content=response_content)
         raise SalesforceMoreThanOneRecord(message)
     elif result.status_code == 400:
-        message = "Malformed request {url}. Response content: {content}"
+        message = u"Malformed request {url}. Response content: {content}"
         message = message.format(url=url, content=response_content)
         raise SalesforceMalformedRequest(message)
     elif result.status_code == 401:
-        message = "Expired session for {url}. Response content: {content}"
+        message = u"Expired session for {url}. Response content: {content}"
         message = message.format(url=url, content=response_content)
         raise SalesforceExpiredSession(message)
     elif result.status_code == 403:
-        message = "Request refused for {url}. Response content: {content}"
+        message = u"Request refused for {url}. Response content: {content}"
         message = message.format(url=url, content=response_content)
         raise SalesforceRefusedRequest(message)
     elif result.status_code == 404:
-        message = 'Resource {name} Not Found. Response content: {content}'
+        message = u'Resource {name} Not Found. Response content: {content}'
         message = message.format(name=name, content=response_content)
         raise SalesforceResourceNotFound(message)
     else:
-        message = 'Error Code {status}. Response content: {content}'
+        message = u'Error Code {status}. Response content: {content}'
         message = message.format(status=result.status_code, content=response_content)
         raise SalesforceGeneralError(message)
 
