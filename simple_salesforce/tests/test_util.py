@@ -23,7 +23,7 @@ class TestXMLParser(unittest.TestCase):
         expected = '2014-03-22T00%3A00%3A00%2B00%3A00'
         self.assertEquals(result, expected)
 
-        date = datetime.datetime(2014, 3, 22, 00, 00, 00, 0, tzinfo=pytz.timezone('America/Chicago'))
+        date = datetime.datetime(2014, 3, 22, 00, 00, 00, 0, tzinfo=pytz.timezone('America/Phoenix'))
         result = date_to_iso8601(date)
-        expected = '2014-03-22T00%3A00%3A00-06%3A00'
+        expected = '2014-03-22T00%3A00%3A00-07%3A00'
         self.assertEquals(result, expected)
