@@ -321,6 +321,34 @@ class Salesforce(object):
         # so check whether there are more results and retrieve them if so.
         return get_all_results(result, **kwargs)
 
+    def download_content(self, doc_url, save_to, **kwargs):
+        """Download content by provided VersionData. 
+        Returns True if success.
+
+        Arguments:
+
+        * doc_url -- URL of content to download. (e.g. VersionData)
+        * save_to -- file path to save downloaded content.
+        """
+        # Don't use `self.base_url` here because the full URI is provided
+        url = (u'https://{instance}{doc_url}'
+               .format(instance=self.sf_instance,
+                       doc_url=doc_url))
+        result = self.request.get(url, headers=self.headers, stream=True, **kwargs)
+
+        if result.status_code != 200:
+            _exception_handler(result)
+            return False
+
+        # write response bytes to file
+        with open(save_to, 'wb') as f:
+            for chunk in result.iter_content(chunk_size=1024): 
+                if chunk: # filter out keep-alive new chunks
+                    f.write(chunk)
+                    f.flush()
+
+        return True
+
     def apexecute(self, action, method='GET', data=None):
         result = self._call_salesforce(method, self.apex_url + action, data=json.dumps(data))
 
