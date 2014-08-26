@@ -2,7 +2,7 @@
 Just Salesforce
 *****************
 
-.. image:: https://travis-ci.org/codingrhythm/just-salesforce.svg?branch=master   :target: https://travis-ci.org/codingrhythm/just-salesforce
+.. image:: https://travis-ci.org/codingrhythm/just-salesforce.svg?branch=master
 
 Just Salesforce is a basic Salesforce.com REST API client built for Python 2.6, 2.7, 3.2 and 3.3. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
 
