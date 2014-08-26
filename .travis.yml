@@ -8,11 +8,11 @@ python:
 # command to install dependencies (mock & nose are already installed)
 install:
   - pip install .
-  - pip install pylint
+  #- pip install pylint
 # command to run tests
 script: python setup.py test
-after_success:
-  - pylint --rcfile=.pylintrc just_salesforce
+#after_success:
+  #- pylint --rcfile=.pylintrc just_salesforce
 # turn off email notifications
 notifications:
   email: 
