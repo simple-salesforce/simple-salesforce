@@ -230,7 +230,7 @@ class Salesforce(object):
                     string will be wrapped to read `FIND {Waldo}` before being
                     sent to Salesforce
         """
-        search_string = u'FIND {search_string}'.format(search_string=search)
+        #search_string = u'FIND {search_string}'.format(search_string=search)
         return self.search(search_string)
 
     # Query Handler
