@@ -13,7 +13,7 @@ except ImportError:
     # Python 3
     from unittest.mock import Mock, patch
 
-from simple_salesforce.api import (
+from just_salesforce.api import (
     _exception_handler,
     SalesforceMoreThanOneRecord,
     SalesforceMalformedRequest,
@@ -28,7 +28,7 @@ class TestSalesforce(unittest.TestCase):
     """Tests for the Salesforce instance"""
     def setUp(self):
         """Setup the SalesforceLogin tests"""
-        request_patcher = patch('simple_salesforce.api.requests')
+        request_patcher = patch('just_salesforce.api.requests')
         self.mockrequest = request_patcher.start()
         self.addCleanup(request_patcher.stop)
 

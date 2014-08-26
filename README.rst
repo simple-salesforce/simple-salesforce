@@ -1,8 +1,8 @@
 *****************
-Simple Salesforce
+Just Salesforce
 *****************
 
-Simple Salesforce is a basic Salesforce.com REST API client built for Python 2.6, 2.7, 3.2 and 3.3. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
+Just Salesforce is a basic Salesforce.com REST API client built for Python 2.6, 2.7, 3.2 and 3.3. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
 
 You can find out more regarding the format of the results in the `Official Salesforce.com REST API Documentation`_
 
@@ -16,31 +16,31 @@ The first is to simply pass the domain of your Salesforce instance and an access
 
 For example::
 
-    from simple_salesforce import Salesforce
+    from just_salesforce import Salesforce
     sf = Salesforce(instance='na1.salesforce.com', session_id='')
 
 If you have the full URL of your instance (perhaps including the schema, as is included in the OAuth2 request process), you can pass that in instead using ``instance_url``::
 
-    from simple_salesforce import Salesforce
+    from just_salesforce import Salesforce
     sf = Salesforce(instance_url='https://na1.salesforce.com', session_id='')
 
 There are also two means of authentication, one that uses username, password and security token and the other that uses IP filtering, username, password  and organizationId
 
 To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password)::
 
-    from simple_salesforce import Salesforce
+    from just_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com', password='password', security_token='token')
 
 To login using IP-whitelist Organization ID method, simply use your Salesforce username, password and organizationId::
 
-    from simple_salesforce import Salesforce
+    from just_salesforce import Salesforce
     sf = Salesforce(password='password', username='myemail@example.com', organizationId='OrgId')
 
 If you'd like to enter a sandbox, simply add ``sandbox=True`` to your ``Salesforce()`` call.
 
 For example::
 
-    from simple_salesforce import Salesforce
+    from just_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', sandbox=True)
 
 Note that specifying if you want to use a sandbox is only necessary if you are using the built-in username/password/security token authentication and is used exclusively during the authentication step.
@@ -179,7 +179,7 @@ Included in them are ``SalesforceLogin``, which takes in a username, password, s
 
 For example, to use SalesforceLogin for a sandbox account you'd use::
 
-    from simple_salesforce import SalesforceLogin
+    from just_salesforce import SalesforceLogin
     session_id, instance = SalesforceLogin('myemail@example.com.sandbox', 'password', 'token', True)
 
 Simply leave off the final ``True`` if you do not wish to use a sandbox.
@@ -188,7 +188,7 @@ Also exposed is the ``SFType`` class, which is used internally by the ``__getatt
 
 To add a Contact using the default version of the API you'd use::
 
-    from simple_salesforce import SFType
+    from just_salesforce import SFType
     contact = SFType('Contact','sesssionid','na1.salesforce.com')
     contact.create({'LastName':'Smith','Email':'example@example.com'})
 
@@ -206,13 +206,9 @@ All results are returned as JSON converted OrderedDict to preserve order of keys
 Authors & License
 -----------------
 
-This plugin was originally built in-house by the team at `New Organizing Institute`_ and is maintained by `Nick Catalano`_. It is released under an open source Apache 2.0 license. Contributions are welcome and can be submitted via a pull request on the official `GitHub Repo`_.
-
-Authentication mechanisms were adapted from Dave Wingate's `RestForce`_ and licensed under a MIT license
+This library is a fork of `simple salesforce`_. It is released under an open source Apache 2.0 license. Contributions are welcome and can be submitted via a pull request on the official `GitHub Repo`_.
 
 .. image:: https://travis-ci.org/neworganizing/simple-salesforce.svg?branch=master   :target: https://travis-ci.org/neworganizing/simple-salesforce
 
-.. _New Organizing Institute: http://neworganizing.com/
-.. _Nick Catalano: https://github.com/nickcatal
-.. _RestForce: http://pypi.python.org/pypi/RestForce/
+.. _simple salesforce: https://github.com/neworganizing/simple-salesforce
 .. _GitHub Repo: https://github.com/neworganizing/simple-salesforce

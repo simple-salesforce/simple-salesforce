@@ -1,6 +1,6 @@
-"""Simple-Salesforce Package"""
+"""Just-Salesforce Package"""
 
-from simple_salesforce.api import (
+from just_salesforce.api import (
     Salesforce,
     SalesforceAPI,
     SFType,
@@ -12,6 +12,6 @@ from simple_salesforce.api import (
     SalesforceMalformedRequest
 )
 
-from simple_salesforce.login import (
+from just_salesforce.login import (
     SalesforceLogin, SalesforceAuthenticationFailed
 )

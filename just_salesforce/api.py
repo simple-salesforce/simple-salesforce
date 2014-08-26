@@ -8,8 +8,8 @@ try:
 except ImportError:
     # Python 3+
     from urllib.parse import urlparse
-from simple_salesforce.login import SalesforceLogin
-from simple_salesforce.util import date_to_iso8601
+from just_salesforce.login import SalesforceLogin
+from just_salesforce.util import date_to_iso8601
 
 try:
     from collections import OrderedDict

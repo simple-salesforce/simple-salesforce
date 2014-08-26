@@ -1,4 +1,4 @@
-"""Tests for simple-salesforce utility functions"""
+"""Tests for just-salesforce utility functions"""
 try:
     import unittest2 as unittest
 except ImportError:
@@ -6,7 +6,7 @@ except ImportError:
 
 import datetime
 import pytz
-from simple_salesforce.util import getUniqueElementValueFromXmlString, date_to_iso8601
+from just_salesforce.util import getUniqueElementValueFromXmlString, date_to_iso8601
 
 
 class TestXMLParser(unittest.TestCase):

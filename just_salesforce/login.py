@@ -1,9 +1,9 @@
-"""Login classes and functions for Simple-Salesforce
+"""Login classes and functions for Just-Salesforce
 
 Heavily Modified from RestForce 1.0.0
 """
 
-from simple_salesforce.util import getUniqueElementValueFromXmlString
+from just_salesforce.util import getUniqueElementValueFromXmlString
 try:
     # Python 3+
     from html import escape

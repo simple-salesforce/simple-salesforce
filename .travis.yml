@@ -12,10 +12,10 @@ install:
 # command to run tests
 script: python setup.py test
 after_success:
-  - pylint --rcfile=.pylintrc simple_salesforce
+  - pylint --rcfile=.pylintrc just_salesforce
 # turn off email notifications
 notifications:
-  email: space.fd@gmail.com
+  email: zhuyuzhou.dev@gmail.com
 
 #deploy:
   # Allow travis-ci to deploy new tags to PyPI

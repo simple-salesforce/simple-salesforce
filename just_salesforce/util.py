@@ -1,4 +1,4 @@
-"""Utility functions for simple-salesforce"""
+"""Utility functions for just-salesforce"""
 
 import xml.dom.minidom
 
