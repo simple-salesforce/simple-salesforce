@@ -211,4 +211,4 @@ This library is a fork of `simple salesforce`_. It is released under an open sou
 .. image:: https://travis-ci.org/neworganizing/simple-salesforce.svg?branch=master   :target: https://travis-ci.org/neworganizing/simple-salesforce
 
 .. _simple salesforce: https://github.com/neworganizing/simple-salesforce
-.. _GitHub Repo: https://github.com/neworganizing/simple-salesforce
+.. _GitHub Repo: https://github.com/codingrhythm/just-salesforce
