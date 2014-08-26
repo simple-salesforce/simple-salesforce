@@ -270,7 +270,7 @@ class Salesforce(object):
         """
         if identifier_is_url:
             # Don't use `self.base_url` here because the full URI is provided
-            url = u'https://%s%s' % (self.sf_instance, next_records_identifier
+            url = u'https://%s%s' % (self.sf_instance, next_records_identifier)
         else:
             url = u'%squery/%s' % (self.base_url, next_records_identifier)
         result = self.request.get(url, headers=self.headers, **kwargs)
