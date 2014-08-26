@@ -2,6 +2,8 @@
 Just Salesforce
 *****************
 
+.. image:: https://travis-ci.org/codingrhythm/just-salesforce.svg?branch=master   :target: https://travis-ci.org/codingrhythm/just-salesforce
+
 Just Salesforce is a basic Salesforce.com REST API client built for Python 2.6, 2.7, 3.2 and 3.3. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
 
 You can find out more regarding the format of the results in the `Official Salesforce.com REST API Documentation`_
@@ -207,8 +209,6 @@ Authors & License
 -----------------
 
 This library is a fork of `simple salesforce`_. It is released under an open source Apache 2.0 license. Contributions are welcome and can be submitted via a pull request on the official `GitHub Repo`_.
-
-.. image:: https://travis-ci.org/neworganizing/simple-salesforce.svg?branch=master   :target: https://travis-ci.org/neworganizing/simple-salesforce
 
 .. _simple salesforce: https://github.com/neworganizing/simple-salesforce
 .. _GitHub Repo: https://github.com/codingrhythm/just-salesforce
