@@ -12,7 +12,7 @@ except ImportError:
     # Python 3
     from unittest.mock import Mock, patch
 
-from simple_salesforce.login import (
+from just_salesforce.login import (
     SalesforceLogin, SalesforceAuthenticationFailed
 )
 
@@ -21,7 +21,7 @@ class TestSalesforceLogin(unittest.TestCase):
     """Tests for the SalesforceLogin function"""
     def setUp(self):
         """Setup the SalesforceLogin tests"""
-        request_patcher = patch('simple_salesforce.login.requests')
+        request_patcher = patch('just_salesforce.login.requests')
         self.mockrequest = request_patcher.start()
         self.addCleanup(request_patcher.stop)
 

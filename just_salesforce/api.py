@@ -8,8 +8,8 @@ try:
 except ImportError:
     # Python 3+
     from urllib.parse import urlparse
-from simple_salesforce.login import SalesforceLogin
-from simple_salesforce.util import date_to_iso8601
+from just_salesforce.login import SalesforceLogin
+from just_salesforce.util import date_to_iso8601
 
 try:
     from collections import OrderedDict
@@ -153,6 +153,9 @@ class Salesforce(object):
     def setPassword(self, user, password):
         """Sets the password of a user
 
+        salesforce dev documentation link:
+        https://www.salesforce.com/us/developer/docs/api_rest/Content/dome_sobject_user_password.htm
+
         Arguments:
 
         * user: the userID of the user to set
@@ -162,8 +165,10 @@ class Salesforce(object):
         url = self.base_url + 'sobjects/User/%s/password' % user
         params = { 'NewPassword' : password, }
 
-        result = self.request.get(url, headers=self.headers, params=params)
-        if result.status_code != 200:
+        result = self.request.post(url, headers=self.headers, data=json.dumps(params))
+
+        # salesforce return 204 No Content when the request is successful
+        if result.status_code != 200 or result.status_code != 204:
             raise SalesforceGeneralError(result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
@@ -225,7 +230,7 @@ class Salesforce(object):
                     string will be wrapped to read `FIND {Waldo}` before being
                     sent to Salesforce
         """
-        search_string = u'FIND {{{search_string}}}'.format(search_string=search)
+        search_string = u'FIND {%s}' % search
         return self.search(search_string)
 
     # Query Handler
@@ -265,12 +270,9 @@ class Salesforce(object):
         """
         if identifier_is_url:
             # Don't use `self.base_url` here because the full URI is provided
-            url = (u'https://{instance}{next_record_url}'
-                   .format(instance=self.sf_instance,
-                           next_record_url=next_records_identifier))
+            url = u'https://%s%s' % (self.sf_instance, next_records_identifier)
         else:
-            url = self.base_url + 'query/{next_record_id}'
-            url = url.format(next_record_id=next_records_identifier)
+            url = u'%squery/%s' % (self.base_url, next_records_identifier)
         result = self.request.get(url, headers=self.headers, **kwargs)
 
         if result.status_code != 200:
@@ -369,10 +371,7 @@ class SFType(object):
         self.request = requests.Session()
         self.request.proxies = proxies
 
-        self.base_url = (u'https://{instance}/services/data/v{sf_version}/sobjects/{object_name}/'
-                         .format(instance=sf_instance,
-                                 object_name=object_name,
-                                 sf_version=sf_version))
+        self.base_url = u'https://%s/services/data/v%s/sobjects/%s' % (sf_instance, sf_version, object_name)
 
     def metadata(self):
         """Returns the result of a GET to `.../{object_name}/` as a dict
@@ -487,8 +486,7 @@ class SFType(object):
         * start -- start datetime object
         * end -- end datetime object
         """
-        url = self.base_url + 'updated/?start={start}&end={end}'.format(
-            start=date_to_iso8601(start), end=date_to_iso8601(end))
+        url = '%supdated/?start=%s&end=%s' % (self.base_url, date_to_iso8601(start), date_to_iso8601(end))
         result = self._call_salesforce('GET', url)
         return result.json(object_pairs_hook=OrderedDict)
 

@@ -1,4 +1,4 @@
-"""Simple-Salesforce Package Setup"""
+"""Just-Salesforce Package Setup"""
 
 from setuptools import setup
 import textwrap
@@ -14,13 +14,13 @@ if sys.version_info < (3, 0):
     extra_tests_require.append('mock==1.0.1')
 
 setup(
-    name='simple-salesforce',
-    version='0.64.0',
-    author='Nick Catalano',
-    packages=['simple_salesforce',],
-    url='https://github.com/neworganizing/simple-salesforce',
+    name='just-salesforce',
+    version='0.1.0',
+    author='Zack Zhu',
+    packages=['just_salesforce',],
+    url='https://github.com/codingrhythm/just-salesforce',
     license='Apache 2.0',
-    description=("Simple Salesforce is a basic Salesforce.com REST API client. "
+    description=("Just Salesforce is a basic Salesforce.com REST API client. "
         "The goal is to provide a very low-level interface to the API, "
         "returning an ordered dictionary of the API JSON response."),
     long_description=textwrap.dedent(open('README.rst', 'r').read()),
