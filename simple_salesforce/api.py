@@ -153,6 +153,9 @@ class Salesforce(object):
     def setPassword(self, user, password):
         """Sets the password of a user
 
+        salesforce dev documentation link:
+        https://www.salesforce.com/us/developer/docs/api_rest/Content/dome_sobject_user_password.htm
+
         Arguments:
 
         * user: the userID of the user to set
@@ -162,8 +165,10 @@ class Salesforce(object):
         url = self.base_url + 'sobjects/User/%s/password' % user
         params = { 'NewPassword' : password, }
 
-        result = self.request.get(url, headers=self.headers, params=params)
-        if result.status_code != 200:
+        result = self.request.post(url, headers=self.headers, data=json.dumps(params))
+
+        # salesforce return 204 No Content when the request is successful
+        if result.status_code != 200 or result.status_code != 204:
             raise SalesforceGeneralError(result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
