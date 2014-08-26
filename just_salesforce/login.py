@@ -32,7 +32,7 @@ def SalesforceLogin(**kwargs):
     """
 
     sandbox = kwargs.get('sandbox', False)
-    sf_version = kwargs.get('sf_version', '23.0')
+    sf_version = kwargs.get('sf_version', '29.0')
 
     username = kwargs['username']
     password = kwargs['password']

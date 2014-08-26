@@ -15,8 +15,8 @@ if sys.version_info < (3, 0):
 
 setup(
     name='just-salesforce',
-    version='0.64.0',
-    author='Nick Catalano',
+    version='0.1.0',
+    author='Zack Zhu',
     packages=['just_salesforce',],
     url='https://github.com/codingrhythm/just-salesforce',
     license='Apache 2.0',
