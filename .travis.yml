@@ -15,14 +15,16 @@ after_success:
   - pylint --rcfile=.pylintrc just_salesforce
 # turn off email notifications
 notifications:
-  email: zhuyuzhou.dev@gmail.com
+  email: 
+    secure: "C3ksh8HzdzH+MT4U2q7lugZItE3CBOQ2DFgKwVotgAnGCCehqylaQPwP1ATy1mc6fSbhIFPnbnYjbknG1i0+eM/DfPFqqFtYBHRDRKfdhUux1Hx62NOjLn1aOtQrjco0MX5VDQ6Z9DJDt8GDsX+3SyvX6BJm+b+sV0NJzFtt1pc="
+
 
 #deploy:
   # Allow travis-ci to deploy new tags to PyPI
   #provider: pypi
-  #user: simple-salesforce
+  #user: just-salesforce
   #password:
     #secure: "J7qjXx9tmsjZQIyLMRK3roEV1+6GmmME34UrdomlipNixc5MELQLZP2gUThIOf3++824AGX9Dgkq0h5YyAwnawXq7QQFcsOOcz8evcE9v6nVc7EEKCOvIeZ7dXHTAk1a+nLH4I7S5t4B+2bpLI5W3AyHxdpD8TrbZ28tFtuQ2e4="
   #on:
     #tags: true
-    #repo: codingrhythm/simple-salesforce
+    #repo: codingrhythm/just-salesforce
