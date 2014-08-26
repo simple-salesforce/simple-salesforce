@@ -41,3 +41,7 @@ class TestSalesforceLogin(unittest.TestCase):
                 sandbox=True
             )
         self.assertTrue(self.mockrequest.post.called)
+
+
+    def test_fail(self):
+        self.assertTrue(False)
