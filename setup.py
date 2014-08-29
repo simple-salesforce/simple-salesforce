@@ -15,7 +15,7 @@ if sys.version_info < (3, 0):
 
 setup(
     name='simple-salesforce',
-    version='0.65.0',
+    version='0.65.1',
     author='Nick Catalano',
     packages=['simple_salesforce',],
     url='https://github.com/neworganizing/simple-salesforce',
