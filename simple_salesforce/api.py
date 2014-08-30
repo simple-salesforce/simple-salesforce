@@ -150,7 +150,7 @@ class Salesforce(object):
         return SFType(name, self.session_id, self.sf_instance, self.sf_version, self.proxies)
 
     # User utlity methods
-    def setPassword(self, user, password):
+    def set_password(self, user, password):
         """Sets the password of a user
 
         salesforce dev documentation link:
@@ -175,6 +175,12 @@ class Salesforce(object):
             return None
         else:
             return json_result
+
+    def setPassword(self, user, password):
+        import warnings
+        warnings.warn(
+            "This method has been deprecated. Please use set_password instread.", DeprecationWarning)
+        return self.set_password(user, password)
 
     # Generic Rest Function
     def restful(self,path,params):
