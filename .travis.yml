@@ -4,6 +4,7 @@ python:
   - "2.7"
   - "3.2"
   - "3.3"
+  - "3.4"
   - "pypy"
 # command to install dependencies (mock & nose are already installed)
 install:
@@ -14,8 +15,8 @@ script: python setup.py test
 matrix:
   fast_finish: true
   allow_failures:
-    # Python 3.2 doesn't appear to work. This is pretty vital to fix, but we
-    # really should get a build out.
+    # Python 3.2 doesn't appear to work. With 3.3 and 3.4 in the world this
+    # probably isn't a priority, but lets keep an eye on it anyways
     - python: "3.2"
 after_success:
   - pylint --rcfile=.pylintrc simple_salesforce
