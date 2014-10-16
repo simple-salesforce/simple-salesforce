@@ -168,7 +168,7 @@ class Salesforce(object):
         result = self.request.post(url, headers=self.headers, data=json.dumps(params))
 
         # salesforce return 204 No Content when the request is successful
-        if result.status_code != 200 or result.status_code != 204:
+        if result.status_code != 200 and result.status_code != 204:
             raise SalesforceGeneralError(result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
@@ -347,12 +347,7 @@ class Salesforce(object):
 
         Returns a `requests.result` object.
         """
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + self.session_id,
-            'X-PrettyPrint': '1'
-        }
-        result = self.request.request(method, url, headers=headers, **kwargs)
+        result = self.request.request(method, url, headers=self.headers, **kwargs)
 
         if result.status_code >= 300:
             _exception_handler(result)
