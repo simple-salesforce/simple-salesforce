@@ -347,12 +347,7 @@ class Salesforce(object):
 
         Returns a `requests.result` object.
         """
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + self.session_id,
-            'X-PrettyPrint': '1'
-        }
-        result = self.request.request(method, url, headers=headers, **kwargs)
+        result = self.request.request(method, url, headers=self.headers, **kwargs)
 
         if result.status_code >= 300:
             _exception_handler(result)
