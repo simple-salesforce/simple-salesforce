@@ -84,6 +84,9 @@ Note that Update, Delete and Upsert actions return the associated `Salesforce HT
 
 .. _Salesforce HTTP Status Code: http://www.salesforce.com/us/developer/docs/api_rest/Content/errorcodes.htm
 
+Use the same format to create any record, including 'Account', 'Opportunity', and 'Lead'. 
+Make sure to have all the required fields for any entry. The [Salesforce Api](https://www.salesforce.com/developer/docs/api/) has all objects found under 'Reference -> Standard Objects'.
+
 Queries
 -------
 
