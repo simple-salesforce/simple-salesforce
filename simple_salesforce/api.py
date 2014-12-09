@@ -580,7 +580,12 @@ def _exception_handler(result, name=""):
         raise SalesforceGeneralError(message)
 
 
-class SalesforceMoreThanOneRecord(Exception):
+class SalesforceError(Exception):
+    """Base Salesforce API exception"""
+    pass
+
+
+class SalesforceMoreThanOneRecord(SalesforceError):
     """
     Error Code: 300
     The value returned when an external ID exists in more than one record. The
@@ -589,7 +594,7 @@ class SalesforceMoreThanOneRecord(Exception):
     pass
 
 
-class SalesforceMalformedRequest(Exception):
+class SalesforceMalformedRequest(SalesforceError):
     """
     Error Code: 400
     The request couldn't be understood, usually becaue the JSON or XML body contains an error.
@@ -597,7 +602,7 @@ class SalesforceMalformedRequest(Exception):
     pass
 
 
-class SalesforceExpiredSession(Exception):
+class SalesforceExpiredSession(SalesforceError):
     """
     Error Code: 401
     The session ID or OAuth token used has expired or is invalid. The response
@@ -606,7 +611,7 @@ class SalesforceExpiredSession(Exception):
     pass
 
 
-class SalesforceRefusedRequest(Exception):
+class SalesforceRefusedRequest(SalesforceError):
     """
     Error Code: 403
     The request has been refused. Verify that the logged-in user has
@@ -615,7 +620,7 @@ class SalesforceRefusedRequest(Exception):
     pass
 
 
-class SalesforceResourceNotFound(Exception):
+class SalesforceResourceNotFound(SalesforceError):
     """
     Error Code: 404
     The requested resource couldn't be found. Check the URI for errors, and
@@ -624,7 +629,7 @@ class SalesforceResourceNotFound(Exception):
     pass
 
 
-class SalesforceGeneralError(Exception):
+class SalesforceGeneralError(SalesforceError):
     """
     A non-specific Salesforce error.
     """
