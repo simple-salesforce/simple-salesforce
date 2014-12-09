@@ -4,6 +4,7 @@ Heavily Modified from RestForce 1.0.0
 """
 
 from simple_salesforce.util import getUniqueElementValueFromXmlString
+from simple_salesforce.api import SalesforceError
 try:
     # Python 3+
     from html import escape
@@ -126,7 +127,7 @@ def SalesforceLogin(**kwargs):
     return session_id, sf_instance
 
 
-class SalesforceAuthenticationFailed(Exception):
+class SalesforceAuthenticationFailed(SalesforceError):
     """
     Thrown to indicate that authentication with Salesforce failed.
     """
