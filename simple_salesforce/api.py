@@ -9,7 +9,7 @@ except ImportError:
     # Python 3+
     from urllib.parse import urlparse
 from simple_salesforce.login import SalesforceLogin
-from simple_salesforce.util import date_to_iso8601
+from simple_salesforce.util import date_to_iso8601, SalesforceError
 
 try:
     from collections import OrderedDict
@@ -202,7 +202,7 @@ class Salesforce(object):
             return None
         else:
             return json_result
-        
+
     # Search Functions
     def search(self, search):
         """Returns the result of a Salesforce search as a dict decoded from
@@ -578,11 +578,6 @@ def _exception_handler(result, name=""):
         message = u'Error Code {status}. Response content: {content}'
         message = message.format(status=result.status_code, content=response_content)
         raise SalesforceGeneralError(message)
-
-
-class SalesforceError(Exception):
-    """Base Salesforce API exception"""
-    pass
 
 
 class SalesforceMoreThanOneRecord(SalesforceError):

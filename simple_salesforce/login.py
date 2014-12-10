@@ -2,9 +2,8 @@
 
 Heavily Modified from RestForce 1.0.0
 """
-
 from simple_salesforce.util import getUniqueElementValueFromXmlString
-from simple_salesforce.api import SalesforceError
+from simple_salesforce.util import SalesforceError
 try:
     # Python 3+
     from html import escape
