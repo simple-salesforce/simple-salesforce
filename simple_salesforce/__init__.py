@@ -4,6 +4,7 @@ from simple_salesforce.api import (
     Salesforce,
     SalesforceAPI,
     SFType,
+    SalesforceError,
     SalesforceMoreThanOneRecord,
     SalesforceExpiredSession,
     SalesforceRefusedRequest,
