@@ -216,9 +216,12 @@ This plugin was originally built in-house by the team at `New Organizing Institu
 
 Authentication mechanisms were adapted from Dave Wingate's `RestForce`_ and licensed under a MIT license
 
-.. image:: https://travis-ci.org/neworganizing/simple-salesforce.svg?branch=master   :target: https://travis-ci.org/neworganizing/simple-salesforce
+The latest build status can be found at `Travis CI`_
+
+.. image:: https://api.travis-ci.org/neworganizing/simple-salesforce.svg?branch=master
 
 .. _New Organizing Institute: http://neworganizing.com/
 .. _Nick Catalano: https://github.com/nickcatal
 .. _RestForce: http://pypi.python.org/pypi/RestForce/
 .. _GitHub Repo: https://github.com/neworganizing/simple-salesforce
+.. _Travis CI: https://travis-ci.org/neworganizing/simple-salesforce
