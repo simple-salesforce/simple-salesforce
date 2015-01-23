@@ -454,11 +454,7 @@ class SFType(object):
         """
         result = self._call_salesforce('PATCH', self.base_url + record_id,
                                        data=json.dumps(data))
-        if response_body:
-            return result.status_code
-        else:
-            return (result.status_code,
-                    result.json(object_pairs_hook=OrderedDict))
+        return self._response_body(result, response_body)
 
     def update(self, record_id, data, response_body=False):
         """Updates an SObject using a PATCH to
@@ -476,11 +472,7 @@ class SFType(object):
         """
         result = self._call_salesforce('PATCH', self.base_url + record_id,
                                        data=json.dumps(data))
-        if response_body:
-            return result.status_code
-        else:
-            return (result.status_code,
-                    result.json(object_pairs_hook=OrderedDict))
+        return self._response_body(result, response_body)
 
     def delete(self, record_id, response_body=False):
         """Deletes an SObject using a DELETE to
@@ -495,11 +487,7 @@ class SFType(object):
         * record_id -- the Id of the SObject to delete
         """
         result = self._call_salesforce('DELETE', self.base_url + record_id)
-        if response_body:
-            return result.status_code
-        else:
-            return (result.status_code,
-                    result.json(object_pairs_hook=OrderedDict))
+        return self._response_body(result, response_body)
 
     def deleted(self, start, end):
         """Use the SObject Get Deleted resource to get a list of deleted records for the specified object.
@@ -544,6 +532,17 @@ class SFType(object):
 
         return result
 
+    def _response_body(self, response, body_flag):
+        """Utility method for processing the response and returning either the
+        status code or a tuple of (status_code, response_dict)"""
+        if not body_flag:
+            return response.status_code
+
+        if response.headers['Content-Length'] == 0:
+            return (response.status_code, {})
+        else:
+            return (response.status_code,
+                    response.json(object_pairs_hook=OrderedDict)
 
 class SalesforceAPI(Salesforce):
     """Depreciated SalesforceAPI Instance
