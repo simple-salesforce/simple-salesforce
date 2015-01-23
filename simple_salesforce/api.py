@@ -436,11 +436,14 @@ class SFType(object):
                                        data=json.dumps(data))
         return result.json(object_pairs_hook=OrderedDict)
 
-    def upsert(self, record_id, data):
+    def upsert(self, record_id, data, response_body=False):
         """Creates or updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
 
-        Returns a dict decoded from the JSON payload returned by Salesforce.
+        If `response_body` is false (the default), returns the status code
+        returned by Salesforce. Otherwise, returns a tuple of the status code
+        and the dict decoded from the JSON payload returned by Salesforce.
+
 
         Arguments:
 
@@ -451,13 +454,19 @@ class SFType(object):
         """
         result = self._call_salesforce('PATCH', self.base_url + record_id,
                                        data=json.dumps(data))
-        return result.status_code
+        if response_body:
+            return result.status_code
+        else:
+            return (result.status_code,
+                    result.json(object_pairs_hook=OrderedDict))
 
-    def update(self, record_id, data):
+    def update(self, record_id, data, response_body=False):
         """Updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
 
-        Returns a dict decoded from the JSON payload returned by Salesforce.
+        If `response_body` is false (the default), returns the status code
+        returned by Salesforce. Otherwise, returns a tuple of the status code
+        and the dict decoded from the JSON payload returned by Salesforce.
 
         Arguments:
 
@@ -467,20 +476,30 @@ class SFType(object):
         """
         result = self._call_salesforce('PATCH', self.base_url + record_id,
                                        data=json.dumps(data))
-        return result.status_code
+        if response_body:
+            return result.status_code
+        else:
+            return (result.status_code,
+                    result.json(object_pairs_hook=OrderedDict))
 
-    def delete(self, record_id):
+    def delete(self, record_id, response_body=False):
         """Deletes an SObject using a DELETE to
         `.../{object_name}/{record_id}`.
 
-        Returns a dict decoded from the JSON payload returned by Salesforce.
+        If `response_body` is false (the default), returns the status code
+        returned by Salesforce. Otherwise, returns a tuple of the status code
+        and the dict decoded from the JSON payload returned by Salesforce.
 
         Arguments:
 
         * record_id -- the Id of the SObject to delete
         """
         result = self._call_salesforce('DELETE', self.base_url + record_id)
-        return result.status_code
+        if response_body:
+            return result.status_code
+        else:
+            return (result.status_code,
+                    result.json(object_pairs_hook=OrderedDict))
 
     def deleted(self, start, end):
         """Use the SObject Get Deleted resource to get a list of deleted records for the specified object.
