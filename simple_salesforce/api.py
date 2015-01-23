@@ -542,7 +542,8 @@ class SFType(object):
             return (response.status_code, {})
         else:
             return (response.status_code,
-                    response.json(object_pairs_hook=OrderedDict)
+                    response.json(object_pairs_hook=OrderedDict))
+
 
 class SalesforceAPI(Salesforce):
     """Depreciated SalesforceAPI Instance
