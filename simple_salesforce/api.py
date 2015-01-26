@@ -436,14 +436,13 @@ class SFType(object):
                                        data=json.dumps(data))
         return result.json(object_pairs_hook=OrderedDict)
 
-    def upsert(self, record_id, data, response_body=False):
+    def upsert(self, record_id, data, raw_response=False):
         """Creates or updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
 
-        If `response_body` is false (the default), returns the status code
-        returned by Salesforce. Otherwise, returns a tuple of the status code
-        and the dict decoded from the JSON payload returned by Salesforce.
-
+        If `raw_response` is false (the default), returns the status code
+        returned by Salesforce. Otherwise, return the `requests.Response`
+        object.
 
         Arguments:
 
@@ -451,43 +450,49 @@ class SFType(object):
                        Salesforce documentation
         * data -- a dict of the data to create or update the SObject from. It
                   will be JSON-encoded before being transmitted.
+        * raw_response -- a boolean indicating whether to return the response
+                          directly, instead of the status code.
         """
         result = self._call_salesforce('PATCH', self.base_url + record_id,
                                        data=json.dumps(data))
-        return self._response_body(result, response_body)
+        return self._raw_response(result, raw_response)
 
-    def update(self, record_id, data, response_body=False):
+    def update(self, record_id, data, raw_response=False):
         """Updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
 
-        If `response_body` is false (the default), returns the status code
-        returned by Salesforce. Otherwise, returns a tuple of the status code
-        and the dict decoded from the JSON payload returned by Salesforce.
+        If `raw_response` is false (the default), returns the status code
+        returned by Salesforce. Otherwise, return the `requests.Response`
+        object.
 
         Arguments:
 
         * record_id -- the Id of the SObject to update
         * data -- a dict of the data to update the SObject from. It will be
                   JSON-encoded before being transmitted.
+        * raw_response -- a boolean indicating whether to return the response
+                          directly, instead of the status code.
         """
         result = self._call_salesforce('PATCH', self.base_url + record_id,
                                        data=json.dumps(data))
-        return self._response_body(result, response_body)
+        return self._raw_response(result, raw_response)
 
-    def delete(self, record_id, response_body=False):
+    def delete(self, record_id, raw_response=False):
         """Deletes an SObject using a DELETE to
         `.../{object_name}/{record_id}`.
 
-        If `response_body` is false (the default), returns the status code
-        returned by Salesforce. Otherwise, returns a tuple of the status code
-        and the dict decoded from the JSON payload returned by Salesforce.
+        If `raw_response` is false (the default), returns the status code
+        returned by Salesforce. Otherwise, return the `requests.Response`
+        object.
 
         Arguments:
 
         * record_id -- the Id of the SObject to delete
+        * raw_response -- a boolean indicating whether to return the response
+                          directly, instead of the status code.
         """
         result = self._call_salesforce('DELETE', self.base_url + record_id)
-        return self._response_body(result, response_body)
+        return self._raw_response(result, raw_response)
 
     def deleted(self, start, end):
         """Use the SObject Get Deleted resource to get a list of deleted records for the specified object.
@@ -532,18 +537,16 @@ class SFType(object):
 
         return result
 
-    def _response_body(self, response, body_flag):
+    def _raw_response(self, response, body_flag):
         """Utility method for processing the response and returning either the
-        status code or a tuple of (status_code, response_dict)"""
+        status code or the response object.
+
+        Returns either an `int` or a `requests.Response` object.
+        """
         if not body_flag:
             return response.status_code
-
-        if response.headers['Content-Length'] == 0:
-            return (response.status_code, {})
         else:
-            return (response.status_code,
-                    response.json(object_pairs_hook=OrderedDict))
-
+            return response
 
 class SalesforceAPI(Salesforce):
     """Depreciated SalesforceAPI Instance
