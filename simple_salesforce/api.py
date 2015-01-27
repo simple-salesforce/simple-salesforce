@@ -53,7 +53,7 @@ class Salesforce(object):
         """
 
         # Determine if the user passed in the optional version and/or sandbox kwargs
-        self.sf_version = kwargs.get('version', '29.0')
+        self.sf_version = kwargs.get('version', '32.0')
         self.sandbox = kwargs.get('sandbox', False)
         self.proxies = kwargs.get('proxies')
 
