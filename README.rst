@@ -186,6 +186,9 @@ You can access the Metadata Tooling API using this library::
 
 This would call the endpoint ``https://<instance>.salesforce.com/services/data/<version>/tooling/`` with a query against the TraceFlag Tooling API object
 
+You can read more about the Tooling API on the `Using Tooling REST API`_
+
+.. _Using Tooling REST API: http://www.salesforce.com/us/developer/docs/api_tooling/Content/intro_rest_overview.htm
 
 Additional Features
 -------------------
