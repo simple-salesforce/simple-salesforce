@@ -176,6 +176,17 @@ You can read more about Apex on the `Force.com Apex Code Developer's Guide`_
 
 .. _Force.com Apex Code Developer's Guide: http://www.salesforce.com/us/developer/docs/apexcode
 
+
+Using Tooling API
+-----------------
+
+You can access the Metadata Tooling API using this library::
+
+    result = sf.tooling( 'query/?q=Select+id,ApexProfiling+from+TraceFlag' , {}))
+
+This would call the endpoint ``https://<instance>.salesforce.com/services/data/<version>/tooling/`` with a query against the TraceFlag Tooling API object
+
+
 Additional Features
 -------------------
 

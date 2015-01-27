@@ -121,6 +121,9 @@ class Salesforce(object):
                                  version=self.sf_version))
         self.apex_url = ('https://{instance}/services/apexrest/'
                          .format(instance=self.sf_instance))
+        self.tool_url = ('https://{instance}/services/data/v{version}/tooling/'
+                            .format(instance=self.sf_instance,
+                                 version=self.sf_version))
 
     def describe(self):
         url = self.base_url + "sobjects"
@@ -194,6 +197,27 @@ class Salesforce(object):
         """
 
         url = self.base_url + path
+        result = self.request.get(url, headers=self.headers, params=params)
+        if result.status_code != 200:
+            raise SalesforceGeneralError(result.content)
+        json_result = result.json(object_pairs_hook=OrderedDict)
+        if len(json_result) == 0:
+            return None
+        else:
+            return json_result
+    
+    # Generic Tooling API Function
+    def tooling(self,path,params):
+        """Allows you to make a direct Tooling REST call if you know the path
+
+        Arguments:
+
+        * path: The path of the request
+            Example: sobjects/User'
+        * params: dict of parameters to pass to the path
+        """
+
+        url = self.tool_url + path
         result = self.request.get(url, headers=self.headers, params=params)
         if result.status_code != 200:
             raise SalesforceGeneralError(result.content)
