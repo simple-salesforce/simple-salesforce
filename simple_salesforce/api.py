@@ -598,7 +598,6 @@ class SalesforceAPI(Salesforce):
 
 def _exception_handler(result, name=""):
     """Exception router. Determines which error to raise for bad results"""
-    url = result.url
     try:
         response_content = result.json()
     except Exception:
@@ -613,7 +612,7 @@ def _exception_handler(result, name=""):
     }
     exc_cls = exc_map.get(result.status_code, SalesforceGeneralError)
 
-    raise exc_cls(url, result.status_code, name, response_content)
+    raise exc_cls(result.url, result.status_code, name, response_content)
 
 
 class SalesforceMoreThanOneRecord(SalesforceError):
