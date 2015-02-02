@@ -660,7 +660,8 @@ class SalesforceResourceNotFound(SalesforceError):
     message = u'Resource {name} Not Found. Response content: {content}'
 
     def __str__(self):
-        return self.message.format(name=self.name, content=self.content)
+        return self.message.format(name=self.resource_name,
+                                   content=self.content)
 
 
 class SalesforceGeneralError(SalesforceError):
@@ -671,15 +672,3 @@ class SalesforceGeneralError(SalesforceError):
 
     def __str__(self):
         return self.message.format(status=self.status, content=self.content)
-
-
-class SalesforceAuthenticationError(SalesforceError):
-    """
-    Invalid or insufficient login information supplied.
-    """
-
-    def __init__(self, message):
-        self.message = message
-
-    def __str__(self):
-        return self.message

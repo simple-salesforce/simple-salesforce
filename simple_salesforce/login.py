@@ -93,8 +93,7 @@ def SalesforceLogin(**kwargs):
     else:
         except_code = 'INVALID AUTH'
         except_msg = 'You must submit either a security token or organizationId for authentication'
-        raise SalesforceAuthenticationFailed('{code}: {message}'.format(
-            code=except_code, message=except_msg))
+        raise SalesforceAuthenticationFailed(except_code, except_msg)
 
     login_soap_request_headers = {
         'content-type': 'text/xml',
@@ -111,8 +110,7 @@ def SalesforceLogin(**kwargs):
             response.content, 'sf:exceptionCode')
         except_msg = getUniqueElementValueFromXmlString(
             response.content, 'sf:exceptionMessage')
-        raise SalesforceAuthenticationFailed('{code}: {message}'.format(
-            code=except_code, message=except_msg))
+        raise SalesforceAuthenticationFailed(except_code, except_msg)
 
     session_id = getUniqueElementValueFromXmlString(response.content, 'sessionId')
     server_url = getUniqueElementValueFromXmlString(response.content, 'serverUrl')
@@ -130,4 +128,9 @@ class SalesforceAuthenticationFailed(SalesforceError):
     """
     Thrown to indicate that authentication with Salesforce failed.
     """
-    pass
+    def __init__(self, code, message):
+        self.code = code
+        self.message = message
+
+    def __str__(self):
+        return '{code}: {message}'.format(code=self.code, message=self.message)
