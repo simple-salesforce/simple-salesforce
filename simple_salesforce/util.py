@@ -35,7 +35,7 @@ def date_to_iso8601(date):
 class SalesforceError(Exception):
     """Base Salesforce API exception"""
 
-    message = 'Unknown error occurred for {url}. Response content: {content}'
+    message = u'Unknown error occurred for {url}. Response content: {content}'
 
     def __init__(self, url, status, resource_name, content):
         self.url = url
