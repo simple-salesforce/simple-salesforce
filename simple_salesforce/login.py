@@ -133,4 +133,5 @@ class SalesforceAuthenticationFailed(SalesforceError):
         self.message = message
 
     def __str__(self):
-        return '{code}: {message}'.format(code=self.code, message=self.message)
+        return u'{code}: {message}'.format(code=self.code,
+                                           message=self.message)

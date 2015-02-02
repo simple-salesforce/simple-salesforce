@@ -45,3 +45,6 @@ class SalesforceError(Exception):
 
     def __str__(self):
         return self.message.format(url=self.url, content=self.content)
+
+    def __unicode__(self):
+        return self.__str__()
