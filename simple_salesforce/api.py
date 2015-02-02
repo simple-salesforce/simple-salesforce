@@ -101,7 +101,8 @@ class Salesforce(object):
 
         else:
             raise SalesforceGeneralError(
-                'You must provide login information or an instance and token')
+                'You must provide login information or an instance and token'
+            )
 
         if self.sandbox:
             self.auth_site = 'https://test.salesforce.com'
@@ -126,7 +127,10 @@ class Salesforce(object):
         url = self.base_url + "sobjects"
         result = self.request.get(url, headers=self.headers)
         if result.status_code != 200:
-            raise SalesforceGeneralError(result.content)
+            raise SalesforceGeneralError(url,
+                                         'describe',
+                                         result.status_code,
+                                         result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
@@ -169,7 +173,10 @@ class Salesforce(object):
 
         # salesforce return 204 No Content when the request is successful
         if result.status_code != 200 and result.status_code != 204:
-            raise SalesforceGeneralError(result.content)
+            raise SalesforceGeneralError(url,
+                                         'User',
+                                         result.status_code,
+                                         result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
@@ -183,7 +190,7 @@ class Salesforce(object):
         return self.set_password(user, password)
 
     # Generic Rest Function
-    def restful(self,path,params):
+    def restful(self, path, params):
         """Allows you to make a direct REST call if you know the path
 
         Arguments:
@@ -196,7 +203,10 @@ class Salesforce(object):
         url = self.base_url + path
         result = self.request.get(url, headers=self.headers, params=params)
         if result.status_code != 200:
-            raise SalesforceGeneralError(result.content)
+            raise SalesforceGeneralError(url,
+                                         path,
+                                         result.status_code,
+                                         result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
@@ -219,7 +229,10 @@ class Salesforce(object):
         params = {'q': search}
         result = self.request.get(url, headers=self.headers, params=params)
         if result.status_code != 200:
-            raise SalesforceGeneralError(result.content)
+            raise SalesforceGeneralError(url,
+                                         'search',
+                                         result.status_code,
+                                         result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
@@ -548,6 +561,7 @@ class SFType(object):
         else:
             return response
 
+
 class SalesforceAPI(Salesforce):
     """Depreciated SalesforceAPI Instance
 
@@ -571,11 +585,15 @@ class SalesforceAPI(Salesforce):
         """
         import warnings
         warnings.warn(
-            "Use of login arguments has been depreciated. Please use kwargs", DeprecationWarning)
+            "Use of login arguments has been depreciated. Please use kwargs",
+            DeprecationWarning
+        )
 
-        super(
-            SalesforceAPI, self).__init__(username=username, password=password,
-                                          security_token=security_token, sandbox=sandbox, version=sf_version)
+        super(SalesforceAPI, self).__init__(username=username,
+                                            password=password,
+                                            security_token=security_token,
+                                            sandbox=sandbox,
+                                            version=sf_version)
 
 
 def _exception_handler(result, name=""):
@@ -586,30 +604,16 @@ def _exception_handler(result, name=""):
     except Exception:
         response_content = result.text
 
-    if result.status_code == 300:
-        message = u"More than one record for {url}. Response content: {content}"
-        message = message.format(url=url, content=response_content)
-        raise SalesforceMoreThanOneRecord(message)
-    elif result.status_code == 400:
-        message = u"Malformed request {url}. Response content: {content}"
-        message = message.format(url=url, content=response_content)
-        raise SalesforceMalformedRequest(message)
-    elif result.status_code == 401:
-        message = u"Expired session for {url}. Response content: {content}"
-        message = message.format(url=url, content=response_content)
-        raise SalesforceExpiredSession(message)
-    elif result.status_code == 403:
-        message = u"Request refused for {url}. Response content: {content}"
-        message = message.format(url=url, content=response_content)
-        raise SalesforceRefusedRequest(message)
-    elif result.status_code == 404:
-        message = u'Resource {name} Not Found. Response content: {content}'
-        message = message.format(name=name, content=response_content)
-        raise SalesforceResourceNotFound(message)
-    else:
-        message = u'Error Code {status}. Response content: {content}'
-        message = message.format(status=result.status_code, content=response_content)
-        raise SalesforceGeneralError(message)
+    exc_map = {
+        300: SalesforceMoreThanOneRecord,
+        400: SalesforceMalformedRequest,
+        401: SalesforceExpiredSession,
+        403: SalesforceRefusedRequest,
+        404: SalesforceResourceNotFound,
+    }
+    exc_cls = exc_map.get(result.status_code, SalesforceGeneralError)
+
+    raise exc_cls(url, result.status_code, name, response_content)
 
 
 class SalesforceMoreThanOneRecord(SalesforceError):
@@ -618,7 +622,7 @@ class SalesforceMoreThanOneRecord(SalesforceError):
     The value returned when an external ID exists in more than one record. The
     response body contains the list of matching records.
     """
-    pass
+    message = u"More than one record for {url}. Response content: {content}"
 
 
 class SalesforceMalformedRequest(SalesforceError):
@@ -626,7 +630,7 @@ class SalesforceMalformedRequest(SalesforceError):
     Error Code: 400
     The request couldn't be understood, usually becaue the JSON or XML body contains an error.
     """
-    pass
+    message = u"Malformed request {url}. Response content: {content}"
 
 
 class SalesforceExpiredSession(SalesforceError):
@@ -635,7 +639,7 @@ class SalesforceExpiredSession(SalesforceError):
     The session ID or OAuth token used has expired or is invalid. The response
     body contains the message and errorCode.
     """
-    pass
+    message = u"Expired session for {url}. Response content: {content}"
 
 
 class SalesforceRefusedRequest(SalesforceError):
@@ -644,7 +648,7 @@ class SalesforceRefusedRequest(SalesforceError):
     The request has been refused. Verify that the logged-in user has
     appropriate permissions.
     """
-    pass
+    message = u"Request refused for {url}. Response content: {content}"
 
 
 class SalesforceResourceNotFound(SalesforceError):
@@ -653,11 +657,29 @@ class SalesforceResourceNotFound(SalesforceError):
     The requested resource couldn't be found. Check the URI for errors, and
     verify that there are no sharing issues.
     """
-    pass
+    message = u'Resource {name} Not Found. Response content: {content}'
+
+    def __str__(self):
+        return self.message.format(name=self.name, content=self.content)
 
 
 class SalesforceGeneralError(SalesforceError):
     """
     A non-specific Salesforce error.
     """
-    pass
+    message = u'Error Code {status}. Response content: {content}'
+
+    def __str__(self):
+        return self.message.format(status=self.status, content=self.content)
+
+
+class SalesforceAuthenticationError(SalesforceError):
+    """
+    Invalid or insufficient login information supplied.
+    """
+
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return self.message
