@@ -100,7 +100,7 @@ class Salesforce(object):
                 proxies=self.proxies)
 
         else:
-            raise SalesforceGeneralError(
+            raise TypeError(
                 'You must provide login information or an instance and token'
             )
 
