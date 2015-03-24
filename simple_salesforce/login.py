@@ -64,7 +64,7 @@ def SalesforceLogin(**kwargs):
         </env:Envelope>""".format(username=username, password=password, token=security_token)
 
     # Check if IP Filtering is used in cojuction with organizationId
-    elif 'organizationId' in kwargs:
+    elif 'organizationId' in kwargs and kwargs['organizationId']:
         organizationId = kwargs['organizationId']
 
         # IP Filtering Login Soap request body
@@ -89,7 +89,26 @@ def SalesforceLogin(**kwargs):
             </soapenv:Body>
         </soapenv:Envelope>""".format(
             username=username, password=password, organizationId=organizationId)
-
+    elif 'organizationId' in kwargs:
+        # IP Filtering for non self-service users
+        login_soap_request_body = """<?xml version="1.0" encoding="utf-8" ?>
+        <soapenv:Envelope
+                xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                xmlns:urn="urn:partner.soap.sforce.com">
+            <soapenv:Header>
+                <urn:CallOptions>
+                    <urn:client>RestForce</urn:client>
+                    <urn:defaultNamespace>sf</urn:defaultNamespace>
+                </urn:CallOptions>
+            </soapenv:Header>
+            <soapenv:Body>
+                <urn:login>
+                    <urn:username>{username}</urn:username>
+                    <urn:password>{password}</urn:password>
+                </urn:login>
+            </soapenv:Body>
+        </soapenv:Envelope>""".format(
+            username=username, password=password)
     else:
         except_code = 'INVALID AUTH'
         except_msg = 'You must submit either a security token or organizationId for authentication'
