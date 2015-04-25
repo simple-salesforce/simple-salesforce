@@ -14,31 +14,41 @@ There are two ways to gain access to Salesforce
 
 The first is to simply pass the domain of your Salesforce instance and an access token straight to ``Salesforce()``
 
-For example::
+For example:
+
+.. code-block:: python
 
     from simple_salesforce import Salesforce
     sf = Salesforce(instance='na1.salesforce.com', session_id='')
 
-If you have the full URL of your instance (perhaps including the schema, as is included in the OAuth2 request process), you can pass that in instead using ``instance_url``::
+If you have the full URL of your instance (perhaps including the schema, as is included in the OAuth2 request process), you can pass that in instead using ``instance_url``:
+
+.. code-block:: python
 
     from simple_salesforce import Salesforce
     sf = Salesforce(instance_url='https://na1.salesforce.com', session_id='')
 
 There are also two means of authentication, one that uses username, password and security token and the other that uses IP filtering, username, password  and organizationId
 
-To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password)::
+To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password):
+
+.. code-block:: python
 
     from simple_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com', password='password', security_token='token')
 
-To login using IP-whitelist Organization ID method, simply use your Salesforce username, password and organizationId::
+To login using IP-whitelist Organization ID method, simply use your Salesforce username, password and organizationId:
+
+.. code-block:: python
 
     from simple_salesforce import Salesforce
     sf = Salesforce(password='password', username='myemail@example.com', organizationId='OrgId')
 
 If you'd like to enter a sandbox, simply add ``sandbox=True`` to your ``Salesforce()`` call.
 
-For example::
+For example:
+
+.. code-block:: python
 
     from simple_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', sandbox=True)
@@ -48,32 +58,44 @@ Note that specifying if you want to use a sandbox is only necessary if you are u
 Record Management
 -----------------
 
-To create a new 'Contact' in Salesforce::
+To create a new 'Contact' in Salesforce:
+
+.. code-block:: python
 
     sf.Contact.create({'LastName':'Smith','Email':'example@example.com'})
 
 This will return a dictionary such as ``{u'errors': [], u'id': u'003e0000003GuNXAA0', u'success': True}``
 
-To get a dictionary with all the information regarding that record, use::
+To get a dictionary with all the information regarding that record, use:
+
+.. code-block:: python
 
     contact = sf.Contact.get('003e0000003GuNXAA0')
 
-To change that contact's last name from 'Smith' to 'Jones' and add a first name of 'John' use::
+To change that contact's last name from 'Smith' to 'Jones' and add a first name of 'John' use:
+
+.. code-block:: python
 
     sf.Contact.update('003e0000003GuNXAA0',{'LastName': 'Jones', 'FirstName': 'John'})
 
-To delete the contact::
+To delete the contact:
+
+.. code-block:: python
 
     sf.Contact.delete('003e0000003GuNXAA0')
 
-To retrieve a list of deleted records between ``2013-10-20`` to ``2013-10-29`` (datetimes are required to be in UTC)::
+To retrieve a list of deleted records between ``2013-10-20`` to ``2013-10-29`` (datetimes are required to be in UTC):
+
+.. code-block:: python
 
     import pytz
     import datetime
     end = datetime.datetime.now(pytz.UTC)  # we need to use UTC as salesforce API requires this!
     sf.Contact.deleted(end - datetime.timedelta(days=10), end)
 
-To retrieve a list of updated records between ``2014-03-20`` to ``2014-03-22`` (datetimes are required to be in UTC)::
+To retrieve a list of updated records between ``2014-03-20`` to ``2014-03-22`` (datetimes are required to be in UTC):
+
+.. code-block:: python
 
     import pytz
     import datetime
@@ -95,32 +117,34 @@ Queries
 
 It's also possible to write select queries in Salesforce Object Query Language (SOQL) and search queries in Salesforce Object Search Language (SOSL).
 
-SOQL queries are done via
+SOQL queries are done via:
 
-::
+.. code-block:: python
 
     sf.query("SELECT Id, Email FROM Contact WHERE LastName = 'Jones'")
 
 If, due to an especially large result, Salesforce adds a ``nextRecordsUrl`` to your query result, such as ``"nextRecordsUrl" : "/services/data/v26.0/query/01gD0000002HU6KIAW-2000"``, you can pull the additional results with either the ID or the full URL (if using the full URL, you must pass 'True' as your second argument)
 
-::
+.. code-block:: python
 
     sf.query_more("01gD0000002HU6KIAW-2000")
     sf.query_more("/services/data/v26.0/query/01gD0000002HU6KIAW-2000", True)
 
 As a convenience, to retrieve all of the results in a single local method call use
 
-::
+.. code-block:: python
 
     sf.query_all("SELECT Id, Email FROM Contact WHERE LastName = 'Jones'")
 
-SOSL queries are done via::
+SOSL queries are done via:
+
+.. code-block:: python
 
     sf.search("FIND {Jones}")
 
 There is also 'Quick Search', which inserts your query inside the {} in the SOSL syntax. Be careful, there is no escaping!
 
-::
+.. code-block:: python
 
     sf.quick_search("Jones")
 
@@ -133,23 +157,33 @@ More details about syntax is available on the `Salesforce Query Language Documen
 Other Options
 -------------
 
-To insert or update (upsert) a record using an external ID, use::
+To insert or update (upsert) a record using an external ID, use:
+
+.. code-block:: python
 
     sf.Contact.upsert('customExtIdField__c/11999',{'LastName': 'Smith','Email': 'smith@example.com'})
 
-To retrieve basic metadata use::
+To retrieve basic metadata use:
+
+.. code-block:: python
 
     sf.Contact.metadata()
 
-To retrieve a description of the object, use::
+To retrieve a description of the object, use:
+
+.. code-block:: python
 
     sf.Contact.describe()
 
-To retrieve a description of the record layout of an object by its record layout unique id, use::
+To retrieve a description of the record layout of an object by its record layout unique id, use:
+
+.. code-block:: python
 
     sf.Contact.describe_layout('39wmxcw9r23r492')
 
-To retrieve a list of top level description of instance metadata, user::
+To retrieve a list of top level description of instance metadata, user:
+
+.. code-block:: python
 
     sf.describe()
 
@@ -160,7 +194,9 @@ To retrieve a list of top level description of instance metadata, user::
 Using Apex
 ----------
 
-You can also use this library to call custom Apex methods::
+You can also use this library to call custom Apex methods:
+
+.. code-block:: python
 
     payload = {
       "activity": [
@@ -183,7 +219,9 @@ There are a few helper classes that are used internally and available to you.
 
 Included in them are ``SalesforceLogin``, which takes in a username, password, security token, optional boolean sandbox indicator and optional version and returns a touple of ``(session_id, sf_instance)`` where `session_id` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
 
-For example, to use SalesforceLogin for a sandbox account you'd use::
+For example, to use SalesforceLogin for a sandbox account you'd use:
+
+.. code-block:: python
 
     from simple_salesforce import SalesforceLogin
     session_id, instance = SalesforceLogin('myemail@example.com.sandbox', 'password', 'token', True)
@@ -192,14 +230,18 @@ Simply leave off the final ``True`` if you do not wish to use a sandbox.
 
 Also exposed is the ``SFType`` class, which is used internally by the ``__getattr__()`` method in the ``Salesforce()`` class and represents a specific SObject type. ``SFType`` requires ``object_name`` (i.e. ``Contact``), ``session_id`` (an authentication ID), ``sf_instance`` (hostname of your Salesforce instance), and an optional ``sf_version``
 
-To add a Contact using the default version of the API you'd use::
+To add a Contact using the default version of the API you'd use:
+
+.. code-block:: python
 
     from simple_salesforce import SFType
     contact = SFType('Contact','sesssionid','na1.salesforce.com')
     contact.create({'LastName':'Smith','Email':'example@example.com'})
 
 To use a proxy server between your client and the SalesForce endpoint, use the proxies argument when creating SalesForce object.
-The proxy argument is the same as what requests uses, a map of scheme to proxy URL::
+The proxy argument is the same as what requests uses, a map of scheme to proxy URL:
+
+.. code-block:: python
 
     proxies = {
       "http": "http://10.10.1.10:3128",
@@ -212,16 +254,16 @@ All results are returned as JSON converted OrderedDict to preserve order of keys
 Authors & License
 -----------------
 
-This plugin was originally built in-house by the team at `New Organizing Institute`_ and is maintained by `Nick Catalano`_. It is released under an open source Apache 2.0 license. Contributions are welcome and can be submitted via a pull request on the official `GitHub Repo`_.
+This package is released under an open source Apache 2.0 license. Simple-Salesforce was originally written by `Nick Catalano`_ but most newer features and bugfixes come from `community contributors`_. Pull requests submitted to the `GitHub Repo`_ are highly encouraged!
 
 Authentication mechanisms were adapted from Dave Wingate's `RestForce`_ and licensed under a MIT license
 
 The latest build status can be found at `Travis CI`_
 
-.. image:: https://api.travis-ci.org/neworganizing/simple-salesforce.svg?branch=master
+.. image:: https://api.travis-ci.org/heroku/simple-salesforce.svg?branch=master
 
-.. _New Organizing Institute: http://neworganizing.com/
 .. _Nick Catalano: https://github.com/nickcatal
+.. _community contributors: https://github.com/heroku/simple-salesforce/graphs/contributors
 .. _RestForce: http://pypi.python.org/pypi/RestForce/
-.. _GitHub Repo: https://github.com/neworganizing/simple-salesforce
-.. _Travis CI: https://travis-ci.org/neworganizing/simple-salesforce
+.. _GitHub Repo: https://github.com/heroku/simple-salesforce
+.. _Travis CI: https://travis-ci.org/heroku/simple-salesforce
