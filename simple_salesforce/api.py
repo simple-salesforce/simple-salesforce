@@ -151,6 +151,11 @@ class Salesforce(object):
 
         * name -- the name of a Salesforce object type, e.g. Lead or Contact
         """
+        
+        # fix to enable serialization (https://github.com/heroku/simple-salesforce/issues/60)
+        if name.startswith('__'):
+            return super(Salesforce, self).__getattr__(name)
+
         return SFType(name, self.session_id, self.sf_instance, self.sf_version, self.proxies)
 
     # User utlity methods
