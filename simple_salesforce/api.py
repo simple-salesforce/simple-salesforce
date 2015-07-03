@@ -84,11 +84,11 @@ class Salesforce(object):
             else:
                 self.sf_instance = kwargs['instance']
 
-        elif 'username' in kwargs and 'password' in kwargs and 'organizationId' in kwargs:
+        elif 'username' in kwargs and 'password' in kwargs:
             self.auth_type = 'ipfilter'
             username = kwargs['username']
             password = kwargs['password']
-            organizationId = kwargs['organizationId']
+            organizationId = kwargs['organizationId'] if 'organizationId' in kwargs else None
 
             # Pass along the username/password to our login helper
             self.session_id, self.sf_instance = SalesforceLogin(
