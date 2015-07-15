@@ -202,7 +202,7 @@ class Salesforce(object):
             return None
         else:
             return json_result
-        
+
     # Search Functions
     def search(self, search):
         """Returns the result of a Salesforce search as a dict decoded from
@@ -319,7 +319,6 @@ class Salesforce(object):
             else:
                 result = self.query_more(previous_result['nextRecordsUrl'],
                                          identifier_is_url=True, **kwargs)
-                result['totalSize'] += previous_result['totalSize']
                 # Include the new list of records with the previous list
                 previous_result['records'].extend(result['records'])
                 result['records'] = previous_result['records']
