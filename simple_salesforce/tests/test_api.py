@@ -1,20 +1,29 @@
 """Tests for api.py"""
 
+import re
 try:
     # Python 2.6
     import unittest2 as unittest
 except ImportError:
     import unittest
 
+import httpretty
+
 try:
     # Python 2.6/2.7
+    import httplib as http
     from mock import Mock, patch
 except ImportError:
     # Python 3
+    import http.client as http
     from unittest.mock import Mock, patch
 
+import requests
+
+from simple_salesforce import tests
 from simple_salesforce.api import (
     _exception_handler,
+    Salesforce,
     SalesforceMoreThanOneRecord,
     SalesforceMalformedRequest,
     SalesforceExpiredSession,
@@ -31,6 +40,34 @@ class TestSalesforce(unittest.TestCase):
         request_patcher = patch('simple_salesforce.api.requests')
         self.mockrequest = request_patcher.start()
         self.addCleanup(request_patcher.stop)
+
+    @httpretty.activate
+    def test_custom_session_success(self):
+        httpretty.register_uri(
+            httpretty.POST,
+            re.compile(r'^https://.*$'),
+            body=tests.LOGIN_RESPONSE_SUCCESS,
+            status=http.OK
+        )
+        session_state = {
+            'called': False,
+        }
+
+        def on_response(*args, **kwargs):
+            session_state['called'] = True
+
+        session = requests.Session()
+        session.hooks = {
+            'response': on_response,
+        }
+        sf = Salesforce(
+            session=session,
+            username='foo@bar.com',
+            password='password',
+            security_token='token')
+
+        self.assertEqual(tests.SESSION_ID, sf.session_id)
+        self.assertEqual(session, sf.request)
 
 
 class TestExceptionHandler(unittest.TestCase):

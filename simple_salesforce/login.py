@@ -2,6 +2,7 @@
 
 Heavily Modified from RestForce 1.0.0
 """
+from simple_salesforce.api import DEFAULT_API_VERSION
 from simple_salesforce.util import getUniqueElementValueFromXmlString
 from simple_salesforce.util import SalesforceError
 try:
@@ -12,7 +13,10 @@ except ImportError:
 import requests
 
 
-def SalesforceLogin(**kwargs):
+def SalesforceLogin(
+        username=None, password=None, security_token=None,
+        organizationId=None, sandbox=False, sf_version=DEFAULT_API_VERSION,
+        proxies=None, session=None):
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
     the domain of the instance of Salesforce to use for the session.
@@ -29,13 +33,10 @@ def SalesforceLogin(**kwargs):
     * sf_version -- the version of the Salesforce API to use, for example
                     "27.0"
     * proxies -- the optional map of scheme to proxy server
+    * session -- Custom requests session, created in calling code. This
+                 enables the use of requets Session features not otherwise
+                 exposed by simple_salesforce.
     """
-
-    sandbox = kwargs.get('sandbox', False)
-    sf_version = kwargs.get('sf_version', '23.0')
-
-    username = kwargs['username']
-    password = kwargs['password']
 
     soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
     domain = 'test' if sandbox else 'login'
@@ -46,9 +47,7 @@ def SalesforceLogin(**kwargs):
     password = escape(password)
 
     # Check if token authentication is used
-    if 'security_token' in kwargs:
-        security_token = kwargs['security_token']
-
+    if security_token is not None:
         # Security Token Soap request body
         login_soap_request_body = """<?xml version="1.0" encoding="utf-8" ?>
         <env:Envelope
@@ -64,9 +63,7 @@ def SalesforceLogin(**kwargs):
         </env:Envelope>""".format(username=username, password=password, token=security_token)
 
     # Check if IP Filtering is used in cojuction with organizationId
-    elif 'organizationId' in kwargs:
-        organizationId = kwargs['organizationId']
-
+    elif organizationId is not None:
         # IP Filtering Login Soap request body
         login_soap_request_body = """<?xml version="1.0" encoding="utf-8" ?>
         <soapenv:Envelope
@@ -100,10 +97,10 @@ def SalesforceLogin(**kwargs):
         'charset': 'UTF-8',
         'SOAPAction': 'login'
     }
-    response = requests.post(soap_url,
+    response = (session or requests).post(soap_url,
                              login_soap_request_body,
                              headers=login_soap_request_headers,
-                             proxies=kwargs.get('proxies', None))
+                             proxies=proxies)
 
     if response.status_code != 200:
         except_code = getUniqueElementValueFromXmlString(

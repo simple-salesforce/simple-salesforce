@@ -55,6 +55,23 @@ For example:
 
 Note that specifying if you want to use a sandbox is only necessary if you are using the built-in username/password/security token authentication and is used exclusively during the authentication step.
 
+When instantiating a `Salesforce` object, it's also possible to include an
+instance of :class:`~requests.Session()`. This is to allow for specialized
+session handling not otherwise exposed by simple_salesoforce.
+
+For example:
+
+.. code-block:: python
+
+   from simple_salesforce import Salesforce
+   import requests
+
+   session = requests.Session()
+   # manipulate the session instance (optional)
+   sf = Salesforce(
+      username='user@example.com', password='password', organizationId='OrgId',
+      session=session)
+
 Record Management
 -----------------
 

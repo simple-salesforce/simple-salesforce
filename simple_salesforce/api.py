@@ -1,5 +1,10 @@
 """Core classes and exceptions for Simple-Salesforce"""
 
+
+# has to be defined prior to login import
+DEFAULT_API_VERSION = '29.0'
+
+
 import requests
 import json
 
@@ -24,7 +29,11 @@ class Salesforce(object):
     An instance of Salesforce is a handy way to wrap a Salesforce session
     for easy use of the Salesforce REST API.
     """
-    def __init__(self, **kwargs):
+    def __init__(
+            self, username=None, password=None, security_token=None,
+            session_id=None, instance=None, instance_url=None,
+            organizationId=None, sandbox=False, sf_version=DEFAULT_API_VERSION,
+            proxies=None, session=None):
         """Initialize the instance with the given parameters.
 
         Available kwargs
@@ -46,26 +55,27 @@ class Salesforce(object):
         OR
         * instance_url -- Full URL of your instance i.e. `https://na1.salesforce.com
 
-
         Universal Kwargs:
         * version -- the version of the Salesforce API to use, for example `29.0`
         * proxies -- the optional map of scheme to proxy server
+        * session -- Custom requests session, created in calling code. This
+                     enables the use of requets Session features not otherwise
+                     exposed by simple_salesforce.
+
         """
 
         # Determine if the user passed in the optional version and/or sandbox kwargs
-        self.sf_version = kwargs.get('version', '29.0')
-        self.sandbox = kwargs.get('sandbox', False)
-        self.proxies = kwargs.get('proxies')
+        self.sf_version = sf_version
+        self.sandbox = sandbox
+        self.proxies = proxies
 
         # Determine if the user wants to use our username/password auth or pass in their own information
-        if 'username' in kwargs and 'password' in kwargs and 'security_token' in kwargs:
+        if all(arg is not None for arg in (username, password, security_token)):
             self.auth_type = "password"
-            username = kwargs['username']
-            password = kwargs['password']
-            security_token = kwargs['security_token']
 
             # Pass along the username/password to our login helper
             self.session_id, self.sf_instance = SalesforceLogin(
+                session=session,
                 username=username,
                 password=password,
                 security_token=security_token,
@@ -73,25 +83,23 @@ class Salesforce(object):
                 sf_version=self.sf_version,
                 proxies=self.proxies)
 
-        elif 'session_id' in kwargs and ('instance' in kwargs or 'instance_url' in kwargs):
+        elif all(arg is not None for arg in (session_id, instance or instance_url)):
             self.auth_type = "direct"
-            self.session_id = kwargs['session_id']
+            self.session_id = session_id
 
             # If the user provides the full url (as returned by the OAuth interface for
             # example) extract the hostname (which we rely on)
-            if 'instance_url' in kwargs:
-                self.sf_instance = urlparse(kwargs['instance_url']).hostname
+            if instance_url is not None:
+                self.sf_instance = urlparse(instance_url).hostname
             else:
-                self.sf_instance = kwargs['instance']
+                self.sf_instance = instance
 
-        elif 'username' in kwargs and 'password' in kwargs and 'organizationId' in kwargs:
+        elif all(arg is not None for arg in (username, password, organizationId)):
             self.auth_type = 'ipfilter'
-            username = kwargs['username']
-            password = kwargs['password']
-            organizationId = kwargs['organizationId']
 
             # Pass along the username/password to our login helper
             self.session_id, self.sf_instance = SalesforceLogin(
+                session=session,
                 username=username,
                 password=password,
                 organizationId=organizationId,
@@ -109,7 +117,7 @@ class Salesforce(object):
         else:
             self.auth_site = 'https://login.salesforce.com'
 
-        self.request = requests.Session()
+        self.request = session or requests.Session()
         self.request.proxies = self.proxies
         self.headers = {
             'Content-Type': 'application/json',
