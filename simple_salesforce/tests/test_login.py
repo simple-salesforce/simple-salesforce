@@ -1,20 +1,29 @@
 """Tests for login.py"""
 
+import re
 try:
     import unittest2 as unittest
 except ImportError:
     import unittest
 
+import httpretty
+import requests
 try:
     # Python 2.6/2.7
+    import httplib as http
+    from urlparse import urlparse
     from mock import Mock, patch
 except ImportError:
     # Python 3
+    import http.client as http
     from unittest.mock import Mock, patch
+    from urllib.parse import urlparse
 
+from simple_salesforce import tests
 from simple_salesforce.login import (
     SalesforceLogin, SalesforceAuthenticationFailed
 )
+
 
 
 class TestSalesforceLogin(unittest.TestCase):
@@ -24,6 +33,34 @@ class TestSalesforceLogin(unittest.TestCase):
         request_patcher = patch('simple_salesforce.login.requests')
         self.mockrequest = request_patcher.start()
         self.addCleanup(request_patcher.stop)
+
+    @httpretty.activate
+    def test_custom_session_success(self):
+        httpretty.register_uri(
+            httpretty.POST,
+            re.compile(r'^https://.*$'),
+            body=tests.LOGIN_RESPONSE_SUCCESS,
+            status=http.OK
+        )
+        session_state = {
+            'used': False,
+        }
+
+        def on_response(*args, **kwargs):
+            session_state['used'] = True
+
+        session = requests.Session()
+        session.hooks = {
+            'response': on_response,
+        }
+        session_id, instance = SalesforceLogin(
+            session=session,
+            username='foo@bar.com',
+            password='password',
+            security_token='token')
+        self.assertTrue(session_state['used'])
+        self.assertEqual(session_id, tests.SESSION_ID)
+        self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
 
     def test_failure(self):
         """Test A Failed Login Response"""
