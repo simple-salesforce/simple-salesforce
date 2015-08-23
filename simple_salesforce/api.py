@@ -159,6 +159,11 @@ class Salesforce(object):
 
         * name -- the name of a Salesforce object type, e.g. Lead or Contact
         """
+        
+        # fix to enable serialization (https://github.com/heroku/simple-salesforce/issues/60)
+        if name.startswith('__'):
+            return super(Salesforce, self).__getattr__(name)
+
         return SFType(name, self.session_id, self.sf_instance, self.sf_version, self.proxies)
 
     # User utlity methods
@@ -441,6 +446,20 @@ class SFType(object):
         * record_id -- the Id of the SObject to get
         """
         result = self._call_salesforce('GET', self.base_url + record_id)
+        return result.json(object_pairs_hook=OrderedDict)
+
+    def get_by_custom_id(self, custom_id_field, custom_id):
+        """Returns the result of a GET to `.../{object_name}/{custom_id_field}/{custom_id}` as a
+        dict decoded from the JSON payload returned by Salesforce.
+
+        Arguments:
+
+        * custom_id_field -- the API name of a custom field that was defined as an External ID
+        * custom_id - the External ID value of the SObject to get
+        """
+        custom_url = self.base_url + '{custom_id_field}/{custom_id}'.format(
+            custom_id_field=custom_id_field, custom_id=custom_id)
+        result = self._call_salesforce('GET', custom_url)
         return result.json(object_pairs_hook=OrderedDict)
 
     def create(self, data):

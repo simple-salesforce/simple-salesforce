@@ -89,6 +89,12 @@ To get a dictionary with all the information regarding that record, use:
 
     contact = sf.Contact.get('003e0000003GuNXAA0')
 
+To get a dictionary with all the information regarding that record, using a **custom** field that was defined as External ID:
+
+.. code-block:: python
+
+    contact = sf.Contact.get_by_custom_id('My_Custom_ID__c', '22')
+
 To change that contact's last name from 'Smith' to 'Jones' and add a first name of 'John' use:
 
 .. code-block:: python
