@@ -56,7 +56,7 @@ For example:
 Note that specifying if you want to use a sandbox is only necessary if you are using the built-in username/password/security token authentication and is used exclusively during the authentication step.
 
 When instantiating a `Salesforce` object, it's also possible to include an
-instance of :class:`~requests.Session()`. This is to allow for specialized
+instance of `requests.Session`. This is to allow for specialized
 session handling not otherwise exposed by simple_salesoforce.
 
 For example:
