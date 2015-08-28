@@ -345,7 +345,6 @@ class Salesforce(object):
             else:
                 result = self.query_more(previous_result['nextRecordsUrl'],
                                          identifier_is_url=True, **kwargs)
-                result['totalSize'] += previous_result['totalSize']
                 # Include the new list of records with the previous list
                 previous_result['records'].extend(result['records'])
                 result['records'] = previous_result['records']
