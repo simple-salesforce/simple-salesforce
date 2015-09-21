@@ -164,7 +164,7 @@ class Salesforce(object):
         if name.startswith('__'):
             return super(Salesforce, self).__getattr__(name)
 
-        return SFType(name, self.session_id, self.sf_instance, self.sf_version, self.proxies)
+        return SFType(name, self.session_id, self.sf_instance, self.sf_version, self.proxies, self.headers)
 
     # User utlity methods
     def set_password(self, user, password):
@@ -394,7 +394,7 @@ class Salesforce(object):
 class SFType(object):
     """An interface to a specific type of SObject"""
 
-    def __init__(self, object_name, session_id, sf_instance, sf_version='27.0', proxies=None):
+    def __init__(self, object_name, session_id, sf_instance, sf_version='27.0', proxies=None, headers=None):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -410,6 +410,12 @@ class SFType(object):
         self.name = object_name
         self.request = requests.Session()
         self.request.proxies = proxies
+
+        self.headers = headers if headers else {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + self.session_id,
+              'X-PrettyPrint': '1'
+          }
 
         self.base_url = (u'https://{instance}/services/data/v{sf_version}/sobjects/{object_name}/'
                          .format(instance=sf_instance,
@@ -565,12 +571,8 @@ class SFType(object):
 
         Returns a `requests.result` object.
         """
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + self.session_id,
-            'X-PrettyPrint': '1'
-        }
-        result = self.request.request(method, url, headers=headers, **kwargs)
+
+        result = self.request.request(method, url, headers=self.headers, **kwargs)
 
         if result.status_code >= 300:
             _exception_handler(result, self.name)
