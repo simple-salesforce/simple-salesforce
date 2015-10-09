@@ -405,17 +405,19 @@ class SFType(object):
         * sf_instance -- the domain of the instance of Salesforce to use
         * sf_version -- the version of the Salesforce API to use
         * proxies -- the optional map of scheme to proxy server
+        * headers -- optional custom headers to pass in
         """
         self.session_id = session_id
         self.name = object_name
         self.request = requests.Session()
         self.request.proxies = proxies
 
-        self.headers = headers if headers else {
+        self.headers = {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer ' + self.session_id,
               'X-PrettyPrint': '1'
           }
+        self.headers.update(headers) if headers else None
 
         self.base_url = (u'https://{instance}/services/data/v{sf_version}/sobjects/{object_name}/'
                          .format(instance=sf_instance,
