@@ -2,6 +2,8 @@
 Simple Salesforce
 *****************
 
+.. image:: https://api.travis-ci.org/heroku/simple-salesforce.svg?branch=master
+
 Simple Salesforce is a basic Salesforce.com REST API client built for Python 2.6, 2.7, 3.3 and 3.4. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
 
 You can find out more regarding the format of the results in the `Official Salesforce.com REST API Documentation`_
@@ -282,8 +284,6 @@ This package is released under an open source Apache 2.0 license. Simple-Salesfo
 Authentication mechanisms were adapted from Dave Wingate's `RestForce`_ and licensed under a MIT license
 
 The latest build status can be found at `Travis CI`_
-
-.. image:: https://api.travis-ci.org/heroku/simple-salesforce.svg?branch=master
 
 .. _Nick Catalano: https://github.com/nickcatal
 .. _community contributors: https://github.com/heroku/simple-salesforce/graphs/contributors

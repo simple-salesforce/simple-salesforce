@@ -8,18 +8,15 @@ python:
   - "pypy"
 # command to install dependencies (mock & nose are already installed)
 install:
-  - pip install .
-  - pip install pylint
+  - pip install tox
 # command to run tests
-script: python setup.py test
+script: tox
 matrix:
   fast_finish: true
   allow_failures:
     # Python 3.2 doesn't appear to work. With 3.3 and 3.4 in the world this
     # probably isn't a priority, but lets keep an eye on it anyways
     - python: "3.2"
-after_success:
-  - pylint --rcfile=.pylintrc simple_salesforce
 # turn off email notifications
 notifications:
   email: false
@@ -33,3 +30,6 @@ deploy:
     tags: true
     all_branches: true
     repo: heroku/simple-salesforce
+env:
+  - TOXENV=unit
+  - TOXENV=static

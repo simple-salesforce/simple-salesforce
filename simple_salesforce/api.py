@@ -23,12 +23,14 @@ except ImportError:
     from ordereddict import OrderedDict
 
 
+# pylint: disable=too-many-instance-attributes
 class Salesforce(object):
     """Salesforce Instance
 
     An instance of Salesforce is a handy way to wrap a Salesforce session
     for easy use of the Salesforce REST API.
     """
+    # pylint: disable=too-many-arguments
     def __init__(
             self, username=None, password=None, security_token=None,
             session_id=None, instance=None, instance_url=None,
@@ -51,12 +53,15 @@ class Salesforce(object):
         * session_id -- Access token for this session
 
         Then either
-        * instance -- Domain of your Salesforce instance, i.e. `na1.salesforce.com`
+        * instance -- Domain of your Salesforce instance, i.e.
+          `na1.salesforce.com`
         OR
-        * instance_url -- Full URL of your instance i.e. `https://na1.salesforce.com
+        * instance_url -- Full URL of your instance i.e.
+          `https://na1.salesforce.com
 
         Universal Kwargs:
-        * version -- the version of the Salesforce API to use, for example `29.0`
+        * version -- the version of the Salesforce API to use, for example
+                     `29.0`
         * proxies -- the optional map of scheme to proxy server
         * session -- Custom requests session, created in calling code. This
                      enables the use of requets Session features not otherwise
@@ -64,13 +69,16 @@ class Salesforce(object):
 
         """
 
-        # Determine if the user passed in the optional version and/or sandbox kwargs
+        # Determine if the user passed in the optional version and/or sandbox
+        # kwargs
         self.sf_version = sf_version
         self.sandbox = sandbox
         self.proxies = proxies
 
-        # Determine if the user wants to use our username/password auth or pass in their own information
-        if all(arg is not None for arg in (username, password, security_token)):
+        # Determine if the user wants to use our username/password auth or pass
+        # in their own information
+        if all(arg is not None for arg in (
+                username, password, security_token)):
             self.auth_type = "password"
 
             # Pass along the username/password to our login helper
@@ -83,18 +91,20 @@ class Salesforce(object):
                 sf_version=self.sf_version,
                 proxies=self.proxies)
 
-        elif all(arg is not None for arg in (session_id, instance or instance_url)):
+        elif all(arg is not None for arg in (
+                session_id, instance or instance_url)):
             self.auth_type = "direct"
             self.session_id = session_id
 
-            # If the user provides the full url (as returned by the OAuth interface for
-            # example) extract the hostname (which we rely on)
+            # If the user provides the full url (as returned by the OAuth
+            # interface for example) extract the hostname (which we rely on)
             if instance_url is not None:
                 self.sf_instance = urlparse(instance_url).hostname
             else:
                 self.sf_instance = instance
 
-        elif all(arg is not None for arg in (username, password, organizationId)):
+        elif all(arg is not None for arg in (
+                username, password, organizationId)):
             self.auth_type = 'ipfilter'
 
             # Pass along the username/password to our login helper
@@ -132,6 +142,8 @@ class Salesforce(object):
                          .format(instance=self.sf_instance))
 
     def describe(self):
+        """Describes all available objects
+        """
         url = self.base_url + "sobjects"
         result = self.request.get(url, headers=self.headers)
         if result.status_code != 200:
@@ -159,12 +171,15 @@ class Salesforce(object):
 
         * name -- the name of a Salesforce object type, e.g. Lead or Contact
         """
-        
-        # fix to enable serialization (https://github.com/heroku/simple-salesforce/issues/60)
+
+        # fix to enable serialization
+        # (https://github.com/heroku/simple-salesforce/issues/60)
         if name.startswith('__'):
             return super(Salesforce, self).__getattr__(name)
 
-        return SFType(name, self.session_id, self.sf_instance, self.sf_version, self.proxies)
+        return SFType(
+            name, self.session_id, self.sf_instance, self.sf_version,
+            self.proxies)
 
     # User utlity methods
     def set_password(self, user, password):
@@ -180,9 +195,10 @@ class Salesforce(object):
         """
 
         url = self.base_url + 'sobjects/User/%s/password' % user
-        params = { 'NewPassword' : password, }
+        params = {'NewPassword': password}
 
-        result = self.request.post(url, headers=self.headers, data=json.dumps(params))
+        result = self.request.post(
+            url, headers=self.headers, data=json.dumps(params))
 
         # salesforce return 204 No Content when the request is successful
         if result.status_code != 200 and result.status_code != 204:
@@ -196,10 +212,24 @@ class Salesforce(object):
         else:
             return json_result
 
+    # pylint: disable=invalid-name
     def setPassword(self, user, password):
+        # pylint: disable=line-too-long
+        """Sets the password of a user
+
+        salesforce dev documentation link:
+        https://www.salesforce.com/us/developer/docs/api_rest/Content/dome_sobject_user_password.htm
+
+        Arguments:
+
+        * user: the userID of the user to set
+        * password: the new password
+        """
         import warnings
         warnings.warn(
-            "This method has been deprecated. Please use set_password instread.", DeprecationWarning)
+            "This method has been deprecated."
+            "Please use set_password instread.",
+            DeprecationWarning)
         return self.set_password(user, password)
 
     # Generic Rest Function
@@ -278,14 +308,16 @@ class Salesforce(object):
         url = self.base_url + 'query/'
         params = {'q': query}
         # `requests` will correctly encode the query string passed as `params`
-        result = self.request.get(url, headers=self.headers, params=params, **kwargs)
+        result = self.request.get(
+            url, headers=self.headers, params=params, **kwargs)
 
         if result.status_code != 200:
             _exception_handler(result)
 
         return result.json(object_pairs_hook=OrderedDict)
 
-    def query_more(self, next_records_identifier, identifier_is_url=False, **kwargs):
+    def query_more(
+            self, next_records_identifier, identifier_is_url=False, **kwargs):
         """Retrieves more results from a query that returned more results
         than the batch maximum. Returns a dict decoded from the Salesforce
         response JSON payload.
@@ -374,6 +406,7 @@ class Salesforce(object):
         if result.status_code == 200:
             try:
                 response_content = result.json()
+            # pylint: disable=broad-except
             except Exception:
                 response_content = result.text
             return response_content
@@ -383,7 +416,8 @@ class Salesforce(object):
 
         Returns a `requests.result` object.
         """
-        result = self.request.request(method, url, headers=self.headers, **kwargs)
+        result = self.request.request(
+            method, url, headers=self.headers, **kwargs)
 
         if result.status_code >= 300:
             _exception_handler(result)
@@ -394,7 +428,10 @@ class Salesforce(object):
 class SFType(object):
     """An interface to a specific type of SObject"""
 
-    def __init__(self, object_name, session_id, sf_instance, sf_version='27.0', proxies=None):
+    # pylint: disable=too-many-arguments
+    def __init__(
+            self, object_name, session_id, sf_instance, sf_version='27.0',
+            proxies=None):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -411,10 +448,11 @@ class SFType(object):
         self.request = requests.Session()
         self.request.proxies = proxies
 
-        self.base_url = (u'https://{instance}/services/data/v{sf_version}/sobjects/{object_name}/'
-                         .format(instance=sf_instance,
-                                 object_name=object_name,
-                                 sf_version=sf_version))
+        self.base_url = (
+            u'https://{instance}/services/data/v{sf_version}/sobjects'
+            '/{object_name}/'.format(instance=sf_instance,
+                                     object_name=object_name,
+                                     sf_version=sf_version))
 
     def metadata(self):
         """Returns the result of a GET to `.../{object_name}/` as a dict
@@ -431,10 +469,14 @@ class SFType(object):
         return result.json(object_pairs_hook=OrderedDict)
 
     def describe_layout(self, record_id):
-        """Returns the result of a GET to `.../{object_name}/describe/layouts/<recordid>` as a
-        dict decoded from the JSON payload returned by Salesforce.
+        """Returns the layout of the object
+
+        Returns the result of a GET to
+        `.../{object_name}/describe/layouts/<recordid>` as a dict decoded from
+        the JSON payload returned by Salesforce.
         """
-        result = self._call_salesforce('GET', self.base_url + 'describe/layouts/' + record_id)
+        result = self._call_salesforce(
+            'GET', self.base_url + 'describe/layouts/' + record_id)
         return result.json(object_pairs_hook=OrderedDict)
 
     def get(self, record_id):
@@ -449,12 +491,16 @@ class SFType(object):
         return result.json(object_pairs_hook=OrderedDict)
 
     def get_by_custom_id(self, custom_id_field, custom_id):
-        """Returns the result of a GET to `.../{object_name}/{custom_id_field}/{custom_id}` as a
-        dict decoded from the JSON payload returned by Salesforce.
+        """Return an ``SFType`` by custom ID
+
+        Returns the result of a GET to
+        `.../{object_name}/{custom_id_field}/{custom_id}` as a dict decoded
+        from the JSON payload returned by Salesforce.
 
         Arguments:
 
-        * custom_id_field -- the API name of a custom field that was defined as an External ID
+        * custom_id_field -- the API name of a custom field that was defined
+                             as an External ID
         * custom_id - the External ID value of the SObject to get
         """
         custom_url = self.base_url + '{custom_id_field}/{custom_id}'.format(
@@ -535,8 +581,12 @@ class SFType(object):
         return self._raw_response(result, raw_response)
 
     def deleted(self, start, end):
-        """Use the SObject Get Deleted resource to get a list of deleted records for the specified object.
-         .../deleted/?start=2013-05-05T00:00:00+00:00&end=2013-05-10T00:00:00+00:00
+        # pylint: disable=line-too-long
+        """Gets a list of deleted records
+
+        Use the SObject Get Deleted resource to get a list of deleted records
+        for the specified object.
+        .../deleted/?start=2013-05-05T00:00:00+00:00&end=2013-05-10T00:00:00+00:00
 
         * start -- start datetime object
         * end -- end datetime object
@@ -547,8 +597,11 @@ class SFType(object):
         return result.json(object_pairs_hook=OrderedDict)
 
     def updated(self, start, end):
-        """Use the SObject Get Updated resource to get a list of updated (modified or added)
-        records for the specified object.
+        # pylint: disable=line-too-long
+        """Gets a list of updated records
+
+        Use the SObject Get Updated resource to get a list of updated
+        (modified or added) records for the specified object.
 
          .../updated/?start=2014-03-20T00:00:00+00:00&end=2014-03-22T00:00:00+00:00
 
@@ -577,6 +630,7 @@ class SFType(object):
 
         return result
 
+    # pylint: disable=no-self-use
     def _raw_response(self, response, body_flag):
         """Utility method for processing the response and returning either the
         status code or the response object.
@@ -592,10 +646,12 @@ class SFType(object):
 class SalesforceAPI(Salesforce):
     """Depreciated SalesforceAPI Instance
 
-    This class implements the Username/Password Authentication Mechanism using Arguments
-    It has since been surpassed by the 'Salesforce' class, which relies on kwargs
+    This class implements the Username/Password Authentication Mechanism using
+    Arguments It has since been surpassed by the 'Salesforce' class, which
+    relies on kwargs
 
     """
+    # pylint: disable=too-many-arguments
     def __init__(self, username, password, security_token, sandbox=False,
                  sf_version='27.0'):
         """Initialize the instance with the given parameters.
@@ -627,6 +683,7 @@ def _exception_handler(result, name=""):
     """Exception router. Determines which error to raise for bad results"""
     try:
         response_content = result.json()
+    # pylint: disable=broad-except
     except Exception:
         response_content = result.text
 
@@ -654,7 +711,8 @@ class SalesforceMoreThanOneRecord(SalesforceError):
 class SalesforceMalformedRequest(SalesforceError):
     """
     Error Code: 400
-    The request couldn't be understood, usually becaue the JSON or XML body contains an error.
+    The request couldn't be understood, usually becaue the JSON or XML body
+    contains an error.
     """
     message = u"Malformed request {url}. Response content: {content}"
 
