@@ -34,7 +34,7 @@ class Salesforce(object):
     def __init__(
             self, username=None, password=None, security_token=None,
             session_id=None, instance=None, instance_url=None,
-            organizationId=None, sandbox=False, sf_version=DEFAULT_API_VERSION,
+            organizationId=None, sandbox=False, version=DEFAULT_API_VERSION,
             proxies=None, session=None):
         """Initialize the instance with the given parameters.
 
@@ -69,9 +69,8 @@ class Salesforce(object):
 
         """
 
-        # Determine if the user passed in the optional version and/or sandbox
-        # kwargs
-        self.sf_version = sf_version
+        # Determine if the user passed in the optional version and/or sandbox kwargs
+        self.sf_version = version
         self.sandbox = sandbox
         self.proxies = proxies
 
