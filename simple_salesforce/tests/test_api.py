@@ -73,6 +73,7 @@ class TestSalesforce(unittest.TestCase):
 
     @httpretty.activate
     def test_custom_version_success(self):
+        """Test custom version"""
         httpretty.register_uri(
             httpretty.POST,
             re.compile(r'^https://.*$'),
@@ -82,13 +83,13 @@ class TestSalesforce(unittest.TestCase):
 
         # Use an invalid version that is guaranteed to never be used
         expected_version = '4.2'
-        sf = Salesforce(
+        client = Salesforce(
             session=requests.Session(), username='foo@bar.com',
             password='password', security_token='token',
             version=expected_version)
 
         self.assertEqual(
-            sf.base_url.split('/')[-2], 'v%s' % expected_version)
+            client.base_url.split('/')[-2], 'v%s' % expected_version)
 
 
 class TestExceptionHandler(unittest.TestCase):

@@ -69,7 +69,8 @@ class Salesforce(object):
 
         """
 
-        # Determine if the user passed in the optional version and/or sandbox kwargs
+        # Determine if the user passed in the optional version and/or sandbox
+        # kwargs
         self.sf_version = version
         self.sandbox = sandbox
         self.proxies = proxies

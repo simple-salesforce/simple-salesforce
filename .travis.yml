@@ -17,6 +17,8 @@ matrix:
     # Python 3.2 doesn't appear to work. With 3.3 and 3.4 in the world this
     # probably isn't a priority, but lets keep an eye on it anyways
     - python: "3.2"
+    # pylint doesn't run under 2.6. this can be solved later.
+    - python: "2.6"
 # turn off email notifications
 notifications:
   email: false
