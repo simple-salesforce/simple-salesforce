@@ -43,6 +43,7 @@ class TestSalesforce(unittest.TestCase):
 
     @httpretty.activate
     def test_custom_session_success(self):
+        """Ensure custom session is used"""
         httpretty.register_uri(
             httpretty.POST,
             re.compile(r'^https://.*$'),
@@ -53,6 +54,7 @@ class TestSalesforce(unittest.TestCase):
             'called': False,
         }
 
+        # pylint: disable=unused-argument,missing-docstring
         def on_response(*args, **kwargs):
             session_state['called'] = True
 
@@ -60,14 +62,14 @@ class TestSalesforce(unittest.TestCase):
         session.hooks = {
             'response': on_response,
         }
-        sf = Salesforce(
+        client = Salesforce(
             session=session,
             username='foo@bar.com',
             password='password',
             security_token='token')
 
-        self.assertEqual(tests.SESSION_ID, sf.session_id)
-        self.assertEqual(session, sf.request)
+        self.assertEqual(tests.SESSION_ID, client.session_id)
+        self.assertEqual(session, client.request)
 
 
 class TestExceptionHandler(unittest.TestCase):

@@ -3,19 +3,22 @@
 import xml.dom.minidom
 
 
+# pylint: disable=invalid-name
 def getUniqueElementValueFromXmlString(xmlString, elementName):
     """
     Extracts an element value from an XML string.
 
     For example, invoking
-    getUniqueElementValueFromXmlString('<?xml version="1.0" encoding="UTF-8"?><foo>bar</foo>', 'foo')
+    getUniqueElementValueFromXmlString(
+        '<?xml version="1.0" encoding="UTF-8"?><foo>bar</foo>', 'foo')
     should return the value 'bar'.
     """
     xmlStringAsDom = xml.dom.minidom.parseString(xmlString)
     elementsByName = xmlStringAsDom.getElementsByTagName(elementName)
     elementValue = None
     if len(elementsByName) > 0:
-        elementValue = elementsByName[0].toxml().replace('<' + elementName + '>', '').replace('</' + elementName + '>', '')
+        elementValue = elementsByName[0].toxml().replace(
+            '<' + elementName + '>', '').replace('</' + elementName + '>', '')
     return elementValue
 
 
@@ -38,6 +41,9 @@ class SalesforceError(Exception):
     message = u'Unknown error occurred for {url}. Response content: {content}'
 
     def __init__(self, url, status, resource_name, content):
+        # TODO exceptions don't seem to be using parent constructors at all.
+        # this should be fixed.
+        # pylint: disable=super-init-not-called
         self.url = url
         self.status = status
         self.resource_name = resource_name
