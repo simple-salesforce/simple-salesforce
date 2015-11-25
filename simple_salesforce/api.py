@@ -7,6 +7,7 @@ DEFAULT_API_VERSION = '29.0'
 
 import requests
 import json
+import sys
 
 try:
     from urlparse import urlparse
@@ -139,7 +140,11 @@ class Salesforce(object):
                                          'describe',
                                          result.status_code,
                                          result.content)
-        json_result = result.json(object_pairs_hook=OrderedDict)
+        #Python 2.6 doesn't like OrderedDict
+        if sys.version_info[0:2] <= (2, 6):
+            json_result = result.json()
+        else:
+            json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
         else:
@@ -190,7 +195,11 @@ class Salesforce(object):
                                          'User',
                                          result.status_code,
                                          result.content)
-        json_result = result.json(object_pairs_hook=OrderedDict)
+        #Python 2.6 doesn't like OrderedDict
+        if sys.version_info[0:2] <= (2, 6):
+            json_result = result.json()
+        else:
+            json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
         else:
@@ -220,7 +229,11 @@ class Salesforce(object):
                                          path,
                                          result.status_code,
                                          result.content)
-        json_result = result.json(object_pairs_hook=OrderedDict)
+        #Python 2.6 doesn't like OrderedDict
+        if sys.version_info[0:2] <= (2, 6):
+            json_result = result.json()
+        else:
+            json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
         else:
@@ -246,7 +259,11 @@ class Salesforce(object):
                                          'search',
                                          result.status_code,
                                          result.content)
-        json_result = result.json(object_pairs_hook=OrderedDict)
+        #Python 2.6 doesn't like OrderedDict
+        if sys.version_info[0:2] <= (2, 6):
+            json_result = result.json()
+        else:
+            json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
         else:
@@ -283,6 +300,9 @@ class Salesforce(object):
         if result.status_code != 200:
             _exception_handler(result)
 
+        #Python 2.6 doesn't like OrderedDict
+        if sys.version_info[0:2] <= (2, 6):
+            return result.json()
         return result.json(object_pairs_hook=OrderedDict)
 
     def query_more(self, next_records_identifier, identifier_is_url=False, **kwargs):
@@ -313,6 +333,9 @@ class Salesforce(object):
         if result.status_code != 200:
             _exception_handler(result)
 
+        #Python 2.6 doesn't like OrderedDict
+        if sys.version_info[0:2] <= (2, 6):
+            return result.json()
         return result.json(object_pairs_hook=OrderedDict)
 
     def query_all(self, query, **kwargs):
@@ -421,6 +444,9 @@ class SFType(object):
         decoded from the JSON payload returned by Salesforce.
         """
         result = self._call_salesforce('GET', self.base_url)
+        #Python 2.6 doesn't like OrderedDict
+        if sys.version_info[0:2] <= (2, 6):
+            return result.json()
         return result.json(object_pairs_hook=OrderedDict)
 
     def describe(self):
@@ -428,6 +454,9 @@ class SFType(object):
         dict decoded from the JSON payload returned by Salesforce.
         """
         result = self._call_salesforce('GET', self.base_url + 'describe')
+        #Python 2.6 doesn't like OrderedDict
+        if sys.version_info[0:2] <= (2, 6):
+            return result.json()
         return result.json(object_pairs_hook=OrderedDict)
 
     def describe_layout(self, record_id):
@@ -435,6 +464,9 @@ class SFType(object):
         dict decoded from the JSON payload returned by Salesforce.
         """
         result = self._call_salesforce('GET', self.base_url + 'describe/layouts/' + record_id)
+        #Python 2.6 doesn't like OrderedDict
+        if sys.version_info[0:2] <= (2, 6):
+            return result.json()
         return result.json(object_pairs_hook=OrderedDict)
 
     def get(self, record_id):
@@ -446,6 +478,9 @@ class SFType(object):
         * record_id -- the Id of the SObject to get
         """
         result = self._call_salesforce('GET', self.base_url + record_id)
+        #Python 2.6 doesn't like OrderedDict
+        if sys.version_info[0:2] <= (2, 6):
+            return result.json()
         return result.json(object_pairs_hook=OrderedDict)
 
     def get_by_custom_id(self, custom_id_field, custom_id):
@@ -460,6 +495,9 @@ class SFType(object):
         custom_url = self.base_url + '{custom_id_field}/{custom_id}'.format(
             custom_id_field=custom_id_field, custom_id=custom_id)
         result = self._call_salesforce('GET', custom_url)
+        #Python 2.6 doesn't like OrderedDict
+        if sys.version_info[0:2] <= (2, 6):
+            return result.json()
         return result.json(object_pairs_hook=OrderedDict)
 
     def create(self, data):
@@ -474,6 +512,9 @@ class SFType(object):
         """
         result = self._call_salesforce('POST', self.base_url,
                                        data=json.dumps(data))
+        #Python 2.6 doesn't like OrderedDict
+        if sys.version_info[0:2] <= (2, 6):
+            return result.json()
         return result.json(object_pairs_hook=OrderedDict)
 
     def upsert(self, record_id, data, raw_response=False):
@@ -544,6 +585,9 @@ class SFType(object):
         url = self.base_url + 'deleted/?start={start}&end={end}'.format(
             start=date_to_iso8601(start), end=date_to_iso8601(end))
         result = self._call_salesforce('GET', url)
+        #Python 2.6 doesn't like OrderedDict
+        if sys.version_info[0:2] <= (2, 6):
+            return result.json()
         return result.json(object_pairs_hook=OrderedDict)
 
     def updated(self, start, end):
@@ -558,6 +602,9 @@ class SFType(object):
         url = self.base_url + 'updated/?start={start}&end={end}'.format(
             start=date_to_iso8601(start), end=date_to_iso8601(end))
         result = self._call_salesforce('GET', url)
+        #Python 2.6 doesn't like OrderedDict
+        if sys.version_info[0:2] <= (2, 6):
+            return result.json()
         return result.json(object_pairs_hook=OrderedDict)
 
     def _call_salesforce(self, method, url, **kwargs):
