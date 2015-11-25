@@ -301,7 +301,7 @@ class Salesforce(object):
             _exception_handler(result)
 
         #Python 2.6 doesn't like OrderedDict
-	if sys.version_info[0:2] <= (2, 6):
+        if sys.version_info[0:2] <= (2, 6):
             return result.json()
         return result.json(object_pairs_hook=OrderedDict)
 
