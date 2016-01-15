@@ -36,6 +36,7 @@ class TestSalesforceLogin(unittest.TestCase):
 
     @httpretty.activate
     def test_custom_session_success(self):
+        """Test custom session"""
         httpretty.register_uri(
             httpretty.POST,
             re.compile(r'^https://.*$'),
@@ -46,6 +47,7 @@ class TestSalesforceLogin(unittest.TestCase):
             'used': False,
         }
 
+        # pylint: disable=missing-docstring,unused-argument
         def on_response(*args, **kwargs):
             session_state['used'] = True
 
@@ -71,7 +73,7 @@ class TestSalesforceLogin(unittest.TestCase):
         self.mockrequest.post.return_value = return_mock
 
         with self.assertRaises(SalesforceAuthenticationFailed):
-            session_id, instance = SalesforceLogin(
+            SalesforceLogin(
                 username='myemail@example.com.sandbox',
                 password='password',
                 security_token='token',

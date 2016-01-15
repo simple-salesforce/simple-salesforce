@@ -1,4 +1,5 @@
 """Simple-Salesforce Tests"""
+# pylint: disable=line-too-long
 
 SESSION_ID = '12345'
 METADATA_URL = 'https://na15.salesforce.com/services/Soap/m/29.0/00Di0000000icUB'

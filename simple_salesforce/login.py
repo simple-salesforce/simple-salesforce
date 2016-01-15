@@ -13,6 +13,7 @@ except ImportError:
 import requests
 
 
+# pylint: disable=invalid-name,too-many-arguments,too-many-locals
 def SalesforceLogin(
         username=None, password=None, security_token=None,
         organizationId=None, sandbox=False, sf_version=DEFAULT_API_VERSION,
@@ -60,9 +61,10 @@ def SalesforceLogin(
                     <n1:password>{password}{token}</n1:password>
                 </n1:login>
             </env:Body>
-        </env:Envelope>""".format(username=username, password=password, token=security_token)
+        </env:Envelope>""".format(
+            username=username, password=password, token=security_token)
 
-    # Check if IP Filtering is used in cojuction with organizationId
+    # Check if IP Filtering is used in conjuction with organizationId
     elif organizationId is not None:
         # IP Filtering Login Soap request body
         login_soap_request_body = """<?xml version="1.0" encoding="utf-8" ?>
@@ -86,7 +88,7 @@ def SalesforceLogin(
             </soapenv:Body>
         </soapenv:Envelope>""".format(
             username=username, password=password, organizationId=organizationId)
-    elif 'organizationId' in kwargs:
+    elif username is not None and password is not None:
         # IP Filtering for non self-service users
         login_soap_request_body = """<?xml version="1.0" encoding="utf-8" ?>
         <soapenv:Envelope
@@ -108,7 +110,10 @@ def SalesforceLogin(
             username=username, password=password)
     else:
         except_code = 'INVALID AUTH'
-        except_msg = 'You must submit either a security token or organizationId for authentication'
+        except_msg = (
+            'You must submit either a security token or organizationId for '
+            'authentication'
+        )
         raise SalesforceAuthenticationFailed(except_code, except_msg)
 
     login_soap_request_headers = {
@@ -116,10 +121,9 @@ def SalesforceLogin(
         'charset': 'UTF-8',
         'SOAPAction': 'login'
     }
-    response = (session or requests).post(soap_url,
-                             login_soap_request_body,
-                             headers=login_soap_request_headers,
-                             proxies=proxies)
+    response = (session or requests).post(
+        soap_url, login_soap_request_body, headers=login_soap_request_headers,
+        proxies=proxies)
 
     if response.status_code != 200:
         except_code = getUniqueElementValueFromXmlString(
@@ -128,8 +132,10 @@ def SalesforceLogin(
             response.content, 'sf:exceptionMessage')
         raise SalesforceAuthenticationFailed(except_code, except_msg)
 
-    session_id = getUniqueElementValueFromXmlString(response.content, 'sessionId')
-    server_url = getUniqueElementValueFromXmlString(response.content, 'serverUrl')
+    session_id = getUniqueElementValueFromXmlString(
+        response.content, 'sessionId')
+    server_url = getUniqueElementValueFromXmlString(
+        response.content, 'serverUrl')
 
     sf_instance = (server_url
                    .replace('http://', '')
@@ -145,6 +151,9 @@ class SalesforceAuthenticationFailed(SalesforceError):
     Thrown to indicate that authentication with Salesforce failed.
     """
     def __init__(self, code, message):
+        # TODO exceptions don't seem to be using parent constructors at all.
+        # this should be fixed.
+        # pylint: disable=super-init-not-called
         self.code = code
         self.message = message
 

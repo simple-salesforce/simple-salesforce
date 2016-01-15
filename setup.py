@@ -18,7 +18,7 @@ setup(
     version='0.68.1',
     author='Nick Catalano',
     packages=['simple_salesforce',],
-    url='https://github.com/neworganizing/simple-salesforce',
+    url='https://github.com/heroku/simple-salesforce',
     license='Apache 2.0',
     description=("Simple Salesforce is a basic Salesforce.com REST API client. "
         "The goal is to provide a very low-level interface to the API, "

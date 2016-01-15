@@ -6,7 +6,9 @@ except ImportError:
 
 import datetime
 import pytz
-from simple_salesforce.util import getUniqueElementValueFromXmlString, date_to_iso8601
+from simple_salesforce.util import (
+    getUniqueElementValueFromXmlString, date_to_iso8601
+)
 
 
 class TestXMLParser(unittest.TestCase):
@@ -18,6 +20,7 @@ class TestXMLParser(unittest.TestCase):
         self.assertEqual(result, 'bar')
 
     def test_date_to_iso8601(self):
+        """Test date converstion"""
         date = pytz.UTC.localize(datetime.datetime(2014, 3, 22, 00, 00, 00, 0))
         result = date_to_iso8601(date)
         expected = '2014-03-22T00%3A00%3A00%2B00%3A00'

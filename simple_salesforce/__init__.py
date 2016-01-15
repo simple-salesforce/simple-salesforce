@@ -1,4 +1,5 @@
 """Simple-Salesforce Package"""
+# flake8: noqa
 
 from simple_salesforce.api import (
     Salesforce,
