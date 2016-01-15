@@ -3,6 +3,7 @@ Simple Salesforce
 *****************
 
 .. image:: https://api.travis-ci.org/heroku/simple-salesforce.svg?branch=master
+   :target: https://travis-ci.org/heroku/simple-salesforce
 
 Simple Salesforce is a basic Salesforce.com REST API client built for Python 2.6, 2.7, 3.3 and 3.4. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
 
