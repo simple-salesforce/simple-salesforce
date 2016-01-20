@@ -104,7 +104,7 @@ class Salesforce(object):
                 self.sf_instance = instance
 
         elif all(arg is not None for arg in (
-                username, password, organizationId)):
+                username, password)):
             self.auth_type = 'ipfilter'
 
             # Pass along the username/password to our login helper
