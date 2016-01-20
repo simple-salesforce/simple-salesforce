@@ -5,22 +5,34 @@
 DEFAULT_API_VERSION = '29.0'
 
 
-import requests
-import json
-
-try:
-    from urlparse import urlparse
-except ImportError:
-    # Python 3+
-    from urllib.parse import urlparse
-from simple_salesforce.login import SalesforceLogin
-from simple_salesforce.util import date_to_iso8601, SalesforceError
-
+from datetime import datetime
 try:
     from collections import OrderedDict
 except ImportError:
     # Python < 2.7
     from ordereddict import OrderedDict
+import json
+try:
+    from urlparse import urlparse
+except ImportError:
+    # Python 3+
+    from urllib.parse import urlparse
+
+import requests
+
+from simple_salesforce.login import SalesforceLogin
+from simple_salesforce.util import date_to_iso8601, SalesforceError
+
+
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, datetime):
+            return o.isoformat()
+        return super(DateTimeEncoder, self).default(o)
+
+
+def dump_json(o):
+    return json.dumps(o, cls=DateTimeEncoder)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -198,7 +210,7 @@ class Salesforce(object):
         params = {'NewPassword': password}
 
         result = self.request.post(
-            url, headers=self.headers, data=json.dumps(params))
+            url, headers=self.headers, data=dump_json(params))
 
         # salesforce return 204 No Content when the request is successful
         if result.status_code != 200 and result.status_code != 204:
@@ -401,7 +413,7 @@ class Salesforce(object):
         * kwargs -- Additional kwargs to pass to `requests.request`
         """
         result = self._call_salesforce(method, self.apex_url + action,
-                                       data=json.dumps(data), **kwargs)
+                                       data=dump_json(data), **kwargs)
 
         if result.status_code == 200:
             try:
@@ -519,7 +531,7 @@ class SFType(object):
                   JSON-encoded before being transmitted.
         """
         result = self._call_salesforce('POST', self.base_url,
-                                       data=json.dumps(data))
+                                       data=dump_json(data))
         return result.json(object_pairs_hook=OrderedDict)
 
     def upsert(self, record_id, data, raw_response=False):
@@ -540,7 +552,7 @@ class SFType(object):
                           directly, instead of the status code.
         """
         result = self._call_salesforce('PATCH', self.base_url + record_id,
-                                       data=json.dumps(data))
+                                       data=dump_json(data))
         return self._raw_response(result, raw_response)
 
     def update(self, record_id, data, raw_response=False):
@@ -560,7 +572,7 @@ class SFType(object):
                           directly, instead of the status code.
         """
         result = self._call_salesforce('PATCH', self.base_url + record_id,
-                                       data=json.dumps(data))
+                                       data=dump_json(data))
         return self._raw_response(result, raw_response)
 
     def delete(self, record_id, raw_response=False):
