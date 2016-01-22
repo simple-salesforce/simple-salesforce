@@ -60,7 +60,7 @@ Note that specifying if you want to use a sandbox is only necessary if you are u
 
 When instantiating a `Salesforce` object, it's also possible to include an
 instance of `requests.Session`. This is to allow for specialized
-session handling not otherwise exposed by simple_salesoforce.
+session handling not otherwise exposed by simple_salesforce.
 
 For example:
 
