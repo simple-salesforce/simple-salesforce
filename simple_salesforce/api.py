@@ -64,7 +64,7 @@ class Salesforce(object):
                      `29.0`
         * proxies -- the optional map of scheme to proxy server
         * session -- Custom requests session, created in calling code. This
-                     enables the use of requets Session features not otherwise
+                     enables the use of requests Session features not otherwise
                      exposed by simple_salesforce.
 
         """
@@ -180,8 +180,8 @@ class Salesforce(object):
             return super(Salesforce, self).__getattr__(name)
 
         return SFType(
-            name, self.session_id, self.sf_instance, self.sf_version,
-            self.proxies)
+            name, self.session_id, self.sf_instance, sf_version=self.sf_version,
+            proxies=self.proxies, session=self.request)
 
     # User utlity methods
     def set_password(self, user, password):
@@ -432,7 +432,7 @@ class SFType(object):
     # pylint: disable=too-many-arguments
     def __init__(
             self, object_name, session_id, sf_instance, sf_version='27.0',
-            proxies=None):
+            proxies=None, session=None):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -443,11 +443,15 @@ class SFType(object):
         * sf_instance -- the domain of the instance of Salesforce to use
         * sf_version -- the version of the Salesforce API to use
         * proxies -- the optional map of scheme to proxy server
+        * session -- Custom requests session, created in calling code. This
+                     enables the use of requests Session features not otherwise
+                     exposed by simple_salesforce.
         """
         self.session_id = session_id
         self.name = object_name
-        self.request = requests.Session()
-        self.request.proxies = proxies
+        self.request = session or requests.Session()
+        if proxies is not None:  # don't wipe out original proxies with None
+            self.request.proxies = proxies
 
         self.base_url = (
             u'https://{instance}/services/data/v{sf_version}/sobjects'
