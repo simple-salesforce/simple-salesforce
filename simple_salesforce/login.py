@@ -44,7 +44,9 @@ def SalesforceLogin(
 
     soap_url = soap_url.format(domain=domain, sf_version=sf_version)
 
+    # pylint: disable=deprecated-method
     username = escape(username)
+    # pylint: disable=deprecated-method
     password = escape(password)
 
     # Check if token authentication is used

@@ -24,10 +24,10 @@ class TestXMLParser(unittest.TestCase):
         date = pytz.UTC.localize(datetime.datetime(2014, 3, 22, 00, 00, 00, 0))
         result = date_to_iso8601(date)
         expected = '2014-03-22T00%3A00%3A00%2B00%3A00'
-        self.assertEquals(result, expected)
+        self.assertEqual(result, expected)
 
         date = pytz.timezone('America/Phoenix').localize(
             datetime.datetime(2014, 3, 22, 00, 00, 00, 0))
         result = date_to_iso8601(date)
         expected = '2014-03-22T00%3A00%3A00-07%3A00'
-        self.assertEquals(result, expected)
+        self.assertEqual(result, expected)
