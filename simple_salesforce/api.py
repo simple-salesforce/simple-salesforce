@@ -644,7 +644,7 @@ class SFType(object):
 
 
 class SalesforceAPI(Salesforce):
-    """Depreciated SalesforceAPI Instance
+    """Deprecated SalesforceAPI Instance
 
     This class implements the Username/Password Authentication Mechanism using
     Arguments It has since been surpassed by the 'Salesforce' class, which
@@ -668,7 +668,7 @@ class SalesforceAPI(Salesforce):
         """
         import warnings
         warnings.warn(
-            "Use of login arguments has been depreciated. Please use kwargs",
+            "Use of login arguments has been deprecated. Please use kwargs",
             DeprecationWarning
         )
 
