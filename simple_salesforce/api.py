@@ -73,7 +73,10 @@ class Salesforce(object):
         # kwargs
         self.sf_version = version
         self.sandbox = sandbox
-        self.proxies = proxies
+        self.request = session or requests.Session()
+        self.proxies = self.request.proxies
+        if proxies is not None:  # override custom session proxies dance
+            self.request.proxies = self.proxies = proxies
 
         # Determine if the user wants to use our username/password auth or pass
         # in their own information
@@ -83,7 +86,7 @@ class Salesforce(object):
 
             # Pass along the username/password to our login helper
             self.session_id, self.sf_instance = SalesforceLogin(
-                session=session,
+                session=self.request,
                 username=username,
                 password=password,
                 security_token=security_token,
@@ -110,7 +113,7 @@ class Salesforce(object):
 
             # Pass along the username/password to our login helper
             self.session_id, self.sf_instance = SalesforceLogin(
-                session=session,
+                session=self.request,
                 username=username,
                 password=password,
                 organizationId=organizationId,
@@ -129,8 +132,6 @@ class Salesforce(object):
         else:
             self.auth_site = 'https://login.salesforce.com'
 
-        self.request = session or requests.Session()
-        self.request.proxies = self.proxies
         self.headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,

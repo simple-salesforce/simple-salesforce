@@ -91,6 +91,43 @@ class TestSalesforce(unittest.TestCase):
         self.assertEqual(
             client.base_url.split('/')[-2], 'v%s' % expected_version)
 
+    def test_shared_session_to_sftype(self):
+        """Test Salesforce and SFType instances share default `Session`"""
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL)
+
+        self.assertIs(client.request, client.Contact.request)
+
+    def test_shared_custom_session_to_sftype(self):
+        """Test Salesforce and SFType instances share custom `Session`"""
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        self.assertIs(session, client.request)
+        self.assertIs(session, client.Contact.request)
+
+    def test_proxies_inherited_default(self):
+        """Test Salesforce and SFType use same proxies"""
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        self.assertIs(session.proxies, client.request.proxies)
+        self.assertIs(session.proxies, client.Contact.request.proxies)
+
+    def test_proxies_inherited_set_on_session(self):
+        """Test Salesforce and SFType use same custom proxies"""
+        session = requests.Session()
+        session.proxies = tests.PROXIES
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+        self.assertIs(tests.PROXIES, client.request.proxies)
+        self.assertIs(tests.PROXIES, client.Contact.request.proxies)
+
 
 class TestExceptionHandler(unittest.TestCase):
     """Test the exception router"""
