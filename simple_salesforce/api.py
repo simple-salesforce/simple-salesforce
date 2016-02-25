@@ -33,7 +33,7 @@ class Salesforce(object):
     # pylint: disable=too-many-arguments
     def __init__(
             self, username=None, password=None, security_token=None,
-            session_id=None, instance=None, instance_url=None,
+            session_id=None, instance=None, instance_url=None, custom_url=None,
             organizationId=None, sandbox=False, version=DEFAULT_API_VERSION,
             proxies=None, session=None):
         """Initialize the instance with the given parameters.
@@ -74,6 +74,7 @@ class Salesforce(object):
         self.sf_version = version
         self.sandbox = sandbox
         self.proxies = proxies
+        self.custom_url = custom_url
 
         # Determine if the user wants to use our username/password auth or pass
         # in their own information
@@ -89,7 +90,8 @@ class Salesforce(object):
                 security_token=security_token,
                 sandbox=self.sandbox,
                 sf_version=self.sf_version,
-                proxies=self.proxies)
+                proxies=self.proxies,
+                custom_url=self.custom_url)
 
         elif all(arg is not None for arg in (
                 session_id, instance or instance_url)):
@@ -127,6 +129,10 @@ class Salesforce(object):
         else:
             self.auth_site = 'https://login.salesforce.com'
 
+        if self.custom_url:
+            print("WARN: Haphazardly trusting your custom url")
+            self.auth_site = custom_url
+
         self.request = session or requests.Session()
         self.request.proxies = self.proxies
         self.headers = {
@@ -140,6 +146,12 @@ class Salesforce(object):
                                  version=self.sf_version))
         self.apex_url = ('https://{instance}/services/apexrest/'
                          .format(instance=self.sf_instance))
+
+        if self.custom_url:
+            base_url_root = custom_url + '/services/data/v{version}/'
+            self.base_url = base_url_root.format(instance=self.sf_instance, version=self.sf_version)
+            apex_url_root = custom_url + '/services/apexrest/'
+            self.apex_url = apex_url_root.format(instance=self.sf_instance)
 
     def describe(self):
         """Describes all available objects
