@@ -130,7 +130,6 @@ class Salesforce(object):
             self.auth_site = 'https://login.salesforce.com'
 
         if self.custom_url:
-            print("WARN: Haphazardly trusting your custom url")
             self.auth_site = custom_url
 
         self.request = session or requests.Session()
@@ -149,7 +148,8 @@ class Salesforce(object):
 
         if self.custom_url:
             base_url_root = custom_url + '/services/data/v{version}/'
-            self.base_url = base_url_root.format(instance=self.sf_instance, version=self.sf_version)
+            self.base_url = base_url_root.format(instance=self.sf_instance
+                                                 , version=self.sf_version)
             apex_url_root = custom_url + '/services/apexrest/'
             self.apex_url = apex_url_root.format(instance=self.sf_instance)
 

@@ -46,7 +46,9 @@ def SalesforceLogin(
         soap_url = '{custom_url}/services/Soap/u/{sf_version}'
         soap_url = soap_url.format(custom_url=custom_url, sf_version=sf_version)
     else:
-        soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
+        soap_url = 'https://'
+        soap_url += '{domain}.salesforce.com/services/Soap/u/'
+        soap_url += '{sf_version}'
         domain = 'test' if sandbox else 'login'
 
         soap_url = soap_url.format(domain=domain, sf_version=sf_version)
