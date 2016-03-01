@@ -33,9 +33,9 @@ class Salesforce(object):
     # pylint: disable=too-many-arguments
     def __init__(
             self, username=None, password=None, security_token=None,
-            session_id=None, instance=None, instance_url=None, custom_url=None,
+            session_id=None, instance=None, instance_url=None,
             organizationId=None, sandbox=False, version=DEFAULT_API_VERSION,
-            proxies=None, session=None):
+            proxies=None, session=None, custom_url=None):
         """Initialize the instance with the given parameters.
 
         Available kwargs
@@ -57,7 +57,10 @@ class Salesforce(object):
           `na1.salesforce.com`
         OR
         * instance_url -- Full URL of your instance i.e.
-          `https://na1.salesforce.com
+          `https://na1.salesforce.com`
+        OR
+        * custom_url -- Full URL of your instance when using Salesforce custom
+          URL feature i.e. ` https://test.my.salesforce.com
 
         Universal Kwargs:
         * version -- the version of the Salesforce API to use, for example
@@ -74,6 +77,8 @@ class Salesforce(object):
         self.sf_version = version
         self.sandbox = sandbox
         self.proxies = proxies
+
+        # Determine if user passed in a custom URL
         self.custom_url = custom_url
 
         # Determine if the user wants to use our username/password auth or pass
@@ -146,6 +151,7 @@ class Salesforce(object):
         self.apex_url = ('https://{instance}/services/apexrest/'
                          .format(instance=self.sf_instance))
 
+        # Replace default formats with the custom URL
         if self.custom_url:
             base_url_root = custom_url + '/services/data/v{version}/'
             self.base_url = base_url_root.format(instance=self.sf_instance

@@ -37,6 +37,7 @@ def SalesforceLogin(
     * session -- Custom requests session, created in calling code. This
                  enables the use of requets Session features not otherwise
                  exposed by simple_salesforce.
+    * custom_url -- Supports Salesforce URL customization
     """
 
     soap_url = ""
