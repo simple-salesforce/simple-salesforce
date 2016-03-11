@@ -72,6 +72,27 @@ class TestSalesforce(unittest.TestCase):
         self.assertEqual(session, client.request)
 
     @httpretty.activate
+    def test_custom_url_success(self):
+        """Ensure custom url is used"""
+        httpretty.register_uri(
+            httpretty.POST,
+            re.compile(r'^https://.*$'),
+            body=tests.LOGIN_RESPONSE_SUCCESS,
+            status=http.OK
+        )
+
+        custom_url = 'https://custom_url'
+
+        client = Salesforce(
+            username='foo@bar.com',
+            password='password',
+            security_token='token',
+            custom_url=custom_url)
+
+        self.assertEqual(
+            client.base_url.split('/')[-5], custom_url.split('/')[2])
+
+    @httpretty.activate
     def test_custom_version_success(self):
         """Test custom version"""
         httpretty.register_uri(
