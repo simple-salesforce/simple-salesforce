@@ -91,6 +91,37 @@ class TestSalesforce(unittest.TestCase):
         self.assertEqual(
             client.base_url.split('/')[-2], 'v%s' % expected_version)
 
+    @httpretty.activate
+    def test_apex_request(self):
+        """Test apex request"""
+
+        # Mock the response for the login call
+        httpretty.register_uri(
+            httpretty.POST,
+            re.compile(r'^https://.*$'),
+            body=tests.LOGIN_RESPONSE_SUCCESS,
+            status=http.OK
+        )
+
+        # Mock the response for the Apex call
+        apex_response = '{"foo": "bar"}'
+        httpretty.register_uri(
+            httpretty.GET,
+            re.compile(r'^https://.*$'),
+            body=apex_response,
+            status=http.OK
+        )
+
+        client = Salesforce(
+            session=requests.Session(), username='foo@bar.com',
+            password='password', security_token='token')
+
+        result = client.apex_request('foo', 'GET')
+
+        self.assertIsInstance(result, requests.models.Response)
+        self.assertEqual(result.status_code, http.OK)
+        self.assertEqual(result.text, apex_response)
+
 
 class TestExceptionHandler(unittest.TestCase):
     """Test the exception router"""
