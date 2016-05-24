@@ -145,7 +145,7 @@ class Salesforce(object):
         """Describes all available objects
         """
         url = self.base_url + "sobjects"
-        result = self.request.get(url, headers=self.headers)
+        result = self._call_salesforce('GET', url)
         if result.status_code != 200:
             raise SalesforceGeneralError(url,
                                          'describe',
@@ -197,8 +197,7 @@ class Salesforce(object):
         url = self.base_url + 'sobjects/User/%s/password' % user
         params = {'NewPassword': password}
 
-        result = self.request.post(
-            url, headers=self.headers, data=json.dumps(params))
+        result = self._call_salesforce('POST', url, data=json.dumps(params))
 
         # salesforce return 204 No Content when the request is successful
         if result.status_code != 200 and result.status_code != 204:
@@ -233,7 +232,7 @@ class Salesforce(object):
         return self.set_password(user, password)
 
     # Generic Rest Function
-    def restful(self, path, params):
+    def restful(self, path, params, method='GET'):
         """Allows you to make a direct REST call if you know the path
 
         Arguments:
@@ -241,10 +240,11 @@ class Salesforce(object):
         * path: The path of the request
             Example: sobjects/User/ABC123/password'
         * params: dict of parameters to pass to the path
+        * method: HTTP request method, default GET
         """
 
         url = self.base_url + path
-        result = self.request.get(url, headers=self.headers, params=params)
+        result = self._call_salesforce(method, url, params=params)
         if result.status_code != 200:
             raise SalesforceGeneralError(url,
                                          path,
@@ -270,7 +270,7 @@ class Salesforce(object):
 
         # `requests` will correctly encode the query string passed as `params`
         params = {'q': search}
-        result = self.request.get(url, headers=self.headers, params=params)
+        result = self._call_salesforce('GET', url, params=params)
         if result.status_code != 200:
             raise SalesforceGeneralError(url,
                                          'search',
@@ -308,8 +308,7 @@ class Salesforce(object):
         url = self.base_url + 'query/'
         params = {'q': query}
         # `requests` will correctly encode the query string passed as `params`
-        result = self.request.get(
-            url, headers=self.headers, params=params, **kwargs)
+        result = self._call_salesforce('GET', url, params=params, **kwargs)
 
         if result.status_code != 200:
             _exception_handler(result)
@@ -340,7 +339,7 @@ class Salesforce(object):
         else:
             url = self.base_url + 'query/{next_record_id}'
             url = url.format(next_record_id=next_records_identifier)
-        result = self.request.get(url, headers=self.headers, **kwargs)
+        result = self._call_salesforce('GET', url, **kwargs)
 
         if result.status_code != 200:
             _exception_handler(result)
