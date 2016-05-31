@@ -15,10 +15,10 @@ if sys.version_info < (3, 0):
 
 setup(
     name='simple-salesforce',
-    version='0.68.1',
+    version='0.68.2',
     author='Nick Catalano',
     packages=['simple_salesforce',],
-    url='https://github.com/heroku/simple-salesforce',
+    url='https://github.com/simple-salesforce/simple-salesforce',
     license='Apache 2.0',
     description=("Simple Salesforce is a basic Salesforce.com REST API client. "
         "The goal is to provide a very low-level interface to the API, "

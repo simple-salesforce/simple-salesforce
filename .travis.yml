@@ -32,7 +32,7 @@ deploy:
   on:
     tags: true
     all_branches: true
-    repo: heroku/simple-salesforce
+    repo: simple-salesforce/simple-salesforce
 env:
   - TOXENV=unit
   - TOXENV=static
