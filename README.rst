@@ -2,8 +2,8 @@
 Simple Salesforce
 *****************
 
-.. image:: https://api.travis-ci.org/heroku/simple-salesforce.svg?branch=master
-   :target: https://travis-ci.org/heroku/simple-salesforce
+.. image:: https://api.travis-ci.org/simple-salesforce/simple-salesforce.svg?branch=master
+   :target: https://travis-ci.org/simple-salesforce/simple-salesforce
 
 Simple Salesforce is a basic Salesforce.com REST API client built for Python 2.6, 2.7, 3.3 and 3.4. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
 
@@ -287,7 +287,7 @@ Authentication mechanisms were adapted from Dave Wingate's `RestForce`_ and lice
 The latest build status can be found at `Travis CI`_
 
 .. _Nick Catalano: https://github.com/nickcatal
-.. _community contributors: https://github.com/heroku/simple-salesforce/graphs/contributors
+.. _community contributors: https://github.com/simple-salesforce/simple-salesforce/graphs/contributors
 .. _RestForce: http://pypi.python.org/pypi/RestForce/
-.. _GitHub Repo: https://github.com/heroku/simple-salesforce
-.. _Travis CI: https://travis-ci.org/heroku/simple-salesforce
+.. _GitHub Repo: https://github.com/simple-salesforce/simple-salesforce
+.. _Travis CI: https://travis-ci.org/simple-salesforce/simple-salesforce
