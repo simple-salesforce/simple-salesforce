@@ -3,6 +3,8 @@ v0.69 (Release date: TBD)
 
 Features
 --------
+- [103] Require requests[secure] to allow for system openssl, which will allow
+  for TLSv1.2 in Python < 2.7.9 assuming system openssl is newer than Python's.
 
 Bug Fixes
 ---------
