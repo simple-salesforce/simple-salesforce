@@ -17,6 +17,8 @@ setup(
     name='simple-salesforce',
     version='0.69',
     author='Nick Catalano',
+    maintainer='Demian Brecht',
+    maintainer_email='demianbrecht@gmail.com',
     packages=['simple_salesforce',],
     url='https://github.com/simple-salesforce/simple-salesforce',
     license='Apache 2.0',
@@ -30,7 +32,7 @@ setup(
     tests_require=[
         'nose>=1.3.0',
         'pytz>=2014.1.1',
-        'httpretty>=0.8.10',
+        'responses>=0.5.1',
     ] + pyver_tests_require,
     test_suite = 'nose.collector',
     keywords = "python salesforce salesforce.com",
