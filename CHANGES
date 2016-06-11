@@ -1,11 +1,19 @@
-v0.69 (Release date: TBD)
-=========================
+v0.69
+=====
 
 Features
 --------
+- [103] Require requests[secure] to allow for system openssl, which will allow
+  for TLSv1.2 in Python < 2.7.9 assuming system openssl is newer than Python's.
 
-Bug Fixes
----------
+Other
+-----
+- Replaced httpretty with responses for unit tests due to SSL-related errors
+  in httpretty.
+
+
+v0.68.2
+=======
 
 Other
 -----

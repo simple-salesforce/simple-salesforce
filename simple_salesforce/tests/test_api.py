@@ -7,7 +7,7 @@ try:
 except ImportError:
     import unittest
 
-import httpretty
+import responses
 
 try:
     # Python 2.6/2.7
@@ -41,11 +41,11 @@ class TestSalesforce(unittest.TestCase):
         self.mockrequest = request_patcher.start()
         self.addCleanup(request_patcher.stop)
 
-    @httpretty.activate
+    @responses.activate
     def test_custom_session_success(self):
         """Ensure custom session is used"""
-        httpretty.register_uri(
-            httpretty.POST,
+        responses.add(
+            responses.POST,
             re.compile(r'^https://.*$'),
             body=tests.LOGIN_RESPONSE_SUCCESS,
             status=http.OK
@@ -71,11 +71,11 @@ class TestSalesforce(unittest.TestCase):
         self.assertEqual(tests.SESSION_ID, client.session_id)
         self.assertEqual(session, client.request)
 
-    @httpretty.activate
+    @responses.activate
     def test_custom_version_success(self):
         """Test custom version"""
-        httpretty.register_uri(
-            httpretty.POST,
+        responses.add(
+            responses.POST,
             re.compile(r'^https://.*$'),
             body=tests.LOGIN_RESPONSE_SUCCESS,
             status=http.OK
