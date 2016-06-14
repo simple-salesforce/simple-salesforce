@@ -1,5 +1,14 @@
-v0.69
-=====
+v0.69.1
+=======
+
+Bug Fixes
+---------
+- [84] SFType.__init__ sf_version parameter now defaults to
+  DEFAULT_API_VERSION instead of literal '27.0'
+
+
+v0.69.0
+=======
 
 Features
 --------
