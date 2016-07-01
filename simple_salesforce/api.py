@@ -7,6 +7,7 @@ DEFAULT_API_VERSION = '29.0'
 
 import requests
 import json
+import re
 
 try:
     from urlparse import urlparse
@@ -140,6 +141,8 @@ class Salesforce(object):
                                  version=self.sf_version))
         self.apex_url = ('https://{instance}/services/apexrest/'
                          .format(instance=self.sf_instance))
+
+        self.api_usage = {}
 
     def describe(self):
         """Describes all available objects
@@ -421,8 +424,41 @@ class Salesforce(object):
         if result.status_code >= 300:
             _exception_handler(result)
 
+        sforce_limit_info = result.headers.get('Sforce-Limit-Info')
+        if sforce_limit_info:
+            self.api_usage = self.parse_api_usage(sforce_limit_info)
+
         return result
 
+    @staticmethod
+    def parse_api_usage(sforce_limit_info):
+        """parse API usage and limits out of the Sforce-Limit-Info header
+
+        Arguments:
+
+        * sforce_limit_info: The value of response header 'Sforce-Limit-Info'
+            Example 1: 'api-usage=18/5000'
+            Example 2: 'api-usage=25/5000;
+                per-app-api-usage=17/250(appName=sample-connected-app)'
+        """
+        result = {
+            'Sforce-Limit-Info': sforce_limit_info
+        }
+
+        api_usage = re.match(r'[^-]?api-usage=(?P<used>\d+)/(?P<tot>\d+)',
+                             sforce_limit_info)
+        u = r'per-app-api-usage=(?P<used>\d+)/(?P<tot>\d+)' \
+            r'\(appName=(?P<name>.+)\)'
+        per_app_api_usage = re.match(u, sforce_limit_info)
+
+        if api_usage and api_usage.groups():
+            result['api-usage'] = [int(n) for n in  api_usage.groups()]
+        if per_app_api_usage and per_app_api_usage.groups():
+            groups = per_app_api_usage.groups()
+            result['per-app-api-usage'] = [int(n)
+                                           for n in groups[:2]] + [groups[2]]
+
+        return result
 
 class SFType(object):
     """An interface to a specific type of SObject"""
@@ -446,6 +482,7 @@ class SFType(object):
         self.name = object_name
         self.request = requests.Session()
         self.request.proxies = proxies
+        self.api_usage = {}
 
         self.base_url = (
             u'https://{instance}/services/data/v{sf_version}/sobjects'
@@ -626,6 +663,10 @@ class SFType(object):
 
         if result.status_code >= 300:
             _exception_handler(result, self.name)
+
+        sforce_limit_info = result.headers.get('Sforce-Limit-Info')
+        if sforce_limit_info:
+            self.api_usage = Salesforce.parse_api_usage(sforce_limit_info)
 
         return result
 
