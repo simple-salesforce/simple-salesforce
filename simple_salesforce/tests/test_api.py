@@ -91,6 +91,51 @@ class TestSalesforce(unittest.TestCase):
         self.assertEqual(
             client.base_url.split('/')[-2], 'v%s' % expected_version)
 
+    @responses.activate
+    def test_api_usage_simple(self):
+        """Make sure a header response is recorded"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{"example": 1}',
+            adding_headers={"Sforce-Limit-Info": "api-usage=18/5000"},
+            status=http.OK
+        )
+
+        client = Salesforce.__new__(Salesforce)
+        client.request = requests.Session()
+        client.headers = {}
+        client.base_url = 'https://localhost'
+        client.query('q')
+
+        self.assertDictEqual(client.api_usage,
+                             {'api-usage': [18, 5000],
+                              'Sforce-Limit-Info': 'api-usage=18/5000'})
+
+    @responses.activate
+    def test_api_usage_per_app(self):
+        """Make sure a header response is recorded"""
+
+        pau = "api-usage=25/5000; per-app-api-usage=17/250(appName=sample-app)"
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{"example": 1}',
+            adding_headers={"Sforce-Limit-Info": pau},
+            status=http.OK
+        )
+
+        client = Salesforce.__new__(Salesforce)
+        client.request = requests.Session()
+        client.headers = {}
+        client.base_url = 'https://localhost'
+        client.query('q')
+
+        self.assertDictEqual(client.api_usage,
+                             {'api-usage': [25, 5000],
+                              'per-app-api-usage': [17, 250, 'sample-app'],
+                              'Sforce-Limit-Info': pau})
+
 
 class TestExceptionHandler(unittest.TestCase):
     """Test the exception router"""

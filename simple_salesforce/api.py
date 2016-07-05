@@ -447,9 +447,8 @@ class Salesforce(object):
 
         api_usage = re.match(r'[^-]?api-usage=(?P<used>\d+)/(?P<tot>\d+)',
                              sforce_limit_info)
-        u = r'per-app-api-usage=(?P<used>\d+)/(?P<tot>\d+)' \
-            r'\(appName=(?P<name>.+)\)'
-        per_app_api_usage = re.match(u, sforce_limit_info)
+        pau = r'.+per-app-api-usage=(?P<u>\d+)/(?P<t>\d+)\(appName=(?P<n>.+)\)'
+        per_app_api_usage = re.match(pau, sforce_limit_info)
 
         if api_usage and api_usage.groups():
             result['api-usage'] = [int(n) for n in  api_usage.groups()]
