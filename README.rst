@@ -132,7 +132,7 @@ Note that Update, Delete and Upsert actions return the associated `Salesforce HT
 
 .. _Salesforce HTTP Status Code: http://www.salesforce.com/us/developer/docs/api_rest/Content/errorcodes.htm
 
-Use the same format to create any record, including 'Account', 'Opportunity', and 'Lead'. 
+Use the same format to create any record, including 'Account', 'Opportunity', and 'Lead'.
 Make sure to have all the required fields for any entry. The `Salesforce API`_ has all objects found under 'Reference -> Standard Objects' and the required fields can be found there.
 
 .. _Salesforce HTTP Status Code: http://www.salesforce.com/us/developer/docs/api_rest/Content/errorcodes.htm
@@ -250,7 +250,11 @@ For example, to use SalesforceLogin for a sandbox account you'd use:
 .. code-block:: python
 
     from simple_salesforce import SalesforceLogin
-    session_id, instance = SalesforceLogin('myemail@example.com.sandbox', 'password', 'token', True)
+    session_id, instance = SalesforceLogin(
+        username='myemail@example.com.sandbox',
+        password='password',
+        security_token='token',
+        sandbox=True)
 
 Simply leave off the final ``True`` if you do not wish to use a sandbox.
 
