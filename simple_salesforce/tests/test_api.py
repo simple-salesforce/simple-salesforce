@@ -29,7 +29,9 @@ from simple_salesforce.api import (
     SalesforceExpiredSession,
     SalesforceRefusedRequest,
     SalesforceResourceNotFound,
-    SalesforceGeneralError
+    SalesforceGeneralError,
+    Usage,
+    PerAppUsage
 )
 
 
@@ -108,9 +110,7 @@ class TestSalesforce(unittest.TestCase):
         client.base_url = 'https://localhost'
         client.query('q')
 
-        self.assertDictEqual(client.api_usage,
-                             {'api-usage': [18, 5000],
-                              'Sforce-Limit-Info': 'api-usage=18/5000'})
+        self.assertDictEqual(client.api_usage, {'api-usage': Usage(18, 5000)})
 
     @responses.activate
     def test_api_usage_per_app(self):
@@ -132,9 +132,9 @@ class TestSalesforce(unittest.TestCase):
         client.query('q')
 
         self.assertDictEqual(client.api_usage,
-                             {'api-usage': [25, 5000],
-                              'per-app-api-usage': [17, 250, 'sample-app'],
-                              'Sforce-Limit-Info': pau})
+                             {'api-usage': Usage(25, 5000),
+                              'per-app-api-usage': PerAppUsage(17, 250,
+                                                               'sample-app')})
 
 
 class TestExceptionHandler(unittest.TestCase):

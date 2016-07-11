@@ -8,6 +8,7 @@ DEFAULT_API_VERSION = '29.0'
 import requests
 import json
 import re
+from collections import namedtuple
 
 try:
     from urlparse import urlparse
@@ -22,6 +23,10 @@ try:
 except ImportError:
     # Python < 2.7
     from ordereddict import OrderedDict
+
+
+Usage = namedtuple('Usage', 'used total')
+PerAppUsage = namedtuple('PerAppUsage', 'used total name')
 
 
 # pylint: disable=too-many-instance-attributes
@@ -441,9 +446,7 @@ class Salesforce(object):
             Example 2: 'api-usage=25/5000;
                 per-app-api-usage=17/250(appName=sample-connected-app)'
         """
-        result = {
-            'Sforce-Limit-Info': sforce_limit_info
-        }
+        result = {}
 
         api_usage = re.match(r'[^-]?api-usage=(?P<used>\d+)/(?P<tot>\d+)',
                              sforce_limit_info)
@@ -451,11 +454,14 @@ class Salesforce(object):
         per_app_api_usage = re.match(pau, sforce_limit_info)
 
         if api_usage and api_usage.groups():
-            result['api-usage'] = [int(n) for n in  api_usage.groups()]
+            groups = api_usage.groups()
+            result['api-usage'] = Usage(used=int(groups[0]),
+                                        total=int(groups[1]))
         if per_app_api_usage and per_app_api_usage.groups():
             groups = per_app_api_usage.groups()
-            result['per-app-api-usage'] = [int(n)
-                                           for n in groups[:2]] + [groups[2]]
+            result['per-app-api-usage'] = PerAppUsage(used=int(groups[0]),
+                                                      total=int(groups[1]),
+                                                      name=groups[2])
 
         return result
 
