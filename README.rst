@@ -58,6 +58,15 @@ For example:
 
 Note that specifying if you want to use a sandbox is only necessary if you are using the built-in username/password/security token authentication and is used exclusively during the authentication step.
 
+If you'd like to keep track where your API calls are coming from, simply add ``client_id='My App'`` to your ``Salesforce()`` call.
+
+.. code-block:: python
+
+    from simple_salesforce import Salesforce
+    sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', sandbox=True, client_id='My App')
+
+If you view the API calls in your Salesforce instance by Client Id it will be prefixed with ``RestForce/``, for example ``RestForce/My App``.
+
 When instantiating a `Salesforce` object, it's also possible to include an
 instance of `requests.Session`. This is to allow for specialized
 session handling not otherwise exposed by simple_salesforce.
