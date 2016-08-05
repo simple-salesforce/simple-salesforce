@@ -49,8 +49,8 @@ def SalesforceLogin(
 
     if client_id:
         client_id = "{prefix}/{app_name}".format(
-                        prefix=DEFAULT_CLIENT_ID_PREFIX,
-                        app_name=client_id)
+            prefix=DEFAULT_CLIENT_ID_PREFIX,
+            app_name=client_id)
     else:
         client_id = DEFAULT_CLIENT_ID_PREFIX
 
