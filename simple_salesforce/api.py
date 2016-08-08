@@ -355,7 +355,7 @@ class Salesforce(object):
         else:
             url = self.base_url + 'query/{next_record_id}'
             url = url.format(next_record_id=next_records_identifier)
-            result = self._call_salesforce('GET', url, **kwargs)
+        result = self._call_salesforce('GET', url, **kwargs)
 
         if result.status_code != 200:
             _exception_handler(result)
@@ -421,7 +421,7 @@ class Salesforce(object):
         if result.status_code == 200:
             try:
                 response_content = result.json()
-                # pylint: disable=broad-except
+            # pylint: disable=broad-except
             except Exception:
                 response_content = result.text
             return response_content
