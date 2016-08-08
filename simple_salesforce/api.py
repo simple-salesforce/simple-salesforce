@@ -7,12 +7,14 @@ DEFAULT_API_VERSION = '29.0'
 
 import requests
 import json
+import xmltodict
 
 try:
     from urlparse import urlparse
 except ImportError:
     # Python 3+
     from urllib.parse import urlparse
+
 from simple_salesforce.login import SalesforceLogin
 from simple_salesforce.util import date_to_iso8601, SalesforceError
 
@@ -135,7 +137,21 @@ class Salesforce(object):
             'X-PrettyPrint': '1'
         }
 
+        self.bulk_headers = {
+            'Content-Type': 'application/xml',
+            'X-SFDC-Session': self.session_id,
+            'charset': 'UTF-8'
+        }
+
+        self.batch_headers = {
+            'X-SFDC-Session': self.session_id,
+            'charset': 'UTF-8'
+        }
+
         self.base_url = ('https://{instance}/services/data/v{version}/'
+                         .format(instance=self.sf_instance,
+                                 version=self.sf_version))
+        self.bulk_url = ('https://{instance}/services/async/{version}/job'
                          .format(instance=self.sf_instance,
                                  version=self.sf_version))
         self.apex_url = ('https://{instance}/services/apexrest/'
@@ -339,7 +355,7 @@ class Salesforce(object):
         else:
             url = self.base_url + 'query/{next_record_id}'
             url = url.format(next_record_id=next_records_identifier)
-        result = self._call_salesforce('GET', url, **kwargs)
+            result = self._call_salesforce('GET', url, **kwargs)
 
         if result.status_code != 200:
             _exception_handler(result)
@@ -405,7 +421,7 @@ class Salesforce(object):
         if result.status_code == 200:
             try:
                 response_content = result.json()
-            # pylint: disable=broad-except
+                # pylint: disable=broad-except
             except Exception:
                 response_content = result.text
             return response_content
@@ -422,6 +438,94 @@ class Salesforce(object):
             _exception_handler(result)
 
         return result
+
+    def _call_bulk_api(self, method, url, **kwargs):
+        result = self.request.request(
+            method, url, headers=self.bulk_headers, **kwargs)
+
+        if result.status_code >= 300:
+            _exception_handler(result)
+
+        return result
+
+    def _make_bulk_request(self, url, data):
+        response = self._call_bulk_api("POST", url, data=data)
+        response_object = xmltodict.parse(response.text)
+        return response, response_object
+
+    def _close_job(self, job_id):
+        data = """<?xml version="1.0" encoding="UTF-8"?>
+<jobInfo xmlns="http://www.force.com/2009/06/asyncapi/dataload">
+      <state>Closed</state>
+</jobInfo>"""
+        url = self.bulk_url + "/" + job_id
+        response, response_object = self._make_bulk_request(url,
+                                                            data)
+
+        if response_object['jobInfo']['state'] != "Closed":
+            raise SalesforceGeneralError(url,
+                                         "close",
+                                         response.status_code,
+                                         response.text)
+
+    def _create_job(self, data):
+        url = self.bulk_url
+        job_info = self._make_bulk_request(url, data)
+        return job_info[1]['jobInfo']['id']
+
+    def _create_basic_job(self, object_name, type):
+        data = """<?xml version="1.0" encoding="UTF-8"?>
+<jobInfo xmlns="http://www.force.com/2009/06/asyncapi/dataload">
+    <operation>{0}</operation>
+    <object>{1}</object>
+    <contentType>CSV</contentType>
+</jobInfo>""".format(type, object_name)
+        return self._create_job(data)
+
+    def _create_upsert_job(self, object_name, external_field):
+        data = """<?xml version="1.0" encoding="UTF-8"?>
+<jobInfo xmlns="http://www.force.com/2009/06/asyncapi/dataload">
+    <operation>upsert</operation>
+    <object>{0}</object>
+    <externalIdFieldName>{1}</externalIdFieldName>
+    <contentType>CSV</contentType>
+</jobInfo>""".format(object_name, external_field)
+        return self._create_job(data)
+
+    def _create_batch(self, csv_file, job_id):
+        data = open(csv_file, 'rb').read()
+        url = self.bulk_url + "/" + job_id + "/batch"
+        self.request.request(
+            "POST",
+            url,
+            headers=self.batch_headers,
+            data=data)
+
+    def bulk_insert(self, object_name, csv_file):
+        """Bulk upload a CSV to a Salesforce Object
+
+        Arguments:
+
+        * object_name -- name of the object to upload to
+        * csv_file -- data to upload to the object"""
+
+        job_id = self._create_basic_job(object_name, "insert")
+        self._create_batch(csv_file, job_id)
+        self._close_job(job_id)
+        return job_id
+
+    def bulk_upsert(self, object_name, external_field, csv_file):
+        """Bulk upsert a CSV to a Salesforce Object
+
+        Arguments:
+
+        * object_name -- name of the object to upload to
+        * csv_file -- data to upload to the object"""
+
+        job_id = self._create_upsert_job(object_name, external_field)
+        self._create_batch(csv_file, job_id)
+        self._close_job(job_id)
+        return job_id
 
 
 class SFType(object):
@@ -622,7 +726,11 @@ class SFType(object):
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
         }
-        result = self.request.request(method, url, headers=headers, **kwargs)
+
+        result = self.request.request(method,
+                                      url,
+                                      headers=headers,
+                                      **kwargs)
 
         if result.status_code >= 300:
             _exception_handler(result, self.name)
