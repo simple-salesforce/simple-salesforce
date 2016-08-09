@@ -8,6 +8,7 @@ DEFAULT_API_VERSION = '29.0'
 import requests
 import json
 import xmltodict
+import os
 
 try:
     from urlparse import urlparse
@@ -76,6 +77,10 @@ class Salesforce(object):
         self.sf_version = version
         self.sandbox = sandbox
         self.proxies = proxies
+
+        self.location = os.path.realpath(
+            os.path.join(os.getcwd(), os.path.dirname(__file__)))
+
 
         # Determine if the user wants to use our username/password auth or pass
         # in their own information
@@ -355,7 +360,7 @@ class Salesforce(object):
         else:
             url = self.base_url + 'query/{next_record_id}'
             url = url.format(next_record_id=next_records_identifier)
-        result = self._call_salesforce('GET', url, **kwargs)
+            result = self._call_salesforce('GET', url, **kwargs)
 
         if result.status_code != 200:
             _exception_handler(result)
@@ -421,7 +426,7 @@ class Salesforce(object):
         if result.status_code == 200:
             try:
                 response_content = result.json()
-            # pylint: disable=broad-except
+                # pylint: disable=broad-except
             except Exception:
                 response_content = result.text
             return response_content
@@ -453,20 +458,25 @@ class Salesforce(object):
         response_object = xmltodict.parse(response.text)
         return response, response_object
 
-    def _close_job(self, job_id):
-        data = """<?xml version="1.0" encoding="UTF-8"?>
-<jobInfo xmlns="http://www.force.com/2009/06/asyncapi/dataload">
-      <state>Closed</state>
-</jobInfo>"""
-        url = self.bulk_url + "/" + job_id
-        response, response_object = self._make_bulk_request(url,
-                                                            data)
+    def _template_location(self, template_file_name):
+        return os.path.join(self.location, template_file_name)
 
-        if response_object['jobInfo']['state'] != "Closed":
-            raise SalesforceGeneralError(url,
-                                         "close",
-                                         response.status_code,
-                                         response.text)
+    def _close_job(self, job_id):
+        with open(self._template_location('close_job.xml'),
+                  'r') as close_xml_file:
+            close_xml_string = close_xml_file.read()
+            url = self.bulk_url + "/" + job_id
+            response, \
+                response_object = self._make_bulk_request(url,
+                                                          close_xml_string)
+
+            if 'jobInfo' not in response_object or \
+               'state' not in response_object['jobInfo'] or \
+               response_object['jobInfo']['state'] != "Closed":
+                raise SalesforceGeneralError(url,
+                                             "close",
+                                             response.status_code,
+                                             response.text)
 
     def _create_job(self, data):
         url = self.bulk_url
@@ -474,32 +484,31 @@ class Salesforce(object):
         return job_info[1]['jobInfo']['id']
 
     def _create_basic_job(self, object_name, type):
-        data = """<?xml version="1.0" encoding="UTF-8"?>
-<jobInfo xmlns="http://www.force.com/2009/06/asyncapi/dataload">
-    <operation>{0}</operation>
-    <object>{1}</object>
-    <contentType>CSV</contentType>
-</jobInfo>""".format(type, object_name)
-        return self._create_job(data)
+        with open(self._template_location(
+                'basic_job_xml_template.xml'), 'r') as \
+                basic_job_template_file:
+            basic_job_template_string = basic_job_template_file.read()
+            basic_job_xml = basic_job_template_string.format(type, object_name)
+            return self._create_job(basic_job_xml)
 
     def _create_upsert_job(self, object_name, external_field):
-        data = """<?xml version="1.0" encoding="UTF-8"?>
-<jobInfo xmlns="http://www.force.com/2009/06/asyncapi/dataload">
-    <operation>upsert</operation>
-    <object>{0}</object>
-    <externalIdFieldName>{1}</externalIdFieldName>
-    <contentType>CSV</contentType>
-</jobInfo>""".format(object_name, external_field)
-        return self._create_job(data)
+        with open(self._template_location(
+                'upsert_job_xml_template.xml'), 'r') as \
+                upsert_job_xml_template_file:
+            upsert_job_template_string = upsert_job_xml_template_file.read()
+            upsert_job_xml = upsert_job_template_string.format(
+                object_name,
+                external_field)
+            return self._create_job(upsert_job_xml)
 
     def _create_batch(self, csv_file, job_id):
-        data = open(csv_file, 'rb').read()
+        csv_file_data = open(csv_file, 'rb').read()
         url = self.bulk_url + "/" + job_id + "/batch"
         self.request.request(
             "POST",
             url,
             headers=self.batch_headers,
-            data=data)
+            data=csv_file_data)
 
     def bulk_insert(self, object_name, csv_file):
         """Bulk upload a CSV to a Salesforce Object

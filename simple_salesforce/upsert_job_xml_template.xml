@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jobInfo xmlns="http://www.force.com/2009/06/asyncapi/dataload">
+    <operation>upsert</operation>
+    <object>{0}</object>
+    <externalIdFieldName>{1}</externalIdFieldName>
+    <contentType>CSV</contentType>
+</jobInfo>
