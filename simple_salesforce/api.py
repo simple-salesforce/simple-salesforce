@@ -445,6 +445,10 @@ class Salesforce(object):
         return result
 
     def _call_bulk_api(self, method, url, **kwargs):
+        """Makes a call to the bulk api
+
+        Returns a `request.result` object.
+        """
         result = self.request.request(
             method, url, headers=self.bulk_headers, **kwargs)
 
@@ -454,14 +458,23 @@ class Salesforce(object):
         return result
 
     def _make_bulk_request(self, url, data):
+        """Wrapper function to call a bulk API.
+
+        Parses the response to a dict.
+
+        Returns a `request.result` and a parsed
+        `reponse_object` dict
+        """
         response = self._call_bulk_api("POST", url, data=data)
         response_object = xmltodict.parse(response.text)
         return response, response_object
 
     def _template_location(self, template_file_name):
+        """Location of the template file"""
         return os.path.join(self.location, template_file_name)
 
     def _close_job(self, job_id):
+        """Makes Salesforce call to close a job"""
         with open(self._template_location('close_job.xml'),
                   'r') as close_xml_file:
             close_xml_string = close_xml_file.read()
@@ -479,22 +492,25 @@ class Salesforce(object):
                                              response.text)
 
     def _create_job(self, data):
+        """Makes a bulk api request to create a job"""
         url = self.bulk_url
         job_info = self._make_bulk_request(url, data)
+
         return job_info[1]['jobInfo']['id']
 
-    def _create_basic_job(self, object_name, type):
-        with open(self._template_location(
-                'basic_job_xml_template.xml'), 'r') as \
-                basic_job_template_file:
+    def _create_basic_job(self, object_name, method_type):
+        """Create a basic job, eg. insert"""
+        with open(self._template_location('basic_job_xml_template.xml'),
+                  'r') as basic_job_template_file:
             basic_job_template_string = basic_job_template_file.read()
-            basic_job_xml = basic_job_template_string.format(type, object_name)
+            basic_job_xml = basic_job_template_string.format(method_type,
+                                                             object_name)
             return self._create_job(basic_job_xml)
 
     def _create_upsert_job(self, object_name, external_field):
-        with open(self._template_location(
-                'upsert_job_xml_template.xml'), 'r') as \
-                upsert_job_xml_template_file:
+        """Create an upsert job"""
+        with open(self._template_location('upsert_job_xml_template.xml'),
+                  'r') as upsert_job_xml_template_file:
             upsert_job_template_string = upsert_job_xml_template_file.read()
             upsert_job_xml = upsert_job_template_string.format(
                 object_name,
@@ -502,6 +518,7 @@ class Salesforce(object):
             return self._create_job(upsert_job_xml)
 
     def _create_batch(self, csv_file, job_id):
+        """Create a batch from a csv file"""
         csv_file_data = open(csv_file, 'rb').read()
         url = self.bulk_url + "/" + job_id + "/batch"
         self.request.request(
