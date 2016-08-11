@@ -15,7 +15,7 @@ Example
 -------
 There are two ways to gain access to Salesforce
 
-1) The first is to simply pass the domain of your Salesforce instance and an access token straight to ``Salesforce()``
+1) The first is to simply pass the domain of your Salesforce instance and an access token straight to ``Salesforce()``. NOTE: ``session_id`` here is also known as ``access_token`` in some flows.
 
 For example:
 
