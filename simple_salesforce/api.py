@@ -4,6 +4,12 @@
 # has to be defined prior to login import
 DEFAULT_API_VERSION = '29.0'
 
+RESPONSE_CODE_EXPIRED_SESSION = 401
+
+AUTH_TYPE_PASSWORD = 'password'
+AUTH_TYPE_IP_FILTER = 'ipfilter'
+AUTH_TYPE_DIRECT = 'direct'
+AUTH_TYPE_DIRECT_WITH_REFRESH = 'direct_with_refresh'
 
 import requests
 import json
@@ -34,6 +40,7 @@ class Salesforce(object):
     def __init__(
             self, username=None, password=None, security_token=None,
             session_id=None, instance=None, instance_url=None,
+            refresh_token=None, client_id=None, client_secret=None,
             organizationId=None, sandbox=False, version=DEFAULT_API_VERSION,
             proxies=None, session=None):
         """Initialize the instance with the given parameters.
@@ -42,30 +49,40 @@ class Salesforce(object):
 
         Password Authentication:
 
-        * username -- the Salesforce username to use for authentication
-        * password -- the password for the username
-        * security_token -- the security token for the username
-        * sandbox -- True if you want to login to `test.salesforce.com`, False
-                     if you want to login to `login.salesforce.com`.
+            * username -- the Salesforce username to use for authentication
+            * password -- the password for the username
+            * security_token -- the security token for the username
+            * sandbox -- True if you want to login to `test.salesforce.com`, False
+                         if you want to login to `login.salesforce.com`.
+
 
         Direct Session and Instance Access:
 
-        * session_id -- Access token for this session
+            * session_id -- Access token for this session
 
-        Then either
-        * instance -- Domain of your Salesforce instance, i.e.
-          `na1.salesforce.com`
-        OR
-        * instance_url -- Full URL of your instance i.e.
-          `https://na1.salesforce.com
+            * Then either:
+                * instance -- Domain of your Salesforce instance, i.e.
+                  `na1.salesforce.com`
+                OR
+                * instance_url -- Full URL of your instance i.e.
+                  `https://na1.salesforce.com
+
+            * Optionally include ALL below for refreshable tokens given to
+                Connected Apps:
+
+                * client_id -- Your Connected App's public key identifier
+                * client_secret -- Your Connected App's private key identifier
+                * refresh_token -- The refresh token provided as part of the
+                    response to your app's OAuth authentication process.
+
 
         Universal Kwargs:
-        * version -- the version of the Salesforce API to use, for example
-                     `29.0`
-        * proxies -- the optional map of scheme to proxy server
-        * session -- Custom requests session, created in calling code. This
-                     enables the use of requets Session features not otherwise
-                     exposed by simple_salesforce.
+            * version -- the version of the Salesforce API to use, for example
+                         `29.0`
+            * proxies -- the optional map of scheme to proxy server
+            * session -- Custom requests session, created in calling code. This
+                         enables the use of requets Session features not otherwise
+                         exposed by simple_salesforce.
 
         """
 
@@ -79,7 +96,7 @@ class Salesforce(object):
         # in their own information
         if all(arg is not None for arg in (
                 username, password, security_token)):
-            self.auth_type = "password"
+            self.auth_type = AUTH_TYPE_PASSWORD
 
             # Pass along the username/password to our login helper
             self.session_id, self.sf_instance = SalesforceLogin(
@@ -93,7 +110,7 @@ class Salesforce(object):
 
         elif all(arg is not None for arg in (
                 session_id, instance or instance_url)):
-            self.auth_type = "direct"
+            self.auth_type = AUTH_TYPE_DIRECT
             self.session_id = session_id
 
             # If the user provides the full url (as returned by the OAuth
@@ -103,9 +120,21 @@ class Salesforce(object):
             else:
                 self.sf_instance = instance
 
+            # If the user provided a refresh token AND client id and secret,
+            # then this session/access_token is refreshable and we may need to
+            # utilize this if session expires
+            if all(arg is not None for arg in (
+                refresh_token, client_id, client_secret)):
+
+                self.auth_type = AUTH_TYPE_DIRECT_WITH_REFRESH
+                self.refresh_token = refresh_token
+                self.client_id = client_id
+                self.client_secret = client_secret
+
+
         elif all(arg is not None for arg in (
                 username, password, organizationId)):
-            self.auth_type = 'ipfilter'
+            self.auth_type = AUTH_TYPE_IP_FILTER
 
             # Pass along the username/password to our login helper
             self.session_id, self.sf_instance = SalesforceLogin(
@@ -129,17 +158,24 @@ class Salesforce(object):
 
         self.request = session or requests.Session()
         self.request.proxies = self.proxies
-        self.headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + self.session_id,
-            'X-PrettyPrint': '1'
-        }
+
+        self._build_headers()
 
         self.base_url = ('https://{instance}/services/data/v{version}/'
                          .format(instance=self.sf_instance,
                                  version=self.sf_version))
         self.apex_url = ('https://{instance}/services/apexrest/'
                          .format(instance=self.sf_instance))
+
+
+    def _build_headers(self):
+        """Build the headers we add to each request that includes access token"""
+        self.headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + self.session_id,
+            'X-PrettyPrint': '1'
+        }
+
 
     def describe(self):
         """Describes all available objects
@@ -410,18 +446,58 @@ class Salesforce(object):
                 response_content = result.text
             return response_content
 
+
     def _call_salesforce(self, method, url, **kwargs):
         """Utility method for performing HTTP call to Salesforce.
 
         Returns a `requests.result` object.
         """
-        result = self.request.request(
-            method, url, headers=self.headers, **kwargs)
 
-        if result.status_code >= 300:
-            _exception_handler(result)
+        # Under some conditions, we'll allow the retrying of the call after an
+        # attempt to fix what's wrong. E.g. expired session token
+        retries_remaining = 1
 
-        return result
+        while retries_remaining >= 0:
+            retries_remaining = retries_remaining - 1
+
+            # Make the call
+            result = self.request.request(
+                method, url, headers=self.headers, **kwargs)
+
+            # If we had trouble
+            if result.status_code >= 300:
+
+                # Was it an expired session error AND do we have what we need
+                # to attempt a refresh?
+                if result.status_code == RESPONSE_CODE_EXPIRED_SESSION \
+                    and self.auth_type == AUTH_TYPE_DIRECT_WITH_REFRESH:
+
+                    # Let's try to refresh the access_token
+                    session_id, sf_instance = SalesforceLogin(
+                                                refresh_token=self.refresh_token,
+                                                client_id=self.client_id,
+                                                client_secret=self.client_secret
+                                            )
+
+                    # If it looks like things went well:
+                    if session_id and sf_instance:
+                        # Store the new session ID and rebuild the headers to use it
+                        self.session_id = session_id
+                        self._build_headers()
+                        # Replace the old instance URL with the new one for this call
+                        # and then store it internally for future calls
+                        url = url.replace(self.sf_instance, sf_instance)
+                        self.sf_instance = sf_instance
+
+                        # Continue through the loop again, hopefully with success
+                        continue
+
+                # If we got here, it's a plain fat old exception
+                _exception_handler(result)
+
+            # All good, so return the result
+            return result
+
 
 
 class SFType(object):
