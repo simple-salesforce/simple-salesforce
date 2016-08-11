@@ -15,7 +15,7 @@ Example
 -------
 There are two ways to gain access to Salesforce
 
-The first is to simply pass the domain of your Salesforce instance and an access token straight to ``Salesforce()``
+1) The first is to simply pass the domain of your Salesforce instance and an access token straight to ``Salesforce()``
 
 For example:
 
@@ -31,10 +31,14 @@ If you have the full URL of your instance (perhaps including the schema, as is i
     from simple_salesforce import Salesforce
     sf = Salesforce(instance_url='https://na1.salesforce.com', session_id='')
 
-There are also three means of authentication\:
-    1) uses username, password and security token
-    2) uses IP filtering, username, password and organizationId
-    3) uses client_id, client_secret and a refresh_token (retrieved from a prior OAuth)
+If you have a Connected App and Refresh token (as included in some OAuth2 request processes), you can also pass in the ``client_id``, ``client_secret`` and ``refresh_token`` to have simple-salesforce attempt to refresh the session/access token if it expires:
+
+.. code-block:: python
+
+    from simple_salesforce import Salesforce
+    sf = Salesforce(instance='na1.salesforce.com', session_id='', client_id='MY_CONNECTED_APP_ID', client_secret='MY_CONNECTED_APP_SECRET', refresh_token='REFRESH_TOKEN_PROVIDED_DURING_A_PRIOR_AUTH')
+
+2) There are also two means of authentication: uses username, password and security token uses IP filtering, username, password and organizationId
 
 To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password):
 
@@ -49,13 +53,6 @@ To login using IP-whitelist Organization ID method, simply use your Salesforce u
 
     from simple_salesforce import Salesforce
     sf = Salesforce(password='password', username='myemail@example.com', organizationId='OrgId')
-
-To login using Client Id, Client Secret and Refresh Token, simply provide the client_id, client_secret and refresh_token:
-
-.. code-block:: python
-
-    from simple_salesforce import Salesforce
-    sf = Salesforce(client_id='MY_CONNECTED_APP_ID', client_secret='MY_CONNECTED_APP_SECRET', refresh_token='REFRESH_TOKEN_PROVIDED_DURING_A_PRIOR_AUTH')
 
 If you'd like to enter a sandbox, simply add ``sandbox=True`` to your ``Salesforce()`` call.
 
