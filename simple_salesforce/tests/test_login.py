@@ -64,6 +64,29 @@ class TestSalesforceLogin(unittest.TestCase):
         self.assertEqual(session_id, tests.SESSION_ID)
         self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
 
+
+    @responses.activate
+    def test_refresh_token_success(self):
+        """Test refresh_token success"""
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://.*$'),
+            body=tests.REFRESH_TOKEN_RESPONSE_SUCCESS_STRING,
+            # json=tests.REFRESH_TOKEN_RESPONSE_SUCCESS_JSON,
+            content_type='application/json',
+            status=200
+        )
+
+        session_id, sf_instance = SalesforceLogin(
+            refresh_token='REFRESH_TOKEN_PROVIDED_DURING_A_PRIOR_AUTH',
+            consumer_id='MY_CONNECTED_APP_ID',
+            consumer_secret='MY_CONNECTED_APP_SECRET')
+
+        self.assertEqual(session_id, tests.SESSION_ID)
+        self.assertEqual(sf_instance, urlparse(tests.SERVER_URL).netloc)
+
+
+
     def test_failure(self):
         """Test A Failed Login Response"""
         return_mock = Mock()

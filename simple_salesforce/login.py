@@ -16,10 +16,19 @@ except ImportError:
     from cgi import escape
 import requests
 
+# pylint: disable=invalid-name
+def cleanseInstanceUrl(instance_url):
+    """Remove some common/likely noise from an instance url"""
+    return (instance_url
+            .replace('http://', '')
+            .replace('https://', '')
+            .split('/')[0]
+            .replace('-api', ''))
 
 # pylint: disable=invalid-name,too-many-arguments,too-many-locals
 def SalesforceLogin(
         username=None, password=None, security_token=None,
+        refresh_token=None, consumer_id=None, consumer_secret=None,
         organizationId=None, sandbox=False, sf_version=DEFAULT_API_VERSION,
         proxies=None, session=None, client_id=None):
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
@@ -31,6 +40,18 @@ def SalesforceLogin(
     * username -- the Salesforce username to use for authentication
     * password -- the password for the username
     * security_token -- the security token for the username
+
+        NOTE: next 3 parameters are optional, but should all be passed if
+            logging in with Connected App and refresh token
+
+    * refresh_token -- the refresh token provided to the Connected App (used in
+        some OAuth schemes)
+    * consumer_id -- the consumer ID for the Connected App that was granted
+        user's refresh token
+    * consumer_secret -- the consumer secret for the Connected App that was
+        granted the user's refresh token.
+
+
     * organizationId -- the ID of your organization
             NOTE: security_token an organizationId are mutually exclusive
     * sandbox -- True if you want to login to `test.salesforce.com`, False if
@@ -45,6 +66,7 @@ def SalesforceLogin(
     """
 
     soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
+    rest_url = 'https://{domain}.salesforce.com/services/oauth2/token'
     domain = 'test' if sandbox else 'login'
 
     if client_id:
@@ -55,6 +77,48 @@ def SalesforceLogin(
         client_id = DEFAULT_CLIENT_ID_PREFIX
 
     soap_url = soap_url.format(domain=domain, sf_version=sf_version)
+    rest_url = rest_url.format(domain=domain, sf_version=sf_version)
+
+
+    # Let's see if this flow is appropriate first as it's quite different
+    # than the rest of the flows
+    if all(arg is not None for arg in (
+            refresh_token, consumer_id, consumer_secret)):
+        # Use client credentials and refresh_token provided to Connected App by
+        # Salesforce during OAuth process to get a new session/access_token
+        data = {
+            'grant_type': 'refresh_token',
+            'client_id' : consumer_id,
+            'client_secret' : consumer_secret,
+            'refresh_token': refresh_token
+        }
+        headers = {
+            'content-type': 'application/x-www-form-urlencoded'
+        }
+
+        response = (session or requests).post(
+            url=rest_url, data=data, headers=headers,
+            proxies=proxies)
+
+        response_data = response.json()
+
+        if response.status_code != 200:
+            # Something's gone wrong :(
+
+
+            # TODO: Could there be a case where this isn't a list? Or the error
+            # is not always in the first element? Not sure.
+            if len(response_data) > 0:
+                response_data = response_data[0]
+
+            raise SalesforceAuthenticationFailed(
+                response_data['errorCode'], response_data['message'])
+
+        session_id = response_data.get('access_token')
+        sf_instance = cleanseInstanceUrl(response_data.get('instance_url'))
+
+        return session_id, sf_instance
+
 
     # pylint: disable=deprecated-method
     username = escape(username)
@@ -131,6 +195,7 @@ def SalesforceLogin(
             </soapenv:Body>
         </soapenv:Envelope>""".format(
             username=username, password=password, client_id=client_id)
+
     else:
         except_code = 'INVALID AUTH'
         except_msg = (
@@ -160,11 +225,7 @@ def SalesforceLogin(
     server_url = getUniqueElementValueFromXmlString(
         response.content, 'serverUrl')
 
-    sf_instance = (server_url
-                   .replace('http://', '')
-                   .replace('https://', '')
-                   .split('/')[0]
-                   .replace('-api', ''))
+    sf_instance = cleanseInstanceUrl(server_url)
 
     return session_id, sf_instance
 

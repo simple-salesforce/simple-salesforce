@@ -45,3 +45,6 @@ LOGIN_RESPONSE_SUCCESS = """<?xml version="1.0" encoding="UTF-8"?>
    </soapenv:Body>
 </soapenv:Envelope>
 """ % (METADATA_URL, SERVER_URL, SESSION_ID)
+
+REFRESH_TOKEN_RESPONSE_SUCCESS_JSON = {"access_token":SESSION_ID, "signature":"xxxxxxxxxuOelk8emXZqI4KDeIF2HvKHGaQ=", "scope":"refresh_token full", "instance_url":SERVER_URL, "id":"https://login.salesforce.com/id/00D36000000kxxxxxx/005360000024xxxxxx", "token_type":"Bearer", "issued_at":"1471024753853"}
+REFRESH_TOKEN_RESPONSE_SUCCESS_STRING = """{"access_token":"%s", "signature":"xxxxxxxxxuOelk8emXZqI4KDeIF2HvKHGaQ=", "scope":"refresh_token full", "instance_url":"%s", "id":"https://login.salesforce.com/id/00D36000000kxxxxxx/005360000024xxxxxx", "token_type":"Bearer", "issued_at":"1471024753853"}""" % (SESSION_ID, SERVER_URL)
