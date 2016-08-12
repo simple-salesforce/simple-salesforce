@@ -13,12 +13,13 @@ except ImportError:
 import requests
 
 
-def _cleanseInstanceUrl(instance_url):
+def cleanseInstanceUrl(instance_url):
+    """Remove some common/likely noise from an instance url"""
     return (instance_url
-                   .replace('http://', '')
-                   .replace('https://', '')
-                   .split('/')[0]
-                   .replace('-api', ''))
+            .replace('http://', '')
+            .replace('https://', '')
+            .split('/')[0]
+            .replace('-api', ''))
 
 # pylint: disable=invalid-name,too-many-arguments,too-many-locals
 def SalesforceLogin(
@@ -73,10 +74,10 @@ def SalesforceLogin(
         # Use client credentials and refresh_token provided to Connected App by
         # Salesforce during OAuth process to get a new session/access_token
         data = {
-           'grant_type': 'refresh_token',
-           'client_id' : client_id,
-           'client_secret' : client_secret,
-           'refresh_token': refresh_token
+            'grant_type': 'refresh_token',
+            'client_id' : client_id,
+            'client_secret' : client_secret,
+            'refresh_token': refresh_token
         }
         headers = {
             'content-type': 'application/x-www-form-urlencoded'
@@ -91,15 +92,15 @@ def SalesforceLogin(
         if response.status_code != 200:
             # Something's gone wrong :(
 
-            # TODO: Could there be a case where this isn't a list? Or the error is
-            # not always in the first element? Not sure.
+            # TODO: Could there be a case where this isn't a list? Or the error
+            # is not always in the first element? Not sure.
             if len(response_data) > 0:
-                repsonse_data = response_data[0]
+                response_data = response_data[0]
 
             raise SalesforceAuthenticationFailed(response_data['errorCode'], response_data['message'])
 
         session_id = response_data.get('access_token')
-        sf_instance = _cleanseInstanceUrl(response_data.get('instance_url'))
+        sf_instance = cleanseInstanceUrl(response_data.get('instance_url'))
 
         return session_id, sf_instance
 
@@ -200,7 +201,7 @@ def SalesforceLogin(
     server_url = getUniqueElementValueFromXmlString(
         response.content, 'serverUrl')
 
-    sf_instance = _cleanseInstanceUrl(server_url)
+    sf_instance = cleanseInstanceUrl(server_url)
 
     return session_id, sf_instance
 

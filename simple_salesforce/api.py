@@ -52,8 +52,8 @@ class Salesforce(object):
             * username -- the Salesforce username to use for authentication
             * password -- the password for the username
             * security_token -- the security token for the username
-            * sandbox -- True if you want to login to `test.salesforce.com`, False
-                         if you want to login to `login.salesforce.com`.
+            * sandbox -- True if you want to login to `test.salesforce.com` or
+                False if you want to login to `login.salesforce.com`.
 
 
         Direct Session and Instance Access:
@@ -474,10 +474,9 @@ class Salesforce(object):
 
                     # Let's try to refresh the access_token
                     session_id, sf_instance = SalesforceLogin(
-                                                refresh_token=self.refresh_token,
-                                                client_id=self.client_id,
-                                                client_secret=self.client_secret
-                                            )
+                                            refresh_token=self.refresh_token,
+                                            client_id=self.client_id,
+                                            client_secret=self.client_secret)
 
                     # If it looks like things went well:
                     if session_id and sf_instance:
