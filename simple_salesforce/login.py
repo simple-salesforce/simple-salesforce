@@ -102,8 +102,13 @@ def SalesforceLogin(
 
         response_data = response.json()
 
+        print response
+        print response.text
+        print response.status_code
+
         if response.status_code != 200:
             # Something's gone wrong :(
+
 
             # TODO: Could there be a case where this isn't a list? Or the error
             # is not always in the first element? Not sure.
