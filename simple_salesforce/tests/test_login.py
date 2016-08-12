@@ -71,7 +71,8 @@ class TestSalesforceLogin(unittest.TestCase):
         responses.add(
             responses.POST,
             re.compile(r'^https://.*$'),
-            json=tests.REFRESH_TOKEN_RESPONSE_SUCCESS,
+            body=tests.REFRESH_TOKEN_RESPONSE_SUCCESS_STRING,
+            # json=tests.REFRESH_TOKEN_RESPONSE_SUCCESS_JSON,
             content_type='application/json',
             status=200
         )
