@@ -72,7 +72,8 @@ class TestSalesforceLogin(unittest.TestCase):
             responses.POST,
             re.compile(r'^https://.*$'),
             json=tests.REFRESH_TOKEN_RESPONSE_SUCCESS,
-            status=http.OK
+            content_type='application/json',
+            status=200
         )
 
         session_id, sf_instance = SalesforceLogin(
