@@ -478,9 +478,9 @@ class Salesforce(object):
 
                     # Let's try to refresh the access_token
                     session_id, sf_instance = SalesforceLogin(
-                            refresh_token=self.refresh_token,
-                            consumer_id=self.consumer_id,
-                            consumer_secret=self.consumer_secret)
+                        refresh_token=self.refresh_token,
+                        consumer_id=self.consumer_id,
+                        consumer_secret=self.consumer_secret)
 
                     # If it looks like things went well:
                     if session_id and sf_instance:

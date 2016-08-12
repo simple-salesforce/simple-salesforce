@@ -83,7 +83,7 @@ def SalesforceLogin(
     # Let's see if this flow is appropriate first as it's quite different
     # than the rest of the flows
     if all(arg is not None for arg in (
-        refresh_token, consumer_id, consumer_secret)):
+            refresh_token, consumer_id, consumer_secret)):
         # Use client credentials and refresh_token provided to Connected App by
         # Salesforce during OAuth process to get a new session/access_token
         data = {
