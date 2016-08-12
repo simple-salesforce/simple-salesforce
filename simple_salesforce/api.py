@@ -40,7 +40,7 @@ class Salesforce(object):
     def __init__(
             self, username=None, password=None, security_token=None,
             session_id=None, instance=None, instance_url=None,
-            refresh_token=None, client_id=None, client_secret=None,
+            refresh_token=None, consumer_id=None, consumer_secret=None,
             organizationId=None, sandbox=False, version=DEFAULT_API_VERSION,
             proxies=None, session=None, client_id=None):
         """Initialize the instance with the given parameters.
@@ -70,8 +70,8 @@ class Salesforce(object):
             * Optionally include ALL below for refreshable tokens given to
                 Connected Apps:
 
-                * client_id -- Your Connected App's public key identifier
-                * client_secret -- Your Connected App's private key identifier
+                * consumer_id -- Your Connected App's public key identifier
+                * consumer_secret -- Your Connected App's private key identifier
                 * refresh_token -- The refresh token provided as part of the
                     response to your app's OAuth authentication process.
 
@@ -125,12 +125,12 @@ class Salesforce(object):
             # then this session/access_token is refreshable and we may need to
             # utilize this if session expires
             if all(arg is not None for arg in (
-                refresh_token, client_id, client_secret)):
+                refresh_token, consumer_id, consumer_secret)):
 
                 self.auth_type = AUTH_TYPE_DIRECT_WITH_REFRESH
                 self.refresh_token = refresh_token
-                self.client_id = client_id
-                self.client_secret = client_secret
+                self.consumer_id = consumer_id
+                self.consumer_secret = consumer_secret
 
 
         elif all(arg is not None for arg in (
@@ -477,8 +477,8 @@ class Salesforce(object):
                     # Let's try to refresh the access_token
                     session_id, sf_instance = SalesforceLogin(
                                             refresh_token=self.refresh_token,
-                                            client_id=self.client_id,
-                                            client_secret=self.client_secret)
+                                            consumer_id=self.consumer_id,
+                                            consumer_secret=self.consumer_secret)
 
                     # If it looks like things went well:
                     if session_id and sf_instance:
