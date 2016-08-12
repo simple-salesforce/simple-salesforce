@@ -36,7 +36,7 @@ class Salesforce(object):
     An instance of Salesforce is a handy way to wrap a Salesforce session
     for easy use of the Salesforce REST API.
     """
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments,too-many-locals
     def __init__(
             self, username=None, password=None, security_token=None,
             session_id=None, instance=None, instance_url=None,
@@ -78,11 +78,11 @@ class Salesforce(object):
 
         Universal Kwargs:
             * version -- the version of the Salesforce API to use, for example
-                         `29.0`
+                        `29.0`
             * proxies -- the optional map of scheme to proxy server
             * session -- Custom requests session, created in calling code. This
-                         enables the use of requets Session features not otherwise
-                         exposed by simple_salesforce.
+                        enables the use of requets Session features not
+                        otherwiseexposed by simple_salesforce.
 
         """
 
@@ -125,7 +125,7 @@ class Salesforce(object):
             # then this session/access_token is refreshable and we may need to
             # utilize this if session expires
             if all(arg is not None for arg in (
-                refresh_token, consumer_id, consumer_secret)):
+                    refresh_token, consumer_id, consumer_secret)):
 
                 self.auth_type = AUTH_TYPE_DIRECT_WITH_REFRESH
                 self.refresh_token = refresh_token
@@ -171,7 +171,9 @@ class Salesforce(object):
 
 
     def _build_headers(self):
-        """Build the headers we add to each request that includes access token"""
+        """
+        Build the headers we add to each request that includes access token
+        """
         self.headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
@@ -476,21 +478,23 @@ class Salesforce(object):
 
                     # Let's try to refresh the access_token
                     session_id, sf_instance = SalesforceLogin(
-                                            refresh_token=self.refresh_token,
-                                            consumer_id=self.consumer_id,
-                                            consumer_secret=self.consumer_secret)
+                            refresh_token=self.refresh_token,
+                            consumer_id=self.consumer_id,
+                            consumer_secret=self.consumer_secret)
 
                     # If it looks like things went well:
                     if session_id and sf_instance:
-                        # Store the new session ID and rebuild the headers to use it
+                        # Store the new session ID and rebuild the headers
+                        # to use it
                         self.session_id = session_id
                         self._build_headers()
-                        # Replace the old instance URL with the new one for this call
-                        # and then store it internally for future calls
+                        # Replace the old instance URL with the new one for this
+                        # call and then store it internally for future calls
                         url = url.replace(self.sf_instance, sf_instance)
                         self.sf_instance = sf_instance
 
-                        # Continue through the loop again, hopefully with success
+                        # Continue through the loop again, hopefully
+                        # with success
                         continue
 
                 # If we got here, it's a plain fat old exception

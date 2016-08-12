@@ -16,7 +16,7 @@ except ImportError:
     from cgi import escape
 import requests
 
-
+# pylint: disable=invalid-name
 def cleanseInstanceUrl(instance_url):
     """Remove some common/likely noise from an instance url"""
     return (instance_url
@@ -46,10 +46,10 @@ def SalesforceLogin(
 
     * refresh_token -- the refresh token provided to the Connected App (used in
         some OAuth schemes)
-    * consumer_id -- the consumer ID for the Connected App that was granted user's
-        refresh token
-    * consumer_secret -- the consumer secret for the Connected App that was granted the
-        user's refresh token.
+    * consumer_id -- the consumer ID for the Connected App that was granted
+        user's refresh token
+    * consumer_secret -- the consumer secret for the Connected App that was
+        granted the user's refresh token.
 
 
     * organizationId -- the ID of your organization
@@ -82,7 +82,8 @@ def SalesforceLogin(
 
     # Let's see if this flow is appropriate first as it's quite different
     # than the rest of the flows
-    if all(arg is not None for arg in (refresh_token, consumer_id, consumer_secret)):
+    if all(arg is not None for arg in (
+        refresh_token, consumer_id, consumer_secret)):
         # Use client credentials and refresh_token provided to Connected App by
         # Salesforce during OAuth process to get a new session/access_token
         data = {
@@ -109,7 +110,8 @@ def SalesforceLogin(
             if len(response_data) > 0:
                 response_data = response_data[0]
 
-            raise SalesforceAuthenticationFailed(response_data['errorCode'], response_data['message'])
+            raise SalesforceAuthenticationFailed(
+                response_data['errorCode'], response_data['message'])
 
         session_id = response_data.get('access_token')
         sf_instance = cleanseInstanceUrl(response_data.get('instance_url'))
