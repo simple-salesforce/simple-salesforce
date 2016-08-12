@@ -71,7 +71,7 @@ class TestSalesforceLogin(unittest.TestCase):
         responses.add(
             responses.POST,
             re.compile(r'^https://.*$'),
-            body=tests.REFRESH_TOKEN_RESPONSE_SUCCESS,
+            json=tests.REFRESH_TOKEN_RESPONSE_SUCCESS,
             status=http.OK
         )
 
@@ -81,7 +81,7 @@ class TestSalesforceLogin(unittest.TestCase):
             consumer_secret='MY_CONNECTED_APP_SECRET')
 
         self.assertEqual(session_id, tests.SESSION_ID)
-        self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
+        self.assertEqual(sf_instance, urlparse(tests.SERVER_URL).netloc)
 
 
 
