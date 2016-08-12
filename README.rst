@@ -31,12 +31,12 @@ If you have the full URL of your instance (perhaps including the schema, as is i
     from simple_salesforce import Salesforce
     sf = Salesforce(instance_url='https://na1.salesforce.com', session_id='')
 
-If you have a Connected App and Refresh token (as included in some OAuth2 request processes), you can also pass in the ``client_id``, ``client_secret`` and ``refresh_token`` to have simple-salesforce attempt to refresh the session/access token if it expires:
+If you have a Connected App and Refresh token (as included in some OAuth2 request processes), you can also pass in the ``consumer_id``, ``consumer_secret`` and ``refresh_token`` to have simple-salesforce attempt to refresh the session/access token if it expires:
 
 .. code-block:: python
 
     from simple_salesforce import Salesforce
-    sf = Salesforce(instance='na1.salesforce.com', session_id='', client_id='MY_CONNECTED_APP_ID', client_secret='MY_CONNECTED_APP_SECRET', refresh_token='REFRESH_TOKEN_PROVIDED_DURING_A_PRIOR_AUTH')
+    sf = Salesforce(instance='na1.salesforce.com', session_id='', consumer_id='MY_CONNECTED_APP_ID', consumer_secret='MY_CONNECTED_APP_SECRET', refresh_token='REFRESH_TOKEN_PROVIDED_DURING_A_PRIOR_AUTH')
 
 2) There are also two means of authentication: uses username, password and security token uses IP filtering, username, password and organizationId
 
@@ -259,7 +259,7 @@ Additional Features
 
 There are a few helper classes that are used internally and available to you.
 
-Included in them are ``SalesforceLogin``, which takes in either: \[a username, password and security token\] OR \[a client_id, client_secret and refresh_token\] and optional boolean sandbox indicator and optional version and returns a touple of ``(session_id, sf_instance)`` where `session_id` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
+Included in them are ``SalesforceLogin``, which takes in either: \[a username, password and security token\] OR \[a consumer_id, consumer_secret and refresh_token\] and optional boolean sandbox indicator and optional version and returns a touple of ``(session_id, sf_instance)`` where `session_id` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
 
 For example, to use SalesforceLogin with a username, password and security_token for a sandbox account you'd use:
 
@@ -274,14 +274,14 @@ For example, to use SalesforceLogin with a username, password and security_token
 
 Simply leave off the final ``True`` if you do not wish to use a sandbox.
 
-To use SalesforceLogin with a client_id, client_secret and refresh_token for a sandbox account you'd use:
+To use SalesforceLogin with a consumer_id, consumer_secret and refresh_token for a sandbox account you'd use:
 
 .. code-block:: python
 
     from simple_salesforce import SalesforceLogin
     session_id, instance = SalesforceLogin(
-        client_id='MY_CONNECTED_APP_ID',
-        client_secret='MY_CONNECTED_APP_SECRET',
+        consumer_id='MY_CONNECTED_APP_ID',
+        consumer_secret='MY_CONNECTED_APP_SECRET',
         refresh_token='REFRESH_TOKEN_PROVIDED_DURING_A_PRIOR_AUTH'
         sandbox=True)
 

@@ -28,7 +28,7 @@ def cleanseInstanceUrl(instance_url):
 # pylint: disable=invalid-name,too-many-arguments,too-many-locals
 def SalesforceLogin(
         username=None, password=None, security_token=None,
-        refresh_token=None, client_id=None, client_secret=None,
+        refresh_token=None, consumer_id=None, consumer_secret=None,
         organizationId=None, sandbox=False, sf_version=DEFAULT_API_VERSION,
         proxies=None, session=None, client_id=None):
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
@@ -46,9 +46,9 @@ def SalesforceLogin(
 
     * refresh_token -- the refresh token provided to the Connected App (used in
         some OAuth schemes)
-    * client_id -- the client ID for the Connected App that was granted user's
+    * consumer_id -- the consumer ID for the Connected App that was granted user's
         refresh token
-    * client_secret -- the client secret for the Connected App that was granted the
+    * consumer_secret -- the consumer secret for the Connected App that was granted the
         user's refresh token.
 
 
@@ -82,13 +82,13 @@ def SalesforceLogin(
 
     # Let's see if this flow is appropriate first as it's quite different
     # than the rest of the flows
-    if all(arg is not None for arg in (refresh_token, client_id, client_secret)):
+    if all(arg is not None for arg in (refresh_token, consumer_id, consumer_secret)):
         # Use client credentials and refresh_token provided to Connected App by
         # Salesforce during OAuth process to get a new session/access_token
         data = {
             'grant_type': 'refresh_token',
-            'client_id' : client_id,
-            'client_secret' : client_secret,
+            'client_id' : consumer_id,
+            'client_secret' : consumer_secret,
             'refresh_token': refresh_token
         }
         headers = {
