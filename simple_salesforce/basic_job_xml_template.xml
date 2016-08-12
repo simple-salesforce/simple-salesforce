@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jobInfo xmlns="http://www.force.com/2009/06/asyncapi/dataload">
+    <operation>{0}</operation>
+    <object>{1}</object>
+    <contentType>CSV</contentType>
+</jobInfo>

@@ -19,7 +19,7 @@ setup(
     author='Nick Catalano',
     maintainer='Demian Brecht',
     maintainer_email='demianbrecht@gmail.com',
-    packages=['simple_salesforce',],
+    packages=['simple_salesforce', ],
     url='https://github.com/simple-salesforce/simple-salesforce',
     license='Apache 2.0',
     description=("Simple Salesforce is a basic Salesforce.com REST API client. "
@@ -27,15 +27,16 @@ setup(
         "returning an ordered dictionary of the API JSON response."),
     long_description=textwrap.dedent(open('README.rst', 'r').read()),
     install_requires=[
-        'requests[security]'
+        'requests[security]',
+        'xmltodict>=0.10.2'
     ] + pyver_install_requires,
     tests_require=[
         'nose>=1.3.0',
         'pytz>=2014.1.1',
         'responses>=0.5.1',
     ] + pyver_tests_require,
-    test_suite = 'nose.collector',
-    keywords = "python salesforce salesforce.com",
+    test_suite='nose.collector',
+    keywords="python salesforce salesforce.com",
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: Apache Software License',
