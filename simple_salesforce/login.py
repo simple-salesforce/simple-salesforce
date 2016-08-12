@@ -2,6 +2,10 @@
 
 Heavily Modified from RestForce 1.0.0
 """
+
+DEFAULT_CLIENT_ID_PREFIX = 'RestForce'
+
+
 from simple_salesforce.api import DEFAULT_API_VERSION
 from simple_salesforce.util import getUniqueElementValueFromXmlString
 from simple_salesforce.util import SalesforceError
@@ -17,7 +21,7 @@ import requests
 def SalesforceLogin(
         username=None, password=None, security_token=None,
         organizationId=None, sandbox=False, sf_version=DEFAULT_API_VERSION,
-        proxies=None, session=None):
+        proxies=None, session=None, client_id=None):
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
     the domain of the instance of Salesforce to use for the session.
@@ -37,10 +41,18 @@ def SalesforceLogin(
     * session -- Custom requests session, created in calling code. This
                  enables the use of requets Session features not otherwise
                  exposed by simple_salesforce.
+    * client_id -- the ID of this client
     """
 
     soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
     domain = 'test' if sandbox else 'login'
+
+    if client_id:
+        client_id = "{prefix}/{app_name}".format(
+            prefix=DEFAULT_CLIENT_ID_PREFIX,
+            app_name=client_id)
+    else:
+        client_id = DEFAULT_CLIENT_ID_PREFIX
 
     soap_url = soap_url.format(domain=domain, sf_version=sf_version)
 
@@ -56,7 +68,14 @@ def SalesforceLogin(
         <env:Envelope
                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+                xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"
+                xmlns:urn="urn:partner.soap.sforce.com">
+            <env:Header>
+                <urn:CallOptions>
+                    <urn:client>{client_id}</urn:client>
+                    <urn:defaultNamespace>sf</urn:defaultNamespace>
+                </urn:CallOptions>
+            </env:Header>
             <env:Body>
                 <n1:login xmlns:n1="urn:partner.soap.sforce.com">
                     <n1:username>{username}</n1:username>
@@ -64,7 +83,8 @@ def SalesforceLogin(
                 </n1:login>
             </env:Body>
         </env:Envelope>""".format(
-            username=username, password=password, token=security_token)
+            username=username, password=password, token=security_token,
+            client_id=client_id)
 
     # Check if IP Filtering is used in conjuction with organizationId
     elif organizationId is not None:
@@ -75,7 +95,7 @@ def SalesforceLogin(
                 xmlns:urn="urn:partner.soap.sforce.com">
             <soapenv:Header>
                 <urn:CallOptions>
-                    <urn:client>RestForce</urn:client>
+                    <urn:client>{client_id}</urn:client>
                     <urn:defaultNamespace>sf</urn:defaultNamespace>
                 </urn:CallOptions>
                 <urn:LoginScopeHeader>
@@ -89,7 +109,8 @@ def SalesforceLogin(
                 </urn:login>
             </soapenv:Body>
         </soapenv:Envelope>""".format(
-            username=username, password=password, organizationId=organizationId)
+            username=username, password=password, organizationId=organizationId,
+            client_id=client_id)
     elif username is not None and password is not None:
         # IP Filtering for non self-service users
         login_soap_request_body = """<?xml version="1.0" encoding="utf-8" ?>
@@ -98,7 +119,7 @@ def SalesforceLogin(
                 xmlns:urn="urn:partner.soap.sforce.com">
             <soapenv:Header>
                 <urn:CallOptions>
-                    <urn:client>RestForce</urn:client>
+                    <urn:client>{client_id}</urn:client>
                     <urn:defaultNamespace>sf</urn:defaultNamespace>
                 </urn:CallOptions>
             </soapenv:Header>
@@ -109,7 +130,7 @@ def SalesforceLogin(
                 </urn:login>
             </soapenv:Body>
         </soapenv:Envelope>""".format(
-            username=username, password=password)
+            username=username, password=password, client_id=client_id)
     else:
         except_code = 'INVALID AUTH'
         except_msg = (
