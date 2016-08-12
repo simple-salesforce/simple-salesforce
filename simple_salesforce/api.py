@@ -42,7 +42,7 @@ class Salesforce(object):
             session_id=None, instance=None, instance_url=None,
             refresh_token=None, client_id=None, client_secret=None,
             organizationId=None, sandbox=False, version=DEFAULT_API_VERSION,
-            proxies=None, session=None):
+            proxies=None, session=None, client_id=None):
         """Initialize the instance with the given parameters.
 
         Available kwargs
@@ -106,7 +106,8 @@ class Salesforce(object):
                 security_token=security_token,
                 sandbox=self.sandbox,
                 sf_version=self.sf_version,
-                proxies=self.proxies)
+                proxies=self.proxies,
+                client_id=client_id)
 
         elif all(arg is not None for arg in (
                 session_id, instance or instance_url)):
@@ -144,7 +145,8 @@ class Salesforce(object):
                 organizationId=organizationId,
                 sandbox=self.sandbox,
                 sf_version=self.sf_version,
-                proxies=self.proxies)
+                proxies=self.proxies,
+                client_id=client_id)
 
         else:
             raise TypeError(
