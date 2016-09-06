@@ -391,7 +391,7 @@ class Salesforce(object):
         # so check whether there are more results and retrieve them if so.
         return get_all_results(result, **kwargs)
 
-    def apexecute(self, action, method='GET', data=None, **kwargs):
+    def apex_request(self, action, method='GET', data=None, **kwargs):
         """Makes an HTTP request to an APEX REST endpoint
 
         Arguments:
@@ -401,8 +401,22 @@ class Salesforce(object):
         * data -- A dict of parameters to send in a POST / PUT request
         * kwargs -- Additional kwargs to pass to `requests.request`
         """
-        result = self._call_salesforce(method, self.apex_url + action,
-                                       data=json.dumps(data), **kwargs)
+        return self._call_salesforce(method, self.apex_url + action,
+                                     data=json.dumps(data), **kwargs)
+
+    def apexecute(self, action, method='GET', data=None, **kwargs):
+        """Makes an HTTP request to an APEX REST endpoint and returns
+        the resulting body content
+
+        Arguments:
+
+        * action -- The REST endpoint for the request.
+        * method -- HTTP method for the request (default GET)
+        * data -- A dict of parameters to send in a POST / PUT request
+        * kwargs -- Additional kwargs to pass to `requests.request`
+        """
+        result = self.apex_execute(method, self.apex_url + action,
+                                   data=data, **kwargs)
 
         if result.status_code == 200:
             try:
