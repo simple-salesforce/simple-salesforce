@@ -69,7 +69,7 @@ class TestSalesforce(unittest.TestCase):
             security_token='token')
 
         self.assertEqual(tests.SESSION_ID, client.session_id)
-        self.assertEqual(session, client.request)
+        self.assertEqual(session, client.session)
 
     @responses.activate
     def test_custom_version_success(self):
@@ -96,7 +96,7 @@ class TestSalesforce(unittest.TestCase):
         client = Salesforce(session_id=tests.SESSION_ID,
                             instance_url=tests.SERVER_URL)
 
-        self.assertIs(client.request, client.Contact.request)
+        self.assertIs(client.session, client.Contact.session)
 
     def test_shared_custom_session_to_sftype(self):
         """Test Salesforce and SFType instances share custom `Session`"""
@@ -105,8 +105,8 @@ class TestSalesforce(unittest.TestCase):
                             instance_url=tests.SERVER_URL,
                             session=session)
 
-        self.assertIs(session, client.request)
-        self.assertIs(session, client.Contact.request)
+        self.assertIs(session, client.session)
+        self.assertIs(session, client.Contact.session)
 
     def test_proxies_inherited_default(self):
         """Test Salesforce and SFType use same proxies"""
@@ -115,8 +115,8 @@ class TestSalesforce(unittest.TestCase):
                             instance_url=tests.SERVER_URL,
                             session=session)
 
-        self.assertIs(session.proxies, client.request.proxies)
-        self.assertIs(session.proxies, client.Contact.request.proxies)
+        self.assertIs(session.proxies, client.session.proxies)
+        self.assertIs(session.proxies, client.Contact.session.proxies)
 
     def test_proxies_inherited_set_on_session(self):
         """Test Salesforce and SFType use same custom proxies"""
@@ -125,8 +125,8 @@ class TestSalesforce(unittest.TestCase):
         client = Salesforce(session_id=tests.SESSION_ID,
                             instance_url=tests.SERVER_URL,
                             session=session)
-        self.assertIs(tests.PROXIES, client.request.proxies)
-        self.assertIs(tests.PROXIES, client.Contact.request.proxies)
+        self.assertIs(tests.PROXIES, client.session.proxies)
+        self.assertIs(tests.PROXIES, client.Contact.session.proxies)
 
 
 class TestExceptionHandler(unittest.TestCase):

@@ -73,10 +73,11 @@ class Salesforce(object):
         # kwargs
         self.sf_version = version
         self.sandbox = sandbox
-        self.request = session or requests.Session()
-        self.proxies = self.request.proxies
-        if proxies is not None:  # override custom session proxies dance
-            self.request.proxies = self.proxies = proxies
+        self.session = session or requests.Session()
+        self.proxies = self.session.proxies
+        # override custom session proxies dance
+        if not session and proxies is not None:
+            self.session.proxies = self.proxies = proxies
 
         # Determine if the user wants to use our username/password auth or pass
         # in their own information
@@ -86,7 +87,7 @@ class Salesforce(object):
 
             # Pass along the username/password to our login helper
             self.session_id, self.sf_instance = SalesforceLogin(
-                session=self.request,
+                session=self.session,
                 username=username,
                 password=password,
                 security_token=security_token,
@@ -113,7 +114,7 @@ class Salesforce(object):
 
             # Pass along the username/password to our login helper
             self.session_id, self.sf_instance = SalesforceLogin(
-                session=self.request,
+                session=self.session,
                 username=username,
                 password=password,
                 organizationId=organizationId,
@@ -182,7 +183,7 @@ class Salesforce(object):
 
         return SFType(
             name, self.session_id, self.sf_instance, sf_version=self.sf_version,
-            proxies=self.proxies, session=self.request)
+            proxies=self.proxies, session=self.session)
 
     # User utlity methods
     def set_password(self, user, password):
@@ -418,13 +419,23 @@ class Salesforce(object):
 
         Returns a `requests.result` object.
         """
-        result = self.request.request(
+        result = self.session.request(
             method, url, headers=self.headers, **kwargs)
 
         if result.status_code >= 300:
             _exception_handler(result)
 
         return result
+
+    @property
+    def request(self):
+        """Deprecated access to self.session for backwards compatibility"""
+        return self.session
+
+    @request.setter
+    def request(self, session):
+        """Deprecated setter for self.session"""
+        self.session = session
 
 
 class SFType(object):
@@ -450,9 +461,10 @@ class SFType(object):
         """
         self.session_id = session_id
         self.name = object_name
-        self.request = session or requests.Session()
-        if proxies is not None:  # don't wipe out original proxies with None
-            self.request.proxies = proxies
+        self.session = session or requests.Session()
+        # don't wipe out original proxies with None
+        if not session and proxies is not None:
+            self.session.proxies = proxies
 
         self.base_url = (
             u'https://{instance}/services/data/v{sf_version}/sobjects'
@@ -629,7 +641,7 @@ class SFType(object):
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
         }
-        result = self.request.request(method, url, headers=headers, **kwargs)
+        result = self.session.request(method, url, headers=headers, **kwargs)
 
         if result.status_code >= 300:
             _exception_handler(result, self.name)
@@ -647,6 +659,16 @@ class SFType(object):
             return response.status_code
         else:
             return response
+
+    @property
+    def request(self):
+        """Deprecated access to self.session for backwards compatibility"""
+        return self.session
+
+    @request.setter
+    def request(self, session):
+        """Deprecated setter for self.session"""
+        self.session = session
 
 
 class SalesforceAPI(Salesforce):
