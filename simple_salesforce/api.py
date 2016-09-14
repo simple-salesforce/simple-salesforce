@@ -94,7 +94,7 @@ class Salesforce(object):
             if not session:
                 self.session.proxies = self.proxies = proxies
             else:
-                logger.warn(
+                logger.warning(
                     'Proxies must be defined on custom session object, '
                     'ignoring proxies: %s', proxies
                 )
