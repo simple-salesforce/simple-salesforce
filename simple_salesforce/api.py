@@ -5,6 +5,8 @@
 DEFAULT_API_VERSION = '29.0'
 
 
+import logging
+import warnings
 import requests
 import json
 
@@ -21,6 +23,17 @@ try:
 except ImportError:
     # Python < 2.7
     from ordereddict import OrderedDict
+
+#pylint: disable=invalid-name
+logger = logging.getLogger(__name__)
+
+
+def _warn_request_deprecation():
+    """Deprecation for (Salesforce/SFType).request attribute"""
+    warnings.warn(
+        'The request attribute has been deprecated and will be removed in a '
+        'future version. Please use Salesforce.session instead.'
+    )
 
 
 # pylint: disable=too-many-instance-attributes
@@ -64,7 +77,7 @@ class Salesforce(object):
                      `29.0`
         * proxies -- the optional map of scheme to proxy server
         * session -- Custom requests session, created in calling code. This
-                     enables the use of requets Session features not otherwise
+                     enables the use of requests Session features not otherwise
                      exposed by simple_salesforce.
 
         """
@@ -73,7 +86,17 @@ class Salesforce(object):
         # kwargs
         self.sf_version = version
         self.sandbox = sandbox
-        self.proxies = proxies
+        self.session = session or requests.Session()
+        self.proxies = self.session.proxies
+        # override custom session proxies dance
+        if proxies is not None:
+            if not session:
+                self.session.proxies = self.proxies = proxies
+            else:
+                logger.warn(
+                    'Proxies must be defined on custom session object, '
+                    'ignoring proxies: %s', proxies
+                )
 
         # Determine if the user wants to use our username/password auth or pass
         # in their own information
@@ -83,7 +106,7 @@ class Salesforce(object):
 
             # Pass along the username/password to our login helper
             self.session_id, self.sf_instance = SalesforceLogin(
-                session=session,
+                session=self.session,
                 username=username,
                 password=password,
                 security_token=security_token,
@@ -110,7 +133,7 @@ class Salesforce(object):
 
             # Pass along the username/password to our login helper
             self.session_id, self.sf_instance = SalesforceLogin(
-                session=session,
+                session=self.session,
                 username=username,
                 password=password,
                 organizationId=organizationId,
@@ -129,8 +152,6 @@ class Salesforce(object):
         else:
             self.auth_site = 'https://login.salesforce.com'
 
-        self.request = session or requests.Session()
-        self.request.proxies = self.proxies
         self.headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
@@ -180,8 +201,8 @@ class Salesforce(object):
             return super(Salesforce, self).__getattr__(name)
 
         return SFType(
-            name, self.session_id, self.sf_instance, self.sf_version,
-            self.proxies)
+            name, self.session_id, self.sf_instance, sf_version=self.sf_version,
+            proxies=self.proxies, session=self.session)
 
     # User utlity methods
     def set_password(self, user, password):
@@ -226,7 +247,6 @@ class Salesforce(object):
         * user: the userID of the user to set
         * password: the new password
         """
-        import warnings
         warnings.warn(
             "This method has been deprecated."
             "Please use set_password instread.",
@@ -417,13 +437,25 @@ class Salesforce(object):
 
         Returns a `requests.result` object.
         """
-        result = self.request.request(
+        result = self.session.request(
             method, url, headers=self.headers, **kwargs)
 
         if result.status_code >= 300:
             _exception_handler(result)
 
         return result
+
+    @property
+    def request(self):
+        """Deprecated access to self.session for backwards compatibility"""
+        _warn_request_deprecation()
+        return self.session
+
+    @request.setter
+    def request(self, session):
+        """Deprecated setter for self.session"""
+        _warn_request_deprecation()
+        self.session = session
 
 
 class SFType(object):
@@ -432,7 +464,7 @@ class SFType(object):
     # pylint: disable=too-many-arguments
     def __init__(
             self, object_name, session_id, sf_instance, sf_version='27.0',
-            proxies=None):
+            proxies=None, session=None):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -443,11 +475,16 @@ class SFType(object):
         * sf_instance -- the domain of the instance of Salesforce to use
         * sf_version -- the version of the Salesforce API to use
         * proxies -- the optional map of scheme to proxy server
+        * session -- Custom requests session, created in calling code. This
+                     enables the use of requests Session features not otherwise
+                     exposed by simple_salesforce.
         """
         self.session_id = session_id
         self.name = object_name
-        self.request = requests.Session()
-        self.request.proxies = proxies
+        self.session = session or requests.Session()
+        # don't wipe out original proxies with None
+        if not session and proxies is not None:
+            self.session.proxies = proxies
 
         self.base_url = (
             u'https://{instance}/services/data/v{sf_version}/sobjects'
@@ -624,7 +661,7 @@ class SFType(object):
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
         }
-        result = self.request.request(method, url, headers=headers, **kwargs)
+        result = self.session.request(method, url, headers=headers, **kwargs)
 
         if result.status_code >= 300:
             _exception_handler(result, self.name)
@@ -642,6 +679,18 @@ class SFType(object):
             return response.status_code
         else:
             return response
+
+    @property
+    def request(self):
+        """Deprecated access to self.session for backwards compatibility"""
+        _warn_request_deprecation()
+        return self.session
+
+    @request.setter
+    def request(self, session):
+        """Deprecated setter for self.session"""
+        _warn_request_deprecation()
+        self.session = session
 
 
 class SalesforceAPI(Salesforce):
@@ -667,7 +716,6 @@ class SalesforceAPI(Salesforce):
         * sf_version -- the version of the Salesforce API to use, for example
                         "27.0"
         """
-        import warnings
         warnings.warn(
             "Use of login arguments has been deprecated. Please use kwargs",
             DeprecationWarning

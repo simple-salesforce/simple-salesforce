@@ -4,6 +4,10 @@
 SESSION_ID = '12345'
 METADATA_URL = 'https://na15.salesforce.com/services/Soap/m/29.0/00Di0000000icUB'
 SERVER_URL = 'https://na15.salesforce.com/services/Soap/c/29.0/00Di0000000icUB/0DFi00000008UYO'
+PROXIES = {
+    "http": "http://10.10.1.10:3128",
+    "https": "http://10.10.1.10:1080",
+}
 
 LOGIN_RESPONSE_SUCCESS = """<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns="urn:enterprise.soap.sforce.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
