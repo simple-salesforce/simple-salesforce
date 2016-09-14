@@ -29,8 +29,67 @@ from simple_salesforce.api import (
     SalesforceExpiredSession,
     SalesforceRefusedRequest,
     SalesforceResourceNotFound,
-    SalesforceGeneralError
+    SalesforceGeneralError,
+    SFType
 )
+
+
+class TestSFType(unittest.TestCase):
+    """Tests for the SFType instance"""
+    def setUp(self):
+        request_patcher = patch('simple_salesforce.api.requests')
+        self.mockrequest = request_patcher.start()
+        self.addCleanup(request_patcher.stop)
+
+    @responses.activate
+    def test_update_with_additional_request_headers(self):
+        """Ensure custom headers are used for updates"""
+        responses.add(
+            responses.PATCH,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = SFType(
+            object_name='Case',
+            session_id='5',
+            sf_instance='test.salesforce.com',
+            session=requests.Session()
+        )
+        update_result = sf_type.update(
+            record_id='some-case-id',
+            data={'some': 'data'},
+            headers={'Sforce-Auto-Assign': 'FALSE'}
+        )
+
+        request_headers = responses.calls[0].request.headers
+        additional_request_header = request_headers['Sforce-Auto-Assign']
+        self.assertEqual(additional_request_header, 'FALSE')
+        self.assertEqual(update_result, http.OK)
+
+    @responses.activate
+    def test_update_without_additional_request_headers(self):
+        """Ensure updates work without custom headers"""
+        responses.add(
+            responses.PATCH,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = SFType(
+            object_name='Case',
+            session_id='5',
+            sf_instance='test.salesforce.com',
+            session=requests.Session()
+        )
+        update_result = sf_type.update(
+            record_id='some-case-id',
+            data={'some': 'data'}
+        )
+
+        self.assertEqual(update_result, http.OK)
 
 
 class TestSalesforce(unittest.TestCase):

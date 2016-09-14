@@ -582,7 +582,7 @@ class SFType(object):
                                        data=json.dumps(data))
         return self._raw_response(result, raw_response)
 
-    def update(self, record_id, data, raw_response=False):
+    def update(self, record_id, data, raw_response=False, **kwargs):
         """Updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
 
@@ -599,7 +599,7 @@ class SFType(object):
                           directly, instead of the status code.
         """
         result = self._call_salesforce('PATCH', self.base_url + record_id,
-                                       data=json.dumps(data))
+                                       data=json.dumps(data), **kwargs)
         return self._raw_response(result, raw_response)
 
     def delete(self, record_id, raw_response=False):
@@ -662,6 +662,7 @@ class SFType(object):
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
         }
+        headers.update(kwargs.pop('headers', dict()))
         result = self.session.request(method, url, headers=headers, **kwargs)
 
         if result.status_code >= 300:
