@@ -133,7 +133,7 @@ class TestSalesforce(unittest.TestCase):
         session = requests.Session()
         session.proxies = tests.PROXIES
 
-        with patch('simple_salesforce.api.logger.warn') as mock_log:
+        with patch('simple_salesforce.api.logger.warning') as mock_log:
             client = Salesforce(session_id=tests.SESSION_ID,
                 instance_url=tests.SERVER_URL, session=session, proxies={})
             self.assertIn('ignoring proxies', mock_log.call_args[0][0])

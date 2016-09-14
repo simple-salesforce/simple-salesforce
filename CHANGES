@@ -1,3 +1,12 @@
+v0.70
+=====
+
+Features
+--------
+- [98] Requests session objects are now shared between SFType instances and
+  the parent Salesforce object
+
+
 v0.69
 =====
 
