@@ -32,7 +32,8 @@ def _warn_request_deprecation():
     """Deprecation for (Salesforce/SFType).request attribute"""
     warnings.warn(
         'The request attribute has been deprecated and will be removed in a '
-        'future version. Please use Salesforce.session instead.'
+        'future version. Please use Salesforce.session instead.',
+        DeprecationWarning
     )
 
 
