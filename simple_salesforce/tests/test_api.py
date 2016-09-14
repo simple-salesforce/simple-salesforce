@@ -128,6 +128,17 @@ class TestSalesforce(unittest.TestCase):
         self.assertIs(tests.PROXIES, client.session.proxies)
         self.assertIs(tests.PROXIES, client.Contact.session.proxies)
 
+    def test_proxies_ignored(self):
+        """Test overridden proxies are ignored"""
+        session = requests.Session()
+        session.proxies = tests.PROXIES
+
+        with patch('simple_salesforce.api.logger.warn') as mock_log:
+            client = Salesforce(session_id=tests.SESSION_ID,
+                instance_url=tests.SERVER_URL, session=session, proxies={})
+            self.assertIn('ignoring proxies', mock_log.call_args[0][0])
+            self.assertIs(tests.PROXIES, client.session.proxies)
+
 
 class TestExceptionHandler(unittest.TestCase):
     """Test the exception router"""
