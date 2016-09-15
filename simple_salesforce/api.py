@@ -493,43 +493,61 @@ class SFType(object):
                                      object_name=object_name,
                                      sf_version=sf_version))
 
-    def metadata(self):
+    def metadata(self, headers=None):
         """Returns the result of a GET to `.../{object_name}/` as a dict
         decoded from the JSON payload returned by Salesforce.
+
+        Arguments:
+
+        * headers -- a dict with additional request headers.
         """
-        result = self._call_salesforce('GET', self.base_url)
+        result = self._call_salesforce('GET', self.base_url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
-    def describe(self):
+    def describe(self, headers=None):
         """Returns the result of a GET to `.../{object_name}/describe` as a
         dict decoded from the JSON payload returned by Salesforce.
+
+        Arguments:
+
+        * headers -- a dict with additional request headers.
         """
-        result = self._call_salesforce('GET', self.base_url + 'describe')
+        result = self._call_salesforce(
+            'GET', self.base_url + 'describe', headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
-    def describe_layout(self, record_id):
+    def describe_layout(self, record_id, headers=None):
         """Returns the layout of the object
 
         Returns the result of a GET to
         `.../{object_name}/describe/layouts/<recordid>` as a dict decoded from
         the JSON payload returned by Salesforce.
+
+        Arguments:
+
+        * record_id -- the Id of the SObject to get
+        * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            'GET', self.base_url + 'describe/layouts/' + record_id)
+            'GET',
+            self.base_url + 'describe/layouts/' + record_id,
+            headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
-    def get(self, record_id):
+    def get(self, record_id, headers=None):
         """Returns the result of a GET to `.../{object_name}/{record_id}` as a
         dict decoded from the JSON payload returned by Salesforce.
 
         Arguments:
 
         * record_id -- the Id of the SObject to get
+        * headers -- a dict with additional request headers.
         """
-        result = self._call_salesforce('GET', self.base_url + record_id)
+        result = self._call_salesforce(
+            'GET', self.base_url + record_id, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
-    def get_by_custom_id(self, custom_id_field, custom_id):
+    def get_by_custom_id(self, custom_id_field, custom_id, headers=None):
         """Return an ``SFType`` by custom ID
 
         Returns the result of a GET to
@@ -541,13 +559,14 @@ class SFType(object):
         * custom_id_field -- the API name of a custom field that was defined
                              as an External ID
         * custom_id - the External ID value of the SObject to get
+        * headers -- a dict with additional request headers.
         """
         custom_url = self.base_url + '{custom_id_field}/{custom_id}'.format(
             custom_id_field=custom_id_field, custom_id=custom_id)
-        result = self._call_salesforce('GET', custom_url)
+        result = self._call_salesforce('GET', custom_url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
-    def create(self, data):
+    def create(self, data, headers=None):
         """Creates a new SObject using a POST to `.../{object_name}/`.
 
         Returns a dict decoded from the JSON payload returned by Salesforce.
@@ -556,12 +575,14 @@ class SFType(object):
 
         * data -- a dict of the data to create the SObject from. It will be
                   JSON-encoded before being transmitted.
+        * headers -- a dict with additional request headers.
         """
-        result = self._call_salesforce('POST', self.base_url,
-                                       data=json.dumps(data))
+        result = self._call_salesforce(
+            'POST', self.base_url, data=json.dumps(data),
+            headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
-    def upsert(self, record_id, data, raw_response=False):
+    def upsert(self, record_id, data, raw_response=False, headers=None):
         """Creates or updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
 
@@ -577,12 +598,14 @@ class SFType(object):
                   will be JSON-encoded before being transmitted.
         * raw_response -- a boolean indicating whether to return the response
                           directly, instead of the status code.
+        * headers -- a dict with additional request headers.
         """
-        result = self._call_salesforce('PATCH', self.base_url + record_id,
-                                       data=json.dumps(data))
+        result = self._call_salesforce(
+            'PATCH', self.base_url + record_id, data=json.dumps(data),
+            headers=headers)
         return self._raw_response(result, raw_response)
 
-    def update(self, record_id, data, raw_response=False, **kwargs):
+    def update(self, record_id, data, raw_response=False, headers=None):
         """Updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
 
@@ -597,12 +620,14 @@ class SFType(object):
                   JSON-encoded before being transmitted.
         * raw_response -- a boolean indicating whether to return the response
                           directly, instead of the status code.
+        * headers -- a dict with additional request headers.
         """
-        result = self._call_salesforce('PATCH', self.base_url + record_id,
-                                       data=json.dumps(data), **kwargs)
+        result = self._call_salesforce(
+            'PATCH', self.base_url + record_id, data=json.dumps(data),
+            headers=headers)
         return self._raw_response(result, raw_response)
 
-    def delete(self, record_id, raw_response=False):
+    def delete(self, record_id, raw_response=False, headers=None):
         """Deletes an SObject using a DELETE to
         `.../{object_name}/{record_id}`.
 
@@ -615,11 +640,13 @@ class SFType(object):
         * record_id -- the Id of the SObject to delete
         * raw_response -- a boolean indicating whether to return the response
                           directly, instead of the status code.
+        * headers -- a dict with additional request headers.
         """
-        result = self._call_salesforce('DELETE', self.base_url + record_id)
+        result = self._call_salesforce(
+            'DELETE', self.base_url + record_id, headers=headers)
         return self._raw_response(result, raw_response)
 
-    def deleted(self, start, end):
+    def deleted(self, start, end, headers=None):
         # pylint: disable=line-too-long
         """Gets a list of deleted records
 
@@ -629,13 +656,14 @@ class SFType(object):
 
         * start -- start datetime object
         * end -- end datetime object
+        * headers -- a dict with additional request headers.
         """
         url = self.base_url + 'deleted/?start={start}&end={end}'.format(
             start=date_to_iso8601(start), end=date_to_iso8601(end))
-        result = self._call_salesforce('GET', url)
+        result = self._call_salesforce('GET', url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
-    def updated(self, start, end):
+    def updated(self, start, end, headers=None):
         # pylint: disable=line-too-long
         """Gets a list of updated records
 
@@ -646,10 +674,11 @@ class SFType(object):
 
         * start -- start datetime object
         * end -- end datetime object
+        * headers -- a dict with additional request headers.
         """
         url = self.base_url + 'updated/?start={start}&end={end}'.format(
             start=date_to_iso8601(start), end=date_to_iso8601(end))
-        result = self._call_salesforce('GET', url)
+        result = self._call_salesforce('GET', url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
     def _call_salesforce(self, method, url, **kwargs):
@@ -662,7 +691,8 @@ class SFType(object):
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
         }
-        headers.update(kwargs.pop('headers', dict()))
+        additional_headers = kwargs.pop('headers', dict())
+        headers.update(additional_headers or dict())
         result = self.session.request(method, url, headers=headers, **kwargs)
 
         if result.status_code >= 300:

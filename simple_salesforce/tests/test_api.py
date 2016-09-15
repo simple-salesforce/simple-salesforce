@@ -1,6 +1,7 @@
 """Tests for api.py"""
 
 import re
+from datetime import datetime
 try:
     # Python 2.6
     import unittest2 as unittest
@@ -34,12 +35,236 @@ from simple_salesforce.api import (
 )
 
 
+def _create_sf_type():
+    """Creates SFType instances"""
+    return SFType(
+        object_name='Case',
+        session_id='5',
+        sf_instance='test.salesforce.com',
+        session=requests.Session()
+    )
+
+
 class TestSFType(unittest.TestCase):
     """Tests for the SFType instance"""
     def setUp(self):
         request_patcher = patch('simple_salesforce.api.requests')
         self.mockrequest = request_patcher.start()
         self.addCleanup(request_patcher.stop)
+
+    @responses.activate
+    def test_metadata_with_additional_request_headers(self):
+        """Ensure custom headers are used for metadata requests"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.metadata(
+            headers={'Sforce-Auto-Assign': 'FALSE'}
+        )
+
+        request_headers = responses.calls[0].request.headers
+        additional_request_header = request_headers['Sforce-Auto-Assign']
+        self.assertEqual(additional_request_header, 'FALSE')
+        self.assertEqual(result, {})
+
+    @responses.activate
+    def test_metadata_without_additional_request_headers(self):
+        """Ensure metadata requests without additional headers"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+
+        self.assertEqual(sf_type.metadata(), {})
+
+    @responses.activate
+    def test_describe_with_additional_request_headers(self):
+        """Ensure custom headers are used for describe requests"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.describe(
+            headers={'Sforce-Auto-Assign': 'FALSE'}
+        )
+
+        request_headers = responses.calls[0].request.headers
+        additional_request_header = request_headers['Sforce-Auto-Assign']
+        self.assertEqual(additional_request_header, 'FALSE')
+        self.assertEqual(result, {})
+
+    @responses.activate
+    def test_describe_without_additional_request_headers(self):
+        """Ensure describe requests without additional headers"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+
+        self.assertEqual(sf_type.describe(), {})
+
+    @responses.activate
+    def test_describe_layout_with_additional_request_headers(self):
+        """Ensure custom headers are used for describe_layout requests"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.describe_layout(
+            record_id='444',
+            headers={'Sforce-Auto-Assign': 'FALSE'}
+        )
+
+        request_headers = responses.calls[0].request.headers
+        additional_request_header = request_headers['Sforce-Auto-Assign']
+        self.assertEqual(additional_request_header, 'FALSE')
+        self.assertEqual(result, {})
+
+    @responses.activate
+    def test_describe_layout_without_additional_request_headers(self):
+        """Ensure describe_layout requests without additional headers"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+
+        self.assertEqual(sf_type.describe_layout(record_id='444'), {})
+
+    @responses.activate
+    def test_get_with_additional_request_headers(self):
+        """Ensure custom headers are used for get requests"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.get(
+            record_id='444',
+            headers={'Sforce-Auto-Assign': 'FALSE'}
+        )
+
+        request_headers = responses.calls[0].request.headers
+        additional_request_header = request_headers['Sforce-Auto-Assign']
+        self.assertEqual(additional_request_header, 'FALSE')
+        self.assertEqual(result, {})
+
+    @responses.activate
+    def test_get_without_additional_request_headers(self):
+        """Ensure get requests without additional headers"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+
+        self.assertEqual(sf_type.get(record_id='444'), {})
+
+    @responses.activate
+    def test_get_by_custom_id_with_additional_request_headers(self):
+        """Ensure custom headers are used for get_by_custom_id requests"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.get_by_custom_id(
+            custom_id_field='some-field',
+            custom_id='444',
+            headers={'Sforce-Auto-Assign': 'FALSE'}
+        )
+
+        request_headers = responses.calls[0].request.headers
+        additional_request_header = request_headers['Sforce-Auto-Assign']
+        self.assertEqual(additional_request_header, 'FALSE')
+        self.assertEqual(result, {})
+
+    @responses.activate
+    def test_get_by_custom_id_without_additional_request_headers(self):
+        """Ensure get_by_custom_id requests without additional headers"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.get_by_custom_id(
+            custom_id_field='some-field',
+            custom_id='444'
+        )
+
+        self.assertEqual(result, {})
+
+    @responses.activate
+    def test_create_with_additional_request_headers(self):
+        """Ensure custom headers are used for create requests"""
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.create(
+            data={'some': 'data'},
+            headers={'Sforce-Auto-Assign': 'FALSE'}
+        )
+
+        request_headers = responses.calls[0].request.headers
+        additional_request_header = request_headers['Sforce-Auto-Assign']
+        self.assertEqual(additional_request_header, 'FALSE')
+        self.assertEqual(result, {})
+
+    @responses.activate
+    def test_create_without_additional_request_headers(self):
+        """Ensure create requests without additional headers"""
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.create(data={'some': 'data'})
+
+        self.assertEqual(result, {})
 
     @responses.activate
     def test_update_with_additional_request_headers(self):
@@ -51,13 +276,8 @@ class TestSFType(unittest.TestCase):
             status=http.OK
         )
 
-        sf_type = SFType(
-            object_name='Case',
-            session_id='5',
-            sf_instance='test.salesforce.com',
-            session=requests.Session()
-        )
-        update_result = sf_type.update(
+        sf_type = _create_sf_type()
+        result = sf_type.update(
             record_id='some-case-id',
             data={'some': 'data'},
             headers={'Sforce-Auto-Assign': 'FALSE'}
@@ -66,7 +286,7 @@ class TestSFType(unittest.TestCase):
         request_headers = responses.calls[0].request.headers
         additional_request_header = request_headers['Sforce-Auto-Assign']
         self.assertEqual(additional_request_header, 'FALSE')
-        self.assertEqual(update_result, http.OK)
+        self.assertEqual(result, http.OK)
 
     @responses.activate
     def test_update_without_additional_request_headers(self):
@@ -78,18 +298,163 @@ class TestSFType(unittest.TestCase):
             status=http.OK
         )
 
-        sf_type = SFType(
-            object_name='Case',
-            session_id='5',
-            sf_instance='test.salesforce.com',
-            session=requests.Session()
-        )
-        update_result = sf_type.update(
+        sf_type = _create_sf_type()
+        result = sf_type.update(
             record_id='some-case-id',
             data={'some': 'data'}
         )
 
-        self.assertEqual(update_result, http.OK)
+        self.assertEqual(result, http.OK)
+
+    @responses.activate
+    def test_upsert_with_additional_request_headers(self):
+        """Ensure custom headers are used for upserts"""
+        responses.add(
+            responses.PATCH,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.upsert(
+            record_id='some-case-id',
+            data={'some': 'data'},
+            headers={'Sforce-Auto-Assign': 'FALSE'}
+        )
+
+        request_headers = responses.calls[0].request.headers
+        additional_request_header = request_headers['Sforce-Auto-Assign']
+        self.assertEqual(additional_request_header, 'FALSE')
+        self.assertEqual(result, http.OK)
+
+    @responses.activate
+    def test_upsert_without_additional_request_headers(self):
+        """Ensure upserts work without custom headers"""
+        responses.add(
+            responses.PATCH,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.upsert(
+            record_id='some-case-id',
+            data={'some': 'data'}
+        )
+
+        self.assertEqual(result, http.OK)
+
+    @responses.activate
+    def test_delete_with_additional_request_headers(self):
+        """Ensure custom headers are used for deletes"""
+        responses.add(
+            responses.DELETE,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.delete(
+            record_id='some-case-id',
+            headers={'Sforce-Auto-Assign': 'FALSE'}
+        )
+
+        request_headers = responses.calls[0].request.headers
+        additional_request_header = request_headers['Sforce-Auto-Assign']
+        self.assertEqual(additional_request_header, 'FALSE')
+        self.assertEqual(result, http.OK)
+
+    @responses.activate
+    def test_delete_without_additional_request_headers(self):
+        """Ensure deletes work without custom headers"""
+        responses.add(
+            responses.DELETE,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.delete(record_id='some-case-id')
+
+        self.assertEqual(result, http.OK)
+
+    @responses.activate
+    def test_deleted_with_additional_request_headers(self):
+        """Ensure custom headers are used for deleted"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.deleted(
+            start=datetime.now(), end=datetime.now(),
+            headers={'Sforce-Auto-Assign': 'FALSE'}
+        )
+
+        request_headers = responses.calls[0].request.headers
+        additional_request_header = request_headers['Sforce-Auto-Assign']
+        self.assertEqual(additional_request_header, 'FALSE')
+        self.assertEqual(result, {})
+
+    @responses.activate
+    def test_deleted_without_additional_request_headers(self):
+        """Ensure deleted works without custom headers"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.deleted(
+            start=datetime.now(), end=datetime.now())
+
+        self.assertEqual(result, {})
+
+    @responses.activate
+    def test_updated_with_additional_request_headers(self):
+        """Ensure custom headers are used for updated"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.updated(
+            start=datetime.now(), end=datetime.now(),
+            headers={'Sforce-Auto-Assign': 'FALSE'}
+        )
+
+        request_headers = responses.calls[0].request.headers
+        additional_request_header = request_headers['Sforce-Auto-Assign']
+        self.assertEqual(additional_request_header, 'FALSE')
+        self.assertEqual(result, {})
+
+    @responses.activate
+    def test_updated_without_additional_request_headers(self):
+        """Ensure updated works without custom headers"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.updated(
+            start=datetime.now(), end=datetime.now())
+
+        self.assertEqual(result, {})
 
 
 class TestSalesforce(unittest.TestCase):
