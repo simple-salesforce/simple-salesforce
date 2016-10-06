@@ -35,12 +35,16 @@ from simple_salesforce.api import (
 )
 
 
-def _create_sf_type():
+def _create_sf_type(
+    object_name='Case',
+    session_id='5',
+    sf_instance='my.salesforce.com'
+):
     """Creates SFType instances"""
     return SFType(
-        object_name='Case',
-        session_id='5',
-        sf_instance='test.salesforce.com',
+        object_name=object_name,
+        session_id=session_id,
+        sf_instance=sf_instance,
         session=requests.Session()
     )
 
