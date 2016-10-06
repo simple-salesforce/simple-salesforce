@@ -91,7 +91,7 @@ class TestSFType(unittest.TestCase):
         """Ensure custom headers are used for describe requests"""
         responses.add(
             responses.GET,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/describe$'),
             body='{}',
             status=http.OK
         )
@@ -111,7 +111,7 @@ class TestSFType(unittest.TestCase):
         """Ensure describe requests without additional headers"""
         responses.add(
             responses.GET,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/describe$'),
             body='{}',
             status=http.OK
         )
@@ -125,7 +125,7 @@ class TestSFType(unittest.TestCase):
         """Ensure custom headers are used for describe_layout requests"""
         responses.add(
             responses.GET,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/describe/layouts/444$'),
             body='{}',
             status=http.OK
         )
@@ -146,7 +146,7 @@ class TestSFType(unittest.TestCase):
         """Ensure describe_layout requests without additional headers"""
         responses.add(
             responses.GET,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/describe/layouts/444$'),
             body='{}',
             status=http.OK
         )
@@ -160,7 +160,7 @@ class TestSFType(unittest.TestCase):
         """Ensure custom headers are used for get requests"""
         responses.add(
             responses.GET,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/444$'),
             body='{}',
             status=http.OK
         )
@@ -181,7 +181,7 @@ class TestSFType(unittest.TestCase):
         """Ensure get requests without additional headers"""
         responses.add(
             responses.GET,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/444$'),
             body='{}',
             status=http.OK
         )
@@ -195,7 +195,7 @@ class TestSFType(unittest.TestCase):
         """Ensure custom headers are used for get_by_custom_id requests"""
         responses.add(
             responses.GET,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/some-field/444$'),
             body='{}',
             status=http.OK
         )
@@ -217,7 +217,7 @@ class TestSFType(unittest.TestCase):
         """Ensure get_by_custom_id requests without additional headers"""
         responses.add(
             responses.GET,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/some-field/444$'),
             body='{}',
             status=http.OK
         )
@@ -235,7 +235,7 @@ class TestSFType(unittest.TestCase):
         """Ensure custom headers are used for create requests"""
         responses.add(
             responses.POST,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/$'),
             body='{}',
             status=http.OK
         )
@@ -256,7 +256,7 @@ class TestSFType(unittest.TestCase):
         """Ensure create requests without additional headers"""
         responses.add(
             responses.POST,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/$'),
             body='{}',
             status=http.OK
         )
@@ -271,7 +271,7 @@ class TestSFType(unittest.TestCase):
         """Ensure custom headers are used for updates"""
         responses.add(
             responses.PATCH,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/some-case-id$'),
             body='{}',
             status=http.OK
         )
@@ -293,7 +293,7 @@ class TestSFType(unittest.TestCase):
         """Ensure updates work without custom headers"""
         responses.add(
             responses.PATCH,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/some-case-id$'),
             body='{}',
             status=http.OK
         )
@@ -311,7 +311,7 @@ class TestSFType(unittest.TestCase):
         """Ensure custom headers are used for upserts"""
         responses.add(
             responses.PATCH,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/some-case-id$'),
             body='{}',
             status=http.OK
         )
@@ -333,7 +333,7 @@ class TestSFType(unittest.TestCase):
         """Ensure upserts work without custom headers"""
         responses.add(
             responses.PATCH,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/some-case-id$'),
             body='{}',
             status=http.OK
         )
@@ -351,7 +351,7 @@ class TestSFType(unittest.TestCase):
         """Ensure custom headers are used for deletes"""
         responses.add(
             responses.DELETE,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/some-case-id$'),
             body='{}',
             status=http.OK
         )
@@ -372,7 +372,7 @@ class TestSFType(unittest.TestCase):
         """Ensure deletes work without custom headers"""
         responses.add(
             responses.DELETE,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/some-case-id$'),
             body='{}',
             status=http.OK
         )
@@ -387,7 +387,7 @@ class TestSFType(unittest.TestCase):
         """Ensure custom headers are used for deleted"""
         responses.add(
             responses.GET,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/deleted/\?start=.+&end=.+$'),
             body='{}',
             status=http.OK
         )
@@ -408,7 +408,7 @@ class TestSFType(unittest.TestCase):
         """Ensure deleted works without custom headers"""
         responses.add(
             responses.GET,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/deleted/\?start=.+&end=.+$'),
             body='{}',
             status=http.OK
         )
@@ -424,7 +424,7 @@ class TestSFType(unittest.TestCase):
         """Ensure custom headers are used for updated"""
         responses.add(
             responses.GET,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/updated/\?start=.+&end=.+$'),
             body='{}',
             status=http.OK
         )
@@ -445,7 +445,7 @@ class TestSFType(unittest.TestCase):
         """Ensure updated works without custom headers"""
         responses.add(
             responses.GET,
-            re.compile(r'^https://.*$'),
+            re.compile(r'^https://.*/Case/updated/\?start=.+&end=.+$'),
             body='{}',
             status=http.OK
         )

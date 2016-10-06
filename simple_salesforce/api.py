@@ -11,10 +11,10 @@ import requests
 import json
 
 try:
-    from urlparse import urlparse
+    from urlparse import urlparse, urljoin
 except ImportError:
     # Python 3+
-    from urllib.parse import urlparse
+    from urllib.parse import urlparse, urljoin
 from simple_salesforce.login import SalesforceLogin
 from simple_salesforce.util import date_to_iso8601, SalesforceError
 
@@ -513,7 +513,8 @@ class SFType(object):
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            'GET', self.base_url + 'describe', headers=headers
+            method='GET', url=urljoin(self.base_url, 'describe'),
+            headers=headers
         )
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -529,9 +530,12 @@ class SFType(object):
         * record_id -- the Id of the SObject to get
         * headers -- a dict with additional request headers.
         """
+        custom_url_part = 'describe/layouts/{record_id}'.format(
+            record_id=record_id
+        )
         result = self._call_salesforce(
-            'GET',
-            self.base_url + 'describe/layouts/' + record_id,
+            method='GET',
+            url=urljoin(self.base_url, custom_url_part),
             headers=headers
         )
         return result.json(object_pairs_hook=OrderedDict)
@@ -546,7 +550,8 @@ class SFType(object):
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            'GET', self.base_url + record_id, headers=headers
+            method='GET', url=urljoin(self.base_url, record_id),
+            headers=headers
         )
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -564,10 +569,14 @@ class SFType(object):
         * custom_id - the External ID value of the SObject to get
         * headers -- a dict with additional request headers.
         """
-        custom_url = self.base_url + '{custom_id_field}/{custom_id}'.format(
-            custom_id_field=custom_id_field, custom_id=custom_id
+        custom_url = urljoin(
+            self.base_url, '{custom_id_field}/{custom_id}'.format(
+                custom_id_field=custom_id_field, custom_id=custom_id
+            )
         )
-        result = self._call_salesforce('GET', custom_url, headers=headers)
+        result = self._call_salesforce(
+            method='GET', url=custom_url, headers=headers
+        )
         return result.json(object_pairs_hook=OrderedDict)
 
     def create(self, data, headers=None):
@@ -582,8 +591,8 @@ class SFType(object):
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            'POST', self.base_url, data=json.dumps(data),
-            headers=headers
+            method='POST', url=self.base_url,
+            data=json.dumps(data), headers=headers
         )
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -606,8 +615,8 @@ class SFType(object):
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            'PATCH', self.base_url + record_id, data=json.dumps(data),
-            headers=headers
+            method='PATCH', url=urljoin(self.base_url, record_id),
+            data=json.dumps(data), headers=headers
         )
         return self._raw_response(result, raw_response)
 
@@ -629,8 +638,8 @@ class SFType(object):
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            'PATCH', self.base_url + record_id, data=json.dumps(data),
-            headers=headers
+            method='PATCH', url=urljoin(self.base_url, record_id),
+            data=json.dumps(data), headers=headers
         )
         return self._raw_response(result, raw_response)
 
@@ -650,7 +659,8 @@ class SFType(object):
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            'DELETE', self.base_url + record_id, headers=headers
+            method='DELETE', url=urljoin(self.base_url, record_id),
+            headers=headers
         )
         return self._raw_response(result, raw_response)
 
@@ -666,10 +676,12 @@ class SFType(object):
         * end -- end datetime object
         * headers -- a dict with additional request headers.
         """
-        url = self.base_url + 'deleted/?start={start}&end={end}'.format(
-            start=date_to_iso8601(start), end=date_to_iso8601(end)
+        url = urljoin(
+            self.base_url, 'deleted/?start={start}&end={end}'.format(
+                start=date_to_iso8601(start), end=date_to_iso8601(end)
+            )
         )
-        result = self._call_salesforce('GET', url, headers=headers)
+        result = self._call_salesforce(method='GET', url=url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
     def updated(self, start, end, headers=None):
@@ -685,10 +697,12 @@ class SFType(object):
         * end -- end datetime object
         * headers -- a dict with additional request headers.
         """
-        url = self.base_url + 'updated/?start={start}&end={end}'.format(
-            start=date_to_iso8601(start), end=date_to_iso8601(end)
+        url = urljoin(
+            self.base_url, 'updated/?start={start}&end={end}'.format(
+                start=date_to_iso8601(start), end=date_to_iso8601(end)
+            )
         )
-        result = self._call_salesforce('GET', url, headers=headers)
+        result = self._call_salesforce(method='GET', url=url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
     def _call_salesforce(self, method, url, **kwargs):
