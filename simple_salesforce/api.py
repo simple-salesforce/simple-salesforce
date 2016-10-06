@@ -370,8 +370,9 @@ class Salesforce(object):
         return result.json(object_pairs_hook=OrderedDict)
 
     def query_all(self, query, **kwargs):
-        """Returns a generator for the full set of results for the `query`.
-        This is a convenience wrapper around `query(...)` and `query_more(...)`.
+        """Returns the full set of results for the `query`. This is a
+        convenience
+        wrapper around `query(...)` and `query_more(...)`.
 
         The returned dict is the decoded JSON payload from the final call to
         Salesforce, but with the `totalSize` field representing the full
@@ -385,15 +386,19 @@ class Salesforce(object):
         """
 
         result = self.query(query, **kwargs)
+        all_records = []
+
         while True:
-            for row in result['records']:
-                yield row
+            all_records.extend(result['records'])
             # fetch next batch if we're not done else break out of loop
             if not result['done']:
                 result = self.query_more(result['nextRecordsUrl'],
-                                                   True)
+                                         True)
             else:
                 break
+
+        result['records'] = all_records
+        return result
 
     def apexecute(self, action, method='GET', data=None, **kwargs):
         """Makes an HTTP request to an APEX REST endpoint
