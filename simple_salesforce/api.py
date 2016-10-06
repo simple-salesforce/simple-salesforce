@@ -513,7 +513,8 @@ class SFType(object):
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            'GET', self.base_url + 'describe', headers=headers)
+            'GET', self.base_url + 'describe', headers=headers
+        )
         return result.json(object_pairs_hook=OrderedDict)
 
     def describe_layout(self, record_id, headers=None):
@@ -531,7 +532,8 @@ class SFType(object):
         result = self._call_salesforce(
             'GET',
             self.base_url + 'describe/layouts/' + record_id,
-            headers=headers)
+            headers=headers
+        )
         return result.json(object_pairs_hook=OrderedDict)
 
     def get(self, record_id, headers=None):
@@ -544,7 +546,8 @@ class SFType(object):
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            'GET', self.base_url + record_id, headers=headers)
+            'GET', self.base_url + record_id, headers=headers
+        )
         return result.json(object_pairs_hook=OrderedDict)
 
     def get_by_custom_id(self, custom_id_field, custom_id, headers=None):
@@ -562,7 +565,8 @@ class SFType(object):
         * headers -- a dict with additional request headers.
         """
         custom_url = self.base_url + '{custom_id_field}/{custom_id}'.format(
-            custom_id_field=custom_id_field, custom_id=custom_id)
+            custom_id_field=custom_id_field, custom_id=custom_id
+        )
         result = self._call_salesforce('GET', custom_url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -579,7 +583,8 @@ class SFType(object):
         """
         result = self._call_salesforce(
             'POST', self.base_url, data=json.dumps(data),
-            headers=headers)
+            headers=headers
+        )
         return result.json(object_pairs_hook=OrderedDict)
 
     def upsert(self, record_id, data, raw_response=False, headers=None):
@@ -602,7 +607,8 @@ class SFType(object):
         """
         result = self._call_salesforce(
             'PATCH', self.base_url + record_id, data=json.dumps(data),
-            headers=headers)
+            headers=headers
+        )
         return self._raw_response(result, raw_response)
 
     def update(self, record_id, data, raw_response=False, headers=None):
@@ -624,7 +630,8 @@ class SFType(object):
         """
         result = self._call_salesforce(
             'PATCH', self.base_url + record_id, data=json.dumps(data),
-            headers=headers)
+            headers=headers
+        )
         return self._raw_response(result, raw_response)
 
     def delete(self, record_id, raw_response=False, headers=None):
@@ -643,7 +650,8 @@ class SFType(object):
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            'DELETE', self.base_url + record_id, headers=headers)
+            'DELETE', self.base_url + record_id, headers=headers
+        )
         return self._raw_response(result, raw_response)
 
     def deleted(self, start, end, headers=None):
@@ -659,7 +667,8 @@ class SFType(object):
         * headers -- a dict with additional request headers.
         """
         url = self.base_url + 'deleted/?start={start}&end={end}'.format(
-            start=date_to_iso8601(start), end=date_to_iso8601(end))
+            start=date_to_iso8601(start), end=date_to_iso8601(end)
+        )
         result = self._call_salesforce('GET', url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -677,7 +686,8 @@ class SFType(object):
         * headers -- a dict with additional request headers.
         """
         url = self.base_url + 'updated/?start={start}&end={end}'.format(
-            start=date_to_iso8601(start), end=date_to_iso8601(end))
+            start=date_to_iso8601(start), end=date_to_iso8601(end)
+        )
         result = self._call_salesforce('GET', url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
