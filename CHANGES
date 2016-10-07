@@ -1,3 +1,11 @@
+v0.71
+=====
+
+Features
+--------
+- [131] Added the ability to pass custom headers through to requests
+
+
 v0.70
 =====
 
