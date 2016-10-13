@@ -15,7 +15,7 @@ if sys.version_info < (3, 0):
 
 setup(
     name='simple-salesforce',
-    version='0.70',
+    version='0.71',
     author='Nick Catalano',
     maintainer='Demian Brecht',
     maintainer_email='demianbrecht@gmail.com',
