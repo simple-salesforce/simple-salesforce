@@ -1,3 +1,12 @@
+v0.72
+=====
+
+Bugs
+----
+- [134] query_all changed to be non-recursive due to recursion limit being
+  hit for large result sets.
+
+
 v0.71
 =====
 
