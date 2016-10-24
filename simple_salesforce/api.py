@@ -371,7 +371,8 @@ class Salesforce(object):
 
     def query_all(self, query, **kwargs):
         """Returns the full set of results for the `query`. This is a
-        convenience wrapper around `query(...)` and `query_more(...)`.
+        convenience
+        wrapper around `query(...)` and `query_more(...)`.
 
         The returned dict is the decoded JSON payload from the final call to
         Salesforce, but with the `totalSize` field representing the full
@@ -383,34 +384,21 @@ class Salesforce(object):
         * query -- the SOQL query to send to Salesforce, e.g.
                    `SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"`
         """
-        def get_all_results(previous_result, **kwargs):
-            """Inner function for recursing until there are no more results.
 
-            Returns the full set of results that will be the return value for
-            `query_all(...)`
-
-            Arguments:
-
-            * previous_result -- the modified result of previous calls to
-                                 Salesforce for this query
-            """
-            if previous_result['done']:
-                return previous_result
-            else:
-                result = self.query_more(previous_result['nextRecordsUrl'],
-                                         identifier_is_url=True, **kwargs)
-                result['totalSize'] += previous_result['totalSize']
-                # Include the new list of records with the previous list
-                previous_result['records'].extend(result['records'])
-                result['records'] = previous_result['records']
-                # Continue the recursion
-                return get_all_results(result, **kwargs)
-
-        # Make the initial query to Salesforce
         result = self.query(query, **kwargs)
-        # The number of results might have exceeded the Salesforce batch limit
-        # so check whether there are more results and retrieve them if so.
-        return get_all_results(result, **kwargs)
+        all_records = []
+
+        while True:
+            all_records.extend(result['records'])
+            # fetch next batch if we're not done else break out of loop
+            if not result['done']:
+                result = self.query_more(result['nextRecordsUrl'],
+                                         True)
+            else:
+                break
+
+        result['records'] = all_records
+        return result
 
     def apexecute(self, action, method='GET', data=None, **kwargs):
         """Makes an HTTP request to an APEX REST endpoint
