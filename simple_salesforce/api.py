@@ -164,6 +164,9 @@ class Salesforce(object):
                                  version=self.sf_version))
         self.apex_url = ('https://{instance}/services/apexrest/'
                          .format(instance=self.sf_instance))
+        self.bulk_url = ('https://{instance}/services/async/{version}/'
+                         .format(instance=self.sf_instance,
+                                 version=self.sf_version))
 
     def describe(self):
         """Describes all available objects
