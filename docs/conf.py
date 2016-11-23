@@ -17,9 +17,11 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import subprocess
+import sys
+sys.path.insert(0, os.path.abspath('../'))
+
 
 # -- General configuration ------------------------------------------------
 
@@ -116,6 +118,17 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
+# -- Autodoc configuration -----------------------------------------------------
+
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    if name == "__init__":
+        return False
+    return skip
+
+# -- Apidoc --------------------------------------------------------------------
+
+def run_apidoc(_):
+    subprocess.check_call("sphinx-apidoc --separate -f -o . ../simple_salesforce", shell=True)
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -339,3 +352,7 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #
 # texinfo_no_detailmenu = False
+
+def setup(app):
+    app.connect("autodoc-skip-member", autodoc_skip_member)
+    app.connect("builder-inited", run_apidoc)

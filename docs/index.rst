@@ -11,6 +11,12 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+API documentation
+-----------------
+.. toctree::
+  :maxdepth: 3
+
+  simple_salesforce
 
 
 Indices and tables

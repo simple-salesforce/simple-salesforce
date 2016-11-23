@@ -12,3 +12,6 @@ tags
 .tags
 .tags_sorted_by_file
 docs/_build/
+# These are auto-created by sphinx-apidoc
+docs/simple_salesforce*.rst
+docs/modules.rst
