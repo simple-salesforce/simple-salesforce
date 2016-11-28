@@ -31,6 +31,14 @@ API documentation
 
   simple_salesforce
 
+Release history
+---------------
+.. toctree::
+  :maxdepth: 2
+
+  changes
+
+
 Authors & License
 -----------------
 
