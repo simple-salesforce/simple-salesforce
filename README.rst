@@ -58,6 +58,15 @@ For example:
 
 Note that specifying if you want to use a sandbox is only necessary if you are using the built-in username/password/security token authentication and is used exclusively during the authentication step.
 
+If you'd like to keep track where your API calls are coming from, simply add ``client_id='My App'`` to your ``Salesforce()`` call.
+
+.. code-block:: python
+
+    from simple_salesforce import Salesforce
+    sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', sandbox=True, client_id='My App')
+
+If you view the API calls in your Salesforce instance by Client Id it will be prefixed with ``RestForce/``, for example ``RestForce/My App``.
+
 When instantiating a `Salesforce` object, it's also possible to include an
 instance of `requests.Session`. This is to allow for specialized
 session handling not otherwise exposed by simple_salesforce.
@@ -132,7 +141,7 @@ Note that Update, Delete and Upsert actions return the associated `Salesforce HT
 
 .. _Salesforce HTTP Status Code: http://www.salesforce.com/us/developer/docs/api_rest/Content/errorcodes.htm
 
-Use the same format to create any record, including 'Account', 'Opportunity', and 'Lead'. 
+Use the same format to create any record, including 'Account', 'Opportunity', and 'Lead'.
 Make sure to have all the required fields for any entry. The `Salesforce API`_ has all objects found under 'Reference -> Standard Objects' and the required fields can be found there.
 
 .. _Salesforce HTTP Status Code: http://www.salesforce.com/us/developer/docs/api_rest/Content/errorcodes.htm
@@ -250,7 +259,11 @@ For example, to use SalesforceLogin for a sandbox account you'd use:
 .. code-block:: python
 
     from simple_salesforce import SalesforceLogin
-    session_id, instance = SalesforceLogin('myemail@example.com.sandbox', 'password', 'token', True)
+    session_id, instance = SalesforceLogin(
+        username='myemail@example.com.sandbox',
+        password='password',
+        security_token='token',
+        sandbox=True)
 
 Simply leave off the final ``True`` if you do not wish to use a sandbox.
 
