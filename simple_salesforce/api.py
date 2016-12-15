@@ -785,9 +785,20 @@ class SFBulkType(object):
             'contentType': 'JSON'
         }
 
-        result = _call_salesforce(url=self.bulk_url, method='POST', session=self.session, headers=self.headers)
+        result = _call_salesforce(url=self.bulk_url, method='POST', session=self.session, headers=self.headers, data=json.dumps(payload))
         return result.json(object_pairs_hook=OrderedDict)
 
+    def _close_job(self, job_id):
+        """ Close a bulk job """
+
+        payload = {
+            'state': 'Closed'
+        }
+
+        url = self.bulk_url + '/' + job_id
+
+        result = _call_salesforce(url=url, method='POST', session=self.session, headers=self.headers, data=json.dumps(payload))
+        return result.json(object_pairs_hook=OrderedDict)
 
 
 class SalesforceAPI(Salesforce):
