@@ -329,7 +329,7 @@ class Salesforce(object):
         Arguments:
 
         * query -- the SOQL query to send to Salesforce, e.g.
-                   `SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"`
+                   SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
         """
         url = self.base_url + 'query/'
         params = {'q': query}
@@ -385,7 +385,7 @@ class Salesforce(object):
         Arguments
 
         * query -- the SOQL query to send to Salesforce, e.g.
-                   `SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"`
+                   SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
         """
 
         result = self.query(query, **kwargs)
@@ -738,6 +738,49 @@ class SFType(object):
         """Deprecated setter for self.session"""
         _warn_request_deprecation()
         self.session = session
+
+class SFBulkType(object):
+    """ Interface to Bulk/Async API functions"""
+
+    def __init__(
+                 self, object_name, session_id, sf_instance,
+                 sf_version=DEFAULT_API_VERSION, proxies=None, session=None):
+        """Initialize the instance with the given parameters.
+
+        Arguments:
+
+        * object_name -- the name of the type of SObject this represents,
+                         e.g. `Lead` or `Contact`
+        * session_id -- the session ID for authenticating to Salesforce
+        * sf_instance -- the domain of the instance of Salesforce to use
+        * sf_version -- the version of the Salesforce API to use
+        * proxies -- the optional map of scheme to proxy server
+        * session -- Custom requests session, created in calling code. This
+                     enables the use of requests Session features not otherwise
+                     exposed by simple_salesforce.
+        """
+        self.session_id = session_id
+        self.name = object_name
+        self.session = session or requests.Session()
+        # don't wipe out original proxies with None
+        if not session and proxies is not None:
+            self.session.proxies = proxies
+
+        self.headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + self.session_id,
+            'X-PrettyPrint': '1'
+        }
+
+        self.bulk_url = ('https://{instance}/services/async/{version}/'
+                         .format(instance=self.sf_instance,
+                                 version=self.sf_version))
+
+    def _create_job_(self, operation, object_name):
+        """ Create a bulk job """
+
+
+
 
 
 class SalesforceAPI(Salesforce):
