@@ -817,6 +817,20 @@ class SalesforceAPI(Salesforce):
                                             sandbox=sandbox,
                                             version=sf_version)
 
+def _call_salesforce(url, method, headers, **kwargs):
+    """Utility method for performing HTTP call to Salesforce.
+
+    Returns a `requests.result` object.
+    """
+
+    additional_headers = kwargs.pop('additional_headers', dict())
+    headers.update(additional_headers or dict())
+    result = self.session.request(method, url, headers=headers, **kwargs)
+
+    if result.status_code >= 300:
+        _exception_handler(result, self.name)
+
+    return result
 
 def _exception_handler(result, name=""):
     """Exception router. Determines which error to raise for bad results"""
