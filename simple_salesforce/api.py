@@ -776,10 +776,17 @@ class SFBulkType(object):
                          .format(instance=self.sf_instance,
                                  version=self.sf_version))
 
-    def _create_job_(self, operation, object_name):
+    def _create_job(self, operation, object_name):
         """ Create a bulk job """
 
+        payload = {
+            'operation': operation,
+            'object': object_name,
+            'contentType': 'JSON'
+        }
 
+        result = _call_salesforce(url=self.bulk_url, method='POST', session=self.session, headers=self.headers)
+        return result.json(object_pairs_hook=OrderedDict)
 
 
 
