@@ -800,6 +800,14 @@ class SFBulkType(object):
         result = _call_salesforce(url=url, method='POST', session=self.session, headers=self.headers, data=json.dumps(payload))
         return result.json(object_pairs_hook=OrderedDict)
 
+    def _add_batch(self, job_id, data):
+        """ Add a set of data as a batch to an existing job """
+
+        url = self.bulk_url + '/' + job_id + '/batch'
+
+        result = _call_salesforce(url=url, method='POST', session=self.session, headers=self.headers, data=json.dumps(data))
+        return result.json(object_pairs_hook=OrderedDict)
+
 
 class SalesforceAPI(Salesforce):
     """Deprecated SalesforceAPI Instance
