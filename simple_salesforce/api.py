@@ -808,6 +808,11 @@ class SFBulkType(object):
         result = _call_salesforce(url=url, method='POST', session=self.session, headers=self.headers, data=json.dumps(data))
         return result.json(object_pairs_hook=OrderedDict)
 
+    def __attr__(self, name):
+        """ handling function here """
+
+        return True
+
 
 class SalesforceAPI(Salesforce):
     """Deprecated SalesforceAPI Instance
