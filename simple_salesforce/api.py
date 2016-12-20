@@ -9,6 +9,7 @@ import logging
 import warnings
 import requests
 import json
+from time import sleep
 
 try:
     from urlparse import urlparse, urljoin
@@ -204,9 +205,17 @@ class Salesforce(object):
         if name.startswith('__'):
             return super(Salesforce, self).__getattr__(name)
 
+        if name=='bulk':
+             return SFBulkHandler(self.session_id, self.sf_instance, self.bulk_url, self.sf_version, self.proxies, self.session)
+
         return SFType(
             name, self.session_id, self.sf_instance, sf_version=self.sf_version,
             proxies=self.proxies, session=self.session)
+
+    # Bulk API request handler
+    #def bulk(self):
+
+    #    return SFBulkHandler(self.session_id, self.sf_instance, self.bulk_url, self.sf_version, self.proxies, self.session)
 
     # User utlity methods
     def set_password(self, user, password):
@@ -739,11 +748,13 @@ class SFType(object):
         _warn_request_deprecation()
         self.session = session
 
-class SFBulkType(object):
-    """ Interface to Bulk/Async API functions"""
+class SFBulkHandler(object):
+    """ Bulk API request handler
+    Intermediate class which allows us to use commands such as 'sf.bulk.Contacts.create(...)'
+    """
 
     def __init__(
-                 self, object_name, session_id, sf_instance,
+                 self, session_id, sf_instance, bulk_url,
                  sf_version=DEFAULT_API_VERSION, proxies=None, session=None):
         """Initialize the instance with the given parameters.
 
@@ -760,23 +771,51 @@ class SFBulkType(object):
                      exposed by simple_salesforce.
         """
         self.session_id = session_id
-        self.name = object_name
         self.session = session or requests.Session()
+        self.bulk_url = bulk_url
         # don't wipe out original proxies with None
         if not session and proxies is not None:
             self.session.proxies = proxies
 
+        #self.bulk_url = ('https://{instance}/services/async/{version}/'
+        #                 .format(instance=self.sf_instance,
+        #                         version=self.sf_version))
+
         self.headers = {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + self.session_id,
+            'X-SFDC-Session': self.session_id,
             'X-PrettyPrint': '1'
         }
 
-        self.bulk_url = ('https://{instance}/services/async/{version}/'
-                         .format(instance=self.sf_instance,
-                                 version=self.sf_version))
+    def __getattr__(self, name):
+        #print(name)
+        return SFBulkType(object_name=name, bulk_url=self.bulk_url, headers=self.headers, session=self.session)
+        #return name
 
-    def _create_job(self, operation, object_name):
+class SFBulkType(object):
+    """ Interface to Bulk/Async API functions"""
+
+    def __init__(self, object_name, bulk_url, headers, session):
+        """Initialize the instance with the given parameters.
+
+        Arguments:
+
+        * object_name -- the name of the type of SObject this represents,
+                         e.g. `Lead` or `Contact`
+        * session_id -- the session ID for authenticating to Salesforce
+        * sf_instance -- the domain of the instance of Salesforce to use
+        * sf_version -- the version of the Salesforce API to use
+        * proxies -- the optional map of scheme to proxy server
+        * session -- Custom requests session, created in calling code. This
+                     enables the use of requests Session features not otherwise
+                     exposed by simple_salesforce.
+        """
+        self.object_name = object_name
+        self.bulk_url = bulk_url
+        self.session = session
+        self.headers = headers
+
+    def _create_job(self, operation, object_name, external_id_field=None):
         """ Create a bulk job """
 
         payload = {
@@ -785,7 +824,12 @@ class SFBulkType(object):
             'contentType': 'JSON'
         }
 
-        result = _call_salesforce(url=self.bulk_url, method='POST', session=self.session, headers=self.headers, data=json.dumps(payload))
+        if operation=='upsert':
+            payload['externalIdFieldName'] = external_id_field
+
+        url = self.bulk_url + 'job'
+
+        result = _call_salesforce(url=url, method='POST', session=self.session, headers=self.headers, data=json.dumps(payload))
         return result.json(object_pairs_hook=OrderedDict)
 
     def _close_job(self, job_id):
@@ -795,23 +839,92 @@ class SFBulkType(object):
             'state': 'Closed'
         }
 
-        url = self.bulk_url + '/' + job_id
+        url = self.bulk_url + 'job/' + job_id
 
         result = _call_salesforce(url=url, method='POST', session=self.session, headers=self.headers, data=json.dumps(payload))
         return result.json(object_pairs_hook=OrderedDict)
 
-    def _add_batch(self, job_id, data):
-        """ Add a set of data as a batch to an existing job """
+    def _get_job(self, job_id):
+        """ Get an existing job to check the status """
 
-        url = self.bulk_url + '/' + job_id + '/batch'
+        url = self.bulk_url + 'job/' + job_id
+
+        result = _call_salesforce(url=url, method='GET', session=self.session, headers=self.headers)
+        return result.json(object_pairs_hook=OrderedDict)
+
+    def _add_batch(self, job_id, data):
+        """ Add a set of data as a batch to an existing job
+        Separating this out in case of later implementations involving multiple batches
+        """
+
+        url = self.bulk_url + 'job/' + job_id + '/batch'
 
         result = _call_salesforce(url=url, method='POST', session=self.session, headers=self.headers, data=json.dumps(data))
         return result.json(object_pairs_hook=OrderedDict)
 
-    def __attr__(self, name):
-        """ handling function here """
+    def _get_batch(self, job_id, batch_id):
+        """ Get an existing batch to check the status """
 
-        return True
+        url = self.bulk_url + 'job/' + job_id + '/batch/' + batch_id
+
+        result = _call_salesforce(url=url, method='GET', session=self.session, headers=self.headers)
+        return result.json(object_pairs_hook=OrderedDict)
+
+    def _get_batch_results(self, job_id, batch_id):
+        """ retrieve a set of results from a completed job """
+
+        url = self.bulk_url + 'job/' + job_id + '/batch/' + batch_id + '/result'
+
+        result = _call_salesforce(url=url, method='GET', session=self.session, headers=self.headers)
+        return result.json()
+
+    def _bulk_operation(self, object_name, operation, data, external_id_field=None, wait=5):
+        """ String together helper functions to create a complete end-to-end bulk API request """
+
+        job = self._create_job(object_name=object_name, operation=operation, external_id_field=external_id_field)
+
+        batch = self._add_batch(job_id=job['id'], data=data)
+
+        job_close = self._close_job(job_id=job['id'])
+
+        batch_status = self._get_batch(job_id=batch['jobId'], batch_id=batch['id'])['state']
+
+        while batch_status not in ['Completed', 'Failed', 'Not Processed']:
+            sleep(wait)
+            batch_status = self._get_batch(job_id=batch['jobId'], batch_id=batch['id'])['state']
+
+        results = self._get_batch_results(job_id=batch['jobId'], batch_id=batch['id'])
+        return results
+
+    def delete(self, data):
+
+        results = self._bulk_operation(object_name=self.object_name, operation='delete', data=data)
+        return results
+
+    def insert(self, data):
+
+        results = self._bulk_operation(object_name=self.object_name, operation='insert', data=data)
+        return results
+
+    def upsert(self, data, external_id_field):
+
+        results = self._bulk_operation(object_name=self.object_name, operation='upsert', external_id_field=external_id_field, data=data)
+        return results
+
+    def update(self, data):
+
+        results = self._bulk_operation(object_name=self.object_name, operation='update', data=data)
+        return results
+
+    def hard_delete(self, data):
+
+        results = self._bulk_operation(object_name=self.object_name, operation='hardDelete', data=data)
+        return results
+
+    def query(self, data):
+
+        results = self._bulk_operation(object_name=self.object_name, operation='query', data=data)
+        return results
 
 
 class SalesforceAPI(Salesforce):
@@ -859,7 +972,7 @@ def _call_salesforce(url, method, session, headers, **kwargs):
     result = session.request(method, url, headers=headers, **kwargs)
 
     if result.status_code >= 300:
-        _exception_handler(result, self.name)
+        _exception_handler(result)
 
     return result
 
