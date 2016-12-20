@@ -206,16 +206,14 @@ class Salesforce(object):
             return super(Salesforce, self).__getattr__(name)
 
         if name=='bulk':
-             return SFBulkHandler(self.session_id, self.sf_instance, self.bulk_url, self.sf_version, self.proxies, self.session)
+            """
+            Deal with bulk API functions
+            """
+             return SFBulkHandler(self.session_id, self.sf_instance, self.bulk_url, self.proxies, self.session)
 
         return SFType(
             name, self.session_id, self.sf_instance, sf_version=self.sf_version,
             proxies=self.proxies, session=self.session)
-
-    # Bulk API request handler
-    #def bulk(self):
-
-    #    return SFBulkHandler(self.session_id, self.sf_instance, self.bulk_url, self.sf_version, self.proxies, self.session)
 
     # User utlity methods
     def set_password(self, user, password):
@@ -751,20 +749,17 @@ class SFType(object):
 class SFBulkHandler(object):
     """ Bulk API request handler
     Intermediate class which allows us to use commands such as 'sf.bulk.Contacts.create(...)'
+    This is really just a middle layer, whose sole purpose is to allow the above syntax
     """
 
-    def __init__(
-                 self, session_id, sf_instance, bulk_url,
-                 sf_version=DEFAULT_API_VERSION, proxies=None, session=None):
+    def __init__(self, session_id, sf_instance, bulk_url, proxies=None, session=None):
         """Initialize the instance with the given parameters.
 
         Arguments:
 
-        * object_name -- the name of the type of SObject this represents,
-                         e.g. `Lead` or `Contact`
         * session_id -- the session ID for authenticating to Salesforce
         * sf_instance -- the domain of the instance of Salesforce to use
-        * sf_version -- the version of the Salesforce API to use
+        * bulk_url -- API endpoint set in Salesforce instance
         * proxies -- the optional map of scheme to proxy server
         * session -- Custom requests session, created in calling code. This
                      enables the use of requests Session features not otherwise
@@ -777,10 +772,7 @@ class SFBulkHandler(object):
         if not session and proxies is not None:
             self.session.proxies = proxies
 
-        #self.bulk_url = ('https://{instance}/services/async/{version}/'
-        #                 .format(instance=self.sf_instance,
-        #                         version=self.sf_version))
-
+        # Define these headers separate from Salesforce class, as bulk uses a slightly different format
         self.headers = {
             'Content-Type': 'application/json',
             'X-SFDC-Session': self.session_id,
@@ -788,9 +780,7 @@ class SFBulkHandler(object):
         }
 
     def __getattr__(self, name):
-        #print(name)
         return SFBulkType(object_name=name, bulk_url=self.bulk_url, headers=self.headers, session=self.session)
-        #return name
 
 class SFBulkType(object):
     """ Interface to Bulk/Async API functions"""
@@ -802,10 +792,8 @@ class SFBulkType(object):
 
         * object_name -- the name of the type of SObject this represents,
                          e.g. `Lead` or `Contact`
-        * session_id -- the session ID for authenticating to Salesforce
-        * sf_instance -- the domain of the instance of Salesforce to use
-        * sf_version -- the version of the Salesforce API to use
-        * proxies -- the optional map of scheme to proxy server
+        * bulk_url -- API endpoint set in Salesforce instance
+        * headers -- bulk API headers
         * session -- Custom requests session, created in calling code. This
                      enables the use of requests Session features not otherwise
                      exposed by simple_salesforce.
@@ -896,6 +884,7 @@ class SFBulkType(object):
         results = self._get_batch_results(job_id=batch['jobId'], batch_id=batch['id'])
         return results
 
+    # Wrappers for _bulk_operation which expose the supported Salesforce bulk operations
     def delete(self, data):
 
         results = self._bulk_operation(object_name=self.object_name, operation='delete', data=data)
