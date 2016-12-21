@@ -86,7 +86,7 @@ class SFBulkType(object):
         if operation == 'upsert':
             payload['externalIdFieldName'] = external_id_field
 
-        url = self.bulk_url + 'job'
+        url = "{}{}".format(self.bulk_url, 'job')
 
         result = _call_salesforce(url=url, method='POST', session=self.session, headers=self.headers, data=json.dumps(payload))
         return result.json(object_pairs_hook=OrderedDict)
@@ -98,7 +98,7 @@ class SFBulkType(object):
             'state': 'Closed'
         }
 
-        url = self.bulk_url + 'job/' + job_id
+        url = "{}{}{}".format(self.bulk_url, 'job/', job_id)
 
         result = _call_salesforce(url=url, method='POST', session=self.session, headers=self.headers, data=json.dumps(payload))
         return result.json(object_pairs_hook=OrderedDict)
@@ -106,7 +106,7 @@ class SFBulkType(object):
     def _get_job(self, job_id):
         """ Get an existing job to check the status """
 
-        url = self.bulk_url + 'job/' + job_id
+        url = "{}{}{}".format(self.bulk_url, 'job/', job_id)
 
         result = _call_salesforce(url=url, method='GET', session=self.session, headers=self.headers)
         return result.json(object_pairs_hook=OrderedDict)
@@ -116,7 +116,7 @@ class SFBulkType(object):
         Separating this out in case of later implementations involving multiple batches
         """
 
-        url = self.bulk_url + 'job/' + job_id + '/batch'
+        url = "{}{}{}{}".format(self.bulk_url, 'job/', job_id, '/batch')
 
         if operation != 'query':
             data = json.dumps(data)
@@ -127,7 +127,7 @@ class SFBulkType(object):
     def _get_batch(self, job_id, batch_id):
         """ Get an existing batch to check the status """
 
-        url = self.bulk_url + 'job/' + job_id + '/batch/' + batch_id
+        url = "{}{}{}{}{}".format(self.bulk_url, 'job/', job_id, '/batch/', batch_id)
 
         result = _call_salesforce(url=url, method='GET', session=self.session, headers=self.headers)
         return result.json(object_pairs_hook=OrderedDict)
@@ -135,12 +135,12 @@ class SFBulkType(object):
     def _get_batch_results(self, job_id, batch_id, operation):
         """ retrieve a set of results from a completed job """
 
-        url = self.bulk_url + 'job/' + job_id + '/batch/' + batch_id + '/result'
+        url = "{}{}{}{}{}{}".format(self.bulk_url, 'job/', job_id, '/batch/', batch_id, '/result')
 
         result = _call_salesforce(url=url, method='GET', session=self.session, headers=self.headers)
 
         if operation == 'query':
-            url_query_results = url + '/' + result.json()[0]
+            url_query_results = "{}{}{}".format(url, '/', result.json()[0])
             query_result = _call_salesforce(url=url_query_results, method='GET', session=self.session, headers=self.headers)
             return query_result.json()
 
