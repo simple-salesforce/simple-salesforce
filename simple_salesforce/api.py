@@ -9,7 +9,6 @@ import logging
 import warnings
 import requests
 import json
-from time import sleep
 
 try:
     from urlparse import urlparse, urljoin
@@ -18,7 +17,7 @@ except ImportError:
     from urllib.parse import urlparse, urljoin
 from simple_salesforce.login import SalesforceLogin
 from simple_salesforce.util import date_to_iso8601, SalesforceError
-from simple_salesforce.bulk import SFBulkType, SFBulkHandler
+from simple_salesforce.bulk import SFBulkHandler, SFBulkType
 
 try:
     from collections import OrderedDict
@@ -206,11 +205,9 @@ class Salesforce(object):
         if name.startswith('__'):
             return super(Salesforce, self).__getattr__(name)
 
-        if name=='bulk':
-            """
-            Deal with bulk API functions
-            """
-             return SFBulkHandler(self.session_id, self.sf_instance, self.bulk_url, self.proxies, self.session)
+        if name == 'bulk':
+            # Deal with bulk API functions
+            return SFBulkHandler(self.session_id, self.sf_instance, self.bulk_url, self.proxies, self.session)
 
         return SFType(
             name, self.session_id, self.sf_instance, sf_version=self.sf_version,

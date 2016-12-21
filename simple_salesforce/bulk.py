@@ -1,3 +1,15 @@
+""" Classes for interacting with Salesforce Bulk API """
+
+import requests
+import json
+from time import sleep
+from simple_salesforce.util import SalesforceError
+
+try:
+    from collections import OrderedDict
+except ImportError:
+    # Python < 2.7
+    from ordereddict import OrderedDict
 
 class SFBulkHandler(object):
     """ Bulk API request handler
@@ -5,13 +17,12 @@ class SFBulkHandler(object):
     This is really just a middle layer, whose sole purpose is to allow the above syntax
     """
 
-    def __init__(self, session_id, sf_instance, bulk_url, proxies=None, session=None):
+    def __init__(self, session_id, bulk_url, proxies=None, session=None):
         """Initialize the instance with the given parameters.
 
         Arguments:
 
         * session_id -- the session ID for authenticating to Salesforce
-        * sf_instance -- the domain of the instance of Salesforce to use
         * bulk_url -- API endpoint set in Salesforce instance
         * proxies -- the optional map of scheme to proxy server
         * session -- Custom requests session, created in calling code. This
@@ -72,7 +83,7 @@ class SFBulkType(object):
             'contentType': 'JSON'
         }
 
-        if operation=='upsert':
+        if operation == 'upsert':
             payload['externalIdFieldName'] = external_id_field
 
         url = self.bulk_url + 'job'
@@ -142,7 +153,7 @@ class SFBulkType(object):
 
         batch = self._add_batch(job_id=job['id'], data=data)
 
-        job_close = self._close_job(job_id=job['id'])
+        self._close_job(job_id=job['id'])
 
         batch_status = self._get_batch(job_id=batch['jobId'], batch_id=batch['id'])['state']
 
