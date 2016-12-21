@@ -111,14 +111,17 @@ class SFBulkType(object):
         result = _call_salesforce(url=url, method='GET', session=self.session, headers=self.headers)
         return result.json(object_pairs_hook=OrderedDict)
 
-    def _add_batch(self, job_id, data):
+    def _add_batch(self, job_id, data, operation):
         """ Add a set of data as a batch to an existing job
         Separating this out in case of later implementations involving multiple batches
         """
 
         url = self.bulk_url + 'job/' + job_id + '/batch'
 
-        result = _call_salesforce(url=url, method='POST', session=self.session, headers=self.headers, data=json.dumps(data))
+        if operation != 'query':
+            data = json.dumps(data)
+
+        result = _call_salesforce(url=url, method='POST', session=self.session, headers=self.headers, data=data)
         return result.json(object_pairs_hook=OrderedDict)
 
     def _get_batch(self, job_id, batch_id):
@@ -129,12 +132,18 @@ class SFBulkType(object):
         result = _call_salesforce(url=url, method='GET', session=self.session, headers=self.headers)
         return result.json(object_pairs_hook=OrderedDict)
 
-    def _get_batch_results(self, job_id, batch_id):
+    def _get_batch_results(self, job_id, batch_id, operation):
         """ retrieve a set of results from a completed job """
 
         url = self.bulk_url + 'job/' + job_id + '/batch/' + batch_id + '/result'
 
         result = _call_salesforce(url=url, method='GET', session=self.session, headers=self.headers)
+
+        if operation == 'query':
+            url_query_results = url + '/' + result.json()[0]
+            query_result = _call_salesforce(url=url_query_results, method='GET', session=self.session, headers=self.headers)
+            return query_result.json()
+
         return result.json()
 
     def _bulk_operation(self, object_name, operation, data, external_id_field=None, wait=5):
@@ -151,7 +160,7 @@ class SFBulkType(object):
 
         job = self._create_job(object_name=object_name, operation=operation, external_id_field=external_id_field)
 
-        batch = self._add_batch(job_id=job['id'], data=data)
+        batch = self._add_batch(job_id=job['id'], data=data, operation=operation)
 
         self._close_job(job_id=job['id'])
 
@@ -161,7 +170,7 @@ class SFBulkType(object):
             sleep(wait)
             batch_status = self._get_batch(job_id=batch['jobId'], batch_id=batch['id'])['state']
 
-        results = self._get_batch_results(job_id=batch['jobId'], batch_id=batch['id'])
+        results = self._get_batch_results(job_id=batch['jobId'], batch_id=batch['id'], operation=operation)
         return results
 
     # Wrappers for _bulk_operation which expose the supported Salesforce bulk operations
