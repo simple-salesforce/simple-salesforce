@@ -1,15 +1,17 @@
 """ Classes for interacting with Salesforce Bulk API """
 
-import requests
-import json
-from time import sleep
-from simple_salesforce.util import SalesforceError
+WAIT = 5
 
 try:
     from collections import OrderedDict
 except ImportError:
     # Python < 2.7
     from ordereddict import OrderedDict
+
+import json
+import requests
+from time import sleep
+from simple_salesforce.util import SalesforceError
 
 class SFBulkHandler(object):
     """ Bulk API request handler
@@ -93,7 +95,8 @@ class SFBulkType(object):
         url = "{}{}".format(self.bulk_url, 'job')
 
         result = _call_salesforce(url=url, method='POST', session=self.session,
-                                headers=self.headers, data=json.dumps(payload))
+                                  headers=self.headers,
+                                  data=json.dumps(payload))
         return result.json(object_pairs_hook=OrderedDict)
 
     def _close_job(self, job_id):
@@ -106,7 +109,8 @@ class SFBulkType(object):
         url = "{}{}{}".format(self.bulk_url, 'job/', job_id)
 
         result = _call_salesforce(url=url, method='POST', session=self.session,
-                                headers=self.headers, data=json.dumps(payload))
+                                  headers=self.headers,
+                                  data=json.dumps(payload))
         return result.json(object_pairs_hook=OrderedDict)
 
     def _get_job(self, job_id):
@@ -155,13 +159,14 @@ class SFBulkType(object):
         if operation == 'query':
             url_query_results = "{}{}{}".format(url, '/', result.json()[0])
             query_result = _call_salesforce(url=url_query_results, method='GET',
-                                    session=self.session, headers=self.headers)
+                                            session=self.session,
+                                            headers=self.headers)
             return query_result.json()
 
         return result.json()
 
     def _bulk_operation(self, object_name, operation, data,
-                        external_id_field=None, wait=5):
+                        external_id_field=None):
         """ String together helper functions to create a complete
         end-to-end bulk API request
 
@@ -186,12 +191,13 @@ class SFBulkType(object):
                                        batch_id=batch['id'])['state']
 
         while batch_status not in ['Completed', 'Failed', 'Not Processed']:
-            sleep(wait)
+            sleep(WAIT)
             batch_status = self._get_batch(job_id=batch['jobId'],
                                            batch_id=batch['id'])['state']
 
         results = self._get_batch_results(job_id=batch['jobId'],
-                                    batch_id=batch['id'], operation=operation)
+                                          batch_id=batch['id'],
+                                          operation=operation)
         return results
 
     # _bulk_operation wrappers to expose supported Salesforce bulk operations

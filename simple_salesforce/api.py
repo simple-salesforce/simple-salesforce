@@ -17,7 +17,7 @@ except ImportError:
     from urllib.parse import urlparse, urljoin
 from simple_salesforce.login import SalesforceLogin
 from simple_salesforce.util import date_to_iso8601, SalesforceError
-from simple_salesforce.bulk import SFBulkHandler, SFBulkType
+from simple_salesforce.bulk import SFBulkHandler
 
 try:
     from collections import OrderedDict
