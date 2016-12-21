@@ -57,7 +57,14 @@ class SFBulkType(object):
         self.headers = headers
 
     def _create_job(self, operation, object_name, external_id_field=None):
-        """ Create a bulk job """
+        """ Create a bulk job
+
+        Arguments:
+
+        * operation -- Bulk operation to be performed by job
+        * object_name -- SF object
+        * external_id_field -- unique identifier field for upsert operations
+        """
 
         payload = {
             'operation': operation,
@@ -120,7 +127,16 @@ class SFBulkType(object):
         return result.json()
 
     def _bulk_operation(self, object_name, operation, data, external_id_field=None, wait=5):
-        """ String together helper functions to create a complete end-to-end bulk API request """
+        """ String together helper functions to create a complete end-to-end bulk API request
+
+        Arguments:
+
+        * object_name -- SF object
+        * operation -- Bulk operation to be performed by job
+        * data -- list of dict to be passed as a batch
+        * external_id_field -- unique identifier field for upsert operations
+        * wait -- seconds to sleep between checking batch status
+        """
 
         job = self._create_job(object_name=object_name, operation=operation, external_id_field=external_id_field)
 
