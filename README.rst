@@ -230,6 +230,60 @@ To retrieve a list of top level description of instance metadata, user:
       print x["label"]
 
 
+Using Bulk
+----------
+
+You can use this library to access Bulk API functions.
+
+Create new records:
+
+.. code-block:: python
+
+    data = [{'LastName':'Smith','Email':'example@example.com'}, {'LastName':'Jones','Email':'test@test.com'}]
+
+    sf.bulk.Contact.insert(data)
+
+Update existing records:
+
+.. code-block:: python
+
+    data = [{'Id': '0000000000AAAAA', 'Email': 'examplenew@example.com'}, {'Id': '0000000000BBBBB', 'Email': 'testnew@test.com'}]
+
+    sf.bulk.Contact.update(data)
+
+Upsert records:
+
+.. code-block:: python
+
+    data = [{'Id': '0000000000AAAAA', 'Email': 'examplenew2@example.com'}, {'Id': '', 'Email': 'foo@foo.com'}]
+
+    sf.bulk.Contact.upsert(data, 'Id')
+
+Query records:
+
+.. code-block:: python
+
+    query = 'SELECT Id, Name FROM Account LIMIT 10'
+
+    sf.bulk.Account.query(query)
+
+Delete records (soft deletion):
+
+.. code-block:: python
+
+    data = [{'Id': '0000000000AAAAA'}]
+
+    sf.bulk.Contact.delete(data)
+
+Hard deletion:
+
+.. code-block:: python
+
+    data = [{'Id': '0000000000BBBBB'}]
+
+    sf.bulk.Contact.hard_delete(data)
+
+
 Using Apex
 ----------
 
