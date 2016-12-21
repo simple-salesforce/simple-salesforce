@@ -207,7 +207,7 @@ class Salesforce(object):
 
         if name == 'bulk':
             # Deal with bulk API functions
-            return SFBulkHandler(self.session_id, self.sf_instance, self.bulk_url, self.proxies, self.session)
+            return SFBulkHandler(self.session_id, self.bulk_url, self.proxies, self.session)
 
         return SFType(
             name, self.session_id, self.sf_instance, sf_version=self.sf_version,

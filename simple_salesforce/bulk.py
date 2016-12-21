@@ -166,32 +166,32 @@ class SFBulkType(object):
 
     # Wrappers for _bulk_operation which expose the supported Salesforce bulk operations
     def delete(self, data):
-
+        """ soft delete records """
         results = self._bulk_operation(object_name=self.object_name, operation='delete', data=data)
         return results
 
     def insert(self, data):
-
+        """ insert records """
         results = self._bulk_operation(object_name=self.object_name, operation='insert', data=data)
         return results
 
     def upsert(self, data, external_id_field):
-
+        """ upsert records based on a unique identifier """
         results = self._bulk_operation(object_name=self.object_name, operation='upsert', external_id_field=external_id_field, data=data)
         return results
 
     def update(self, data):
-
+        """ update records """
         results = self._bulk_operation(object_name=self.object_name, operation='update', data=data)
         return results
 
     def hard_delete(self, data):
-
+        """ hard delete records """
         results = self._bulk_operation(object_name=self.object_name, operation='hardDelete', data=data)
         return results
 
     def query(self, data):
-
+        """ bulk query """
         results = self._bulk_operation(object_name=self.object_name, operation='query', data=data)
         return results
 
