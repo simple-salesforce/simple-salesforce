@@ -19,7 +19,7 @@ import requests
 
 # pylint: disable=invalid-name,too-many-arguments,too-many-locals
 def SalesforceLogin(
-        username=None, password=None, security_token=None,
+        username=None, password=None, security_token=None, instance=None,
         organizationId=None, sandbox=False, sf_version=DEFAULT_API_VERSION,
         proxies=None, session=None, client_id=None):
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
@@ -31,6 +31,7 @@ def SalesforceLogin(
     * username -- the Salesforce username to use for authentication
     * password -- the password for the username
     * security_token -- the security token for the username
+    * instance -- the domain of salesforce instance
     * organizationId -- the ID of your organization
             NOTE: security_token an organizationId are mutually exclusive
     * sandbox -- True if you want to login to `test.salesforce.com`, False if
@@ -44,8 +45,13 @@ def SalesforceLogin(
     * client_id -- the ID of this client
     """
 
-    soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
-    domain = 'test' if sandbox else 'login'
+    soap_url = 'https://{domain}/services/Soap/u/{sf_version}'
+    if instance is not None:
+        domain = instance
+    elif sandbox is True:
+        domain = 'test.salesforce.com'
+    else:
+        domain = 'login.salesforce.com'
 
     if client_id:
         client_id = "{prefix}/{app_name}".format(
