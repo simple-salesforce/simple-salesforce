@@ -21,7 +21,7 @@ import requests
 def SalesforceLogin(
         username=None, password=None, security_token=None,
         organizationId=None, sandbox=False, sf_version=DEFAULT_API_VERSION,
-        proxies=None, session=None, client_id=None):
+        session=None, client_id=None, timeout=60, **kwargs):
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
     the domain of the instance of Salesforce to use for the session.
@@ -42,6 +42,11 @@ def SalesforceLogin(
                  enables the use of requets Session features not otherwise
                  exposed by simple_salesforce.
     * client_id -- the ID of this client
+    * timeout -- How long to wait for the server to send data before giving
+                 up, as a float, or a `(connect timeout, read timeout)` tuple.
+                 (default 60)
+
+    Keyword Args: Parameters passed down to requests.post method
     """
 
     soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
@@ -144,9 +149,10 @@ def SalesforceLogin(
         'charset': 'UTF-8',
         'SOAPAction': 'login'
     }
+    login_soap_request_headers.update(kwargs.pop('headers', dict()))
     response = (session or requests).post(
-        soap_url, login_soap_request_body, headers=login_soap_request_headers,
-        proxies=proxies)
+        url=soap_url, data=login_soap_request_body,
+        headers=login_soap_request_headers, timeout=timeout, **kwargs)
 
     if response.status_code != 200:
         except_code = getUniqueElementValueFromXmlString(

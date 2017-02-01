@@ -31,7 +31,8 @@ from simple_salesforce.api import (
     SalesforceRefusedRequest,
     SalesforceResourceNotFound,
     SalesforceGeneralError,
-    SFType
+    SFType,
+    RequestBase
 )
 
 
@@ -563,7 +564,8 @@ class TestSalesforce(unittest.TestCase):
 
         with patch('simple_salesforce.api.logger.warning') as mock_log:
             client = Salesforce(session_id=tests.SESSION_ID,
-                instance_url=tests.SERVER_URL, session=session, proxies={})
+                                instance_url=tests.SERVER_URL,
+                                session=session, proxies={})
             self.assertIn('ignoring proxies', mock_log.call_args[0][0])
             self.assertIs(tests.PROXIES, client.session.proxies)
 
@@ -575,12 +577,14 @@ class TestExceptionHandler(unittest.TestCase):
         self.mockresult = Mock()
         self.mockresult.url = 'http://www.example.com/'
         self.mockresult.json.return_value = 'Example Content'
+        self.mixin = RequestBase()
+        self.exec_handler = self.mixin.exception_handler
 
     def test_multiple_records_returned(self):
         """Test multiple records returned (a 300 code)"""
         self.mockresult.status_code = 300
         with self.assertRaises(SalesforceMoreThanOneRecord) as cm:
-            _exception_handler(self.mockresult)
+            self.exec_handler(self.mockresult)
 
         self.assertEqual(str(cm.exception), (
             'More than one record for '
@@ -590,7 +594,7 @@ class TestExceptionHandler(unittest.TestCase):
         """Test a malformed request (400 code)"""
         self.mockresult.status_code = 400
         with self.assertRaises(SalesforceMalformedRequest) as cm:
-            _exception_handler(self.mockresult)
+            self.exec_handler(self.mockresult)
 
         self.assertEqual(str(cm.exception), (
             'Malformed request '
@@ -600,7 +604,7 @@ class TestExceptionHandler(unittest.TestCase):
         """Test an expired session (401 code)"""
         self.mockresult.status_code = 401
         with self.assertRaises(SalesforceExpiredSession) as cm:
-            _exception_handler(self.mockresult)
+            self.exec_handler(self.mockresult)
 
         self.assertEqual(str(cm.exception), (
             'Expired session for '
@@ -610,7 +614,7 @@ class TestExceptionHandler(unittest.TestCase):
         """Test a refused request (403 code)"""
         self.mockresult.status_code = 403
         with self.assertRaises(SalesforceRefusedRequest) as cm:
-            _exception_handler(self.mockresult)
+            self.exec_handler(self.mockresult)
 
         self.assertEqual(str(cm.exception), (
             'Request refused for '
@@ -620,7 +624,8 @@ class TestExceptionHandler(unittest.TestCase):
         """Test resource not found (404 code)"""
         self.mockresult.status_code = 404
         with self.assertRaises(SalesforceResourceNotFound) as cm:
-            _exception_handler(self.mockresult, 'SpecialContacts')
+            self.mixin.name = 'SpecialContacts'
+            self.exec_handler(self.mockresult)
 
         self.assertEqual(str(cm.exception), (
             'Resource SpecialContacts Not'
@@ -630,8 +635,63 @@ class TestExceptionHandler(unittest.TestCase):
         """Test an error code that is otherwise not caught"""
         self.mockresult.status_code = 500
         with self.assertRaises(SalesforceGeneralError) as cm:
-            _exception_handler(self.mockresult)
+            self.exec_handler(self.mockresult)
 
         self.assertEqual(str(cm.exception), (
             'Error Code 500. Response content'
             ': Example Content'))
+
+    def test_deprecated_exception_handler(self):
+        """Test calling deprecated exception handler"""
+        self.mockresult.status_code = 404
+        resource_name = 'SpecialContacts'
+        with self.assertRaises(SalesforceResourceNotFound) as exception:
+            _exception_handler(result=self.mockresult, name=resource_name)
+        self.assertEqual(exception.exception.status, 404)
+        self.assertEqual(exception.exception.resource_name, resource_name)
+
+
+class TestRequestBase(unittest.TestCase):
+    """ Tests for RequestBase class """
+    def setUp(self):
+        self.mock_resp = Mock()
+        self.mock_resp.status_code = 200
+        mock_sess = Mock()
+        mock_sess.request.return_value = self.mock_resp
+        self.req_base = RequestBase(session=mock_sess)
+        self.mock_req = mock_sess.request
+
+    def test_default_init(self):
+        """ Test checking default RequestBase instance variables """
+        inst = RequestBase()
+        self.assertIsInstance(inst.session, requests.Session)
+        self.assertEqual(inst.name, "")
+        self.assertEqual(inst.session_id, "sessionId")
+
+    def test_init_with_session(self):
+        """ Test checking construction of RequestBase with a session """
+        sess = requests.Session()
+        inst = RequestBase(session=sess)
+        self.assertIs(inst.session, sess)
+
+    def test_make_request(self):
+        """ Test checking making a request """
+        self.req_base.session_id = "MyVeryCrypticSessionIDASDF"
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + self.req_base.session_id,
+            'X-PrettyPrint': '1'
+        }
+        rsp = self.req_base.call_salesforce(method='GET',
+                                            url='http//remote.host')
+        self.assertEqual(rsp, self.mock_resp)
+        self.mock_req.assert_called_once_with(method='GET', timeout=60,
+                                              url='http//remote.host',
+                                              headers=headers)
+
+    def test_error_request(self):
+        """ Regression test for error handling in RequestBase """
+        with self.assertRaises(SalesforceMalformedRequest):
+            self.mock_resp.status_code = 400
+            self.req_base.call_salesforce(method='GET',
+                                          url='http//remote.host')

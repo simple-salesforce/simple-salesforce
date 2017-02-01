@@ -12,18 +12,17 @@ try:
     # Python 2.6/2.7
     import httplib as http
     from urlparse import urlparse
-    from mock import Mock, patch
+    from mock import Mock, patch, ANY
 except ImportError:
     # Python 3
     import http.client as http
-    from unittest.mock import Mock, patch
+    from unittest.mock import Mock, patch, ANY
     from urllib.parse import urlparse
 
 from simple_salesforce import tests
 from simple_salesforce.login import (
     SalesforceLogin, SalesforceAuthenticationFailed
 )
-
 
 
 class TestSalesforceLogin(unittest.TestCase):
@@ -80,3 +79,22 @@ class TestSalesforceLogin(unittest.TestCase):
                 sandbox=True
             )
         self.assertTrue(self.mockrequest.post.called)
+
+    def test_requests_args(self):
+        """ Test request args passing to SalesforceLogin function """
+        self.mockrequest.post.return_value = Mock(**{'status_code': 200})
+        proxies = dict(https='https://my.host.proxy')
+        with patch('simple_salesforce.login.'
+                   'getUniqueElementValueFromXmlString') as xml_patch:
+            xml_patch.return_value = ""
+            SalesforceLogin(
+                session=self.mockrequest,
+                username='foo@bar.com',
+                password='password',
+                security_token='token',
+                proxies=proxies
+            )
+            self.mockrequest.post.assert_called_once_with(url=ANY, data=ANY,
+                                                          headers=ANY,
+                                                          proxies=proxies,
+                                                          timeout=60)
