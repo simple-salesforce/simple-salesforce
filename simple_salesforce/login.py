@@ -151,8 +151,8 @@ def SalesforceLogin(
     }
     login_soap_request_headers.update(kwargs.pop('headers', dict()))
     response = (session or requests).post(
-        url=soap_url, data=login_soap_request_body, headers=login_soap_request_headers,
-        timeout=timeout, **kwargs)
+        url=soap_url, data=login_soap_request_body,
+        headers=login_soap_request_headers, timeout=timeout, **kwargs)
 
     if response.status_code != 200:
         except_code = getUniqueElementValueFromXmlString(

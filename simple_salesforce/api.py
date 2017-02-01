@@ -38,6 +38,7 @@ def _warn_request_deprecation():
 
 
 class RequestBase(object):
+    """ Wrapper for remote calls and error handling """
     def __init__(self, session=None):
         """
         Base class to encapsulate all remote operations
@@ -47,14 +48,14 @@ class RequestBase(object):
         self.session_id = "sessionId"
         self.name = ""
 
-    def _call_salesforce(self, method, url, timeout=60, **kwargs):
+    def call_salesforce(self, method, url, timeout=60, **kwargs):
         """Utility method for performing HTTP call to Salesforce.
 
         Arguments:
 
         * timeout -- How long to wait for the server to send data before giving
-                     up, as a float, or a `(connect timeout, read timeout)` tuple.
-                     (default 60)
+                     up, as a float, or a `(connect timeout, read timeout)`
+                     tuple. (default 60)
         * kwargs -- Parameters passed down to `requests.Session.request` method
 
         Returns a `requests.result` object.
@@ -70,11 +71,11 @@ class RequestBase(object):
                                       timeout=timeout, **kwargs)
 
         if result.status_code >= 300:
-            self._exception_handler(result)
+            self.exception_handler(result)
 
         return result
 
-    def _exception_handler(self, result):
+    def exception_handler(self, result):
         """Exception router. Determines which error to raise for bad results"""
         try:
             response_content = result.json()
@@ -91,7 +92,8 @@ class RequestBase(object):
         }
         exc_cls = exc_map.get(result.status_code, SalesforceGeneralError)
 
-        raise exc_cls(result.url, result.status_code, self.name, response_content)
+        raise exc_cls(result.url, result.status_code, self.name,
+                      response_content)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -224,7 +226,7 @@ class Salesforce(RequestBase):
         * kwargs -- Parameters passed down to `requests.Session.request` method
         """
         url = self.base_url + "sobjects"
-        result = self._call_salesforce('GET', url, **kwargs)
+        result = self.call_salesforce('GET', url, **kwargs)
         if result.status_code != 200:
             raise SalesforceGeneralError(url,
                                          'describe',
@@ -277,7 +279,8 @@ class Salesforce(RequestBase):
         url = self.base_url + 'sobjects/User/%s/password' % user
         params = {'NewPassword': password}
 
-        result = self._call_salesforce('POST', url, data=json.dumps(params), **kwargs)
+        result = self.call_salesforce('POST', url, data=json.dumps(params),
+                                      **kwargs)
 
         # salesforce return 204 No Content when the request is successful
         if result.status_code != 200 and result.status_code != 204:
@@ -324,7 +327,7 @@ class Salesforce(RequestBase):
         """
 
         url = self.base_url + path
-        result = self._call_salesforce(method, url, params=params, **kwargs)
+        result = self.call_salesforce(method, url, params=params, **kwargs)
         if result.status_code != 200:
             raise SalesforceGeneralError(url,
                                          path,
@@ -351,7 +354,7 @@ class Salesforce(RequestBase):
 
         # `requests` will correctly encode the query string passed as `params`
         params = {'q': search}
-        result = self._call_salesforce('GET', url, params=params, **kwargs)
+        result = self.call_salesforce('GET', url, params=params, **kwargs)
         if result.status_code != 200:
             raise SalesforceGeneralError(url,
                                          'search',
@@ -391,10 +394,10 @@ class Salesforce(RequestBase):
         url = self.base_url + 'query/'
         params = {'q': query}
         # `requests` will correctly encode the query string passed as `params`
-        result = self._call_salesforce('GET', url, params=params, **kwargs)
+        result = self.call_salesforce('GET', url, params=params, **kwargs)
 
         if result.status_code != 200:
-            self._exception_handler(result)
+            self.exception_handler(result)
 
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -423,10 +426,10 @@ class Salesforce(RequestBase):
         else:
             url = self.base_url + 'query/{next_record_id}'
             url = url.format(next_record_id=next_records_identifier)
-        result = self._call_salesforce('GET', url, **kwargs)
+        result = self.call_salesforce('GET', url, **kwargs)
 
         if result.status_code != 200:
-            self._exception_handler(result)
+            self.exception_handler(result)
 
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -472,8 +475,8 @@ class Salesforce(RequestBase):
         * data -- A dict of parameters to send in a POST / PUT request
         * kwargs -- Parameters passed down to `requests.Session.request` method
         """
-        result = self._call_salesforce(method, self.apex_url + action,
-                                       data=json.dumps(data), **kwargs)
+        result = self.call_salesforce(method, self.apex_url + action,
+                                      data=json.dumps(data), **kwargs)
 
         if result.status_code == 200:
             try:
@@ -538,7 +541,7 @@ class SFType(RequestBase):
 
         * kwargs -- Parameters passed down to `requests.Session.request` method
         """
-        result = self._call_salesforce('GET', self.base_url, **kwargs)
+        result = self.call_salesforce('GET', self.base_url, **kwargs)
         return result.json(object_pairs_hook=OrderedDict)
 
     def describe(self, **kwargs):
@@ -549,7 +552,7 @@ class SFType(RequestBase):
 
         * kwargs -- Parameters passed down to `requests.Session.request` method
         """
-        result = self._call_salesforce(
+        result = self.call_salesforce(
             method='GET', url=urljoin(self.base_url, 'describe'), **kwargs
         )
         return result.json(object_pairs_hook=OrderedDict)
@@ -569,7 +572,7 @@ class SFType(RequestBase):
         custom_url_part = 'describe/layouts/{record_id}'.format(
             record_id=record_id
         )
-        result = self._call_salesforce(
+        result = self.call_salesforce(
             method='GET',
             url=urljoin(self.base_url, custom_url_part), **kwargs
         )
@@ -584,7 +587,7 @@ class SFType(RequestBase):
         * record_id -- the Id of the SObject to get
         * kwargs -- Parameters passed down to `requests.Session.request` method
         """
-        result = self._call_salesforce(
+        result = self.call_salesforce(
             method='GET', url=urljoin(self.base_url, record_id), **kwargs
         )
         return result.json(object_pairs_hook=OrderedDict)
@@ -608,7 +611,7 @@ class SFType(RequestBase):
                 custom_id_field=custom_id_field, custom_id=custom_id
             )
         )
-        result = self._call_salesforce(
+        result = self.call_salesforce(
             method='GET', url=custom_url, **kwargs
         )
         return result.json(object_pairs_hook=OrderedDict)
@@ -624,7 +627,7 @@ class SFType(RequestBase):
                   JSON-encoded before being transmitted.
         * kwargs -- Parameters passed down to `requests.Session.request` method
         """
-        result = self._call_salesforce(
+        result = self.call_salesforce(
             method='POST', url=self.base_url,
             data=json.dumps(data), **kwargs
         )
@@ -648,7 +651,7 @@ class SFType(RequestBase):
                           directly, instead of the status code.
         * kwargs -- Parameters passed down to `requests.Session.request` method
         """
-        result = self._call_salesforce(
+        result = self.call_salesforce(
             method='PATCH', url=urljoin(self.base_url, record_id),
             data=json.dumps(data), **kwargs
         )
@@ -671,7 +674,7 @@ class SFType(RequestBase):
                           directly, instead of the status code.
         * kwargs -- Parameters passed down to `requests.Session.request` method
         """
-        result = self._call_salesforce(
+        result = self.call_salesforce(
             method='PATCH', url=urljoin(self.base_url, record_id),
             data=json.dumps(data), **kwargs
         )
@@ -692,7 +695,7 @@ class SFType(RequestBase):
                           directly, instead of the status code.
         * kwargs -- Parameters passed down to `requests.Session.request` method
         """
-        result = self._call_salesforce(
+        result = self.call_salesforce(
             method='DELETE', url=urljoin(self.base_url, record_id), **kwargs
         )
         return self._raw_response(result, raw_response)
@@ -714,7 +717,7 @@ class SFType(RequestBase):
                 start=date_to_iso8601(start), end=date_to_iso8601(end)
             )
         )
-        result = self._call_salesforce(method='GET', url=url, **kwargs)
+        result = self.call_salesforce(method='GET', url=url, **kwargs)
         return result.json(object_pairs_hook=OrderedDict)
 
     def updated(self, start, end, **kwargs):
@@ -735,7 +738,7 @@ class SFType(RequestBase):
                 start=date_to_iso8601(start), end=date_to_iso8601(end)
             )
         )
-        result = self._call_salesforce(method='GET', url=url, **kwargs)
+        result = self.call_salesforce(method='GET', url=url, **kwargs)
         return result.json(object_pairs_hook=OrderedDict)
 
     # pylint: disable=no-self-use
@@ -800,12 +803,12 @@ class SalesforceAPI(Salesforce):
 
 def _exception_handler(result, name=""):
     """Exception router. Determines which error to raise for bad results"""
-    warnings.warn('This global exception handler is deprecated. It has been moved'
-                  'to the RequestMixin class.', DeprecationWarning)
+    warnings.warn('This global exception handler is deprecated. It has been '
+                  'moved to the RequestMixin class.', DeprecationWarning)
 
     mixin = RequestBase()
     mixin.name = name
-    mixin._exception_handler(result=result)
+    mixin.exception_handler(result=result)
 
 
 class SalesforceMoreThanOneRecord(SalesforceError):

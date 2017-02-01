@@ -81,16 +81,20 @@ class TestSalesforceLogin(unittest.TestCase):
         self.assertTrue(self.mockrequest.post.called)
 
     def test_requests_args(self):
-        mock_sess = Mock()
-        mock_sess.post.return_value = Mock(**{'status_code': 200})
+        """ Test request args passing to SalesforceLogin function """
+        self.mockrequest.post.return_value = Mock(**{'status_code': 200})
         proxies = dict(https='https://my.host.proxy')
-        with patch('simple_salesforce.login.getUniqueElementValueFromXmlString') as xml_patch:
+        with patch('simple_salesforce.login.'
+                   'getUniqueElementValueFromXmlString') as xml_patch:
             xml_patch.return_value = ""
             SalesforceLogin(
-                session=mock_sess,
+                session=self.mockrequest,
                 username='foo@bar.com',
                 password='password',
                 security_token='token',
                 proxies=proxies
             )
-            mock_sess.post.assert_called_once_with(url=ANY, data=ANY, headers=ANY, proxies=proxies, timeout=60)
+            self.mockrequest.post.assert_called_once_with(url=ANY, data=ANY,
+                                                          headers=ANY,
+                                                          proxies=proxies,
+                                                          timeout=60)

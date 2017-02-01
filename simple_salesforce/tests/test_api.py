@@ -564,7 +564,8 @@ class TestSalesforce(unittest.TestCase):
 
         with patch('simple_salesforce.api.logger.warning') as mock_log:
             client = Salesforce(session_id=tests.SESSION_ID,
-                                instance_url=tests.SERVER_URL, session=session, proxies={})
+                                instance_url=tests.SERVER_URL,
+                                session=session, proxies={})
             self.assertIn('ignoring proxies', mock_log.call_args[0][0])
             self.assertIs(tests.PROXIES, client.session.proxies)
 
@@ -577,7 +578,7 @@ class TestExceptionHandler(unittest.TestCase):
         self.mockresult.url = 'http://www.example.com/'
         self.mockresult.json.return_value = 'Example Content'
         self.mixin = RequestBase()
-        self.exec_handler = self.mixin._exception_handler
+        self.exec_handler = self.mixin.exception_handler
 
     def test_multiple_records_returned(self):
         """Test multiple records returned (a 300 code)"""
@@ -650,7 +651,8 @@ class TestExceptionHandler(unittest.TestCase):
         self.assertEqual(exception.exception.resource_name, resource_name)
 
 
-class TestRequestMixin(unittest.TestCase):
+class TestRequestBase(unittest.TestCase):
+    """ Tests for RequestBase class """
     def setUp(self):
         self.mock_resp = Mock()
         self.mock_resp.status_code = 200
@@ -660,36 +662,36 @@ class TestRequestMixin(unittest.TestCase):
         self.mock_req = mock_sess.request
 
     def test_default_init(self):
+        """ Test checking default RequestBase instance variables """
         inst = RequestBase()
         self.assertIsInstance(inst.session, requests.Session)
         self.assertEqual(inst.name, "")
         self.assertEqual(inst.session_id, "sessionId")
 
     def test_init_with_session(self):
+        """ Test checking construction of RequestBase with a session """
         sess = requests.Session()
         inst = RequestBase(session=sess)
         self.assertIs(inst.session, sess)
 
     def test_make_request(self):
+        """ Test checking making a request """
         self.req_base.session_id = "MyVeryCrypticSessionIDASDF"
         headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.req_base.session_id,
             'X-PrettyPrint': '1'
         }
-        rsp = self.req_base._call_salesforce(method='GET', url='http//remote.host')
+        rsp = self.req_base.call_salesforce(method='GET',
+                                            url='http//remote.host')
         self.assertEqual(rsp, self.mock_resp)
-        self.mock_req.assert_called_once_with(method='GET', url='http//remote.host',
-                                              headers=headers, timeout=60)
+        self.mock_req.assert_called_once_with(method='GET', timeout=60,
+                                              url='http//remote.host',
+                                              headers=headers)
 
     def test_error_request(self):
+        """ Regression test for error handling in RequestBase """
         with self.assertRaises(SalesforceMalformedRequest):
             self.mock_resp.status_code = 400
-            self.req_base._call_salesforce(method='GET', url='http//remote.host')
-
-
-
-
-
-
-
+            self.req_base.call_salesforce(method='GET',
+                                          url='http//remote.host')
