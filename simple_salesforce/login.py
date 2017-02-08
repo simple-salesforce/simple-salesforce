@@ -86,7 +86,7 @@ def SalesforceLogin(
             username=username, password=password, token=security_token,
             client_id=client_id)
 
-    # Check if IP Filtering is used in conjuction with organizationId
+    # Check if IP Filtering is used in conjunction with organizationId
     elif organizationId is not None:
         # IP Filtering Login Soap request body
         login_soap_request_body = """<?xml version="1.0" encoding="utf-8" ?>

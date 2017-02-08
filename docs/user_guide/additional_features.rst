@@ -3,7 +3,7 @@ Additional Features
 
 There are a few helper classes that are used internally and available to you.
 
-Included in them are ``SalesforceLogin``, which takes in a username, password, security token, optional boolean sandbox indicator and optional version and returns a touple of ``(session_id, sf_instance)`` where `session_id` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
+Included in them are ``SalesforceLogin``, which takes in a username, password, security token, optional boolean sandbox indicator and optional version and returns a tuple of ``(session_id, sf_instance)`` where `session_id` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
 
 For example, to use SalesforceLogin for a sandbox account you'd use:
 
