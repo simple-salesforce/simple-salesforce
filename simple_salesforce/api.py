@@ -328,7 +328,7 @@ class Salesforce(object):
         return self.search(search_string)
 
     # Query Handler
-    def query(self, query, **kwargs):
+    def query(self, query, include_deleted=False, **kwargs):
         """Return the result of a Salesforce SOQL query as a dict decoded from
         the Salesforce response JSON payload.
 
@@ -336,8 +336,9 @@ class Salesforce(object):
 
         * query -- the SOQL query to send to Salesforce, e.g.
                    SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
+        * include_deleted -- True if deleted records should be included
         """
-        url = self.base_url + 'query/'
+        url = self.base_url + ('queryAll/' if include_deleted else 'query/')
         params = {'q': query}
         # `requests` will correctly encode the query string passed as `params`
         result = self._call_salesforce('GET', url, name='query',
@@ -346,7 +347,8 @@ class Salesforce(object):
         return result.json(object_pairs_hook=OrderedDict)
 
     def query_more(
-            self, next_records_identifier, identifier_is_url=False, **kwargs):
+            self, next_records_identifier, identifier_is_url=False,
+            include_deleted=False, **kwargs):
         """Retrieves more results from a query that returned more results
         than the batch maximum. Returns a dict decoded from the Salesforce
         response JSON payload.
@@ -360,6 +362,9 @@ class Salesforce(object):
                                treated as a URL, False if
                                `next_records_identifier` should be treated as
                                an Id.
+        * include_deleted -- True if the `next_records_identifier` refers to a
+                             query that includes deleted records. Only used if
+                             `identifier_is_url` is False
         """
         if identifier_is_url:
             # Don't use `self.base_url` here because the full URI is provided
@@ -367,13 +372,15 @@ class Salesforce(object):
                    .format(instance=self.sf_instance,
                            next_record_url=next_records_identifier))
         else:
-            url = self.base_url + 'query/{next_record_id}'
-            url = url.format(next_record_id=next_records_identifier)
+            endpoint = 'queryAll' if include_deleted else 'query'
+            url = self.base_url + '{query_endpoint}/{next_record_id}'
+            url = url.format(query_endpoint=endpoint,
+                             next_record_id=next_records_identifier)
         result = self._call_salesforce('GET', url, name='query_more', **kwargs)
 
         return result.json(object_pairs_hook=OrderedDict)
 
-    def query_all(self, query, **kwargs):
+    def query_all(self, query, include_deleted=False, **kwargs):
         """Returns the full set of results for the `query`. This is a
         convenience
         wrapper around `query(...)` and `query_more(...)`.
@@ -387,9 +394,10 @@ class Salesforce(object):
 
         * query -- the SOQL query to send to Salesforce, e.g.
                    SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
+        * include_deleted -- True if the query should include deleted records.
         """
 
-        result = self.query(query, **kwargs)
+        result = self.query(query, include_deleted=include_deleted, **kwargs)
         all_records = []
 
         while True:
@@ -397,7 +405,7 @@ class Salesforce(object):
             # fetch next batch if we're not done else break out of loop
             if not result['done']:
                 result = self.query_more(result['nextRecordsUrl'],
-                                         True)
+                                         identifier_is_url=True)
             else:
                 break
 
