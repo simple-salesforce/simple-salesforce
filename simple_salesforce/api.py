@@ -205,7 +205,7 @@ class Salesforce(object):
             name, self.session_id, self.sf_instance, sf_version=self.sf_version,
             proxies=self.proxies, session=self.session)
 
-    # User utlity methods
+    # User utility methods
     def set_password(self, user, password):
         """Sets the password of a user
 
@@ -250,7 +250,7 @@ class Salesforce(object):
         """
         warnings.warn(
             "This method has been deprecated."
-            "Please use set_password instread.",
+            "Please use set_password instead.",
             DeprecationWarning)
         return self.set_password(user, password)
 
@@ -351,7 +351,7 @@ class Salesforce(object):
                                      next record in the result.
         * identifier_is_url -- True if `next_records_identifier` should be
                                treated as a URL, False if
-                               `next_records_identifer` should be treated as
+                               `next_records_identifier` should be treated as
                                an Id.
         """
         if identifier_is_url:
@@ -804,7 +804,7 @@ class SalesforceMoreThanOneRecord(SalesforceError):
 class SalesforceMalformedRequest(SalesforceError):
     """
     Error Code: 400
-    The request couldn't be understood, usually becaue the JSON or XML body
+    The request couldn't be understood, usually because the JSON or XML body
     contains an error.
     """
     message = u"Malformed request {url}. Response content: {content}"
