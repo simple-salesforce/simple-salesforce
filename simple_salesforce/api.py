@@ -798,7 +798,7 @@ class SalesforceMoreThanOneRecord(SalesforceError):
     The value returned when an external ID exists in more than one record. The
     response body contains the list of matching records.
     """
-    message = u"More than one record for {url}. Response content: {content}"
+    message = u"More than one record for {0.url}. Response content: {0.content}"
 
 
 class SalesforceMalformedRequest(SalesforceError):
@@ -807,7 +807,7 @@ class SalesforceMalformedRequest(SalesforceError):
     The request couldn't be understood, usually because the JSON or XML body
     contains an error.
     """
-    message = u"Malformed request {url}. Response content: {content}"
+    message = u"Malformed request {0.url}. Response content: {0.content}"
 
 
 class SalesforceExpiredSession(SalesforceError):
@@ -816,7 +816,7 @@ class SalesforceExpiredSession(SalesforceError):
     The session ID or OAuth token used has expired or is invalid. The response
     body contains the message and errorCode.
     """
-    message = u"Expired session for {url}. Response content: {content}"
+    message = u"Expired session for {0.url}. Response content: {0.content}"
 
 
 class SalesforceRefusedRequest(SalesforceError):
@@ -825,7 +825,7 @@ class SalesforceRefusedRequest(SalesforceError):
     The request has been refused. Verify that the logged-in user has
     appropriate permissions.
     """
-    message = u"Request refused for {url}. Response content: {content}"
+    message = u"Request refused for {0.url}. Response content: {0.content}"
 
 
 class SalesforceResourceNotFound(SalesforceError):
@@ -834,18 +834,11 @@ class SalesforceResourceNotFound(SalesforceError):
     The requested resource couldn't be found. Check the URI for errors, and
     verify that there are no sharing issues.
     """
-    message = u'Resource {name} Not Found. Response content: {content}'
-
-    def __str__(self):
-        return self.message.format(name=self.resource_name,
-                                   content=self.content)
+    message = u'Resource {0.resource_name} Not Found. Response content: {0.content}'
 
 
 class SalesforceGeneralError(SalesforceError):
     """
     A non-specific Salesforce error.
     """
-    message = u'Error Code {status}. Response content: {content}'
-
-    def __str__(self):
-        return self.message.format(status=self.status, content=self.content)
+    message = u'Error Code {0.status}. Response content: {0.content}'

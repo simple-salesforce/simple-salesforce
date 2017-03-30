@@ -43,7 +43,7 @@ def date_to_iso8601(date):
 class SalesforceError(Exception):
     """Base Salesforce API exception"""
 
-    message = u'Unknown error occurred for {url}. Response content: {content}'
+    message = u'Unknown error occurred for {0.url}. Response content: {0.content}'
 
     def __init__(self, url, status, resource_name, content):
         # TODO exceptions don't seem to be using parent constructors at all.
@@ -59,4 +59,4 @@ class SalesforceError(Exception):
         return message.encode('utf-8') if PY2 else message
 
     def __unicode__(self):
-        return self.message.format(url=self.url, content=self.content)
+        return self.message.format(self)
