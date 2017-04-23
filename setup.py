@@ -7,7 +7,6 @@ from simple_salesforce import _version
 
 __version__ = _version.__version__
 
-
 pyver_install_requires = []
 pyver_tests_require = []
 if sys.version_info < (2, 7):
