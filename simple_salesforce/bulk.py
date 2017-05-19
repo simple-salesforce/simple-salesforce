@@ -164,7 +164,7 @@ class SFBulkType(object):
         return result.json()
 
     def _bulk_operation(self, object_name, operation, data,
-                        external_id_field=None, wait=5):
+                        external_id_field=None, wait=5): #pylint: disable=R0913
         """ String together helper functions to create a complete
         end-to-end bulk API request
 
