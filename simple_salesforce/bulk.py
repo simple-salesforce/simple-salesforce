@@ -1,7 +1,5 @@
 """ Classes for interacting with Salesforce Bulk API """
 
-WAIT = 5
-
 try:
     from collections import OrderedDict
 except ImportError:
@@ -166,7 +164,7 @@ class SFBulkType(object):
         return result.json()
 
     def _bulk_operation(self, object_name, operation, data,
-                        external_id_field=None):
+                        external_id_field=None, wait=5):
         """ String together helper functions to create a complete
         end-to-end bulk API request
 
@@ -191,7 +189,7 @@ class SFBulkType(object):
                                        batch_id=batch['id'])['state']
 
         while batch_status not in ['Completed', 'Failed', 'Not Processed']:
-            sleep(WAIT)
+            sleep(wait)
             batch_status = self._get_batch(job_id=batch['jobId'],
                                            batch_id=batch['id'])['state']
 
