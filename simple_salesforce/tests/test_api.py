@@ -32,13 +32,13 @@ from simple_salesforce.api import (
     SalesforceResourceNotFound,
     SalesforceGeneralError,
     SFType,
-    SFemailSimple
+    SFAction
 )
 
 def _create_sf_emailSimple(object_name='Case', session_id='5',
                            sf_instance='my.salesforce.com'):
     """Creates SF emailSimple instances"""
-    return SFemailSimple(
+    return SFAction(
         object_name=object_name,
         session_id=session_id,
         sf_instance=sf_instance,
