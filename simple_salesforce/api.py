@@ -201,6 +201,10 @@ class Salesforce(object):
         if name.startswith('__'):
             return super(Salesforce, self).__getattr__(name)
 
+        if name == 'Email':
+            return SFemailSimple(self.session_id, self.sf_instance,
+                                 proxies=self.proxies, session=self.session)
+
         return SFType(
             name, self.session_id, self.sf_instance, sf_version=self.sf_version,
             proxies=self.proxies, session=self.session)
@@ -446,6 +450,58 @@ class Salesforce(object):
         _warn_request_deprecation()
         self.session = session
 
+class SFemailSimple(object):
+    """Interface for simpleEmail Action"""
+
+    # pylint: disable=too-many-arguments
+    def __init__(self, session_id, sf_instance,
+            sf_version='32.0', proxies=None, session=None):
+        """
+        Initialize emailSimple action. Note
+        - the base_url is different from the url of sobjects
+        - this is only available after version 32.0 
+        """
+        self.session_id = session_id
+        self.session = session or requests.Session()
+        if not session and proxies is not None:
+            self.session.proxies = proxies
+        self.sf_version = sf_version
+
+        self.url = (
+            u'https://{instance}/services/data/v{sf_version}/actions/standard/emailSimple/'
+                .format(instance=sf_instance, sf_version=sf_version))
+
+    def send(self,  emailAddresses, emailSubject, emailBody):
+        """Utility method for sending simpleEmail via Salesforce.
+        :param EmailAdresses: string like "user1@email.com,user2@email.com"
+        :param emailSubject:  string like "An email from salesforce",
+        :param emailBody:     string (note html code does not work)
+        Returns a `requests.result` object.
+        """
+
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + self.session_id,
+            'X-PrettyPrint': '1'
+        }
+
+        email_data = {'inputs':[
+            {
+            "emailBody": emailBody,
+            "emailAddresses": emailAddresses,
+            "emailSubject": emailSubject,
+            "senderType": "CurrentUser"
+            }
+        ]
+        }
+
+        result = self.session.request('POST', self.url, headers=headers,
+                                      data=json.dumps(email_data))
+
+        if result.status_code >= 300:
+
+            _exception_handler(result, 'simpleEmail')
+        return result
 
 class SFType(object):
     """An interface to a specific type of SObject"""
@@ -770,6 +826,7 @@ class SalesforceAPI(Salesforce):
                                             security_token=security_token,
                                             sandbox=sandbox,
                                             version=sf_version)
+
 
 
 def _exception_handler(result, name=""):
