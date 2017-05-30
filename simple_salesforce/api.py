@@ -176,10 +176,10 @@ class Salesforce(object):
                                          result.status_code,
                                          result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
-        if len(json_result) == 0:
+        if not json_result:
             return None
-        else:
-            return json_result
+
+        return json_result
 
     # SObject Handler
     def __getattr__(self, name):
@@ -230,10 +230,10 @@ class Salesforce(object):
                                          result.status_code,
                                          result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
-        if len(json_result) == 0:
+        if not json_result:
             return None
-        else:
-            return json_result
+
+        return json_result
 
     # pylint: disable=invalid-name
     def setPassword(self, user, password):
@@ -274,10 +274,10 @@ class Salesforce(object):
                                          result.status_code,
                                          result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
-        if len(json_result) == 0:
+        if not json_result:
             return None
-        else:
-            return json_result
+
+        return json_result
 
     # Search Functions
     def search(self, search):
@@ -300,10 +300,10 @@ class Salesforce(object):
                                          result.status_code,
                                          result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
-        if len(json_result) == 0:
+        if not json_result:
             return None
-        else:
-            return json_result
+
+        return json_result
 
     def quick_search(self, search):
         """Returns the result of a Salesforce search as a dict decoded from

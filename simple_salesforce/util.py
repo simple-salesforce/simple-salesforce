@@ -16,7 +16,7 @@ def getUniqueElementValueFromXmlString(xmlString, elementName):
     xmlStringAsDom = xml.dom.minidom.parseString(xmlString)
     elementsByName = xmlStringAsDom.getElementsByTagName(elementName)
     elementValue = None
-    if len(elementsByName) > 0:
+    if elementsByName:
         elementValue = elementsByName[0].toxml().replace(
             '<' + elementName + '>', '').replace('</' + elementName + '>', '')
     return elementValue
