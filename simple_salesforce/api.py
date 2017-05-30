@@ -721,8 +721,8 @@ class SFType(object):
         """
         if not body_flag:
             return response.status_code
-        else:
-            return response
+
+        return response
 
     @property
     def request(self):
