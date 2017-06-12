@@ -1,6 +1,11 @@
 """Utility functions for simple-salesforce"""
 
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+import sys
 import xml.dom.minidom
+
+PY2 = sys.version_info[0] == 2
 
 
 # pylint: disable=invalid-name
@@ -38,7 +43,7 @@ def date_to_iso8601(date):
 class SalesforceError(Exception):
     """Base Salesforce API exception"""
 
-    message = u'Unknown error occurred for {url}. Response content: {content}'
+    message = u'Unknown error occurred for {0.url}. Response content: {0.content}'
 
     def __init__(self, url, status, resource_name, content):
         # TODO exceptions don't seem to be using parent constructors at all.
@@ -50,7 +55,8 @@ class SalesforceError(Exception):
         self.content = content
 
     def __str__(self):
-        return self.message.format(url=self.url, content=self.content)
+        message = self.__unicode__()
+        return message.encode('utf-8') if PY2 else message
 
     def __unicode__(self):
-        return self.__str__()
+        return self.message.format(self)
