@@ -171,10 +171,10 @@ class Salesforce(object):
         url = self.base_url + "sobjects"
         result = self._call_salesforce('GET', url)
         if result.status_code != 200:
-            raise SalesforceGeneralError(url,
-                                         'describe',
-                                         result.status_code,
-                                         result.content)
+            raise SalesforceGeneralError(url=url,
+                                         resource_name='describe',
+                                         status=result.status_code,
+                                         content=result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
@@ -225,10 +225,10 @@ class Salesforce(object):
 
         # salesforce return 204 No Content when the request is successful
         if result.status_code != 200 and result.status_code != 204:
-            raise SalesforceGeneralError(url,
-                                         'User',
-                                         result.status_code,
-                                         result.content)
+            raise SalesforceGeneralError(url=url,
+                                         resource_name='User',
+                                         status=result.status_code,
+                                         content=result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
@@ -269,10 +269,10 @@ class Salesforce(object):
         url = self.base_url + path
         result = self._call_salesforce(method, url, params=params)
         if result.status_code != 200:
-            raise SalesforceGeneralError(url,
-                                         path,
-                                         result.status_code,
-                                         result.content)
+            raise SalesforceGeneralError(url=url,
+                                         resource_name=path,
+                                         status=result.status_code,
+                                         content=result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
@@ -295,10 +295,10 @@ class Salesforce(object):
         params = {'q': search}
         result = self._call_salesforce('GET', url, params=params)
         if result.status_code != 200:
-            raise SalesforceGeneralError(url,
-                                         'search',
-                                         result.status_code,
-                                         result.content)
+            raise SalesforceGeneralError(url=url,
+                                         resource_name='search',
+                                         status=result.status_code,
+                                         content=result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
@@ -789,7 +789,10 @@ def _exception_handler(result, name=""):
     }
     exc_cls = exc_map.get(result.status_code, SalesforceGeneralError)
 
-    raise exc_cls(result.url, result.status_code, name, response_content)
+    raise exc_cls(url=result.url,
+                  status=result.status_code,
+                  resource_name=name,
+                  content=response_content)
 
 
 class SalesforceMoreThanOneRecord(SalesforceError):
