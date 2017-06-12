@@ -17,6 +17,7 @@ except ImportError:
     from urllib.parse import urlparse, urljoin
 from simple_salesforce.login import SalesforceLogin
 from simple_salesforce.util import date_to_iso8601, SalesforceError
+from simple_salesforce.bulk import SFBulkHandler
 
 try:
     from collections import OrderedDict
@@ -164,6 +165,9 @@ class Salesforce(object):
                                  version=self.sf_version))
         self.apex_url = ('https://{instance}/services/apexrest/'
                          .format(instance=self.sf_instance))
+        self.bulk_url = ('https://{instance}/services/async/{version}/'
+                         .format(instance=self.sf_instance,
+                                 version=self.sf_version))
 
     def describe(self):
         """Describes all available objects
@@ -200,6 +204,11 @@ class Salesforce(object):
         # (https://github.com/heroku/simple-salesforce/issues/60)
         if name.startswith('__'):
             return super(Salesforce, self).__getattr__(name)
+
+        if name == 'bulk':
+            # Deal with bulk API functions
+            return SFBulkHandler(self.session_id, self.bulk_url, self.proxies,
+                                 self.session)
 
         return SFType(
             name, self.session_id, self.sf_instance, sf_version=self.sf_version,
@@ -326,7 +335,7 @@ class Salesforce(object):
         Arguments:
 
         * query -- the SOQL query to send to Salesforce, e.g.
-                   `SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"`
+                   SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
         """
         url = self.base_url + 'query/'
         params = {'q': query}
@@ -382,7 +391,7 @@ class Salesforce(object):
         Arguments
 
         * query -- the SOQL query to send to Salesforce, e.g.
-                   `SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"`
+                   SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
         """
 
         result = self.query(query, **kwargs)
@@ -736,7 +745,6 @@ class SFType(object):
         _warn_request_deprecation()
         self.session = session
 
-
 class SalesforceAPI(Salesforce):
     """Deprecated SalesforceAPI Instance
 
@@ -770,7 +778,6 @@ class SalesforceAPI(Salesforce):
                                             security_token=security_token,
                                             sandbox=sandbox,
                                             version=sf_version)
-
 
 def _exception_handler(result, name=""):
     """Exception router. Determines which error to raise for bad results"""

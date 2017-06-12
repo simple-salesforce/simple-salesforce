@@ -5,6 +5,7 @@ from simple_salesforce.api import (
     Salesforce,
     SalesforceAPI,
     SFType,
+    SFBulkHandler,
     SalesforceError,
     SalesforceMoreThanOneRecord,
     SalesforceExpiredSession,
