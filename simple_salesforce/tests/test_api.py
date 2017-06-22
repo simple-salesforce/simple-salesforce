@@ -25,13 +25,15 @@ from simple_salesforce import tests
 from simple_salesforce.api import (
     _exception_handler,
     Salesforce,
+    SFType
+)
+from simple_salesforce.exceptions import (
     SalesforceMoreThanOneRecord,
     SalesforceMalformedRequest,
     SalesforceExpiredSession,
     SalesforceRefusedRequest,
     SalesforceResourceNotFound,
-    SalesforceGeneralError,
-    SFType
+    SalesforceGeneralError
 )
 
 
