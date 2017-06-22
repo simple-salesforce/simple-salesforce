@@ -9,11 +9,7 @@ except ImportError:
 import json
 import requests
 from time import sleep
-from simple_salesforce.exceptions import (
-    SalesforceGeneralError, SalesforceExpiredSession,
-    SalesforceMalformedRequest, SalesforceMoreThanOneRecord,
-    SalesforceRefusedRequest, SalesforceResourceNotFound
-)
+from simple_salesforce.util import call_salesforce
 
 
 class SFBulkHandler(object):
@@ -97,7 +93,7 @@ class SFBulkType(object):
 
         url = "{}{}".format(self.bulk_url, 'job')
 
-        result = _call_salesforce(url=url, method='POST', session=self.session,
+        result = call_salesforce(url=url, method='POST', session=self.session,
                                   headers=self.headers,
                                   data=json.dumps(payload))
         return result.json(object_pairs_hook=OrderedDict)
@@ -110,7 +106,7 @@ class SFBulkType(object):
 
         url = "{}{}{}".format(self.bulk_url, 'job/', job_id)
 
-        result = _call_salesforce(url=url, method='POST', session=self.session,
+        result = call_salesforce(url=url, method='POST', session=self.session,
                                   headers=self.headers,
                                   data=json.dumps(payload))
         return result.json(object_pairs_hook=OrderedDict)
@@ -119,7 +115,7 @@ class SFBulkType(object):
         """ Get an existing job to check the status """
         url = "{}{}{}".format(self.bulk_url, 'job/', job_id)
 
-        result = _call_salesforce(url=url, method='GET', session=self.session,
+        result = call_salesforce(url=url, method='GET', session=self.session,
                                   headers=self.headers)
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -134,7 +130,7 @@ class SFBulkType(object):
         if operation != 'query':
             data = json.dumps(data)
 
-        result = _call_salesforce(url=url, method='POST', session=self.session,
+        result = call_salesforce(url=url, method='POST', session=self.session,
                                   headers=self.headers, data=data)
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -144,7 +140,7 @@ class SFBulkType(object):
         url = "{}{}{}{}{}".format(self.bulk_url, 'job/',
                                   job_id, '/batch/', batch_id)
 
-        result = _call_salesforce(url=url, method='GET', session=self.session,
+        result = call_salesforce(url=url, method='GET', session=self.session,
                                   headers=self.headers)
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -154,12 +150,12 @@ class SFBulkType(object):
         url = "{}{}{}{}{}{}".format(self.bulk_url, 'job/', job_id, '/batch/',
                                     batch_id, '/result')
 
-        result = _call_salesforce(url=url, method='GET', session=self.session,
+        result = call_salesforce(url=url, method='GET', session=self.session,
                                   headers=self.headers)
 
         if operation == 'query':
             url_query_results = "{}{}{}".format(url, '/', result.json()[0])
-            query_result = _call_salesforce(url=url_query_results, method='GET',
+            query_result = call_salesforce(url=url_query_results, method='GET',
                                             session=self.session,
                                             headers=self.headers)
             return query_result.json()
@@ -240,42 +236,3 @@ class SFBulkType(object):
         results = self._bulk_operation(object_name=self.object_name,
                                        operation='query', data=data)
         return results
-
-
-# TODO: refactor _call_salesforce, _exception_handler into util.py for common
-#       access between different API handlers
-
-def _call_salesforce(url, method, session, headers, **kwargs):
-    """Utility method for performing HTTP call to Salesforce.
-
-    Returns a `requests.result` object.
-    """
-
-    additional_headers = kwargs.pop('additional_headers', dict())
-    headers.update(additional_headers or dict())
-    result = session.request(method, url, headers=headers, **kwargs)
-
-    if result.status_code >= 300:
-        _exception_handler(result)
-
-    return result
-
-
-def _exception_handler(result, name=""):
-    """Exception router. Determines which error to raise for bad results"""
-    try:
-        response_content = result.json()
-    # pylint: disable=broad-except
-    except Exception:
-        response_content = result.text
-
-    exc_map = {
-        300: SalesforceMoreThanOneRecord,
-        400: SalesforceMalformedRequest,
-        401: SalesforceExpiredSession,
-        403: SalesforceRefusedRequest,
-        404: SalesforceResourceNotFound,
-    }
-    exc_cls = exc_map.get(result.status_code, SalesforceGeneralError)
-
-    raise exc_cls(result.url, result.status_code, name, response_content)

@@ -17,11 +17,9 @@ except ImportError:
     from urllib.parse import urlparse, urljoin
 
 from simple_salesforce.login import SalesforceLogin
-from simple_salesforce.util import date_to_iso8601
+from simple_salesforce.util import date_to_iso8601, exception_handler
 from simple_salesforce.exceptions import (
-    SalesforceGeneralError, SalesforceExpiredSession,
-    SalesforceMalformedRequest, SalesforceMoreThanOneRecord,
-    SalesforceRefusedRequest, SalesforceResourceNotFound
+    SalesforceGeneralError
 )
 from simple_salesforce.bulk import SFBulkHandler
 
@@ -349,7 +347,7 @@ class Salesforce(object):
         result = self._call_salesforce('GET', url, params=params, **kwargs)
 
         if result.status_code != 200:
-            _exception_handler(result)
+            exception_handler(result)
 
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -380,7 +378,7 @@ class Salesforce(object):
         result = self._call_salesforce('GET', url, **kwargs)
 
         if result.status_code != 200:
-            _exception_handler(result)
+            exception_handler(result)
 
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -445,7 +443,7 @@ class Salesforce(object):
             method, url, headers=self.headers, **kwargs)
 
         if result.status_code >= 300:
-            _exception_handler(result)
+            exception_handler(result)
 
         return result
 
@@ -723,7 +721,7 @@ class SFType(object):
         result = self.session.request(method, url, headers=headers, **kwargs)
 
         if result.status_code >= 300:
-            _exception_handler(result, self.name)
+            exception_handler(result, self.name)
 
         return result
 
@@ -750,6 +748,7 @@ class SFType(object):
         """Deprecated setter for self.session"""
         _warn_request_deprecation()
         self.session = session
+
 
 class SalesforceAPI(Salesforce):
     """Deprecated SalesforceAPI Instance
@@ -784,22 +783,3 @@ class SalesforceAPI(Salesforce):
                                             security_token=security_token,
                                             sandbox=sandbox,
                                             version=sf_version)
-
-def _exception_handler(result, name=""):
-    """Exception router. Determines which error to raise for bad results"""
-    try:
-        response_content = result.json()
-    # pylint: disable=broad-except
-    except Exception:
-        response_content = result.text
-
-    exc_map = {
-        300: SalesforceMoreThanOneRecord,
-        400: SalesforceMalformedRequest,
-        401: SalesforceExpiredSession,
-        403: SalesforceRefusedRequest,
-        404: SalesforceResourceNotFound,
-    }
-    exc_cls = exc_map.get(result.status_code, SalesforceGeneralError)
-
-    raise exc_cls(result.url, result.status_code, name, response_content)
