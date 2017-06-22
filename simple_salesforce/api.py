@@ -169,6 +169,24 @@ class Salesforce(object):
                                  version=self.sf_version))
         self.apex_url = ('https://{instance}/services/apexrest/'
                          .format(instance=self.sf_instance))
+        self.tooling_url = ('{base}tooling/').format(base=self.base_url)
+
+    def execanon(self, apex_string):
+        """Executes a string of Apex code.
+        """
+        url = self.tooling_url + "executeAnonymous/"
+        params = {'anonymousBody': apex_string}
+        result = self.request.get(url, headers=self.headers, params=params)
+        if result.status_code != 200:
+            raise SalesforceGeneralError(url,
+                                         'executeAnonymous',
+                                         result.status_code,
+                                         result.content)
+        json_result = result.json(object_pairs_hook=OrderedDict)
+        if len(json_result) == 0:
+            return None
+        else:
+            return json_result
 
     def describe(self):
         """Describes all available objects
