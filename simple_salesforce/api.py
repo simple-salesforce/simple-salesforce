@@ -2,7 +2,7 @@
 
 
 # has to be defined prior to login import
-DEFAULT_API_VERSION = '29.0'
+DEFAULT_API_VERSION = '38.0'
 
 
 import logging
