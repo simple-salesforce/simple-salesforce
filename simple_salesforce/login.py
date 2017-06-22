@@ -57,6 +57,7 @@ def SalesforceLogin(
 
     soap_url = soap_url.format(domain=domain, sf_version=sf_version)
 
+    # pylint: disable=E0012,deprecated-method
     username = escape(username)
     password = escape(password)
 

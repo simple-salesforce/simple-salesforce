@@ -33,4 +33,3 @@ def date_to_iso8601(date):
         tzsign=timezone_sign,
         timezone=timezone_str
         ).replace(':', '%3A').replace('+', '%2B')
-
