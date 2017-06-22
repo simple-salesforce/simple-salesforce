@@ -332,8 +332,10 @@ class Salesforce(object):
 
         * query -- the SOQL query to send to Salesforce, e.g.
                    `SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"`
+
+        * query_all: if True queries for all records, archived/deleted/active else just active set
         """
-        url = self.base_url + 'query/'
+        url = self.base_url + ( 'queryAll/' if ( 'query_all' in kwargs and kwargs.pop('query_all') ) else 'query/' )
         params = {'q': query}
         # `requests` will correctly encode the query string passed as `params`
         result = self._call_salesforce('GET', url, params=params, **kwargs)
