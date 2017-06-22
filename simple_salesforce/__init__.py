@@ -4,17 +4,24 @@
 from simple_salesforce.api import (
     Salesforce,
     SalesforceAPI,
-    SFType,
-    SFBulkHandler,
+    SFType
+)
+
+from simple_salesforce.bulk import (
+    SFBulkHandler
+)
+
+from simple_salesforce.login import (
+    SalesforceLogin
+)
+
+from simple_salesforce.exceptions import (
     SalesforceError,
     SalesforceMoreThanOneRecord,
     SalesforceExpiredSession,
     SalesforceRefusedRequest,
     SalesforceResourceNotFound,
     SalesforceGeneralError,
-    SalesforceMalformedRequest
-)
-
-from simple_salesforce.login import (
-    SalesforceLogin, SalesforceAuthenticationFailed
+    SalesforceMalformedRequest,
+    SalesforceAuthenticationFailed
 )

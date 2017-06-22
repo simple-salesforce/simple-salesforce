@@ -15,8 +15,14 @@ try:
 except ImportError:
     # Python 3+
     from urllib.parse import urlparse, urljoin
+
 from simple_salesforce.login import SalesforceLogin
-from simple_salesforce.util import date_to_iso8601, SalesforceError
+from simple_salesforce.util import date_to_iso8601
+from simple_salesforce.exceptions import (
+    SalesforceGeneralError, SalesforceExpiredSession,
+    SalesforceMalformedRequest, SalesforceMoreThanOneRecord,
+    SalesforceRefusedRequest, SalesforceResourceNotFound
+)
 from simple_salesforce.bulk import SFBulkHandler
 
 try:
@@ -182,8 +188,8 @@ class Salesforce(object):
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
-        else:
-            return json_result
+
+        return json_result
 
     # SObject Handler
     def __getattr__(self, name):
@@ -214,7 +220,7 @@ class Salesforce(object):
             name, self.session_id, self.sf_instance, sf_version=self.sf_version,
             proxies=self.proxies, session=self.session)
 
-    # User utlity methods
+    # User utility methods
     def set_password(self, user, password):
         """Sets the password of a user
 
@@ -241,8 +247,8 @@ class Salesforce(object):
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
-        else:
-            return json_result
+
+        return json_result
 
     # pylint: disable=invalid-name
     def setPassword(self, user, password):
@@ -259,7 +265,7 @@ class Salesforce(object):
         """
         warnings.warn(
             "This method has been deprecated."
-            "Please use set_password instread.",
+            "Please use set_password instead.",
             DeprecationWarning)
         return self.set_password(user, password)
 
@@ -285,8 +291,8 @@ class Salesforce(object):
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
-        else:
-            return json_result
+
+        return json_result
 
     # Search Functions
     def search(self, search):
@@ -311,8 +317,8 @@ class Salesforce(object):
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
-        else:
-            return json_result
+
+        return json_result
 
     def quick_search(self, search):
         """Returns the result of a Salesforce search as a dict decoded from
@@ -360,7 +366,7 @@ class Salesforce(object):
                                      next record in the result.
         * identifier_is_url -- True if `next_records_identifier` should be
                                treated as a URL, False if
-                               `next_records_identifer` should be treated as
+                               `next_records_identifier` should be treated as
                                an Id.
         """
         if identifier_is_url:
@@ -730,8 +736,8 @@ class SFType(object):
         """
         if not body_flag:
             return response.status_code
-        else:
-            return response
+
+        return response
 
     @property
     def request(self):
@@ -797,62 +803,3 @@ def _exception_handler(result, name=""):
     exc_cls = exc_map.get(result.status_code, SalesforceGeneralError)
 
     raise exc_cls(result.url, result.status_code, name, response_content)
-
-
-class SalesforceMoreThanOneRecord(SalesforceError):
-    """
-    Error Code: 300
-    The value returned when an external ID exists in more than one record. The
-    response body contains the list of matching records.
-    """
-    message = u"More than one record for {url}. Response content: {content}"
-
-
-class SalesforceMalformedRequest(SalesforceError):
-    """
-    Error Code: 400
-    The request couldn't be understood, usually becaue the JSON or XML body
-    contains an error.
-    """
-    message = u"Malformed request {url}. Response content: {content}"
-
-
-class SalesforceExpiredSession(SalesforceError):
-    """
-    Error Code: 401
-    The session ID or OAuth token used has expired or is invalid. The response
-    body contains the message and errorCode.
-    """
-    message = u"Expired session for {url}. Response content: {content}"
-
-
-class SalesforceRefusedRequest(SalesforceError):
-    """
-    Error Code: 403
-    The request has been refused. Verify that the logged-in user has
-    appropriate permissions.
-    """
-    message = u"Request refused for {url}. Response content: {content}"
-
-
-class SalesforceResourceNotFound(SalesforceError):
-    """
-    Error Code: 404
-    The requested resource couldn't be found. Check the URI for errors, and
-    verify that there are no sharing issues.
-    """
-    message = u'Resource {name} Not Found. Response content: {content}'
-
-    def __str__(self):
-        return self.message.format(name=self.resource_name,
-                                   content=self.content)
-
-
-class SalesforceGeneralError(SalesforceError):
-    """
-    A non-specific Salesforce error.
-    """
-    message = u'Error Code {status}. Response content: {content}'
-
-    def __str__(self):
-        return self.message.format(status=self.status, content=self.content)

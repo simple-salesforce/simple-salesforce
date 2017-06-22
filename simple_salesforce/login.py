@@ -8,7 +8,8 @@ DEFAULT_CLIENT_ID_PREFIX = 'RestForce'
 
 from simple_salesforce.api import DEFAULT_API_VERSION
 from simple_salesforce.util import getUniqueElementValueFromXmlString
-from simple_salesforce.util import SalesforceError
+from simple_salesforce.exceptions import SalesforceAuthenticationFailed
+
 try:
     # Python 3+
     from html import escape
@@ -56,9 +57,8 @@ def SalesforceLogin(
 
     soap_url = soap_url.format(domain=domain, sf_version=sf_version)
 
-    # pylint: disable=deprecated-method
+    # pylint: disable=E0012,deprecated-method
     username = escape(username)
-    # pylint: disable=deprecated-method
     password = escape(password)
 
     # Check if token authentication is used
@@ -86,7 +86,7 @@ def SalesforceLogin(
             username=username, password=password, token=security_token,
             client_id=client_id)
 
-    # Check if IP Filtering is used in conjuction with organizationId
+    # Check if IP Filtering is used in conjunction with organizationId
     elif organizationId is not None:
         # IP Filtering Login Soap request body
         login_soap_request_body = """<?xml version="1.0" encoding="utf-8" ?>
@@ -167,19 +167,3 @@ def SalesforceLogin(
                    .replace('-api', ''))
 
     return session_id, sf_instance
-
-
-class SalesforceAuthenticationFailed(SalesforceError):
-    """
-    Thrown to indicate that authentication with Salesforce failed.
-    """
-    def __init__(self, code, message):
-        # TODO exceptions don't seem to be using parent constructors at all.
-        # this should be fixed.
-        # pylint: disable=super-init-not-called
-        self.code = code
-        self.message = message
-
-    def __str__(self):
-        return u'{code}: {message}'.format(code=self.code,
-                                           message=self.message)

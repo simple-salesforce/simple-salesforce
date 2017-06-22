@@ -9,7 +9,12 @@ except ImportError:
 import json
 import requests
 from time import sleep
-from simple_salesforce.util import SalesforceError
+from simple_salesforce.exceptions import (
+    SalesforceGeneralError, SalesforceExpiredSession,
+    SalesforceMalformedRequest, SalesforceMoreThanOneRecord,
+    SalesforceRefusedRequest, SalesforceResourceNotFound
+)
+
 
 class SFBulkHandler(object):
     """ Bulk API request handler
@@ -99,7 +104,6 @@ class SFBulkType(object):
 
     def _close_job(self, job_id):
         """ Close a bulk job """
-
         payload = {
             'state': 'Closed'
         }
@@ -113,7 +117,6 @@ class SFBulkType(object):
 
     def _get_job(self, job_id):
         """ Get an existing job to check the status """
-
         url = "{}{}{}".format(self.bulk_url, 'job/', job_id)
 
         result = _call_salesforce(url=url, method='GET', session=self.session,
@@ -163,8 +166,9 @@ class SFBulkType(object):
 
         return result.json()
 
+    #pylint: disable=R0913
     def _bulk_operation(self, object_name, operation, data,
-                        external_id_field=None, wait=5): #pylint: disable=R0913
+                        external_id_field=None, wait=5):
         """ String together helper functions to create a complete
         end-to-end bulk API request
 
@@ -237,8 +241,8 @@ class SFBulkType(object):
                                        operation='query', data=data)
         return results
 
-# TODO: refactor _call_salesforce, _exception_handler,
-#       and exception classes into util.py for common
+
+# TODO: refactor _call_salesforce, _exception_handler into util.py for common
 #       access between different API handlers
 
 def _call_salesforce(url, method, session, headers, **kwargs):
@@ -275,62 +279,3 @@ def _exception_handler(result, name=""):
     exc_cls = exc_map.get(result.status_code, SalesforceGeneralError)
 
     raise exc_cls(result.url, result.status_code, name, response_content)
-
-
-class SalesforceMoreThanOneRecord(SalesforceError):
-    """
-    Error Code: 300
-    The value returned when an external ID exists in more than one record. The
-    response body contains the list of matching records.
-    """
-    message = u"More than one record for {url}. Response content: {content}"
-
-
-class SalesforceMalformedRequest(SalesforceError):
-    """
-    Error Code: 400
-    The request couldn't be understood, usually becaue the JSON or XML body
-    contains an error.
-    """
-    message = u"Malformed request {url}. Response content: {content}"
-
-
-class SalesforceExpiredSession(SalesforceError):
-    """
-    Error Code: 401
-    The session ID or OAuth token used has expired or is invalid. The response
-    body contains the message and errorCode.
-    """
-    message = u"Expired session for {url}. Response content: {content}"
-
-
-class SalesforceRefusedRequest(SalesforceError):
-    """
-    Error Code: 403
-    The request has been refused. Verify that the logged-in user has
-    appropriate permissions.
-    """
-    message = u"Request refused for {url}. Response content: {content}"
-
-
-class SalesforceResourceNotFound(SalesforceError):
-    """
-    Error Code: 404
-    The requested resource couldn't be found. Check the URI for errors, and
-    verify that there are no sharing issues.
-    """
-    message = u'Resource {name} Not Found. Response content: {content}'
-
-    def __str__(self):
-        return self.message.format(name=self.resource_name,
-                                   content=self.content)
-
-
-class SalesforceGeneralError(SalesforceError):
-    """
-    A non-specific Salesforce error.
-    """
-    message = u'Error Code {status}. Response content: {content}'
-
-    def __str__(self):
-        return self.message.format(status=self.status, content=self.content)
