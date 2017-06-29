@@ -3,6 +3,9 @@
 from setuptools import setup
 import textwrap
 import sys
+from simple_salesforce import _version
+
+__version__ = _version.__version__
 
 pyver_install_requires = []
 pyver_tests_require = []
@@ -15,7 +18,7 @@ if sys.version_info < (3, 0):
 
 setup(
     name='simple-salesforce',
-    version='0.72.2',
+    version=__version__,
     author='Nick Catalano',
     maintainer='Demian Brecht',
     maintainer_email='demianbrecht@gmail.com',
