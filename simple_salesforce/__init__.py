@@ -7,6 +7,10 @@ from simple_salesforce.api import (
     SFType
 )
 
+from simple_salesforce.bulk import (
+    SFBulkHandler
+)
+
 from simple_salesforce.login import (
     SalesforceLogin
 )

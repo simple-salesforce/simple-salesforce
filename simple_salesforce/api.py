@@ -2,7 +2,7 @@
 
 
 # has to be defined prior to login import
-DEFAULT_API_VERSION = '29.0'
+DEFAULT_API_VERSION = '38.0'
 
 
 import logging
@@ -15,13 +15,13 @@ try:
 except ImportError:
     # Python 3+
     from urllib.parse import urlparse, urljoin
+
 from simple_salesforce.login import SalesforceLogin
-from simple_salesforce.util import date_to_iso8601
+from simple_salesforce.util import date_to_iso8601, exception_handler
 from simple_salesforce.exceptions import (
-    SalesforceGeneralError, SalesforceExpiredSession,
-    SalesforceMalformedRequest, SalesforceMoreThanOneRecord,
-    SalesforceRefusedRequest, SalesforceResourceNotFound
+    SalesforceGeneralError
 )
+from simple_salesforce.bulk import SFBulkHandler
 
 try:
     from collections import OrderedDict
@@ -169,6 +169,9 @@ class Salesforce(object):
                                  version=self.sf_version))
         self.apex_url = ('https://{instance}/services/apexrest/'
                          .format(instance=self.sf_instance))
+        self.bulk_url = ('https://{instance}/services/async/{version}/'
+                         .format(instance=self.sf_instance,
+                                 version=self.sf_version))
 
     def describe(self):
         """Describes all available objects
@@ -205,6 +208,11 @@ class Salesforce(object):
         # (https://github.com/heroku/simple-salesforce/issues/60)
         if name.startswith('__'):
             return super(Salesforce, self).__getattr__(name)
+
+        if name == 'bulk':
+            # Deal with bulk API functions
+            return SFBulkHandler(self.session_id, self.bulk_url, self.proxies,
+                                 self.session)
 
         return SFType(
             name, self.session_id, self.sf_instance, sf_version=self.sf_version,
@@ -331,7 +339,7 @@ class Salesforce(object):
         Arguments:
 
         * query -- the SOQL query to send to Salesforce, e.g.
-                   `SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"`
+                   SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
         """
         url = self.base_url + 'query/'
         params = {'q': query}
@@ -339,7 +347,7 @@ class Salesforce(object):
         result = self._call_salesforce('GET', url, params=params, **kwargs)
 
         if result.status_code != 200:
-            _exception_handler(result)
+            exception_handler(result)
 
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -370,7 +378,7 @@ class Salesforce(object):
         result = self._call_salesforce('GET', url, **kwargs)
 
         if result.status_code != 200:
-            _exception_handler(result)
+            exception_handler(result)
 
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -387,7 +395,7 @@ class Salesforce(object):
         Arguments
 
         * query -- the SOQL query to send to Salesforce, e.g.
-                   `SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"`
+                   SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
         """
 
         result = self.query(query, **kwargs)
@@ -435,7 +443,7 @@ class Salesforce(object):
             method, url, headers=self.headers, **kwargs)
 
         if result.status_code >= 300:
-            _exception_handler(result)
+            exception_handler(result)
 
         return result
 
@@ -713,7 +721,7 @@ class SFType(object):
         result = self.session.request(method, url, headers=headers, **kwargs)
 
         if result.status_code >= 300:
-            _exception_handler(result, self.name)
+            exception_handler(result, self.name)
 
         return result
 
@@ -775,23 +783,3 @@ class SalesforceAPI(Salesforce):
                                             security_token=security_token,
                                             sandbox=sandbox,
                                             version=sf_version)
-
-
-def _exception_handler(result, name=""):
-    """Exception router. Determines which error to raise for bad results"""
-    try:
-        response_content = result.json()
-    # pylint: disable=broad-except
-    except Exception:
-        response_content = result.text
-
-    exc_map = {
-        300: SalesforceMoreThanOneRecord,
-        400: SalesforceMalformedRequest,
-        401: SalesforceExpiredSession,
-        403: SalesforceRefusedRequest,
-        404: SalesforceResourceNotFound,
-    }
-    exc_cls = exc_map.get(result.status_code, SalesforceGeneralError)
-
-    raise exc_cls(result.url, result.status_code, name, response_content)
