@@ -242,11 +242,15 @@ class Salesforce(object):
                                          'User',
                                          result.status_code,
                                          result.content)
-        json_result = result.json(object_pairs_hook=OrderedDict)
-        if len(json_result) == 0:
-            return None
 
-        return json_result
+        if result.status_code != 204:
+            json_result = result.json(object_pairs_hook=OrderedDict)
+            if len(json_result) == 0:
+                return None
+
+            return json_result
+
+        return None
 
     # pylint: disable=invalid-name
     def setPassword(self, user, password):
