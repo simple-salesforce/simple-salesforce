@@ -486,7 +486,7 @@ class SFAction(object):
             u'https://{instance}/services/data/v{sf_version}/actions/'
                 .format(instance=sf_instance, sf_version=sf_version))
 
-    def emailSimple(self,  emailAddresses, emailSubject, emailBody):
+    def emailSimple(self, emailAddresses, emailSubject, emailBody):
         """Utility method for sending simpleEmail via Salesforce.
         :param EmailAdresses: string like "user1@email.com,user2@email.com"
         :param emailSubject:  string like "An email from salesforce",
@@ -841,84 +841,4 @@ class SalesforceAPI(Salesforce):
                                             security_token=security_token,
                                             sandbox=sandbox,
                                             version=sf_version)
-
-
-
-def _exception_handler(result, name=""):
-    """Exception router. Determines which error to raise for bad results"""
-    try:
-        response_content = result.json()
-    # pylint: disable=broad-except
-    except Exception:
-        response_content = result.text
-
-    exc_map = {
-        300: SalesforceMoreThanOneRecord,
-        400: SalesforceMalformedRequest,
-        401: SalesforceExpiredSession,
-        403: SalesforceRefusedRequest,
-        404: SalesforceResourceNotFound,
-    }
-    exc_cls = exc_map.get(result.status_code, SalesforceGeneralError)
-
-    raise exc_cls(result.url, result.status_code, name, response_content)
-
-
-class SalesforceMoreThanOneRecord(SalesforceError):
-    """
-    Error Code: 300
-    The value returned when an external ID exists in more than one record. The
-    response body contains the list of matching records.
-    """
-    message = u"More than one record for {url}. Response content: {content}"
-
-
-class SalesforceMalformedRequest(SalesforceError):
-    """
-    Error Code: 400
-    The request couldn't be understood, usually because the JSON or XML body
-    contains an error.
-    """
-    message = u"Malformed request {url}. Response content: {content}"
-
-
-class SalesforceExpiredSession(SalesforceError):
-    """
-    Error Code: 401
-    The session ID or OAuth token used has expired or is invalid. The response
-    body contains the message and errorCode.
-    """
-    message = u"Expired session for {url}. Response content: {content}"
-
-
-class SalesforceRefusedRequest(SalesforceError):
-    """
-    Error Code: 403
-    The request has been refused. Verify that the logged-in user has
-    appropriate permissions.
-    """
-    message = u"Request refused for {url}. Response content: {content}"
-
-
-class SalesforceResourceNotFound(SalesforceError):
-    """
-    Error Code: 404
-    The requested resource couldn't be found. Check the URI for errors, and
-    verify that there are no sharing issues.
-    """
-    message = u'Resource {name} Not Found. Response content: {content}'
-
-    def __str__(self):
-        return self.message.format(name=self.resource_name,
-                                   content=self.content)
-
-
-class SalesforceGeneralError(SalesforceError):
-    """
-    A non-specific Salesforce error.
-    """
-    message = u'Error Code {status}. Response content: {content}'
-
-    def __str__(self):
-        return self.message.format(status=self.status, content=self.content)
 
