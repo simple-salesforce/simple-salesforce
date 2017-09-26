@@ -514,7 +514,7 @@ class SFAction(object):
                     headers=headers, data=json.dumps(email_data))
 
         if result.status_code >= 300:
-            _exception_handler(result, 'simpleEmail')
+            exception_handler(result)
             
         return result
 
