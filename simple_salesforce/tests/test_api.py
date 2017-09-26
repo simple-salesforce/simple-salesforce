@@ -24,13 +24,6 @@ import requests
 from simple_salesforce import tests
 from simple_salesforce.api import (
     Salesforce,
-    SalesforceMoreThanOneRecord,
-    SalesforceMalformedRequest,
-    SalesforceExpiredSession,
-    SalesforceRefusedRequest,
-    SalesforceResourceNotFound,
-    SalesforceGeneralError,
-    SFType,
     SFAction,
     SFType
 )
