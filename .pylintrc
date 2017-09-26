@@ -38,7 +38,7 @@ load-plugins=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
-disable=too-many-public-methods,too-few-public-methods,no-member,super-on-old-class,too-many-ancestors,I0011,deprecated-disable-all,file-ignored,import-error,no-name-in-module,maybe-no-member,fixme,duplicate-code,cyclic-import,wrong-import-order,wrong-import-position,ungrouped-imports,redefined-variable-type,bad-continuation
+disable=too-many-public-methods,too-few-public-methods,no-member,super-on-old-class,too-many-ancestors,I0011,deprecated-disable-all,file-ignored,import-error,no-name-in-module,maybe-no-member,fixme,duplicate-code,cyclic-import,wrong-import-order,wrong-import-position,ungrouped-imports,redefined-variable-type,bad-continuation,len-as-condition
 
 
 [REPORTS]
