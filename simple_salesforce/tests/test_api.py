@@ -24,7 +24,9 @@ import requests
 from simple_salesforce import tests
 from simple_salesforce.api import (
     Salesforce,
-    SFType
+    SFType,
+    Usage,
+    PerAppUsage
 )
 
 
@@ -560,3 +562,46 @@ class TestSalesforce(unittest.TestCase):
                 instance_url=tests.SERVER_URL, session=session, proxies={})
             self.assertIn('ignoring proxies', mock_log.call_args[0][0])
             self.assertIs(tests.PROXIES, client.session.proxies)
+
+    @responses.activate
+    def test_api_usage_simple(self):
+        """Make sure a header response is recorded"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{"example": 1}',
+            adding_headers={"Sforce-Limit-Info": "api-usage=18/5000"},
+            status=http.OK
+        )
+
+        client = Salesforce.__new__(Salesforce)
+        client.request = requests.Session()
+        client.headers = {}
+        client.base_url = 'https://localhost'
+        client.query('q')
+
+        self.assertDictEqual(client.api_usage, {'api-usage': Usage(18, 5000)})
+
+    @responses.activate
+    def test_api_usage_per_app(self):
+        """Make sure a header response is recorded"""
+
+        pau = "api-usage=25/5000; per-app-api-usage=17/250(appName=sample-app)"
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{"example": 1}',
+            adding_headers={"Sforce-Limit-Info": pau},
+            status=http.OK
+        )
+
+        client = Salesforce.__new__(Salesforce)
+        client.request = requests.Session()
+        client.headers = {}
+        client.base_url = 'https://localhost'
+        client.query('q')
+
+        self.assertDictEqual(client.api_usage,
+                             {'api-usage': Usage(25, 5000),
+                              'per-app-api-usage': PerAppUsage(17, 250,
+                                                               'sample-app')})
