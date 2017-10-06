@@ -3,6 +3,8 @@
 from setuptools import setup
 import textwrap
 import sys
+import os
+
 
 pyver_install_requires = []
 pyver_tests_require = []
@@ -13,19 +15,27 @@ if sys.version_info < (2, 7):
 if sys.version_info < (3, 0):
     pyver_tests_require.append('mock==1.0.1')
 
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+about = {}
+with open(os.path.join(here, 'simple_salesforce', '__version__.py'), 'r') as f:
+    exec(f.read(), about)
+
+
 setup(
-    name='simple-salesforce',
-    version='0.73.0',
-    author='Nick Catalano',
-    maintainer='Demian Brecht',
-    maintainer_email='demianbrecht@gmail.com',
+    name=about['__title__'],
+    version=about['__version__'],
+    author=about['__author__'],
+    author_email=about['__author_email__'],
+    maintainer=about['__maintainer__'],
+    maintainer_email=about['__maintainer_email__'],
     packages=['simple_salesforce',],
-    url='https://github.com/simple-salesforce/simple-salesforce',
-    license='Apache 2.0',
-    description=("Simple Salesforce is a basic Salesforce.com REST API client. "
-        "The goal is to provide a very low-level interface to the API, "
-        "returning an ordered dictionary of the API JSON response."),
+    url=about['__url__'],
+    license=about['__license__'],
+    description=about['__description__'],
     long_description=textwrap.dedent(open('README.rst', 'r').read()),
+
     install_requires=[
         'requests[security]'
     ] + pyver_install_requires,
@@ -35,7 +45,8 @@ setup(
         'responses>=0.5.1',
     ] + pyver_tests_require,
     test_suite = 'nose.collector',
-    keywords = "python salesforce salesforce.com",
+
+    keywords=about['__keywords__'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: Apache Software License',
