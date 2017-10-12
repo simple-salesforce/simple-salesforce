@@ -15,7 +15,7 @@ You can find out more regarding the format of the results in the `Official Sales
 
 .. _Official Salesforce.com REST API Documentation: http://www.salesforce.com/us/developer/docs/api_rest/index.htm
 
-Example
+Examples
 -------
 There are two ways to gain access to Salesforce
 
@@ -51,23 +51,23 @@ To login using IP-whitelist Organization ID method, simply use your Salesforce u
     from simple_salesforce import Salesforce
     sf = Salesforce(password='password', username='myemail@example.com', organizationId='OrgId')
 
-If you'd like to enter a sandbox, simply add ``sandbox=True`` to your ``Salesforce()`` call.
+If you'd like to enter a sandbox, simply add ``login_domain='test'`` to your ``Salesforce()`` call.
 
 For example:
 
 .. code-block:: python
 
     from simple_salesforce import Salesforce
-    sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', sandbox=True)
+    sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', login_domain='test')
 
-Note that specifying if you want to use a sandbox is only necessary if you are using the built-in username/password/security token authentication and is used exclusively during the authentication step.
+Note that specifying if you want to use a login domain is only necessary if you are using the built-in username/password/security token authentication and is used exclusively during the authentication step.
 
 If you'd like to keep track where your API calls are coming from, simply add ``client_id='My App'`` to your ``Salesforce()`` call.
 
 .. code-block:: python
 
     from simple_salesforce import Salesforce
-    sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', sandbox=True, client_id='My App')
+    sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', client_id='My App', login_domain='test')
 
 If you view the API calls in your Salesforce instance by Client Id it will be prefixed with ``RestForce/``, for example ``RestForce/My App``.
 
@@ -310,7 +310,7 @@ Additional Features
 
 There are a few helper classes that are used internally and available to you.
 
-Included in them are ``SalesforceLogin``, which takes in a username, password, security token, optional boolean sandbox indicator and optional version and returns a tuple of ``(session_id, sf_instance)`` where `session_id` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
+Included in them are ``SalesforceLogin``, which takes in a username, password, security token, optional version and optional login domain and returns a tuple of ``(session_id, sf_instance)`` where `session_id` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
 
 For example, to use SalesforceLogin for a sandbox account you'd use:
 
@@ -321,9 +321,9 @@ For example, to use SalesforceLogin for a sandbox account you'd use:
         username='myemail@example.com.sandbox',
         password='password',
         security_token='token',
-        sandbox=True)
+        login_domain='test')
 
-Simply leave off the final ``True`` if you do not wish to use a sandbox.
+Simply leave off the final login_domain if you do not wish to use a sandbox.
 
 Also exposed is the ``SFType`` class, which is used internally by the ``__getattr__()`` method in the ``Salesforce()`` class and represents a specific SObject type. ``SFType`` requires ``object_name`` (i.e. ``Contact``), ``session_id`` (an authentication ID), ``sf_instance`` (hostname of your Salesforce instance), and an optional ``sf_version``
 

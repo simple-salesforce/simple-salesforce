@@ -59,8 +59,9 @@ class Salesforce(object):
     def __init__(
             self, username=None, password=None, security_token=None,
             session_id=None, instance=None, instance_url=None,
-            organizationId=None, sandbox=False, version=DEFAULT_API_VERSION,
-            proxies=None, session=None, client_id=None):
+            organizationId=None, version=DEFAULT_API_VERSION,
+            proxies=None, session=None, client_id=None, login_domain='login',
+            **kwargs):
         """Initialize the instance with the given parameters.
 
         Available kwargs
@@ -70,8 +71,9 @@ class Salesforce(object):
         * username -- the Salesforce username to use for authentication
         * password -- the password for the username
         * security_token -- the security token for the username
-        * sandbox -- True if you want to login to `test.salesforce.com`, False
-                     if you want to login to `login.salesforce.com`.
+        * sandbox -- DEPRECATED: Use login_domain instead.
+        * login_domain -- The domain to using for logging in. Use common login
+                          domains, such as 'login' or 'test', or named domain.
 
         Direct Session and Instance Access:
 
@@ -93,11 +95,19 @@ class Salesforce(object):
                      exposed by simple_salesforce.
 
         """
+        if 'sandbox' in kwargs.keys():
+            warnings.warn('\'sandbox\' argument is deprecated. Use '
+                          '\'login_domain\' instead. Overriding login_domain '
+                          'with sandbox flag.',
+                          DeprecationWarning)
+            login_domain = 'login'
+            if kwargs['sandbox'] is True:
+                login_domain = 'test'
 
-        # Determine if the user passed in the optional version and/or sandbox
+        # Determine if the user passed in the optional version and/or login_domain
         # kwargs
         self.sf_version = version
-        self.sandbox = sandbox
+        self.login_domain = login_domain
         self.session = session or requests.Session()
         self.proxies = self.session.proxies
         # override custom session proxies dance
@@ -122,10 +132,10 @@ class Salesforce(object):
                 username=username,
                 password=password,
                 security_token=security_token,
-                sandbox=self.sandbox,
                 sf_version=self.sf_version,
                 proxies=self.proxies,
-                client_id=client_id)
+                client_id=client_id,
+                login_domain=self.login_domain)
 
         elif all(arg is not None for arg in (
                 session_id, instance or instance_url)):
@@ -149,20 +159,18 @@ class Salesforce(object):
                 username=username,
                 password=password,
                 organizationId=organizationId,
-                sandbox=self.sandbox,
                 sf_version=self.sf_version,
                 proxies=self.proxies,
-                client_id=client_id)
+                client_id=client_id,
+                login_domain=self.login_domain)
 
         else:
             raise TypeError(
                 'You must provide login information or an instance and token'
             )
 
-        if self.sandbox:
-            self.auth_site = 'https://test.salesforce.com'
-        else:
-            self.auth_site = 'https://login.salesforce.com'
+        self.auth_site = ('https://{login_domain}.salesforce.com'
+                          .format(login_domain=self.login_domain))
 
         self.headers = {
             'Content-Type': 'application/json',

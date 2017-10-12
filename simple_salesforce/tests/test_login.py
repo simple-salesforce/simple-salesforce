@@ -75,6 +75,6 @@ class TestSalesforceLogin(unittest.TestCase):
                 username='myemail@example.com.sandbox',
                 password='password',
                 security_token='token',
-                sandbox=True
+                login_domain='test',
             )
         self.assertTrue(self.mockrequest.post.called)
