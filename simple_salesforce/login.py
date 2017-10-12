@@ -16,6 +16,7 @@ try:
 except ImportError:
     from cgi import escape
 import requests
+import warnings
 
 
 # pylint: disable=invalid-name,too-many-arguments,too-many-locals
