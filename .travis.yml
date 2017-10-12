@@ -11,6 +11,7 @@ python:
 # command to install dependencies (mock & nose are already installed)
 install:
   - pip install tox
+  - pip install pylint
 # command to run tests
 script: tox
 matrix:
