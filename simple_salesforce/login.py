@@ -56,8 +56,8 @@ def SalesforceLogin(
         if kwargs['sandbox'] is True:
             login_domain = 'test'
 
-    soap_url = 'https://{login_domain}.salesforce.com/'
-               'services/Soap/u/{sf_version}'
+    soap_url = ('https://{login_domain}.salesforce.com/'
+                'services/Soap/u/{sf_version}')
 
     if client_id:
         client_id = "{prefix}/{app_name}".format(
