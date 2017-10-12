@@ -23,7 +23,8 @@ import warnings
 def SalesforceLogin(
         username=None, password=None, security_token=None,
         organizationId=None, sf_version=DEFAULT_API_VERSION,
-        proxies=None, session=None, client_id=None, login_domain='login', **kwargs):
+        proxies=None, session=None, client_id=None, login_domain='login',
+        **kwargs):
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
     the domain of the instance of Salesforce to use for the session.
@@ -55,7 +56,8 @@ def SalesforceLogin(
         if kwargs['sandbox'] is True:
             login_domain = 'test'
 
-    soap_url = 'https://{login_domain}.salesforce.com/services/Soap/u/{sf_version}'
+    soap_url = 'https://{login_domain}.salesforce.com/'
+               'services/Soap/u/{sf_version}'
 
     if client_id:
         client_id = "{prefix}/{app_name}".format(
@@ -64,7 +66,8 @@ def SalesforceLogin(
     else:
         client_id = DEFAULT_CLIENT_ID_PREFIX
 
-    soap_url = soap_url.format(login_domain=login_domain, sf_version=sf_version)
+    soap_url = soap_url.format(login_domain=login_domain,
+                               sf_version=sf_version)
 
     # pylint: disable=E0012,deprecated-method
     username = escape(username)

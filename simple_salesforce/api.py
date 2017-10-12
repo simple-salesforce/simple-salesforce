@@ -104,8 +104,8 @@ class Salesforce(object):
             if kwargs['sandbox'] is True:
                 login_domain = 'test'
 
-        # Determine if the user passed in the optional version and/or login_domain
-        # kwargs
+        # Determine if the user passed in the optional version and/or
+        # login_domain kwargs
         self.sf_version = version
         self.login_domain = login_domain
         self.session = session or requests.Session()
