@@ -123,7 +123,7 @@ To delete the contact:
 
     sf.Contact.delete('003e0000003GuNXAA0')
 
-To retrieve a list of deleted records between ``2013-10-20`` to ``2013-10-29`` (datetimes are required to be in UTC):
+To retrieve a list of Contact records deleted over the past 10 days (datetimes are required to be in UTC):
 
 .. code-block:: python
 
@@ -132,7 +132,7 @@ To retrieve a list of deleted records between ``2013-10-20`` to ``2013-10-29`` (
     end = datetime.datetime.now(pytz.UTC)  # we need to use UTC as salesforce API requires this!
     sf.Contact.deleted(end - datetime.timedelta(days=10), end)
 
-To retrieve a list of updated records between ``2014-03-20`` to ``2014-03-22`` (datetimes are required to be in UTC):
+To retrieve a list of Contact records updated over the past 10 days (datetimes are required to be in UTC):
 
 .. code-block:: python
 
