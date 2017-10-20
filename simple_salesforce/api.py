@@ -327,6 +327,18 @@ class Salesforce(object):
         search_string = u'FIND {{{search_string}}}'.format(search_string=search)
         return self.search(search_string)
 
+    def limits(self, **kwargs):
+        """Return the result of a Salesforce request to list Organization
+        limits.
+        """
+        url = self.base_url + 'limits/'
+        result = self._call_salesforce('GET', url, **kwargs)
+
+        if result.status_code != 200:
+            exception_handler(result)
+
+        return result.json(object_pairs_hook=OrderedDict)
+
     # Query Handler
     def query(self, query, **kwargs):
         """Return the result of a Salesforce SOQL query as a dict decoded from
