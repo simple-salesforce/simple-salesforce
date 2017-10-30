@@ -14,9 +14,9 @@ For example, to use SalesforceLogin for a sandbox account you'd use:
         username='myemail@example.com.sandbox',
         password='password',
         security_token='token',
-        login_domain='test')
+        domain='test')
 
-Simply leave off the final login_domain if you do not wish to use a sandbox.
+Simply leave off the final domain if you do not wish to use a sandbox.
 
 Also exposed is the ``SFType`` class, which is used internally by the ``__getattr__()`` method in the ``Salesforce()`` class and represents a specific SObject type. ``SFType`` requires ``object_name`` (i.e. ``Contact``), ``session_id`` (an authentication ID), ``sf_instance`` (hostname of your Salesforce instance), and an optional ``sf_version``
 

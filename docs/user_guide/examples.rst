@@ -34,14 +34,14 @@ To login using IP-whitelist Organization ID method, simply use your Salesforce u
     from simple_salesforce import Salesforce
     sf = Salesforce(password='password', username='myemail@example.com', organizationId='OrgId')
 
-If you'd like to enter a sandbox, simply add ``login_domain='test'`` to your ``Salesforce()`` call.
+If you'd like to enter a sandbox, simply add ``domain='test'`` to your ``Salesforce()`` call.
 
 For example:
 
 .. code-block:: python
 
     from simple_salesforce import Salesforce
-    sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', login_domain='test')
+    sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', domain='test')
 
 Note that specifying if you want to use a login domain is only necessary if you are using the built-in username/password/security token authentication and is used exclusively during the authentication step.
 
@@ -50,7 +50,7 @@ If you'd like to keep track where your API calls are coming from, simply add ``c
 .. code-block:: python
 
     from simple_salesforce import Salesforce
-    sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', client_id='My App', login_domain='test')
+    sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', client_id='My App', domain='test')
 
 If you view the API calls in your Salesforce instance by Client Id it will be prefixed with ``RestForce/``, for example ``RestForce/My App``.
 

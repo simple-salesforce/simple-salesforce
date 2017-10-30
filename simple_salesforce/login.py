@@ -22,9 +22,8 @@ import warnings
 # pylint: disable=invalid-name,too-many-arguments,too-many-locals
 def SalesforceLogin(
         username=None, password=None, security_token=None,
-        organizationId=None, sf_version=DEFAULT_API_VERSION,
-        proxies=None, session=None, client_id=None, login_domain='login',
-        **kwargs):
+        organizationId=None, sandbox=None, sf_version=DEFAULT_API_VERSION,
+        proxies=None, session=None, client_id=None, domain=None):
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
     the domain of the instance of Salesforce to use for the session.
@@ -36,7 +35,7 @@ def SalesforceLogin(
     * security_token -- the security token for the username
     * organizationId -- the ID of your organization
             NOTE: security_token an organizationId are mutually exclusive
-    * sandbox -- DEPRECATED: Use login_domain instead.
+    * sandbox -- DEPRECATED: Use domain instead.
     * sf_version -- the version of the Salesforce API to use, for example
                     "27.0"
     * proxies -- the optional map of scheme to proxy server
@@ -44,20 +43,28 @@ def SalesforceLogin(
                  enables the use of requets Session features not otherwise
                  exposed by simple_salesforce.
     * client_id -- the ID of this client
-    * login_domain -- The domain to using for logging in. Use common login
-                      domains, such as 'login' or 'test', or named domain.
+    * domain -- The domain to using for connecting to Salesforce. Use
+                common domains, such as 'login' or 'test', or
+                Salesforce My domain. If not used, will default to
+                'login'.
     """
-    if 'sandbox' in kwargs.keys():
-        warnings.warn('\'sandbox\' argument is deprecated. Use '
-                        '\'login_domain\' instead. Overriding login_domain '
-                        'with sandbox flag.',
-                        DeprecationWarning)
-        login_domain = 'login'
-        if kwargs['sandbox'] is True:
-            login_domain = 'test'
+    if (sandbox is not None) and (domain is not None):
+        raise ValueError("Both 'sandbox' and 'domain' arguments were "
+                            "supplied. Either may be supplied, but not "
+                            "both.")
 
-    soap_url = ('https://{login_domain}.salesforce.com/'
-                'services/Soap/u/{sf_version}')
+    if sandbox is not None:
+        warnings.warn("'sandbox' argument is deprecated. Use "
+                    "'domain' instead. Overriding 'domain' "
+                    "with 'sandbox' value.",
+                    DeprecationWarning)
+
+        domain = 'test' if sandbox else 'login'
+
+    if domain is None:
+        domain = 'login'
+
+    soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
 
     if client_id:
         client_id = "{prefix}/{app_name}".format(
@@ -66,7 +73,7 @@ def SalesforceLogin(
     else:
         client_id = DEFAULT_CLIENT_ID_PREFIX
 
-    soap_url = soap_url.format(login_domain=login_domain,
+    soap_url = soap_url.format(domain=domain,
                                sf_version=sf_version)
 
     # pylint: disable=E0012,deprecated-method
