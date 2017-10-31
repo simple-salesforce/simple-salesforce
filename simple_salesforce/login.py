@@ -50,14 +50,14 @@ def SalesforceLogin(
     """
     if (sandbox is not None) and (domain is not None):
         raise ValueError("Both 'sandbox' and 'domain' arguments were "
-                            "supplied. Either may be supplied, but not "
-                            "both.")
+                         "supplied. Either may be supplied, but not "
+                         "both.")
 
     if sandbox is not None:
         warnings.warn("'sandbox' argument is deprecated. Use "
-                    "'domain' instead. Overriding 'domain' "
-                    "with 'sandbox' value.",
-                    DeprecationWarning)
+                      "'domain' instead. Overriding 'domain' "
+                      "with 'sandbox' value.",
+                      DeprecationWarning)
 
         domain = 'test' if sandbox else 'login'
 
