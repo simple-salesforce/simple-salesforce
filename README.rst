@@ -60,7 +60,7 @@ For example:
     from simple_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', domain='test')
 
-Note that specifying if you want to use a login domain is only necessary if you are using the built-in username/password/security token authentication and is used exclusively during the authentication step.
+Note that specifying if you want to use a domain is only necessary if you are using the built-in username/password/security token authentication and is used exclusively during the authentication step.
 
 If you'd like to keep track where your API calls are coming from, simply add ``client_id='My App'`` to your ``Salesforce()`` call.
 
@@ -310,7 +310,7 @@ Additional Features
 
 There are a few helper classes that are used internally and available to you.
 
-Included in them are ``SalesforceLogin``, which takes in a username, password, security token, optional version and optional login domain and returns a tuple of ``(session_id, sf_instance)`` where `session_id` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
+Included in them are ``SalesforceLogin``, which takes in a username, password, security token, optional version and optional domain and returns a tuple of ``(session_id, sf_instance)`` where `session_id` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
 
 For example, to use SalesforceLogin for a sandbox account you'd use:
 

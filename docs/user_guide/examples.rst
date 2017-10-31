@@ -43,7 +43,7 @@ For example:
     from simple_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', domain='test')
 
-Note that specifying if you want to use a login domain is only necessary if you are using the built-in username/password/security token authentication and is used exclusively during the authentication step.
+Note that specifying if you want to use a domain is only necessary if you are using the built-in username/password/security token authentication and is used exclusively during the authentication step.
 
 If you'd like to keep track where your API calls are coming from, simply add ``client_id='My App'`` to your ``Salesforce()`` call.
 
