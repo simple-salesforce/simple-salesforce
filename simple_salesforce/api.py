@@ -18,6 +18,7 @@ except ImportError:
     # Python 3+
     from urllib.parse import urlparse, urljoin
 
+from simple_salesforce.log import log_with_args
 from simple_salesforce.login import SalesforceLogin
 from simple_salesforce.util import date_to_iso8601, exception_handler
 from simple_salesforce.exceptions import (
@@ -276,6 +277,7 @@ class Salesforce(object):
         return self.set_password(user, password)
 
     # Generic Rest Function
+    @log_with_args
     def restful(self, path, params, method='GET'):
         """Allows you to make a direct REST call if you know the path
 
@@ -301,6 +303,7 @@ class Salesforce(object):
         return json_result
 
     # Search Functions
+    @log_with_args
     def search(self, search):
         """Returns the result of a Salesforce search as a dict decoded from
         the Salesforce response JSON payload.
@@ -326,6 +329,7 @@ class Salesforce(object):
 
         return json_result
 
+    @log_with_args
     def quick_search(self, search):
         """Returns the result of a Salesforce search as a dict decoded from
         the Salesforce response JSON payload.
@@ -340,6 +344,7 @@ class Salesforce(object):
         return self.search(search_string)
 
     # Query Handler
+    @log_with_args
     def query(self, query, **kwargs):
         """Return the result of a Salesforce SOQL query as a dict decoded from
         the Salesforce response JSON payload.
@@ -359,6 +364,7 @@ class Salesforce(object):
 
         return result.json(object_pairs_hook=OrderedDict)
 
+    @log_with_args
     def query_more(
             self, next_records_identifier, identifier_is_url=False, **kwargs):
         """Retrieves more results from a query that returned more results
@@ -390,6 +396,7 @@ class Salesforce(object):
 
         return result.json(object_pairs_hook=OrderedDict)
 
+    @log_with_args
     def query_all(self, query, **kwargs):
         """Returns the full set of results for the `query`. This is a
         convenience
@@ -421,6 +428,7 @@ class Salesforce(object):
         result['records'] = all_records
         return result
 
+    @log_with_args
     def apexecute(self, action, method='GET', data=None, **kwargs):
         """Makes an HTTP request to an APEX REST endpoint
 
@@ -442,6 +450,7 @@ class Salesforce(object):
                 response_content = result.text
             return response_content
 
+    @log_with_args
     def _call_salesforce(self, method, url, **kwargs):
         """Utility method for performing HTTP call to Salesforce.
 
@@ -583,6 +592,7 @@ class SFType(object):
         )
         return result.json(object_pairs_hook=OrderedDict)
 
+    @log_with_args
     def get(self, record_id, headers=None):
         """Returns the result of a GET to `.../{object_name}/{record_id}` as a
         dict decoded from the JSON payload returned by Salesforce.
@@ -598,6 +608,7 @@ class SFType(object):
         )
         return result.json(object_pairs_hook=OrderedDict)
 
+    @log_with_args
     def get_by_custom_id(self, custom_id_field, custom_id, headers=None):
         """Return an ``SFType`` by custom ID
 
@@ -622,6 +633,7 @@ class SFType(object):
         )
         return result.json(object_pairs_hook=OrderedDict)
 
+    @log_with_args
     def create(self, data, headers=None):
         """Creates a new SObject using a POST to `.../{object_name}/`.
 
@@ -639,6 +651,7 @@ class SFType(object):
         )
         return result.json(object_pairs_hook=OrderedDict)
 
+    @log_with_args
     def upsert(self, record_id, data, raw_response=False, headers=None):
         """Creates or updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
@@ -663,6 +676,7 @@ class SFType(object):
         )
         return self._raw_response(result, raw_response)
 
+    @log_with_args
     def update(self, record_id, data, raw_response=False, headers=None):
         """Updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
@@ -686,6 +700,7 @@ class SFType(object):
         )
         return self._raw_response(result, raw_response)
 
+    @log_with_args
     def delete(self, record_id, raw_response=False, headers=None):
         """Deletes an SObject using a DELETE to
         `.../{object_name}/{record_id}`.
@@ -707,6 +722,7 @@ class SFType(object):
         )
         return self._raw_response(result, raw_response)
 
+    @log_with_args
     def deleted(self, start, end, headers=None):
         # pylint: disable=line-too-long
         """Gets a list of deleted records
@@ -727,6 +743,7 @@ class SFType(object):
         result = self._call_salesforce(method='GET', url=url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
+    @log_with_args
     def updated(self, start, end, headers=None):
         # pylint: disable=line-too-long
         """Gets a list of updated records
@@ -748,6 +765,7 @@ class SFType(object):
         result = self._call_salesforce(method='GET', url=url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
+    @log_with_args
     def _call_salesforce(self, method, url, **kwargs):
         """Utility method for performing HTTP call to Salesforce.
 
