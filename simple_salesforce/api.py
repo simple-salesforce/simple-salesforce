@@ -340,7 +340,8 @@ class Salesforce(object):
         url = self.base_url + 'query/'
         params = {'q': query}
         # `requests` will correctly encode the query string passed as `params`
-        result = self._call_salesforce('GET', url, name='query', params=params, **kwargs)
+        result = self._call_salesforce('GET', url, name='query',
+                                       params=params, **kwargs)
 
         return result.json(object_pairs_hook=OrderedDict)
 
