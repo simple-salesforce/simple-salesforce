@@ -185,12 +185,8 @@ class Salesforce(object):
         """Describes all available objects
         """
         url = self.base_url + "sobjects"
-        result = self._call_salesforce('GET', url)
-        if result.status_code != 200:
-            raise SalesforceGeneralError(url,
-                                         'describe',
-                                         result.status_code,
-                                         result.content)
+        result = self._call_salesforce('GET', url, name='describe')
+
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
@@ -247,8 +243,8 @@ class Salesforce(object):
         # salesforce return 204 No Content when the request is successful
         if result.status_code != 200 and result.status_code != 204:
             raise SalesforceGeneralError(url,
-                                         'User',
                                          result.status_code,
+                                         'User',
                                          result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
@@ -288,12 +284,8 @@ class Salesforce(object):
         """
 
         url = self.base_url + path
-        result = self._call_salesforce(method, url, params=params)
-        if result.status_code != 200:
-            raise SalesforceGeneralError(url,
-                                         path,
-                                         result.status_code,
-                                         result.content)
+        result = self._call_salesforce(method, url, name=path, params=params)
+
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
@@ -314,12 +306,8 @@ class Salesforce(object):
 
         # `requests` will correctly encode the query string passed as `params`
         params = {'q': search}
-        result = self._call_salesforce('GET', url, params=params)
-        if result.status_code != 200:
-            raise SalesforceGeneralError(url,
-                                         'search',
-                                         result.status_code,
-                                         result.content)
+        result = self._call_salesforce('GET', url, name='search', params=params)
+
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
@@ -352,10 +340,7 @@ class Salesforce(object):
         url = self.base_url + 'query/'
         params = {'q': query}
         # `requests` will correctly encode the query string passed as `params`
-        result = self._call_salesforce('GET', url, params=params, **kwargs)
-
-        if result.status_code != 200:
-            exception_handler(result)
+        result = self._call_salesforce('GET', url, name='query', params=params, **kwargs)
 
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -383,10 +368,7 @@ class Salesforce(object):
         else:
             url = self.base_url + 'query/{next_record_id}'
             url = url.format(next_record_id=next_records_identifier)
-        result = self._call_salesforce('GET', url, **kwargs)
-
-        if result.status_code != 200:
-            exception_handler(result)
+        result = self._call_salesforce('GET', url, name='query_more', **kwargs)
 
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -442,7 +424,7 @@ class Salesforce(object):
                 response_content = result.text
             return response_content
 
-    def _call_salesforce(self, method, url, **kwargs):
+    def _call_salesforce(self, method, url, name="", **kwargs):
         """Utility method for performing HTTP call to Salesforce.
 
         Returns a `requests.result` object.
@@ -451,7 +433,7 @@ class Salesforce(object):
             method, url, headers=self.headers, **kwargs)
 
         if result.status_code >= 300:
-            exception_handler(result)
+            exception_handler(result, name=name)
 
         sforce_limit_info = result.headers.get('Sforce-Limit-Info')
         if sforce_limit_info:
