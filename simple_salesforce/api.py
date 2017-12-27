@@ -414,16 +414,17 @@ class Salesforce(object):
         * data -- A dict of parameters to send in a POST / PUT request
         * kwargs -- Additional kwargs to pass to `requests.request`
         """
-        result = self._call_salesforce(method, self.apex_url + action,
-                                       data=json.dumps(data), **kwargs)
-
-        if result.status_code == 200:
-            try:
-                response_content = result.json()
-            # pylint: disable=broad-except
-            except Exception:
-                response_content = result.text
-            return response_content
+        result = self._call_salesforce(
+            method,
+            self.apex_url + action,
+            name="apexexcute",
+            data=json.dumps(data), **kwargs
+        )
+        try:
+            return result.json()
+        # pylint: disable=broad-except
+        except Exception:
+            return result.text
 
     def _call_salesforce(self, method, url, name="", **kwargs):
         """Utility method for performing HTTP call to Salesforce.
