@@ -2,10 +2,14 @@
 
 try:
     from collections import OrderedDict
+    from queue import Queue
 except ImportError:
     # Python < 2.7
     from ordereddict import OrderedDict
+    from Queue import Queue
 
+from threading import Thread
+from multiprocessing import cpu_count
 import json
 import requests
 from time import sleep
@@ -179,27 +183,41 @@ class SFBulkType(object):
 
         job = self._create_job(object_name=object_name, operation=operation,
                                external_id_field=external_id_field)
-
+        q = Queue()
+        num_threads = cpu_count()
         batches = []
-        for n in range(0, len(data), 10000):
-            batch = self._add_batch(job_id=job['id'], data=data[n:n + 9999],
-                                    operation=operation)
-            batches.append(batch)
+        def worker():
+            while True:
+                data = q.get()
+                if batch is None:
+                    break
+                batch = self._add_batch(job_id=job['id'],
+                                        data=data,
+                                        operation=operation)
+                batches.append(batch)
+                q.task_done()
+
+        init_thread = lambda: threading.Thread(target=worker).start()
+        threads = [ init_thread() for n in range(num_threads) ]
+        
+        for n in range(0, len(data), 10000): q.put(data[n:n + 9999])
+        q.join()
+        for i in range(num_threads): q.put(None)
+        for t in threads: t.join()
 
         self._close_job(job_id=job['id'])
-        
-        batch_results = lambda batch: self._get_batch(batch['jobId'], batch['id'])
-        batch_pending = lambda batch: batch['state'] not in ['Completed', 'Failed', 'Not Processed']
 
-        pending = filter(batch_pending, map(batch_results, batches))
-        while pending:
-            pending = filter(batch_pending, map(batch_results, pending))
+        batches_pending = [ self._get_batch(batch['jobId'], batch['id']) for batch in batches 
+                    if batch['state'] not in ('Completed', 'Failed', 'Not Processed') ]
+        while batches_pending:
+            batches_pending = [ self._get_batch(batch['jobId'], batch['id']) for batch in pending
+                        if batch['state'] not in ('Completed', 'Failed', 'Not Processed') ]
             sleep(wait)
 
         results = map(lambda batch: { batch['id']: self._get_batch_results(job_id=batch['jobId'],
                                                                            batch_id=batch['id'],
-                                                                           operation=operation)}, batches)
-        return results if len(results) > 1 else results[0]
+                                                                           operation=operation) }, batches)
+        return results
 
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
     def delete(self, data):
