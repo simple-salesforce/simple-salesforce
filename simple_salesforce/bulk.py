@@ -205,17 +205,18 @@ class SFBulkType(object):
 
         self._close_job(job_id=job['id'])
 
-        batches_pending = [ self._get_batch(batch['jobId'], batch['id'], operation=operation) for batch in batches 
-                    if batch['state'] not in ('Completed', 'Failed', 'Not Processed') ]
+        batches_pending = [ self._get_batch(batch['jobId'], batch['id'], operation=operation) 
+                            for batch in batches 
+                            if batch['state'] not in ('Completed', 'Failed', 'Not Processed') ]
         while batches_pending:
-            batches_pending = [ self._get_batch(batch['jobId'], batch['id'], operation=operation) for batch in pending
-                        if batch['state'] not in ('Completed', 'Failed', 'Not Processed') ]
+            batches_pending = [ self._get_batch(batch['jobId'], batch['id'], operation=operation)
+                                for batch in pending
+                                if batch['state'] not in ('Completed', 'Failed', 'Not Processed') ]
             sleep(wait)
 
         results = [ 
                     self._get_batch_results(job_id=batch['jobId'], batch_id=batch['id'], operation=operation) 
-                    for batch 
-                    in batches
+                    for batch in batches
                   ]
         return results
 
