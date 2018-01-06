@@ -191,9 +191,7 @@ class SFBulkType(object):
                 data = q.get()
                 if batch is None:
                     break
-                batch = self._add_batch(job_id=job['id'],
-                                        data=data,
-                                        operation=operation)
+                batch = self._add_batch(job_id=job['id'], data=data, operation=operation)
                 batches.append(batch)
                 q.task_done()
 
@@ -207,16 +205,18 @@ class SFBulkType(object):
 
         self._close_job(job_id=job['id'])
 
-        batches_pending = [ self._get_batch(batch['jobId'], batch['id']) for batch in batches 
+        batches_pending = [ self._get_batch(batch['jobId'], batch['id'], operation=operation) for batch in batches 
                     if batch['state'] not in ('Completed', 'Failed', 'Not Processed') ]
         while batches_pending:
-            batches_pending = [ self._get_batch(batch['jobId'], batch['id']) for batch in pending
+            batches_pending = [ self._get_batch(batch['jobId'], batch['id'], operation=operation) for batch in pending
                         if batch['state'] not in ('Completed', 'Failed', 'Not Processed') ]
             sleep(wait)
 
-        results = map(lambda batch: { batch['id']: self._get_batch_results(job_id=batch['jobId'],
-                                                                           batch_id=batch['id'],
-                                                                           operation=operation) }, batches)
+        results = [ 
+                    self._get_batch_results(job_id=batch['jobId'], batch_id=batch['id'], operation=operation) 
+                    for batch 
+                    in batches
+                  ]
         return results
 
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
