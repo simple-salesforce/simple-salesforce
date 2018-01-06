@@ -214,10 +214,8 @@ class SFBulkType(object):
                                 if batch['state'] not in ('Completed', 'Failed', 'Not Processed') ]
             sleep(wait)
 
-        results = [ 
-                    self._get_batch_results(job_id=batch['jobId'], batch_id=batch['id'], operation=operation) 
-                    for batch in batches
-                  ]
+        results = [ self._get_batch_results(job_id=batch['jobId'], batch_id=batch['id'], operation=operation) 
+                    for batch in batches ]
         return results
 
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
