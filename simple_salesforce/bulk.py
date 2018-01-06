@@ -180,23 +180,26 @@ class SFBulkType(object):
         job = self._create_job(object_name=object_name, operation=operation,
                                external_id_field=external_id_field)
 
-        batch = self._add_batch(job_id=job['id'], data=data,
-                                operation=operation)
+        batches = []
+        for n in range(0, len(data), 10000):
+            batch = self._add_batch(job_id=job['id'], data=data[n:n + 9999],
+                                    operation=operation)
+            batches.append(batch)
 
         self._close_job(job_id=job['id'])
+        
+        batch_results = lambda batch: self._get_batch(batch['jobId'], batch['id'])
+        batch_pending = lambda batch: batch['state'] not in ['Completed', 'Failed', 'Not Processed']
 
-        batch_status = self._get_batch(job_id=batch['jobId'],
-                                       batch_id=batch['id'])['state']
-
-        while batch_status not in ['Completed', 'Failed', 'Not Processed']:
+        pending = filter(batch_pending, map(batch_results, batches))
+        while pending:
+            pending = filter(batch_pending, map(batch_results, pending))
             sleep(wait)
-            batch_status = self._get_batch(job_id=batch['jobId'],
-                                           batch_id=batch['id'])['state']
 
-        results = self._get_batch_results(job_id=batch['jobId'],
-                                          batch_id=batch['id'],
-                                          operation=operation)
-        return results
+        results = map(lambda batch: { batch['id']: self._get_batch_results(job_id=batch['jobId'],
+                                                                           batch_id=batch['id'],
+                                                                           operation=operation)}, batches)
+        return results if len(results) > 1 else results[0]
 
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
     def delete(self, data):
