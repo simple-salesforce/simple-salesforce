@@ -213,11 +213,11 @@ class SFBulkType(object):
         for thread in threads:
             thread.start()
 
-        for n in range(0, len(data), 10000):
-            queue.put(data[n:n + 10000])
+        for i in range(0, len(data), 10000):
+            queue.put(data[i:i + 10000])
 
         queue.join()
-        for i in range(cpu_count()):
+        for _ in range(cpu_count()):
             queue.put(None)
         for thread in threads:
             thread.join()
