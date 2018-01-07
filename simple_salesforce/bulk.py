@@ -14,7 +14,6 @@ except ImportError:
 
 from threading import Thread
 from multiprocessing import cpu_count
-from math import ceil
 import json
 import requests
 from time import sleep
