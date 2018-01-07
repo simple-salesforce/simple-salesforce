@@ -195,24 +195,22 @@ class SFBulkType(object):
         def worker():
             """ Add batches and wait for network responses (I/O) concurrently
             with worker threads. (there may be a lot of batches)
-            
-            Arguments: 
+            Arguments:
             (Workers pull their args from the queue)
-            * data -- Batch-sized (<=10000 records) slice of 
+            * data -- Batch-sized (<=10000 records) slice of
             list of dict, see line 185
             """
             while True:
                 data = queue.get()
-                if data is None: break
+                if data is None:
+                    break
                 batch = self._add_batch(job_id=job['id'], data=data,
                                         operation=operation)
-                status = self._get_batch(job_id=batch['jobId'],
-                                        batch_id=batch['id'])['state']
 
-                while status not in ('Completed', 'Failed', 'Not Processed'):
+                while batch['state'] not in ('Completed', 'Failed', 'Not Processed'):
                     sleep(wait)
-                    status = self._get_batch(job_id=batch['jobId'],
-                                             batch_id=batch['id'])['state']
+                    batch = self._get_batch(job_id=batch['jobId'],
+                                             batch_id=batch['id'])
 
                 batch_results = self._get_batch_results(job_id=batch['jobId'],
                                     batch_id=batch['id'], operation=operation)
