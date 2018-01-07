@@ -195,17 +195,19 @@ class SFBulkType(object):
         def worker():
             """ Add batches and wait for network responses (I/O) concurrently
             with worker threads. (there may be a lot of batches)
-
+            
             Arguments: 
             (Workers pull their args from the queue)
-            * data -- Batch-sized (<=10000 records) slice of list of dict, see line 185
+            * data -- Batch-sized (<=10000 records) slice of 
+            list of dict, see line 185
             """
             while True:
                 data = queue.get()
                 if data is None: break
                 batch = self._add_batch(job_id=job['id'], data=data,
                                         operation=operation)
-                status = self._get_batch(job_id=batch['jobId'], batch_id=batch['id'])['state']
+                status = self._get_batch(job_id=batch['jobId'],
+                                        batch_id=batch['id'])['state']
 
                 while status not in ('Completed', 'Failed', 'Not Processed'):
                     sleep(wait)
@@ -213,12 +215,13 @@ class SFBulkType(object):
                                              batch_id=batch['id'])['state']
 
                 batch_results = self._get_batch_results(job_id=batch['jobId'],
-                                            batch_id=batch['id'], operation=operation)
+                                    batch_id=batch['id'], operation=operation)
                 results.append(batch_results)
                 queue.task_done()
 
         threads = [Thread(target=worker) for _ in range(num_threads)]
-        for thread in threads: thread.start()
+        for thread in threads:
+            thread.start()
 
         for j, i in enumerate(range(num_batches), 1):
             queue.put(data[i * 10000:j * 10000])
@@ -226,7 +229,8 @@ class SFBulkType(object):
         queue.join()
         for i in range(num_threads):
             queue.put(None)
-        for thread in threads: thread.join()
+        for thread in threads:
+            thread.join()
 
         self._close_job(job_id=job['id'])
         return results
