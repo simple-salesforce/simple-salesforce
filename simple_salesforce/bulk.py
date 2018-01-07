@@ -186,8 +186,6 @@ class SFBulkType(object):
         * wait -- seconds to sleep between checking batch status
         """
         queue = Queue()
-        num_batches = int(ceil(len(data) / 10000.0))
-        num_threads = min(num_batches, cpu_count())
         results = []
         job = self._create_job(object_name=object_name, operation=operation,
                                external_id_field=external_id_field)
@@ -212,15 +210,15 @@ class SFBulkType(object):
                 results.append(batch_results)
                 queue.task_done()
 
-        threads = [Thread(target=worker) for _ in range(num_threads)]
+        threads = [Thread(target=worker) for _ in range(cpu_count())]
         for thread in threads:
             thread.start()
 
-        for j, i in enumerate(range(num_batches), 1):
-            queue.put(data[i * 10000:j * 10000])
+        for n in range(0, len(data), 10000):
+            queue.put(data[n:n + 10000])
 
         queue.join()
-        for i in range(num_threads):
+        for i in range(cpu_count()):
             queue.put(None)
         for thread in threads:
             thread.join()
