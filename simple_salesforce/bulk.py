@@ -10,6 +10,7 @@ except ImportError:
 
 from threading import Thread
 from multiprocessing import cpu_count
+from math import ceil
 import json
 import requests
 from time import sleep
@@ -181,7 +182,8 @@ class SFBulkType(object):
         * wait -- seconds to sleep between checking batch status
         """
         queue = Queue()
-        num_threads = cpu_count()
+        num_batches = int(ceil(len(data) / 10000.0))
+        num_threads = min(num_batches, cpu_count())
         results = []
         job = self._create_job(object_name=object_name, operation=operation,
                                external_id_field=external_id_field)
@@ -207,8 +209,8 @@ class SFBulkType(object):
         threads = [ Thread(target=worker) for n in range(num_threads) ]
         for t in threads: t.start()
 
-        for n in range(0, len(data), 10000):
-            queue.put(data[n:n + 10000])
+        for j, i in enumerate(range(num_batches), 1):
+            queue.put(data[i * 10000:j * 10000])
 
         queue.join()
         for i in range(num_threads):
