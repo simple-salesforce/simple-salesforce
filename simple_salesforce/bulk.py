@@ -9,7 +9,7 @@ except ImportError:
 
 try:
     from queue import Queue
-except: ImportError:
+except ImportError:
     # Python < 3.x
     from Queue import Queue
 
