@@ -193,13 +193,7 @@ class SFBulkType(object):
                                external_id_field=external_id_field)
 
         def worker():
-            """ Add batches and wait for network responses (I/O) concurrently
-            with worker threads. (there may be a lot of batches)
-            Arguments:
-            (Workers pull their args from the queue)
-            * data -- Batch-sized (<=10000 records) slice of
-            list of dict, see line 185
-            """
+            """ Add batches to concurrent worker threads"""
             while True:
                 data = queue.get()
                 if data is None:
