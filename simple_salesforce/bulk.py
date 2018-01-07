@@ -201,7 +201,8 @@ class SFBulkType(object):
                 batch = self._add_batch(job_id=job['id'], data=data,
                                         operation=operation)
 
-                while batch['state'] not in ('Completed', 'Failed', 'Not Processed'):
+                while batch['state'] not in 
+                  ('Completed', 'Failed', 'Not Processed'):
                     sleep(wait)
                     batch = self._get_batch(job_id=batch['jobId'],
                                              batch_id=batch['id'])
