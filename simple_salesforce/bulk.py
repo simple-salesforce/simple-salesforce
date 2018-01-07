@@ -2,10 +2,14 @@
 
 try:
     from collections import OrderedDict
+    from queue import Queue
 except ImportError:
     # Python < 2.7
     from ordereddict import OrderedDict
+    from Queue import Queue
 
+from threading import Thread
+from multiprocessing import cpu_count
 import json
 import requests
 from time import sleep
@@ -163,7 +167,7 @@ class SFBulkType(object):
         return result.json()
 
     #pylint: disable=R0913
-    def _bulk_operation(self, object_name, operation, data,
+     def _bulk_operation(self, object_name, operation, data,
                         external_id_field=None, wait=5):
         """ String together helper functions to create a complete
         end-to-end bulk API request
@@ -176,26 +180,42 @@ class SFBulkType(object):
         * external_id_field -- unique identifier field for upsert operations
         * wait -- seconds to sleep between checking batch status
         """
-
+        queue = Queue()
+        num_threads = cpu_count()
+        results = []
         job = self._create_job(object_name=object_name, operation=operation,
                                external_id_field=external_id_field)
 
-        batch = self._add_batch(job_id=job['id'], data=data,
-                                operation=operation)
+        def worker():
+            while True:
+                data = queue.get()
+                if data is None: break
+                batch = self._add_batch(job_id=job['id'], data=data,
+                                        operation=operation)
+                status = self._get_batch(job_id=batch['jobId'], batch_id=batch['id'])['state']
+
+                while status not in ('Completed', 'Failed', 'Not Processed'):
+                    sleep(wait)
+                    status = self._get_batch(job_id=batch['jobId'],
+                                             batch_id=batch['id'])['state']
+
+                batch_results = self._get_batch_results(job_id=batch['jobId'], batch_id=batch['id'], 
+                                                        operation=operation)
+                results.append(batch_results)
+                queue.task_done()
+
+        threads = [ Thread(target=worker) for n in range(num_threads) ]
+        for t in threads: t.start()
+
+        for n in range(0, len(data), 10000):
+            queue.put(data[n:n + 10000])
+
+        queue.join()
+        for i in range(num_threads):
+            queue.put(None)
+        for t in threads: t.join()
 
         self._close_job(job_id=job['id'])
-
-        batch_status = self._get_batch(job_id=batch['jobId'],
-                                       batch_id=batch['id'])['state']
-
-        while batch_status not in ['Completed', 'Failed', 'Not Processed']:
-            sleep(wait)
-            batch_status = self._get_batch(job_id=batch['jobId'],
-                                           batch_id=batch['id'])['state']
-
-        results = self._get_batch_results(job_id=batch['jobId'],
-                                          batch_id=batch['id'],
-                                          operation=operation)
         return results
 
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
