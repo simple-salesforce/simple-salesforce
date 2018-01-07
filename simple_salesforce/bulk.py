@@ -2,7 +2,6 @@
 
 try:
     from collections import OrderedDict
-    from queue import Queue
 except ImportError:
     # Python < 2.7
     from ordereddict import OrderedDict
