@@ -290,10 +290,10 @@ class Salesforce(object):
         url = self.base_url + path
         result = self._call_salesforce(method, url, params=params)
         if result.status_code != 200:
-            raise SalesforceGeneralError(url,
-                                         path,
-                                         result.status_code,
-                                         result.content)
+            raise SalesforceGeneralError(url=url,
+                                         status=result.status_code,
+                                         resource_name=path,
+                                         content=result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
