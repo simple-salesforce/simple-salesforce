@@ -421,10 +421,12 @@ class Salesforce(object):
             data=json.dumps(data), **kwargs
         )
         try:
-            return result.json()
+            response_content = result.json()
         # pylint: disable=broad-except
         except Exception:
-            return result.text
+            response_content = result.text
+
+        return response_content
 
     def _call_salesforce(self, method, url, name="", **kwargs):
         """Utility method for performing HTTP call to Salesforce.
