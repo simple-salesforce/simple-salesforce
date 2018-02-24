@@ -117,7 +117,7 @@ class Salesforce(object):
             self.auth_type = "password"
 
             # Pass along the username/password to our login helper
-            self.session_id, self.sf_instance = SalesforceLogin(
+            self.session_id, self.sf_instance, self.user_id = SalesforceLogin(
                 session=self.session,
                 username=username,
                 password=password,
@@ -131,6 +131,7 @@ class Salesforce(object):
                 session_id, instance or instance_url)):
             self.auth_type = "direct"
             self.session_id = session_id
+            self.user_id = None
 
             # If the user provides the full url (as returned by the OAuth
             # interface for example) extract the hostname (which we rely on)
@@ -144,7 +145,7 @@ class Salesforce(object):
             self.auth_type = 'ipfilter'
 
             # Pass along the username/password to our login helper
-            self.session_id, self.sf_instance = SalesforceLogin(
+            self.session_id, self.sf_instance, self.user_id = SalesforceLogin(
                 session=self.session,
                 username=username,
                 password=password,

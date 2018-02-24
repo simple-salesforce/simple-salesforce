@@ -53,7 +53,7 @@ class TestSalesforceLogin(unittest.TestCase):
         session.hooks = {
             'response': on_response,
         }
-        session_id, instance = SalesforceLogin(
+        session_id, instance, user_id = SalesforceLogin(
             session=session,
             username='foo@bar.com',
             password='password',
@@ -61,6 +61,7 @@ class TestSalesforceLogin(unittest.TestCase):
         self.assertTrue(session_state['used'])
         self.assertEqual(session_id, tests.SESSION_ID)
         self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
+        self.assertEqual(user_id, tests.USER_ID)
 
     def test_failure(self):
         """Test A Failed Login Response"""
