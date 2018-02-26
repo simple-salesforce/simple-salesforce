@@ -121,6 +121,7 @@ class Salesforce(object):
                 session=self.session,
                 username=username,
                 password=password,
+                instance=instance,
                 security_token=security_token,
                 sandbox=self.sandbox,
                 sf_version=self.sf_version,
