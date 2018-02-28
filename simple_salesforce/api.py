@@ -625,7 +625,7 @@ class SFType(object):
         )
         return result.json(object_pairs_hook=OrderedDict)
 
-    def upsert(self, record_id, data, raw_response=False, headers=None):
+    def upsert(self, record_id, data, raw_response=False, headers=None, **kwargs):
         """Creates or updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
 
@@ -645,7 +645,7 @@ class SFType(object):
         """
         result = self._call_salesforce(
             method='PATCH', url=urljoin(self.base_url, record_id),
-            data=json.dumps(data), headers=headers
+            data=json.dumps(data), headers=headers, **kwargs
         )
         return self._raw_response(result, raw_response)
 
