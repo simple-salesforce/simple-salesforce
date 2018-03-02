@@ -199,40 +199,45 @@ class SFBulkType(object):
         return results
 
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
-    def delete(self, data):
+    def delete(self, data, wait=5):
         """ soft delete records """
         results = self._bulk_operation(object_name=self.object_name,
-                                       operation='delete', data=data)
+                                       operation='delete', data=data,
+                                       wait=wait)
         return results
 
-    def insert(self, data):
+    def insert(self, data, wait=5):
         """ insert records """
         results = self._bulk_operation(object_name=self.object_name,
-                                       operation='insert', data=data)
+                                       operation='insert', data=data,
+                                       wait=wait)
         return results
 
-    def upsert(self, data, external_id_field):
+    def upsert(self, data, external_id_field, wait=5):
         """ upsert records based on a unique identifier """
         results = self._bulk_operation(object_name=self.object_name,
                                        operation='upsert',
                                        external_id_field=external_id_field,
-                                       data=data)
+                                       data=data, wait=wait)
         return results
 
-    def update(self, data):
+    def update(self, data, wait=5):
         """ update records """
         results = self._bulk_operation(object_name=self.object_name,
-                                       operation='update', data=data)
+                                       operation='update', data=data,
+                                       wait=wait)
         return results
 
-    def hard_delete(self, data):
+    def hard_delete(self, data, wait=5):
         """ hard delete records """
         results = self._bulk_operation(object_name=self.object_name,
-                                       operation='hardDelete', data=data)
+                                       operation='hardDelete', data=data,
+                                       wait=wait)
         return results
 
-    def query(self, data):
+    def query(self, data, wait=5):
         """ bulk query """
         results = self._bulk_operation(object_name=self.object_name,
-                                       operation='query', data=data)
+                                       operation='query', data=data,
+                                       wait=wait)
         return results
