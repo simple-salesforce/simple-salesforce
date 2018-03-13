@@ -239,7 +239,10 @@ Create new records:
 
 .. code-block:: python
 
-    data = [{'LastName':'Smith','Email':'example@example.com'}, {'LastName':'Jones','Email':'test@test.com'}]
+    data = [
+          {'LastName':'Smith','Email':'example@example.com'}, 
+          {'LastName':'Jones','Email':'test@test.com'}
+        ]
 
     sf.bulk.Contact.insert(data)
 
@@ -247,7 +250,10 @@ Update existing records:
 
 .. code-block:: python
 
-    data = [{'Id': '0000000000AAAAA', 'Email': 'examplenew@example.com'}, {'Id': '0000000000BBBBB', 'Email': 'testnew@test.com'}]
+    data = [
+          {'Id': '0000000000AAAAA', 'Email': 'examplenew@example.com'}, 
+          {'Id': '0000000000BBBBB', 'Email': 'testnew@test.com'}
+        ]
 
     sf.bulk.Contact.update(data)
 
@@ -255,7 +261,10 @@ Upsert records:
 
 .. code-block:: python
 
-    data = [{'Id': '0000000000AAAAA', 'Email': 'examplenew2@example.com'}, {'Id': '', 'Email': 'foo@foo.com'}]
+    data = [
+          {'Id': '0000000000AAAAA', 'Email': 'examplenew2@example.com'}, 
+          {'Email': 'foo@foo.com'}
+        ]
 
     sf.bulk.Contact.upsert(data, 'Id')
 
@@ -271,7 +280,9 @@ Delete records (soft deletion):
 
 .. code-block:: python
 
-    data = [{'Id': '0000000000AAAAA'}]
+    data = [
+          {'Id': '0000000000AAAAA'}
+        ]
 
     sf.bulk.Contact.delete(data)
 
@@ -279,7 +290,9 @@ Hard deletion:
 
 .. code-block:: python
 
-    data = [{'Id': '0000000000BBBBB'}]
+    data = [
+          {'Id': '0000000000BBBBB'}
+        ]
 
     sf.bulk.Contact.hard_delete(data)
 
