@@ -280,9 +280,7 @@ Delete records (soft deletion):
 
 .. code-block:: python
 
-    data = [
-          {'Id': '0000000000AAAAA'}
-        ]
+    data = [{'Id': '0000000000AAAAA'}]
 
     sf.bulk.Contact.delete(data)
 
@@ -290,9 +288,7 @@ Hard deletion:
 
 .. code-block:: python
 
-    data = [
-          {'Id': '0000000000BBBBB'}
-        ]
+    data = [{'Id': '0000000000BBBBB'}]
 
     sf.bulk.Contact.hard_delete(data)
 
