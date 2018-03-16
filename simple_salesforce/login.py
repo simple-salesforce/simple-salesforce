@@ -159,6 +159,7 @@ def SalesforceLogin(
         response.content, 'sessionId')
     server_url = getUniqueElementValueFromXmlString(
         response.content, 'serverUrl')
+    user_id = getUniqueElementValueFromXmlString(response.content, 'userId')
 
     sf_instance = (server_url
                    .replace('http://', '')
@@ -166,4 +167,4 @@ def SalesforceLogin(
                    .split('/')[0]
                    .replace('-api', ''))
 
-    return session_id, sf_instance
+    return session_id, sf_instance, user_id

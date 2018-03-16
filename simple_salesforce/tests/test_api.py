@@ -493,6 +493,7 @@ class TestSalesforce(unittest.TestCase):
             security_token='token')
 
         self.assertEqual(tests.SESSION_ID, client.session_id)
+        self.assertEqual(tests.USER_ID, client.user_id)
         self.assertEqual(session, client.session)
 
     @responses.activate

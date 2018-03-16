@@ -2,6 +2,7 @@
 # pylint: disable=line-too-long
 
 SESSION_ID = '12345'
+USER_ID = '005i0000002MUqLAAW'
 METADATA_URL = 'https://na15.salesforce.com/services/Soap/m/29.0/00Di0000000icUB'
 SERVER_URL = 'https://na15.salesforce.com/services/Soap/c/29.0/00Di0000000icUB/0DFi00000008UYO'
 PROXIES = {
@@ -19,7 +20,7 @@ LOGIN_RESPONSE_SUCCESS = """<?xml version="1.0" encoding="UTF-8"?>
             <sandbox>false</sandbox>
             <serverUrl>%s</serverUrl>
             <sessionId>%s</sessionId>
-            <userId>005i0000002MUqLAAW</userId>
+            <userId>%s</userId>
             <userInfo>
                <accessibilityMode>false</accessibilityMode>
                <currencySymbol>$</currencySymbol>
@@ -48,4 +49,4 @@ LOGIN_RESPONSE_SUCCESS = """<?xml version="1.0" encoding="UTF-8"?>
       </loginResponse>
    </soapenv:Body>
 </soapenv:Envelope>
-""" % (METADATA_URL, SERVER_URL, SESSION_ID)
+""" % (METADATA_URL, SERVER_URL, SESSION_ID, USER_ID)
