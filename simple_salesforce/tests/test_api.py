@@ -605,3 +605,21 @@ class TestSalesforce(unittest.TestCase):
                              {'api-usage': Usage(25, 5000),
                               'per-app-api-usage': PerAppUsage(17, 250,
                                                                'sample-app')})
+
+    @responses.activate
+    def test_api_limits(self):
+        """Test method for getting Salesforce organization limits"""
+
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/limits/$'),
+            json=tests.ORGANIZATION_LIMITS_RESPONSE,
+            status=http.OK
+        )
+
+        client = Salesforce.__new__(Salesforce)
+        client.session = requests.Session()
+        client.headers = {}
+        client.base_url = "https://localhost/"
+
+        self.assertEqual(client.limits(), tests.ORGANIZATION_LIMITS_RESPONSE)
