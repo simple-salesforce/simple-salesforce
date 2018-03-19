@@ -737,6 +737,7 @@ class TestSalesforce(unittest.TestCase):
                 OrderedDict([(u'ID', u'2')])
             ]), (u'done', True)]))
 
+    @responses.activate
     def test_api_limits(self):
         """Test method for getting Salesforce organization limits"""
 
@@ -747,9 +748,11 @@ class TestSalesforce(unittest.TestCase):
             status=http.OK
         )
 
-        client = Salesforce.__new__(Salesforce)
-        client.session = requests.Session()
-        client.headers = {}
-        client.base_url = "https://localhost/"
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
 
-        self.assertEqual(client.limits(), tests.ORGANIZATION_LIMITS_RESPONSE)
+        result = client.limits()
+
+        self.assertEqual(result, tests.ORGANIZATION_LIMITS_RESPONSE)
