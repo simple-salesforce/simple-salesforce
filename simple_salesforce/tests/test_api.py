@@ -2,6 +2,9 @@
 
 import re
 from datetime import datetime
+
+from collections import OrderedDict
+
 try:
     # Python 2.6
     import unittest2 as unittest
@@ -607,6 +610,133 @@ class TestSalesforce(unittest.TestCase):
                                                                'sample-app')})
 
     @responses.activate
+    def test_query(self):
+        """Test querying generates the expected request"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/query/\?q=SELECT\+ID\+FROM\+Account$'),
+            body='{}',
+            status=http.OK)
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        result = client.query('SELECT ID FROM Account')
+        self.assertEqual(result, {})
+
+    @responses.activate
+    def test_query_include_deleted(self):
+        """Test querying for all records generates the expected request"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/queryAll/\?q=SELECT\+ID\+FROM\+Account$'),
+            body='{}',
+            status=http.OK)
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        result = client.query('SELECT ID FROM Account', include_deleted=True)
+        self.assertEqual(result, {})
+
+    @responses.activate
+    def test_query_more_id_not_url(self):
+        """
+        Test fetching additional results by ID generates the expected request
+        """
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/query/next-records-id$'),
+            body='{}',
+            status=http.OK)
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        result = client.query_more('next-records-id', identifier_is_url=False)
+        self.assertEqual(result, {})
+
+    @responses.activate
+    def test_query_more_id_not_url_include_deleted(self):
+        """
+        Test fetching additional results by ID generates the expected request
+        """
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/queryAll/next-records-id$'),
+            body='{}',
+            status=http.OK)
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        result = client.query_more(
+            'next-records-id', identifier_is_url=False, include_deleted=True)
+        self.assertEqual(result, {})
+
+    @responses.activate
+    def test_query_all(self):
+        """
+        Test that we query and fetch additional result sets automatically.
+        """
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/query/\?q=SELECT\+ID\+FROM\+Account$'),
+            body='{"records": [{"ID": "1"}], "done": false, "nextRecordsUrl": '
+                 '"https://example.com/query/next-records-id"}',
+            status=http.OK)
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/query/next-records-id$'),
+            body='{"records": [{"ID": "2"}], "done": true}',
+            status=http.OK)
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        result = client.query_all('SELECT ID FROM Account')
+        self.assertEqual(
+            result,
+            OrderedDict([(u'records', [
+                OrderedDict([(u'ID', u'1')]),
+                OrderedDict([(u'ID', u'2')])
+            ]), (u'done', True)]))
+
+    @responses.activate
+    def test_query_all_include_deleted(self):
+        """
+        Test that we query all and fetch additional result sets automatically.
+        """
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/queryAll/\?q=SELECT\+ID\+FROM\+Account$'),
+            body='{"records": [{"ID": "1"}], "done": false, "nextRecordsUrl": '
+                 '"https://example.com/queryAll/next-records-id"}',
+            status=http.OK)
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/queryAll/next-records-id$'),
+            body='{"records": [{"ID": "2"}], "done": true}',
+            status=http.OK)
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        result = client.query_all('SELECT ID FROM Account',
+                                  include_deleted=True)
+        self.assertEqual(
+            result,
+            OrderedDict([(u'records', [
+                OrderedDict([(u'ID', u'1')]),
+                OrderedDict([(u'ID', u'2')])
+            ]), (u'done', True)]))
+
     def test_api_limits(self):
         """Test method for getting Salesforce organization limits"""
 
