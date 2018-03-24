@@ -24,6 +24,7 @@ from simple_salesforce.exceptions import (
     SalesforceGeneralError
 )
 from simple_salesforce.bulk import SFBulkHandler
+from simple_salesforce.composite import SFCompositeHandler
 
 try:
     from collections import OrderedDict
@@ -178,6 +179,7 @@ class Salesforce(object):
         self.bulk_url = ('https://{instance}/services/async/{version}/'
                          .format(instance=self.sf_instance,
                                  version=self.sf_version))
+        self.composite_url = self.base_url + 'composite/'
 
         self.api_usage = {}
 
@@ -217,6 +219,11 @@ class Salesforce(object):
             # Deal with bulk API functions
             return SFBulkHandler(self.session_id, self.bulk_url, self.proxies,
                                  self.session)
+
+        if name == 'composite':
+            # Deal with composite API functions
+            return SFCompositeHandler(self.session_id, self.composite_url,
+                                      self.proxies, self.session)
 
         return SFType(
             name, self.session_id, self.sf_instance, sf_version=self.sf_version,
