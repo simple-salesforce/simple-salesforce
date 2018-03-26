@@ -272,7 +272,7 @@ class Salesforce(object):
         return self.set_password(user, password)
 
     # Generic Rest Function
-    def restful(self, path, params, method='GET'):
+    def restful(self, path, params=None, method='GET', **kwargs):
         """Allows you to make a direct REST call if you know the path
 
         Arguments:
@@ -281,10 +281,12 @@ class Salesforce(object):
             Example: sobjects/User/ABC123/password'
         * params: dict of parameters to pass to the path
         * method: HTTP request method, default GET
+        * other arguments supported by requests.request (e.g. json, timeout)
         """
 
         url = self.base_url + path
-        result = self._call_salesforce(method, url, name=path, params=params)
+        result = self._call_salesforce(method, url, name=path, params=params,
+                                       **kwargs)
 
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
