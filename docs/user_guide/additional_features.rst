@@ -3,7 +3,7 @@ Additional Features
 
 There are a few helper classes that are used internally and available to you.
 
-Included in them are ``SalesforceLogin``, which takes in a username, password, security token, optional boolean sandbox indicator and optional version and returns a tuple of ``(session_id, sf_instance)`` where `session_id` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
+Included in them are ``SalesforceLogin``, which takes in a username, password, security token, optional version and optional domain and returns a tuple of ``(session_id, sf_instance)`` where `session_id` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
 
 For example, to use SalesforceLogin for a sandbox account you'd use:
 
@@ -14,9 +14,9 @@ For example, to use SalesforceLogin for a sandbox account you'd use:
         username='myemail@example.com.sandbox',
         password='password',
         security_token='token',
-        sandbox=True)
+        domain='test')
 
-Simply leave off the final ``True`` if you do not wish to use a sandbox.
+Simply leave off the final domain if you do not wish to use a sandbox.
 
 Also exposed is the ``SFType`` class, which is used internally by the ``__getattr__()`` method in the ``Salesforce()`` class and represents a specific SObject type. ``SFType`` requires ``object_name`` (i.e. ``Contact``), ``session_id`` (an authentication ID), ``sf_instance`` (hostname of your Salesforce instance), and an optional ``sf_version``
 

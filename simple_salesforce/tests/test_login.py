@@ -33,6 +33,141 @@ class TestSalesforceLogin(unittest.TestCase):
         self.addCleanup(request_patcher.stop)
 
     @responses.activate
+    def test_default_domain_success(self):
+        """Test default domain logic and login"""
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://login.*$'),
+            body=tests.LOGIN_RESPONSE_SUCCESS,
+            status=http.OK
+        )
+        session_state = {
+            'used': False,
+        }
+
+        # pylint: disable=missing-docstring,unused-argument
+        def on_response(*args, **kwargs):
+            session_state['used'] = True
+
+        session = requests.Session()
+        session.hooks = {
+            'response': on_response,
+        }
+        session_id, instance = SalesforceLogin(
+            session=session,
+            username='foo@bar.com',
+            password='password',
+            security_token='token')
+        self.assertTrue(session_state['used'])
+        self.assertEqual(session_id, tests.SESSION_ID)
+        self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
+
+    @responses.activate
+    def test_custom_domain_success(self):
+        """Test custom domain login"""
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://testdomain.my.*$'),
+            body=tests.LOGIN_RESPONSE_SUCCESS,
+            status=http.OK
+        )
+        session_state = {
+            'used': False,
+        }
+
+        # pylint: disable=missing-docstring,unused-argument
+        def on_response(*args, **kwargs):
+            session_state['used'] = True
+
+        session = requests.Session()
+        session.hooks = {
+            'response': on_response,
+        }
+        session_id, instance = SalesforceLogin(
+            session=session,
+            username='foo@bar.com',
+            password='password',
+            security_token='token',
+            domain='testdomain.my')
+        self.assertTrue(session_state['used'])
+        self.assertEqual(session_id, tests.SESSION_ID)
+        self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
+
+    @responses.activate
+    def test_deprecated_sandbox_disabled_success(self):
+        """Test sandbox argument set to False"""
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://login.*$'),
+            body=tests.LOGIN_RESPONSE_SUCCESS,
+            status=http.OK
+        )
+        session_state = {
+            'used': False,
+        }
+
+        # pylint: disable=missing-docstring,unused-argument
+        def on_response(*args, **kwargs):
+            session_state['used'] = True
+
+        session = requests.Session()
+        session.hooks = {
+            'response': on_response,
+        }
+        session_id, instance = SalesforceLogin(
+            session=session,
+            username='foo@bar.com',
+            password='password',
+            security_token='token',
+            sandbox=False)
+        self.assertTrue(session_state['used'])
+        self.assertEqual(session_id, tests.SESSION_ID)
+        self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
+
+    @responses.activate
+    def test_deprecated_sandbox_enabled_success(self):
+        """Test sandbox argument set to True"""
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://test.*$'),
+            body=tests.LOGIN_RESPONSE_SUCCESS,
+            status=http.OK
+        )
+        session_state = {
+            'used': False,
+        }
+
+        # pylint: disable=missing-docstring,unused-argument
+        def on_response(*args, **kwargs):
+            session_state['used'] = True
+
+        session = requests.Session()
+        session.hooks = {
+            'response': on_response,
+        }
+        session_id, instance = SalesforceLogin(
+            session=session,
+            username='foo@bar.com',
+            password='password',
+            security_token='token',
+            sandbox=True)
+        self.assertTrue(session_state['used'])
+        self.assertEqual(session_id, tests.SESSION_ID)
+        self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
+
+    def test_domain_sandbox_mutual_exclusion_failure(self):
+        """Test sandbox and domain mutual exclusion"""
+
+        with self.assertRaises(ValueError):
+            SalesforceLogin(
+                username='myemail@example.com.sandbox',
+                password='password',
+                security_token='token',
+                domain='login',
+                sandbox=False
+            )
+
+    @responses.activate
     def test_custom_session_success(self):
         """Test custom session"""
         responses.add(
@@ -75,6 +210,6 @@ class TestSalesforceLogin(unittest.TestCase):
                 username='myemail@example.com.sandbox',
                 password='password',
                 security_token='token',
-                sandbox=True
+                domain='test'
             )
         self.assertTrue(self.mockrequest.post.called)
