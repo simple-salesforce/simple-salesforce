@@ -1,4 +1,5 @@
 """Utility functions for simple-salesforce"""
+import os
 import ssl
 import xml.dom.minidom
 from urllib3 import PoolManager
