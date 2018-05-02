@@ -61,17 +61,45 @@ def exception_handler(result, name=""):
     raise exc_cls(result.url, result.status_code, name, response_content)
 
 
-def call_salesforce(url, method, session, headers, **kwargs):
-    """Utility method for performing HTTP call to Salesforce.
+def call_salesforce(url, method, session, headers, cert_file=None,
+                    cert_pass=None, **kwargs):
+    """Utility that generates a request to salesforce using urllib3 instead of
+    requests package. This is necessary for connections that use the mutual
+    authentication with encrypted certificates, the package requests  can't
+    handle it.
 
-    Returns a `requests.result` object.
+    PrepareRequest and HttpAdapter are used so that it returns a regular
+    Response <requests.Response> that is expected for the rest of the process.
     """
-
     additional_headers = kwargs.pop('additional_headers', dict())
     headers.update(additional_headers or dict())
-    result = session.request(method, url, headers=headers, **kwargs)
 
-    if result.status_code >= 300:
-        exception_handler(result)
+    request_args = {
+        'url': url,
+        'method': method.upper(),
+        'headers': headers
+    }
 
-    return result
+    context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+    if cert_file and cert_pass:
+        context.load_cert_chain(certfile=cert_file, password=cert_pass)
+
+    request = PreparedRequest()
+    request.prepare(data=kwargs.get('data') or {}, **request_args)
+
+    http = PoolManager(ssl_context=context, cert_reqs='CERT_REQUIRED')
+    result = http.urlopen(
+        body=request.body,
+        redirect=False,
+        assert_same_host=False,
+        preload_content=False,
+        decode_content=False, **request_args)
+
+    adapter = HTTPAdapter()
+    response = adapter.build_response(request, result)
+
+    if response.status_code >= 300:
+        from simple_salesforce.util import exception_handler
+        exception_handler(response)
+
+    return response
