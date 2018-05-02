@@ -109,4 +109,5 @@ def call_salesforce(url, method, session, headers, **kwargs):
         from simple_salesforce.util import exception_handler
         exception_handler(response)
 
+    adapter.close()
     return response
