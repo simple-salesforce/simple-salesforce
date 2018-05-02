@@ -1,6 +1,10 @@
 """Utility functions for simple-salesforce"""
-
+import ssl
 import xml.dom.minidom
+from urllib3 import PoolManager
+
+from requests import PreparedRequest
+from requests.adapters import HTTPAdapter
 
 from simple_salesforce.exceptions import (
     SalesforceGeneralError, SalesforceExpiredSession,
