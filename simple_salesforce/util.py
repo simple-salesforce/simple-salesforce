@@ -101,6 +101,7 @@ def call_salesforce(url, method, session, headers, **kwargs):
         assert_same_host=False,
         preload_content=False,
         decode_content=False, **request_args)
+    result.close()
 
     adapter = HTTPAdapter()
     response = adapter.build_response(request, result)
