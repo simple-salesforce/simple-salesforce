@@ -61,8 +61,7 @@ def exception_handler(result, name=""):
     raise exc_cls(result.url, result.status_code, name, response_content)
 
 
-def call_salesforce(url, method, session, headers, cert_file=None,
-                    cert_pass=None, **kwargs):
+def call_salesforce(url, method, session, headers, **kwargs):
     """Utility that generates a request to salesforce using urllib3 instead of
     requests package. This is necessary for connections that use the mutual
     authentication with encrypted certificates, the package requests  can't
@@ -81,6 +80,9 @@ def call_salesforce(url, method, session, headers, cert_file=None,
     }
 
     context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+    # We will try and load the cert file and pass from the environment variables
+    cert_file = os.environ.get('SIMPLE_SALESFORCE_CERT_FILE', None)
+    cert_pass = os.environ.get('SIMPLE_SALESFORCE_PASSWORD', None)
     if cert_file and cert_pass:
         context.load_cert_chain(certfile=cert_file, password=cert_pass)
 
