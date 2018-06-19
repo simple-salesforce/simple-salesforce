@@ -303,7 +303,10 @@ class Salesforce(object):
         url = self.base_url + path
         result = self._call_salesforce(method, url, name=path, params=params,
                                        **kwargs)
-
+        
+        if result.status_code == 204:
+            return None
+        
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
