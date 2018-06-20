@@ -51,6 +51,7 @@ class SFBulkHandler(object):
         return SFBulkType(object_name=name, bulk_url=self.bulk_url,
                           headers=self.headers, session=self.session)
 
+
 class SFBulkType(object):
     """ Interface to Bulk/Async API functions"""
 
@@ -94,8 +95,8 @@ class SFBulkType(object):
         url = "{}{}".format(self.bulk_url, 'job')
 
         result = call_salesforce(url=url, method='POST', session=self.session,
-                                  headers=self.headers,
-                                  data=json.dumps(payload))
+                                 headers=self.headers,
+                                 data=json.dumps(payload))
         return result.json(object_pairs_hook=OrderedDict)
 
     def _close_job(self, job_id):
@@ -107,8 +108,8 @@ class SFBulkType(object):
         url = "{}{}{}".format(self.bulk_url, 'job/', job_id)
 
         result = call_salesforce(url=url, method='POST', session=self.session,
-                                  headers=self.headers,
-                                  data=json.dumps(payload))
+                                 headers=self.headers,
+                                 data=json.dumps(payload))
         return result.json(object_pairs_hook=OrderedDict)
 
     def _get_job(self, job_id):
@@ -116,7 +117,7 @@ class SFBulkType(object):
         url = "{}{}{}".format(self.bulk_url, 'job/', job_id)
 
         result = call_salesforce(url=url, method='GET', session=self.session,
-                                  headers=self.headers)
+                                 headers=self.headers)
         return result.json(object_pairs_hook=OrderedDict)
 
     def _add_batch(self, job_id, data, operation):
@@ -131,7 +132,7 @@ class SFBulkType(object):
             data = json.dumps(data)
 
         result = call_salesforce(url=url, method='POST', session=self.session,
-                                  headers=self.headers, data=data)
+                                 headers=self.headers, data=data)
         return result.json(object_pairs_hook=OrderedDict)
 
     def _get_batch(self, job_id, batch_id):
@@ -141,7 +142,7 @@ class SFBulkType(object):
                                   job_id, '/batch/', batch_id)
 
         result = call_salesforce(url=url, method='GET', session=self.session,
-                                  headers=self.headers)
+                                 headers=self.headers)
         return result.json(object_pairs_hook=OrderedDict)
 
     def _get_batch_results(self, job_id, batch_id, operation):
@@ -151,18 +152,18 @@ class SFBulkType(object):
                                     batch_id, '/result')
 
         result = call_salesforce(url=url, method='GET', session=self.session,
-                                  headers=self.headers)
+                                 headers=self.headers)
 
         if operation == 'query' or operation == 'queryAll':
             url_query_results = "{}{}{}".format(url, '/', result.json()[0])
             query_result = call_salesforce(url=url_query_results, method='GET',
-                                            session=self.session,
-                                            headers=self.headers)
+                                           session=self.session,
+                                           headers=self.headers)
             return query_result.json()
 
         return result.json()
 
-    #pylint: disable=R0913
+    # pylint: disable=R0913
     def _bulk_operation(self, object_name, operation, data,
                         external_id_field=None, wait=5):
         """ String together helper functions to create a complete
@@ -237,7 +238,7 @@ class SFBulkType(object):
                                        operation='query', data=data)
         return results
 
-    def query_all(self,data):
+    def query_all(self, data):
         """ bulk queryAll """
         results = self._bulk_operation(object_name=self.object_name,
                                        operation='queryAll', data=data)
