@@ -265,6 +265,14 @@ Query records:
 
     sf.bulk.Account.query(query)
 
+Query all records:
+
+.. code-block:: python
+
+    query = 'SELECT Id, Name FROM Account LIMIT 10'
+
+    sf.bulk.Account.query_all(query)
+
 Delete records (soft deletion):
 
 .. code-block:: python

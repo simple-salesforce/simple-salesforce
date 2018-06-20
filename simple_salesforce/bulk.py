@@ -127,7 +127,7 @@ class SFBulkType(object):
 
         url = "{}{}{}{}".format(self.bulk_url, 'job/', job_id, '/batch')
 
-        if operation != 'query':
+        if operation not in ('query', 'queryAll'):
             data = json.dumps(data)
 
         result = call_salesforce(url=url, method='POST', session=self.session,
@@ -153,7 +153,7 @@ class SFBulkType(object):
         result = call_salesforce(url=url, method='GET', session=self.session,
                                   headers=self.headers)
 
-        if operation == 'query':
+        if operation == 'query' or operation == 'queryAll':
             url_query_results = "{}{}{}".format(url, '/', result.json()[0])
             query_result = call_salesforce(url=url_query_results, method='GET',
                                             session=self.session,
@@ -235,4 +235,10 @@ class SFBulkType(object):
         """ bulk query """
         results = self._bulk_operation(object_name=self.object_name,
                                        operation='query', data=data)
+        return results
+
+    def query_all(self,data):
+        """ bulk queryAll """
+        results = self._bulk_operation(object_name=self.object_name,
+                                       operation='queryAll', data=data)
         return results
