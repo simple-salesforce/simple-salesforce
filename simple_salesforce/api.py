@@ -581,7 +581,8 @@ class SFType(object):
         """
         result = self._call_salesforce(
             method='GET', url=urljoin(self.base_url, 'describe'),
-            headers=headers
+            headers=headers,
+            proxies=self.session.proxies
         )
         return result.json(object_pairs_hook=OrderedDict)
 
