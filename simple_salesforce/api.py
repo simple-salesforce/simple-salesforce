@@ -201,7 +201,8 @@ class Salesforce(object):
         """Describes all available objects
         """
         url = self.base_url + "sobjects"
-        result = self._call_salesforce('GET', url, name='describe', proxies=self.proxies)
+        result = self._call_salesforce('GET', url, 
+                                       name='describe', proxies=self.proxies)
 
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
