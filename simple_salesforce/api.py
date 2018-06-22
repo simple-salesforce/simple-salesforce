@@ -435,7 +435,7 @@ class Salesforce(object):
             # fetch next batch if we're not done else break out of loop
             if not result['done']:
                 result = self.query_more(result['nextRecordsUrl'],
-                                         identifier_is_url=True)
+                                         identifier_is_url=True, **kwargs)
             else:
                 break
 
