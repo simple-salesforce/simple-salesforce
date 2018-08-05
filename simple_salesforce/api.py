@@ -290,7 +290,8 @@ class Salesforce(object):
     # Generic Rest Function
     def restful(self, path, params=None, method='GET', **kwargs):
         """Allows you to make a direct REST call if you know the path.
-        If `Content-Type: application/json` in response, function will return a JSON-parsed OrderedDict.
+        If `Content-Type: application/json` in response,
+        function will return a JSON-parsed OrderedDict.
         For all other cases the raw content body is returned, e.g., binary data.
 
         Arguments:
