@@ -301,11 +301,12 @@ class Salesforce(object):
         * method: HTTP request method, default GET
         * other arguments supported by requests.request (e.g. json, timeout)
         """
-        base_regex = '\/*services\/data\/v[0-9]{2}.[0-9]{1,}\/'
+        base_regex = r'\/*services\/data\/v[0-9]{2}.[0-9]{1,}\/'
         url = self.base_url + re.sub(base_regex, '', path)
         result = self._call_salesforce(method, url, name=path, params=params,
                                        **kwargs)
-        if 'Content-Type' in result.headers and 'application/json' in result.headers['Content-Type'].split(';'):
+        if 'Content-Type' in result.headers and 'application/json' in \
+                result.headers['Content-Type'].split(';'):
             json_result = result.json(object_pairs_hook=OrderedDict)
             return None if len(json_result) == 0 else json_result
         else:
