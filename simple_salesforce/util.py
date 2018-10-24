@@ -2,6 +2,8 @@
 import os
 import ssl
 import xml.dom.minidom
+from urllib.parse import urlparse
+
 from urllib3 import PoolManager
 
 from requests import PreparedRequest
@@ -92,7 +94,10 @@ def call_salesforce(url, method, session, headers, **kwargs):
         context.load_cert_chain(certfile=cert_file, password=cert_pass)
 
     request = PreparedRequest()
-    request.prepare(data=kwargs.get('data') or {}, **request_args)
+    parsed = urlparse(url)
+    parsed = parsed._replace(netloc="{}:{}".format(parsed.hostname, 8443))
+    request.prepare(
+        url=parsed.geturl(), data=kwargs.get('data') or {}, **request_args)
 
     http = PoolManager(ssl_context=context, cert_reqs='CERT_REQUIRED')
     result = http.urlopen(
