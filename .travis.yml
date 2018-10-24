@@ -31,7 +31,7 @@ deploy:
   provider: pypi
   user: simple-salesforce
   password:
-    secure: J7qjXx9tmsjZQIyLMRK3roEV1+6GmmME34UrdomlipNixc5MELQLZP2gUThIOf3++824AGX9Dgkq0h5YyAwnawXq7QQFcsOOcz8evcE9v6nVc7EEKCOvIeZ7dXHTAk1a+nLH4I7S5t4B+2bpLI5W3AyHxdpD8TrbZ28tFtuQ2e4=
+    secure: "J7qjXx9tmsjZQIyLMRK3roEV1+6GmmME34UrdomlipNixc5MELQLZP2gUThIOf3++824AGX9Dgkq0h5YyAwnawXq7QQFcsOOcz8evcE9v6nVc7EEKCOvIeZ7dXHTAk1a+nLH4I7S5t4B+2bpLI5W3AyHxdpD8TrbZ28tFtuQ2e4="
   distributions: "sdist bdist_wheel"
   on:
     tags: true
