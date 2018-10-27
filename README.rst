@@ -301,7 +301,7 @@ the body content encoded with ``json.dumps``
 
 You can read more about Apex on the `Force.com Apex Code Developer's Guide`_
 
-.. _Force.com Apex Code Developer's Guide: http://www.salesforce.com/us/developer/docs/apexcode
+.. _Force.com Apex Code Developer's Guide: https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_dev_guide.htm
 
 Additional Features
 -------------------
