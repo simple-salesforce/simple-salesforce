@@ -538,8 +538,8 @@ class Salesforce(object):
 
 class SFAction(object):
     """Interface for Salesforce Action.
-       Currently only simpleEmail is implemented. 
-       More actions coming in the future
+    Currently only simpleEmail is implemented.
+    More actions coming in the future
     """
 
     # pylint: disable=too-many-arguments
@@ -547,7 +547,7 @@ class SFAction(object):
             sf_version='32.0', proxies=None, session=None):
         """
         Initialize SF Action. Note some actions are only available after version 32.0,
-         so we use default sf_version='32.0'
+        so we use default sf_version='32.0'
         """
         self.session_id = session_id
         self.session = session or requests.Session()
@@ -583,8 +583,9 @@ class SFAction(object):
         ]
         }
 
-        result = self.session.request('POST', urljoin(self.base_url, 'standard/emailSimple/'),
-                    headers=headers, data=json.dumps(email_data))
+        result = self.session.request('POST',
+                                      urljoin(self.base_url, 'standard/emailSimple/'),
+                                      headers=headers, data=json.dumps(email_data))
 
         if result.status_code >= 300:
             exception_handler(result)
@@ -920,4 +921,3 @@ class SalesforceAPI(Salesforce):
                                             security_token=security_token,
                                             sandbox=sandbox,
                                             version=sf_version)
-
