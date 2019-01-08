@@ -238,8 +238,10 @@ class Salesforce(object):
             return SFBulkHandler(self.session_id, self.bulk_url, self.proxies,
                                  self.session)
 
+        print('name=', name)
         return SFType(
-            name, self.session_id, self.sf_instance, sf_version=self.sf_version,
+            name, self.session_id,
+            self.sf_instance, sf_version=self.sf_version,
             proxies=self.proxies, session=self.session)
 
     # User utility methods
