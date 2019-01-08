@@ -234,9 +234,6 @@ class Salesforce(object):
             return SFBulkHandler(self.session_id, self.bulk_url, self.proxies,
                                  self.session)
 
-        if name == 'session_id':
-            return self.session_id
-
         if name == 'Action':
            # Deal with simple_email action
            return SFAction(self.session_id,
@@ -485,7 +482,6 @@ class Salesforce(object):
 
         Returns a `requests.result` object.
         """
-        print('_call_salesforce name=', name)  # added for debug
         result = self.session.request(
             method, url, headers=self.headers, **kwargs)
 
@@ -494,7 +490,6 @@ class Salesforce(object):
 
         sforce_limit_info = result.headers.get('Sforce-Limit-Info')
         if sforce_limit_info:
-            print('sforce_limit_info:', sforce_limit_info) # added for debug
             self.api_usage = self.parse_api_usage(sforce_limit_info)
 
         return result
