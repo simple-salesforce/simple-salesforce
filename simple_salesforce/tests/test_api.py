@@ -33,8 +33,8 @@ from simple_salesforce.api import (
     PerAppUsage
 )
 
-def _create_sf_emailSimple(session_id='5',
-                          sf_instance='my.salesforce.com'):
+def _create_sf_emailaction(session_id='5',
+                           sf_instance='my.salesforce.com'):
     """Creates SF emailSimple instances"""
     return SFAction(
         session_id=session_id,
@@ -54,8 +54,8 @@ class TestSFEmailSimple(unittest.TestCase):
     @responses.activate
     def test_version(self):
         """SFEmailSimple is only tested on  on 32.0 """
-        emailSimple = _create_sf_emailSimple()
-        self.assertGreaterEqual(float(emailSimple.sf_version), 32.0)
+        simple_email = _create_sf_emailaction()
+        self.assertGreaterEqual(float(simple_email.sf_version), 32.0)
 
 
 def _create_sf_type(
