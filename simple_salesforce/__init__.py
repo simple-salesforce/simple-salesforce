@@ -4,7 +4,8 @@
 from simple_salesforce.api import (
     Salesforce,
     SalesforceAPI,
-    SFType
+    SFType,
+    SFAction
 )
 
 from simple_salesforce.bulk import (
