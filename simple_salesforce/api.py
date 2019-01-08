@@ -236,17 +236,21 @@ class Salesforce(object):
             return SFBulkHandler(self.session_id, self.bulk_url, self.proxies,
                                  self.session)
 
-        if name == 'Action':
-            # Deal with Action (simple_email)
-            return SFAction(self.session_id,
-                            self.sf_instance,
-                            proxies=self.proxies,
-                            session=self.session)
+# temporally remove for debugging
+#        if name == 'Action':
+#            # Deal with simple_email action
+#            return SFAction(self.session_id,
+#                            self.sf_instance,
+#                            proxies=self.proxies,
+#                            session=self.session)
 
         return SFType(
-            name, self.session_id,
-            self.sf_instance, sf_version=self.sf_version,
-            proxies=self.proxies, session=self.session)
+            name,
+            self.session_id,
+            self.sf_instance,
+            sf_version=self.sf_version,
+            proxies=self.proxies,
+            session=self.session)
 
     # User utility methods
     def set_password(self, user, password):
