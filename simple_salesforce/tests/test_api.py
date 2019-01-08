@@ -50,10 +50,10 @@ class TestSFEmailSimple(unittest.TestCase):
         self.mockrequest = request_patcher.start()
         self.addCleanup(request_patcher.stop)
 
-    @responses.activate
-    def test_version(self):
-        emailSimple = _create_sf_emailSimple()
-        self.assertGreaterEqual(float(emailSimple.sf_version), 32.0)
+#    @responses.activate
+#    def test_version(self):
+#        emailSimple = _create_sf_emailSimple()
+#        self.assertGreaterEqual(float(emailSimple.sf_version), 32.0)
 
 
 
