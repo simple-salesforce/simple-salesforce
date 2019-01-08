@@ -229,8 +229,6 @@ class Salesforce(object):
         if name.startswith('__'):
             return super(Salesforce, self).__getattr__(name)
 
-        print('name=', type(name), name)
-
         if name == 'bulk':
             # Deal with bulk API functions
             return SFBulkHandler(self.session_id, self.bulk_url, self.proxies,
@@ -238,14 +236,13 @@ class Salesforce(object):
 
         if name == 'session_id':
             return self.session_id
-        
-# temporally remove for debugging
-#        if name == 'Action':
-#            # Deal with simple_email action
-#            return SFAction(self.session_id,
-#                            self.sf_instance,
-#                            proxies=self.proxies,
-#                            session=self.session)
+
+        if name == 'Action':
+           # Deal with simple_email action
+           return SFAction(self.session_id,
+                           self.sf_instance,
+                           proxies=self.proxies,
+                           session=self.session)
 
         return SFType(
             name,
@@ -488,6 +485,7 @@ class Salesforce(object):
 
         Returns a `requests.result` object.
         """
+        print('_call_salesforce name=', name)  # added for debug
         result = self.session.request(
             method, url, headers=self.headers, **kwargs)
 
@@ -496,7 +494,7 @@ class Salesforce(object):
 
         sforce_limit_info = result.headers.get('Sforce-Limit-Info')
         if sforce_limit_info:
-            print('sforce_limit_info:', sforce_limit_info)
+            print('sforce_limit_info:', sforce_limit_info) # added for debug
             self.api_usage = self.parse_api_usage(sforce_limit_info)
 
         return result
@@ -513,6 +511,35 @@ class Salesforce(object):
         _warn_request_deprecation()
         self.session = session
 
+    @staticmethod
+    def parse_api_usage(sforce_limit_info):
+        """parse API usage and limits out of the Sforce-Limit-Info header
+
+        Arguments:
+
+        * sforce_limit_info: The value of response header 'Sforce-Limit-Info'
+            Example 1: 'api-usage=18/5000'
+            Example 2: 'api-usage=25/5000;
+                per-app-api-usage=17/250(appName=sample-connected-app)'
+        """
+        result = {}
+
+        api_usage = re.match(r'[^-]?api-usage=(?P<used>\d+)/(?P<tot>\d+)',
+                             sforce_limit_info)
+        pau = r'.+per-app-api-usage=(?P<u>\d+)/(?P<t>\d+)\(appName=(?P<n>.+)\)'
+        per_app_api_usage = re.match(pau, sforce_limit_info)
+
+        if api_usage and api_usage.groups():
+            groups = api_usage.groups()
+            result['api-usage'] = Usage(used=int(groups[0]),
+                                        total=int(groups[1]))
+        if per_app_api_usage and per_app_api_usage.groups():
+            groups = per_app_api_usage.groups()
+            result['per-app-api-usage'] = PerAppUsage(used=int(groups[0]),
+                                                      total=int(groups[1]),
+                                                      name=groups[2])
+
+        return result
 
 class SFAction(object):
     """Interface for Salesforce Action.
@@ -568,35 +595,7 @@ class SFAction(object):
             exception_handler(result)
             
 
-    @staticmethod
-    def parse_api_usage(sforce_limit_info):
-        """parse API usage and limits out of the Sforce-Limit-Info header
 
-        Arguments:
-
-        * sforce_limit_info: The value of response header 'Sforce-Limit-Info'
-            Example 1: 'api-usage=18/5000'
-            Example 2: 'api-usage=25/5000;
-                per-app-api-usage=17/250(appName=sample-connected-app)'
-        """
-        result = {}
-
-        api_usage = re.match(r'[^-]?api-usage=(?P<used>\d+)/(?P<tot>\d+)',
-                             sforce_limit_info)
-        pau = r'.+per-app-api-usage=(?P<u>\d+)/(?P<t>\d+)\(appName=(?P<n>.+)\)'
-        per_app_api_usage = re.match(pau, sforce_limit_info)
-
-        if api_usage and api_usage.groups():
-            groups = api_usage.groups()
-            result['api-usage'] = Usage(used=int(groups[0]),
-                                        total=int(groups[1]))
-        if per_app_api_usage and per_app_api_usage.groups():
-            groups = per_app_api_usage.groups()
-            result['per-app-api-usage'] = PerAppUsage(used=int(groups[0]),
-                                                      total=int(groups[1]),
-                                                      name=groups[2])
-
-        return result
 
 class SFType(object):
     """An interface to a specific type of SObject"""
