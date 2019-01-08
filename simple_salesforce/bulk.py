@@ -15,7 +15,7 @@ from simple_salesforce.util import call_salesforce
 class SFBulkHandler(object):
     """ Bulk API request handler
     Intermediate class which allows us to use commands,
-     such as 'sf.bulk.Contacts.create(...)'
+     such as 'sf.bulk.Contacts.insert(...)'
     This is really just a middle layer, whose sole purpose is
     to allow the above syntax
     """
@@ -206,7 +206,7 @@ class SFBulkType(object):
         return results
 
     def insert(self, data):
-        """ insert records """
+        """ insert/create records """
         results = self._bulk_operation(object_name=self.object_name,
                                        operation='insert', data=data)
         return results

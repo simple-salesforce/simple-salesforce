@@ -9,14 +9,14 @@ Simple Salesforce
    :target: http://simple-salesforce.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-Simple Salesforce is a basic Salesforce.com REST API client built for Python 2.6, 2.7, 3.3 and 3.4. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
+Simple Salesforce is a basic Salesforce.com REST API client built for Python 2.6, 2.7, 3.3, 3.4, 3.5, and 3.6. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
 
 You can find out more regarding the format of the results in the `Official Salesforce.com REST API Documentation`_
 
 .. _Official Salesforce.com REST API Documentation: http://www.salesforce.com/us/developer/docs/api_rest/index.htm
 
-Example
--------
+Examples
+--------
 There are two ways to gain access to Salesforce
 
 The first is to simply pass the domain of your Salesforce instance and an access token straight to ``Salesforce()``
@@ -51,23 +51,23 @@ To login using IP-whitelist Organization ID method, simply use your Salesforce u
     from simple_salesforce import Salesforce
     sf = Salesforce(password='password', username='myemail@example.com', organizationId='OrgId')
 
-If you'd like to enter a sandbox, simply add ``sandbox=True`` to your ``Salesforce()`` call.
+If you'd like to enter a sandbox, simply add ``domain='test'`` to your ``Salesforce()`` call.
 
 For example:
 
 .. code-block:: python
 
     from simple_salesforce import Salesforce
-    sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', sandbox=True)
+    sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', domain='test')
 
-Note that specifying if you want to use a sandbox is only necessary if you are using the built-in username/password/security token authentication and is used exclusively during the authentication step.
+Note that specifying if you want to use a domain is only necessary if you are using the built-in username/password/security token authentication and is used exclusively during the authentication step.
 
 If you'd like to keep track where your API calls are coming from, simply add ``client_id='My App'`` to your ``Salesforce()`` call.
 
 .. code-block:: python
 
     from simple_salesforce import Salesforce
-    sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', sandbox=True, client_id='My App')
+    sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', client_id='My App', domain='test')
 
 If you view the API calls in your Salesforce instance by Client Id it will be prefixed with ``RestForce/``, for example ``RestForce/My App``.
 
@@ -123,7 +123,7 @@ To delete the contact:
 
     sf.Contact.delete('003e0000003GuNXAA0')
 
-To retrieve a list of deleted records between ``2013-10-20`` to ``2013-10-29`` (datetimes are required to be in UTC):
+To retrieve a list of Contact records deleted over the past 10 days (datetimes are required to be in UTC):
 
 .. code-block:: python
 
@@ -132,7 +132,7 @@ To retrieve a list of deleted records between ``2013-10-20`` to ``2013-10-29`` (
     end = datetime.datetime.now(pytz.UTC)  # we need to use UTC as salesforce API requires this!
     sf.Contact.deleted(end - datetime.timedelta(days=10), end)
 
-To retrieve a list of updated records between ``2014-03-20`` to ``2014-03-22`` (datetimes are required to be in UTC):
+To retrieve a list of Contact records updated over the past 10 days (datetimes are required to be in UTC):
 
 .. code-block:: python
 
@@ -142,8 +142,6 @@ To retrieve a list of updated records between ``2014-03-20`` to ``2014-03-22`` (
     sf.Contact.updated(end - datetime.timedelta(days=10), end)
 
 Note that Update, Delete and Upsert actions return the associated `Salesforce HTTP Status Code`_
-
-.. _Salesforce HTTP Status Code: http://www.salesforce.com/us/developer/docs/api_rest/Content/errorcodes.htm
 
 Use the same format to create any record, including 'Account', 'Opportunity', and 'Lead'.
 Make sure to have all the required fields for any entry. The `Salesforce API`_ has all objects found under 'Reference -> Standard Objects' and the required fields can be found there.
@@ -303,14 +301,14 @@ the body content encoded with ``json.dumps``
 
 You can read more about Apex on the `Force.com Apex Code Developer's Guide`_
 
-.. _Force.com Apex Code Developer's Guide: http://www.salesforce.com/us/developer/docs/apexcode
+.. _Force.com Apex Code Developer's Guide: https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_dev_guide.htm
 
 Additional Features
 -------------------
 
 There are a few helper classes that are used internally and available to you.
 
-Included in them are ``SalesforceLogin``, which takes in a username, password, security token, optional boolean sandbox indicator and optional version and returns a tuple of ``(session_id, sf_instance)`` where `session_id` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
+Included in them are ``SalesforceLogin``, which takes in a username, password, security token, optional version and optional domain and returns a tuple of ``(session_id, sf_instance)`` where `session_id` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
 
 For example, to use SalesforceLogin for a sandbox account you'd use:
 
@@ -321,9 +319,9 @@ For example, to use SalesforceLogin for a sandbox account you'd use:
         username='myemail@example.com.sandbox',
         password='password',
         security_token='token',
-        sandbox=True)
+        domain='test')
 
-Simply leave off the final ``True`` if you do not wish to use a sandbox.
+Simply leave off the final domain if you do not wish to use a sandbox.
 
 Also exposed is the ``SFType`` class, which is used internally by the ``__getattr__()`` method in the ``Salesforce()`` class and represents a specific SObject type. ``SFType`` requires ``object_name`` (i.e. ``Contact``), ``session_id`` (an authentication ID), ``sf_instance`` (hostname of your Salesforce instance), and an optional ``sf_version``
 

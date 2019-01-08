@@ -9,6 +9,8 @@ import logging
 import warnings
 import requests
 import json
+import re
+from collections import namedtuple
 
 try:
     from urlparse import urlparse, urljoin
@@ -42,6 +44,10 @@ def _warn_request_deprecation():
     )
 
 
+Usage = namedtuple('Usage', 'used total')
+PerAppUsage = namedtuple('PerAppUsage', 'used total name')
+
+
 # pylint: disable=too-many-instance-attributes
 class Salesforce(object):
     """Salesforce Instance
@@ -53,8 +59,8 @@ class Salesforce(object):
     def __init__(
             self, username=None, password=None, security_token=None,
             session_id=None, instance=None, instance_url=None,
-            organizationId=None, sandbox=False, version=DEFAULT_API_VERSION,
-            proxies=None, session=None, client_id=None):
+            organizationId=None, sandbox=None, version=DEFAULT_API_VERSION,
+            proxies=None, session=None, client_id=None, domain=None):
         """Initialize the instance with the given parameters.
 
         Available kwargs
@@ -64,8 +70,11 @@ class Salesforce(object):
         * username -- the Salesforce username to use for authentication
         * password -- the password for the username
         * security_token -- the security token for the username
-        * sandbox -- True if you want to login to `test.salesforce.com`, False
-                     if you want to login to `login.salesforce.com`.
+        * sandbox -- DEPRECATED: Use domain instead.
+        * domain -- The domain to using for connecting to Salesforce. Use
+                    common domains, such as 'login' or 'test', or
+                    Salesforce My domain. If not used, will default to
+                    'login'.
 
         Direct Session and Instance Access:
 
@@ -87,11 +96,26 @@ class Salesforce(object):
                      exposed by simple_salesforce.
 
         """
+        if (sandbox is not None) and (domain is not None):
+            raise ValueError("Both 'sandbox' and 'domain' arguments were "
+                             "supplied. Either may be supplied, but not "
+                             "both.")
 
-        # Determine if the user passed in the optional version and/or sandbox
-        # kwargs
+        if sandbox is not None:
+            warnings.warn("'sandbox' argument is deprecated. Use "
+                          "'domain' instead. Overriding 'domain' "
+                          "with 'sandbox' value.",
+                          DeprecationWarning)
+
+            domain = 'test' if sandbox else 'login'
+
+        if domain is None:
+            domain = 'login'
+
+        # Determine if the user passed in the optional version and/or
+        # domain kwargs
         self.sf_version = version
-        self.sandbox = sandbox
+        self.domain = domain
         self.session = session or requests.Session()
         self.proxies = self.session.proxies
         # override custom session proxies dance
@@ -116,10 +140,10 @@ class Salesforce(object):
                 username=username,
                 password=password,
                 security_token=security_token,
-                sandbox=self.sandbox,
                 sf_version=self.sf_version,
                 proxies=self.proxies,
-                client_id=client_id)
+                client_id=client_id,
+                domain=self.domain)
 
         elif all(arg is not None for arg in (
                 session_id, instance or instance_url)):
@@ -143,20 +167,18 @@ class Salesforce(object):
                 username=username,
                 password=password,
                 organizationId=organizationId,
-                sandbox=self.sandbox,
                 sf_version=self.sf_version,
                 proxies=self.proxies,
-                client_id=client_id)
+                client_id=client_id,
+                domain=self.domain)
 
         else:
             raise TypeError(
                 'You must provide login information or an instance and token'
             )
 
-        if self.sandbox:
-            self.auth_site = 'https://test.salesforce.com'
-        else:
-            self.auth_site = 'https://login.salesforce.com'
+        self.auth_site = ('https://{domain}.salesforce.com'
+                          .format(domain=self.domain))
 
         self.headers = {
             'Content-Type': 'application/json',
@@ -173,16 +195,14 @@ class Salesforce(object):
                          .format(instance=self.sf_instance,
                                  version=self.sf_version))
 
+        self.api_usage = {}
+
     def describe(self):
         """Describes all available objects
         """
         url = self.base_url + "sobjects"
-        result = self._call_salesforce('GET', url)
-        if result.status_code != 200:
-            raise SalesforceGeneralError(url,
-                                         'describe',
-                                         result.status_code,
-                                         result.content)
+        result = self._call_salesforce('GET', url, name='describe')
+
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
@@ -243,8 +263,8 @@ class Salesforce(object):
         # salesforce return 204 No Content when the request is successful
         if result.status_code != 200 and result.status_code != 204:
             raise SalesforceGeneralError(url,
-                                         'User',
                                          result.status_code,
+                                         'User',
                                          result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
@@ -272,7 +292,7 @@ class Salesforce(object):
         return self.set_password(user, password)
 
     # Generic Rest Function
-    def restful(self, path, params, method='GET'):
+    def restful(self, path, params=None, method='GET', **kwargs):
         """Allows you to make a direct REST call if you know the path
 
         Arguments:
@@ -281,15 +301,13 @@ class Salesforce(object):
             Example: sobjects/User/ABC123/password'
         * params: dict of parameters to pass to the path
         * method: HTTP request method, default GET
+        * other arguments supported by requests.request (e.g. json, timeout)
         """
 
         url = self.base_url + path
-        result = self._call_salesforce(method, url, params=params)
-        if result.status_code != 200:
-            raise SalesforceGeneralError(url,
-                                         path,
-                                         result.status_code,
-                                         result.content)
+        result = self._call_salesforce(method, url, name=path, params=params,
+                                       **kwargs)
+
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
@@ -310,12 +328,8 @@ class Salesforce(object):
 
         # `requests` will correctly encode the query string passed as `params`
         params = {'q': search}
-        result = self._call_salesforce('GET', url, params=params)
-        if result.status_code != 200:
-            raise SalesforceGeneralError(url,
-                                         'search',
-                                         result.status_code,
-                                         result.content)
+        result = self._call_salesforce('GET', url, name='search', params=params)
+
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
@@ -335,8 +349,20 @@ class Salesforce(object):
         search_string = u'FIND {{{search_string}}}'.format(search_string=search)
         return self.search(search_string)
 
+    def limits(self, **kwargs):
+        """Return the result of a Salesforce request to list Organization
+        limits.
+        """
+        url = self.base_url + 'limits/'
+        result = self._call_salesforce('GET', url, **kwargs)
+
+        if result.status_code != 200:
+            exception_handler(result)
+
+        return result.json(object_pairs_hook=OrderedDict)
+
     # Query Handler
-    def query(self, query, **kwargs):
+    def query(self, query, include_deleted=False, **kwargs):
         """Return the result of a Salesforce SOQL query as a dict decoded from
         the Salesforce response JSON payload.
 
@@ -344,19 +370,19 @@ class Salesforce(object):
 
         * query -- the SOQL query to send to Salesforce, e.g.
                    SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
+        * include_deleted -- True if deleted records should be included
         """
-        url = self.base_url + 'query/'
+        url = self.base_url + ('queryAll/' if include_deleted else 'query/')
         params = {'q': query}
         # `requests` will correctly encode the query string passed as `params`
-        result = self._call_salesforce('GET', url, params=params, **kwargs)
-
-        if result.status_code != 200:
-            exception_handler(result)
+        result = self._call_salesforce('GET', url, name='query',
+                                       params=params, **kwargs)
 
         return result.json(object_pairs_hook=OrderedDict)
 
     def query_more(
-            self, next_records_identifier, identifier_is_url=False, **kwargs):
+            self, next_records_identifier, identifier_is_url=False,
+            include_deleted=False, **kwargs):
         """Retrieves more results from a query that returned more results
         than the batch maximum. Returns a dict decoded from the Salesforce
         response JSON payload.
@@ -370,6 +396,9 @@ class Salesforce(object):
                                treated as a URL, False if
                                `next_records_identifier` should be treated as
                                an Id.
+        * include_deleted -- True if the `next_records_identifier` refers to a
+                             query that includes deleted records. Only used if
+                             `identifier_is_url` is False
         """
         if identifier_is_url:
             # Don't use `self.base_url` here because the full URI is provided
@@ -377,16 +406,15 @@ class Salesforce(object):
                    .format(instance=self.sf_instance,
                            next_record_url=next_records_identifier))
         else:
-            url = self.base_url + 'query/{next_record_id}'
-            url = url.format(next_record_id=next_records_identifier)
-        result = self._call_salesforce('GET', url, **kwargs)
-
-        if result.status_code != 200:
-            exception_handler(result)
+            endpoint = 'queryAll' if include_deleted else 'query'
+            url = self.base_url + '{query_endpoint}/{next_record_id}'
+            url = url.format(query_endpoint=endpoint,
+                             next_record_id=next_records_identifier)
+        result = self._call_salesforce('GET', url, name='query_more', **kwargs)
 
         return result.json(object_pairs_hook=OrderedDict)
 
-    def query_all(self, query, **kwargs):
+    def query_all(self, query, include_deleted=False, **kwargs):
         """Returns the full set of results for the `query`. This is a
         convenience
         wrapper around `query(...)` and `query_more(...)`.
@@ -400,9 +428,10 @@ class Salesforce(object):
 
         * query -- the SOQL query to send to Salesforce, e.g.
                    SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
+        * include_deleted -- True if the query should include deleted records.
         """
 
-        result = self.query(query, **kwargs)
+        result = self.query(query, include_deleted=include_deleted, **kwargs)
         all_records = []
 
         while True:
@@ -410,7 +439,7 @@ class Salesforce(object):
             # fetch next batch if we're not done else break out of loop
             if not result['done']:
                 result = self.query_more(result['nextRecordsUrl'],
-                                         True)
+                                         identifier_is_url=True)
             else:
                 break
 
@@ -427,18 +456,21 @@ class Salesforce(object):
         * data -- A dict of parameters to send in a POST / PUT request
         * kwargs -- Additional kwargs to pass to `requests.request`
         """
-        result = self._call_salesforce(method, self.apex_url + action,
-                                       data=json.dumps(data), **kwargs)
+        result = self._call_salesforce(
+            method,
+            self.apex_url + action,
+            name="apexexcute",
+            data=json.dumps(data), **kwargs
+        )
+        try:
+            response_content = result.json()
+        # pylint: disable=broad-except
+        except Exception:
+            response_content = result.text
 
-        if result.status_code == 200:
-            try:
-                response_content = result.json()
-            # pylint: disable=broad-except
-            except Exception:
-                response_content = result.text
-            return response_content
+        return response_content
 
-    def _call_salesforce(self, method, url, **kwargs):
+    def _call_salesforce(self, method, url, name="", **kwargs):
         """Utility method for performing HTTP call to Salesforce.
 
         Returns a `requests.result` object.
@@ -447,7 +479,11 @@ class Salesforce(object):
             method, url, headers=self.headers, **kwargs)
 
         if result.status_code >= 300:
-            exception_handler(result)
+            exception_handler(result, name=name)
+
+        sforce_limit_info = result.headers.get('Sforce-Limit-Info')
+        if sforce_limit_info:
+            self.api_usage = self.parse_api_usage(sforce_limit_info)
 
         return result
 
@@ -462,6 +498,7 @@ class Salesforce(object):
         """Deprecated setter for self.session"""
         _warn_request_deprecation()
         self.session = session
+
 
 class SFAction(object):
     """Interface for Salesforce Action.
@@ -516,6 +553,35 @@ class SFAction(object):
         if result.status_code >= 300:
             exception_handler(result)
             
+
+    @staticmethod
+    def parse_api_usage(sforce_limit_info):
+        """parse API usage and limits out of the Sforce-Limit-Info header
+
+        Arguments:
+
+        * sforce_limit_info: The value of response header 'Sforce-Limit-Info'
+            Example 1: 'api-usage=18/5000'
+            Example 2: 'api-usage=25/5000;
+                per-app-api-usage=17/250(appName=sample-connected-app)'
+        """
+        result = {}
+
+        api_usage = re.match(r'[^-]?api-usage=(?P<used>\d+)/(?P<tot>\d+)',
+                             sforce_limit_info)
+        pau = r'.+per-app-api-usage=(?P<u>\d+)/(?P<t>\d+)\(appName=(?P<n>.+)\)'
+        per_app_api_usage = re.match(pau, sforce_limit_info)
+
+        if api_usage and api_usage.groups():
+            groups = api_usage.groups()
+            result['api-usage'] = Usage(used=int(groups[0]),
+                                        total=int(groups[1]))
+        if per_app_api_usage and per_app_api_usage.groups():
+            groups = per_app_api_usage.groups()
+            result['per-app-api-usage'] = PerAppUsage(used=int(groups[0]),
+                                                      total=int(groups[1]),
+                                                      name=groups[2])
+
         return result
 
 class SFType(object):
@@ -545,6 +611,7 @@ class SFType(object):
         # don't wipe out original proxies with None
         if not session and proxies is not None:
             self.session.proxies = proxies
+        self.api_usage = {}
 
         self.base_url = (
             u'https://{instance}/services/data/v{sf_version}/sobjects'
@@ -780,6 +847,10 @@ class SFType(object):
 
         if result.status_code >= 300:
             exception_handler(result, self.name)
+
+        sforce_limit_info = result.headers.get('Sforce-Limit-Info')
+        if sforce_limit_info:
+            self.api_usage = Salesforce.parse_api_usage(sforce_limit_info)
 
         return result
 

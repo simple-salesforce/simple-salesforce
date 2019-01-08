@@ -49,3 +49,98 @@ LOGIN_RESPONSE_SUCCESS = """<?xml version="1.0" encoding="UTF-8"?>
    </soapenv:Body>
 </soapenv:Envelope>
 """ % (METADATA_URL, SERVER_URL, SESSION_ID)
+
+ORGANIZATION_LIMITS_RESPONSE = {
+    "ConcurrentAsyncGetReportInstances": {
+        "Max": 200,
+        "Remaining": 200
+    },
+    "ConcurrentSyncReportRuns": {
+        "Max": 20,
+        "Remaining": 20
+    },
+    "DailyApiRequests": {
+        "Max": 15000,
+        "Remaining": 14998
+    },
+    "DailyAsyncApexExecutions": {
+        "Max": 250000,
+        "Remaining": 250000
+    },
+    "DailyBulkApiRequests": {
+        "Max": 5000,
+        "Remaining": 5000
+    },
+    "DailyDurableGenericStreamingApiEvents": {
+        "Max": 10000,
+        "Remaining": 10000
+    },
+    "DailyDurableStreamingApiEvents": {
+        "Max": 10000,
+        "Remaining": 10000
+    },
+    "DailyGenericStreamingApiEvents": {
+        "Max": 10000,
+        "Remaining": 10000
+    },
+    "DailyStreamingApiEvents": {
+        "Max": 10000,
+        "Remaining": 10000
+    },
+    "DailyWorkflowEmails": {
+        "Max": 390,
+        "Remaining": 390
+    },
+    "DataStorageMB": {
+        "Max": 5,
+        "Remaining": 5
+    },
+    "DurableStreamingApiConcurrentClients": {
+        "Max": 20,
+        "Remaining": 20
+    },
+    "FileStorageMB": {
+        "Max": 20,
+        "Remaining": 20
+    },
+    "HourlyAsyncReportRuns": {
+        "Max": 1200,
+        "Remaining": 1200
+    },
+    "HourlyDashboardRefreshes": {
+        "Max": 200,
+        "Remaining": 200
+    },
+    "HourlyDashboardResults": {
+        "Max": 5000,
+        "Remaining": 5000
+    },
+    "HourlyDashboardStatuses": {
+        "Max": 999999999,
+        "Remaining": 999999999
+    },
+    "HourlyODataCallout": {
+        "Max": 10000,
+        "Remaining": 9999
+    },
+    "HourlySyncReportRuns": {
+        "Max": 500,
+        "Remaining": 500
+    },
+    "HourlyTimeBasedWorkflow": {
+        "Max": 50,
+        "Remaining": 50
+    },
+    "MassEmail": {
+        "Max": 10,
+        "Remaining": 10
+    },
+    "SingleEmail": {
+        "Max": 15,
+        "Remaining": 15
+    },
+    "StreamingApiConcurrentClients": {
+        "Max": 20,
+        "Remaining": 20
+    }
+}
