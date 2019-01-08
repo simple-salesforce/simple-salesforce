@@ -34,38 +34,6 @@ from simple_salesforce.api import (
 )
 
 
-### the following cannot pass the CL test
-###   although it is OK to run 
-###     emailSimple = SFAction(
-###        session_id=5,
-###        sf_instance='my.salesforce.com',
-###        session=requests.Session()
-###    )
-
-#def _create_sf_emailSimple(session_id='5',
-#                           sf_instance='my.salesforce.com'):
-#    """Creates SF emailSimple instances"""
-#    return SFAction(
-#        session_id=session_id,
-#        sf_instance=sf_instance,
-#        session=requests.Session()
-#    )
-#
-#
-class TestSFEmailSimple(unittest.TestCase):
-    """Tests for SFEmailSimple instance"""
-    def setUp(self):
-        pass
-#        request_patcher = patch('simple_salesforce.api.requests')
-#        self.mockrequest = request_patcher.start()
-#        self.addCleanup(request_patcher.stop)
-
-#    @responses.activate
-#    def test_version(self):
-#        emailSimple = _create_sf_emailSimple()
-#        self.assertGreaterEqual(float(emailSimple.sf_version), 32.0)
-
-
 
 
 def _create_sf_type(
