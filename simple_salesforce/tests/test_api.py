@@ -27,8 +27,7 @@ import requests
 from simple_salesforce import tests
 from simple_salesforce.api import (
     Salesforce,
-    SFAction,
-    SFType,
+    SFType,     # SFAction,
     Usage,
     PerAppUsage
 )
