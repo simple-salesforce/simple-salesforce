@@ -53,7 +53,7 @@ class TestSFEmailSimple(unittest.TestCase):
 
     @responses.activate
     def test_version(self):
-        """SFEmailSimple is only tested on  on 32.0 """
+        """SFEmailSimple is supported for version 32.0 or later"""
         simple_email = _create_sf_emailaction()
         self.assertGreaterEqual(float(simple_email.sf_version), 32.0)
 

@@ -546,8 +546,8 @@ class SFAction(object):
     def __init__(self, session_id, sf_instance,
             sf_version='32.0', proxies=None, session=None):
         """
-        Initialize SF Action. Note some actions are only available after version 32.0,
-        so we use default sf_version='32.0'
+        Initialize SF Action. Note default sf_version='32.0'
+        because some actions are available after version 32
         """
         self.session_id = session_id
         self.session = session or requests.Session()
@@ -584,13 +584,11 @@ class SFAction(object):
         }
 
         result = self.session.request('POST',
-                                      urljoin(self.base_url, 'standard/emailSimple/'),
-                                      headers=headers, data=json.dumps(email_data))
+                      urljoin(self.base_url, 'standard/emailSimple/'),
+                      headers=headers, data=json.dumps(email_data))
 
         if result.status_code >= 300:
             exception_handler(result)
-            
-
 
 
 class SFType(object):
