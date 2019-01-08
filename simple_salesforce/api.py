@@ -229,16 +229,20 @@ class Salesforce(object):
         if name.startswith('__'):
             return super(Salesforce, self).__getattr__(name)
 
-        if name == 'Action':
-            return SFAction(self.session_id, self.sf_instance,
-                            proxies=self.proxies, session=self.session)
+        print('name=', type(name), name)
 
         if name == 'bulk':
             # Deal with bulk API functions
             return SFBulkHandler(self.session_id, self.bulk_url, self.proxies,
                                  self.session)
 
-        print('name=', name)
+        if name == 'Action':
+            # Deal with Action (simple_email)
+            return SFAction(self.session_id,
+                            self.sf_instance,
+                            proxies=self.proxies,
+                            session=self.session)
+
         return SFType(
             name, self.session_id,
             self.sf_instance, sf_version=self.sf_version,
