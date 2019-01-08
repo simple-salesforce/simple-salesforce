@@ -55,9 +55,10 @@ from simple_salesforce.api import (
 class TestSFEmailSimple(unittest.TestCase):
     """Tests for SFEmailSimple instance"""
     def setUp(self):
-        request_patcher = patch('simple_salesforce.api.requests')
-        self.mockrequest = request_patcher.start()
-        self.addCleanup(request_patcher.stop)
+        pass
+#        request_patcher = patch('simple_salesforce.api.requests')
+#        self.mockrequest = request_patcher.start()
+#        self.addCleanup(request_patcher.stop)
 
 #    @responses.activate
 #    def test_version(self):
