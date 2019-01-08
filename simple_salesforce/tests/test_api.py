@@ -35,12 +35,12 @@ from simple_salesforce.api import (
 
 def _create_sf_emailSimple(session_id='5',
                           sf_instance='my.salesforce.com'):
-   """Creates SF emailSimple instances"""
-   return SFAction(
-       session_id=session_id,
-       sf_instance=sf_instance,
-       session=requests.Session()
-   )
+    """Creates SF emailSimple instances"""
+    return SFAction(
+        session_id=session_id,
+        sf_instance=sf_instance,
+        session=requests.Session()
+    )
 
 
 class TestSFEmailSimple(unittest.TestCase):

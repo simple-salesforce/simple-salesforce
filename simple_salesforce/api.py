@@ -235,11 +235,11 @@ class Salesforce(object):
                                  self.session)
 
         if name == 'Action':
-           # Deal with simple_email action
-           return SFAction(self.session_id,
-                           self.sf_instance,
-                           proxies=self.proxies,
-                           session=self.session)
+            # Deal with simple_email action
+            return SFAction(self.session_id,
+                            self.sf_instance,
+                            proxies=self.proxies,
+                            session=self.session)
 
         return SFType(
             name,
