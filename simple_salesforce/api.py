@@ -49,7 +49,7 @@ PerAppUsage = namedtuple('PerAppUsage', 'used total name')
 
 
 # pylint: disable=too-many-instance-attributes
-class Salesforce(object):
+class Salesforce:
     """Salesforce Instance
 
     An instance of Salesforce is a handy way to wrap a Salesforce session
@@ -529,7 +529,7 @@ class Salesforce(object):
 
         return result
 
-class SFType(object):
+class SFType:
     """An interface to a specific type of SObject"""
 
     # pylint: disable=too-many-arguments
