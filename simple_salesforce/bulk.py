@@ -12,7 +12,7 @@ from time import sleep
 from simple_salesforce.util import call_salesforce
 
 
-class SFBulkHandler:
+class SFBulkHandler(object):
     """ Bulk API request handler
     Intermediate class which allows us to use commands,
      such as 'sf.bulk.Contacts.insert(...)'
@@ -51,7 +51,7 @@ class SFBulkHandler:
         return SFBulkType(object_name=name, bulk_url=self.bulk_url,
                           headers=self.headers, session=self.session)
 
-class SFBulkType:
+class SFBulkType(object):
     """ Interface to Bulk/Async API functions"""
 
     def __init__(self, object_name, bulk_url, headers, session):
