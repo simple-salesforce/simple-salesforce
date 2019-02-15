@@ -34,7 +34,6 @@ except ImportError:
 #pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
 
-
 def _warn_request_deprecation():
     """Deprecation for (Salesforce/SFType).request attribute"""
     warnings.warn(
@@ -650,7 +649,7 @@ class SFType(object):
         )
         return result.json(object_pairs_hook=OrderedDict)
 
-    def create(self, data, headers=None):
+    def create(self, data, headers=None, files=None):
         """Creates a new SObject using a POST to `.../{object_name}/`.
 
         Returns a dict decoded from the JSON payload returned by Salesforce.
@@ -661,10 +660,17 @@ class SFType(object):
                   JSON-encoded before being transmitted.
         * headers -- a dict with additional request headers.
         """
-        result = self._call_salesforce(
-            method='POST', url=self.base_url,
-            data=json.dumps(data), headers=headers
-        )
+        result = None
+        if files:
+            result = self._call_salesforce(
+                method='POST', url=self.base_url,
+                files=files, headers=headers
+            )
+        else:
+            result = self._call_salesforce(
+                method='POST', url=self.base_url,
+                data=json.dumps(data), headers=headers
+            )
         return result.json(object_pairs_hook=OrderedDict)
 
     def upsert(self, record_id, data, raw_response=False, headers=None):
@@ -788,6 +794,8 @@ class SFType(object):
         }
         additional_headers = kwargs.pop('headers', dict())
         headers.update(additional_headers or dict())
+        if additional_headers.get('Content-Type') == '':
+            headers.pop('Content-Type')
         result = self.session.request(method, url, headers=headers, **kwargs)
 
         if result.status_code >= 300:
