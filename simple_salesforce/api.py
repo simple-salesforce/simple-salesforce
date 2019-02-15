@@ -34,6 +34,7 @@ except ImportError:
 #pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
 
+
 def _warn_request_deprecation():
     """Deprecation for (Salesforce/SFType).request attribute"""
     warnings.warn(
