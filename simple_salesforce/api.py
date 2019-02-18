@@ -795,7 +795,7 @@ class SFType(object):
         }
         additional_headers = kwargs.pop('headers', dict())
         headers.update(additional_headers or dict())
-        if additional_headers.get('Content-Type') == '':
+        if additional_headers and additional_headers.get('Content-Type') == '':
             headers.pop('Content-Type')
         result = self.session.request(method, url, headers=headers, **kwargs)
 
