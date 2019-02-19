@@ -767,7 +767,7 @@ class TestSalesforce(unittest.TestCase):
         """
         Test creating a non-binary (string) attachment.
         """
-        b = {"Name":"attachment.txt",
+        data = {"Name":"attachment.txt",
              "body":"this is the body of the document"}
         responses.add(
             responses.POST,
@@ -777,7 +777,8 @@ class TestSalesforce(unittest.TestCase):
         )
 
         sf_type = _create_sf_type(object_name='Attachment')
-        result = sf_type.create(data=b)
+        # pylint: disable=unused-variable
+        result = sf_type.create(data=data)
         request_headers = responses.calls[0].request.headers
         self.assertEqual(request_headers['Content-Type'], 'application/json')
 
@@ -786,11 +787,12 @@ class TestSalesforce(unittest.TestCase):
         """
         Test creation of a binary attachment. This requires a multi-part upload.
         """
-        s = BytesIO()
-        s.write(b'\xFFFF\xAAAA\xBBBB')
-        s.seek(0)
-        files = {'Body': ('filename.png', s, 'image/png'),
-                 'entity_document': (None, json.dumps({'Name':'my photo'}), 'application/json')}
+        attachment_object = BytesIO()
+        attachment_object.write(b'\xFFFF\xAAAA\xBBBB')
+        attachment_object.seek(0)
+        files = {'Body': ('filename.png', attachment_object, 'image/png'),
+                 'entity_document': (None, json.dumps({'Name':'my photo'}),
+                                     'application/json')}
         responses.add(
             responses.POST,
             re.compile(r'^https://.*/Attachment/$'),
@@ -800,7 +802,11 @@ class TestSalesforce(unittest.TestCase):
 
         sf_type = _create_sf_type(object_name='Attachment')
         # Note it is important to send the zero-length string as Conent-Type
-        # for the default 'application/json' header to be replaced with 'multipart/form-data'.
-        result = sf_type.create(data=None, files=files, headers={'Content-Type':''})
+        # for the default 'application/json' header to be replaced with
+        # 'multipart/form-data'.
+        # pylint: disable=unused-variable
+        result = sf_type.create(
+            data=None, files=files, headers={'Content-Type':''})
         request_headers = responses.calls[0].request.headers
-        self.assertEqual(request_headers['Content-Type'][:19], 'multipart/form-data')
+        self.assertEqual(
+            request_headers['Content-Type'][:19], 'multipart/form-data')
