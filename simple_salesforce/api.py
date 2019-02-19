@@ -660,6 +660,9 @@ class SFType(object):
         * data -- a dict of the data to create the SObject from. It will be
                   JSON-encoded before being transmitted.
         * headers -- a dict with additional request headers.
+        * files -- a dict of the data to create the SObject from. It is used
+                   for multipart uploads using the files parameter to
+                   requests.request
         """
         result = None
         if files:
