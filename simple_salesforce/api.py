@@ -471,8 +471,12 @@ class Salesforce(object):
 
         Returns a `requests.result` object.
         """
+        headers = self.headers.copy()
+        additional_headers = kwargs.pop('headers', dict())
+        headers.update(additional_headers)
+
         result = self.session.request(
-            method, url, headers=self.headers, **kwargs)
+            method, url, headers=headers, **kwargs)
 
         if result.status_code >= 300:
             exception_handler(result, name=name)

@@ -25,7 +25,7 @@ To add a Contact using the default version of the API you'd use:
 .. code-block:: python
 
     from simple_salesforce import SFType
-    contact = SFType('Contact','sesssionid','na1.salesforce.com')
+    contact = SFType('Contact','sessionid','na1.salesforce.com')
     contact.create({'LastName':'Smith','Email':'example@example.com'})
 
 To use a proxy server between your client and the SalesForce endpoint, use the proxies argument when creating SalesForce object.
