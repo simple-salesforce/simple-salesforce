@@ -155,10 +155,13 @@ class SFBulkType(object):
                                  headers=self.headers)
 
         if operation == 'query' or operation == 'queryAll':
-            url_query_results = "{}{}{}".format(url, '/', result.json()[0])
-            query_result = call_salesforce(url=url_query_results, method='GET',
-                                           session=self.session,
-                                           headers=self.headers)
+            query_result = []
+            for batch_result in result.json():
+                url_query_results = "{}{}{}".format(url, '/', batch_result)
+                batch_query_result = call_salesforce(url=url_query_results, method='GET',
+                                               session=self.session,
+                                               headers=self.headers)
+                query_result.extend(batch_query_result)
             return query_result.json()
 
         return result.json()
