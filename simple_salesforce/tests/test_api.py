@@ -1145,5 +1145,6 @@ class TestSalesforce(unittest.TestCase):
         session = requests.Session()
         client = Salesforce(session_id=tests.SESSION_ID,
                             instance_url=tests.SERVER_URL,
-                            session=session, concurrency_mode='Parallel')
+                            session=session,
+                            concurrency_mode='Parallel')
         results = client.bulk.Contact.query("")
