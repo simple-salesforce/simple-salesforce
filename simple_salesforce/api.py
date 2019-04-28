@@ -60,7 +60,7 @@ class Salesforce(object):
             self, username=None, password=None, security_token=None,
             session_id=None, instance=None, instance_url=None,
             organizationId=None, sandbox=None, version=DEFAULT_API_VERSION,
-            proxies=None, session=None, client_id=None, domain=None):
+            proxies=None, session=None, client_id=None, domain=None, batch_size=10000000):
         """Initialize the instance with the given parameters.
 
         Available kwargs
@@ -118,6 +118,7 @@ class Salesforce(object):
         self.domain = domain
         self.session = session or requests.Session()
         self.proxies = self.session.proxies
+        self.batch_size = batch_size
         # override custom session proxies dance
         if proxies is not None:
             if not session:
@@ -232,7 +233,7 @@ class Salesforce(object):
         if name == 'bulk':
             # Deal with bulk API functions
             return SFBulkHandler(self.session_id, self.bulk_url, self.proxies,
-                                 self.session)
+                                 self.session, self.batch_size)
 
         return SFType(
             name, self.session_id, self.sf_instance, sf_version=self.sf_version,

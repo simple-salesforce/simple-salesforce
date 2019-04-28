@@ -20,7 +20,7 @@ class SFBulkHandler(object):
     to allow the above syntax
     """
 
-    def __init__(self, session_id, bulk_url, proxies=None, session=None):
+    def __init__(self, session_id, bulk_url, proxies=None, session=None, batch_size=None, concurrency_mode=None):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -35,6 +35,8 @@ class SFBulkHandler(object):
         self.session_id = session_id
         self.session = session or requests.Session()
         self.bulk_url = bulk_url
+        self.batch_size = batch_size
+        self.concurrency_mode = concurrency_mode
         # don't wipe out original proxies with None
         if not session and proxies is not None:
             self.session.proxies = proxies
@@ -49,12 +51,12 @@ class SFBulkHandler(object):
 
     def __getattr__(self, name):
         return SFBulkType(object_name=name, bulk_url=self.bulk_url,
-                          headers=self.headers, session=self.session)
+                          headers=self.headers, session=self.session, batch_size=self.batch_size, concurrency_mode=self.concurrency_mode)
 
 class SFBulkType(object):
     """ Interface to Bulk/Async API functions"""
 
-    def __init__(self, object_name, bulk_url, headers, session, chunk_size=10000000):
+    def __init__(self, object_name, bulk_url, headers, session, batch_size, concurrency_mode):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -71,7 +73,8 @@ class SFBulkType(object):
         self.bulk_url = bulk_url
         self.session = session
         self.headers = headers
-        self.chunk_size = chunk_size
+        self.batch_size = batch_size
+        self.concurrency_mode=concurrency_mode
 
     def _create_job(self, operation, object_name, external_id_field=None):
         """ Create a bulk job
@@ -86,7 +89,8 @@ class SFBulkType(object):
         payload = {
             'operation': operation,
             'object': object_name,
-            'contentType': 'JSON'
+            'contentType': 'JSON',
+            'concurrencyMode': self.concurrency_mode
         }
 
         if operation == 'upsert':
@@ -167,7 +171,7 @@ class SFBulkType(object):
         """
         chunks a datasets for batches
         """
-        n = self.chunk_size
+        n = self.batch_size
         for i in range(0, len(data), n):
             yield data[i:i+n]
 
