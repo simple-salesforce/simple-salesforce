@@ -54,7 +54,7 @@ class SFBulkHandler(object):
 class SFBulkType(object):
     """ Interface to Bulk/Async API functions"""
 
-    def __init__(self, object_name, bulk_url, headers, session):
+    def __init__(self, object_name, bulk_url, headers, session, chunk_size=10000000):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -71,6 +71,7 @@ class SFBulkType(object):
         self.bulk_url = bulk_url
         self.session = session
         self.headers = headers
+        self.chunk_size = chunk_size
 
     def _create_job(self, operation, object_name, external_id_field=None):
         """ Create a bulk job
@@ -162,6 +163,14 @@ class SFBulkType(object):
 
         return result.json()
 
+    def _divide_into_chunks(self, data):
+        """
+        chunks a datasets for batches
+        """
+        n = self.chunk_size
+        for i in range(0, len(data), n):
+            yield data[i:i+n]
+
     #pylint: disable=R0913
     def _bulk_operation(self, object_name, operation, data,
                         external_id_field=None, wait=5):
@@ -179,23 +188,31 @@ class SFBulkType(object):
 
         job = self._create_job(object_name=object_name, operation=operation,
                                external_id_field=external_id_field)
-
-        batch = self._add_batch(job_id=job['id'], data=data,
-                                operation=operation)
+        results = []
+        batches = []
+        chunks = self._divide_into_chunks(data)
+        for chunk in chunks:
+            batch = self._add_batch(job_id=job['id'], data=chunk,
+                                    operation=operation)
+            batches.append(batch)
 
         self._close_job(job_id=job['id'])
 
-        batch_status = self._get_batch(job_id=batch['jobId'],
-                                       batch_id=batch['id'])['state']
+        while len(batches) > 0:
+            # start querying the last batch added, give at least one wait period b4
+            batch = batches.pop(-1)
+            batch_status = 'Not Queried yet'
+            
+            while batch_status not in ['Completed', 'Failed', 'Not Processed']:
+                sleep(wait) # 
+                batch_status = self._get_batch(job_id=batch['jobId'],
+                                               batch_id=batch['id'])['state']
 
-        while batch_status not in ['Completed', 'Failed', 'Not Processed']:
-            sleep(wait)
-            batch_status = self._get_batch(job_id=batch['jobId'],
-                                           batch_id=batch['id'])['state']
-
-        results = self._get_batch_results(job_id=batch['jobId'],
-                                          batch_id=batch['id'],
-                                          operation=operation)
+            result = self._get_batch_results(job_id=batch['jobId'],
+                                              batch_id=batch['id'],
+                                              operation=operation)
+            results.extend(result)
+         
         return results
 
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
