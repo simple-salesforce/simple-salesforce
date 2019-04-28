@@ -759,7 +759,7 @@ class TestSalesforce(unittest.TestCase):
         self.assertEqual(result, tests.ORGANIZATION_LIMITS_RESPONSE)
 
     @responses.activate
-    def test_data_batches_default_limits(self):
+    def test_data_bulk_batches_default_limits(self):
         """Test method for getting Salesforce organization limits"""
 
         # start a job
@@ -877,7 +877,7 @@ class TestSalesforce(unittest.TestCase):
         self.assertEqual(results, expected_results)
 
     @responses.activate
-    def test_data_batches_modified_limits(self):
+    def test_data_bulk_batches_modified_limits(self):
         """Test method for getting Salesforce organization limits"""
 
         # start a job
@@ -1021,3 +1021,129 @@ class TestSalesforce(unittest.TestCase):
 
         results = client.bulk.Contact.insert(data)
         self.assertEqual(results, expected_results)
+
+    @responses.activate
+    def test_data_bulk_parallel_serial(self):
+        """Test method for getting Salesforce organization limits"""
+        global concurrencyMode
+
+        # start a job
+        def batch_callback(request):
+            global concurrencyMode
+            body = request.body
+            body = json.loads(body)
+            cm = body['concurrencyMode']
+
+            res = '''{
+                "apexProcessingTime" : 0,
+                "apiActiveProcessingTime" : 0,
+                "apiVersion" : 36.0,
+                "concurrencyMode" : "%s",
+                "contentType" : "JSON",
+                "createdById" : "005D0000001b0fFIAQ",
+                "createdDate" : "2015-12-15T20:45:25.000+0000",
+                "id" : "750D00000004SkGIAU",
+                "numberBatchesCompleted" : 0,
+                "numberBatchesFailed" : 0,
+                "numberBatchesInProgress" : 0,
+                "numberBatchesQueued" : 0,
+                "numberBatchesTotal" : 0,
+                "numberRecordsFailed" : 0,
+                "numberRecordsProcessed" : 0,
+                "numberRetries" : 0,
+                "object" : "Account",
+                "operation" : "insert",
+                "state" : "Open",
+                "systemModstamp" : "2015-12-15T20:45:25.000+0000",
+                "totalProcessingTime" : 0
+                }''' % (concurrencyMode)
+            return (200 if cm == concurrencyMode else 400, {}, res)
+        responses.add_callback(
+            responses.POST,
+            re.compile(r'^https://.*/services/async/38.0/job$'),
+            callback=batch_callback)
+        # add a batch
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://.*/services/async/38.0/job/750D00000004SkGIAU/batch$'),
+            body='''{
+               "apexProcessingTime":0,
+               "apiActiveProcessingTime":0,
+               "createdDate":"2015-12-15T21:56:43.000+0000",
+               "id":"751D00000004YGZIA2",
+               "jobId":"750D00000004SkVIAU",
+               "numberRecordsFailed":0,
+               "numberRecordsProcessed":0,
+               "state":"Queued",
+               "systemModstamp":"2015-12-15T21:56:43.000+0000",
+               "totalProcessingTime":0
+            }''',
+            status=http.OK)
+        # close job
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://.*/services/async/38.0/job/750D00000004SkGIAU$'),
+            body='''{
+               "apexProcessingTime":0,
+               "apiActiveProcessingTime":0,
+               "createdDate":"2015-12-15T21:56:43.000+0000",
+               "id":"751D00000004YGZIA2",
+               "jobId":"750D00000004SkVIAU",
+               "numberRecordsFailed":0,
+               "numberRecordsProcessed":0,
+               "state":"Closed",
+               "systemModstamp":"2015-12-15T21:56:43.000+0000",
+               "totalProcessingTime":0
+            }''',
+            status=http.OK)
+        # batch status
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/services/async/38.0/job/750D00000004SkVIAU/batch/751D00000004YGZIA2$'),
+            body='''{
+               "apexProcessingTime":0,
+               "apiActiveProcessingTime":0,
+               "createdDate":"2015-12-15T21:56:43.000+0000",
+               "id":"751D00000004YGZIA2",
+               "jobId":"750D00000004SkVIAU",
+               "numberRecordsFailed":0,
+               "numberRecordsProcessed":0,
+               "state":"Completed",
+               "systemModstamp":"2015-12-15T21:56:43.000+0000",
+               "totalProcessingTime":0
+            }''',
+            status=http.OK)
+        # batch results
+        expected_results = [
+               {
+                  "success" : True,
+                  "created" : True,
+                  "id" : "001xx000003DHP0AAO",
+                  "errors" : []
+               },
+               {
+                  "success" : True,
+                  "created" : True,
+                  "id" : "001xx000003DHP1AAO",
+                  "errors" : []
+               }
+            ]
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/services/async/38.0/job/750D00000004SkVIAU/batch/751D00000004YGZIA2/result$'),
+            json=expected_results,
+            status=http.OK)
+
+        concurrencyMode = "Serial"
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+        results = client.bulk.Contact.query("")
+
+        concurrencyMode = "Parallel"
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session, concurrency_mode='Parallel')
+        results = client.bulk.Contact.query("")
