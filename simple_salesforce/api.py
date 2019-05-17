@@ -60,7 +60,8 @@ class Salesforce(object):
             self, username=None, password=None, security_token=None,
             session_id=None, instance=None, instance_url=None,
             organizationId=None, sandbox=None, version=DEFAULT_API_VERSION,
-            proxies=None, session=None, client_id=None, domain=None):
+            proxies=None, session=None, client_id=None, domain=None,
+            timeout=None):
         """Initialize the instance with the given parameters.
 
         Available kwargs
@@ -94,7 +95,7 @@ class Salesforce(object):
         * session -- Custom requests session, created in calling code. This
                      enables the use of requests Session features not otherwise
                      exposed by simple_salesforce.
-
+        * timeout -- the global timeout to use, in seconds, for each request
         """
         if (sandbox is not None) and (domain is not None):
             raise ValueError("Both 'sandbox' and 'domain' arguments were "
@@ -196,6 +197,7 @@ class Salesforce(object):
                                  version=self.sf_version))
 
         self.api_usage = {}
+        self.timeout = timeout
 
     def describe(self):
         """Describes all available objects
@@ -474,6 +476,9 @@ class Salesforce(object):
         headers = self.headers.copy()
         additional_headers = kwargs.pop('headers', dict())
         headers.update(additional_headers)
+
+        if 'timeout' not in kwargs and self.timeout is not None:
+            kwargs['timeout'] = self.timeout
 
         result = self.session.request(
             method, url, headers=headers, **kwargs)
