@@ -13,17 +13,23 @@ from simple_salesforce.exceptions import SalesforceAuthenticationFailed
 try:
     # Python 3+
     from html import escape
+    from json.decoder import JSONDecodeError
 except ImportError:
     from cgi import escape
+    JSONDecodeError = ValueError
 import requests
 import warnings
+import time
+from datetime import datetime, timedelta
+from authlib.jose import jwt
 
 
 # pylint: disable=invalid-name,too-many-arguments,too-many-locals
 def SalesforceLogin(
         username=None, password=None, security_token=None,
         organizationId=None, sandbox=None, sf_version=DEFAULT_API_VERSION,
-        proxies=None, session=None, client_id=None, domain=None):
+        proxies=None, session=None, client_id=None, domain=None,
+        consumer_key=None, privatekey_file=None):
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
     the domain of the instance of Salesforce to use for the session.
@@ -47,6 +53,9 @@ def SalesforceLogin(
                 common domains, such as 'login' or 'test', or
                 Salesforce My domain. If not used, will default to
                 'login'.
+    * consumer_key -- the consumer key generated for the user
+    * privatekey_file -- the path to the private key file used
+                         for signing the JWT token
     """
     if (sandbox is not None) and (domain is not None):
         raise ValueError("Both 'sandbox' and 'domain' arguments were "
@@ -77,8 +86,8 @@ def SalesforceLogin(
                                sf_version=sf_version)
 
     # pylint: disable=E0012,deprecated-method
-    username = escape(username)
-    password = escape(password)
+    username = escape(username) if username else None
+    password = escape(password) if password else None
 
     # Check if token authentication is used
     if security_token is not None:
@@ -150,6 +159,33 @@ def SalesforceLogin(
             </soapenv:Body>
         </soapenv:Envelope>""".format(
             username=username, password=password, client_id=client_id)
+    elif username is not None and \
+            consumer_key is not None and \
+            privatekey_file is not None:
+        header = {'alg': 'RS256'}
+        expiration = datetime.utcnow() + timedelta(minutes=3)
+        payload = {
+            'iss': consumer_key,
+            'sub': username,
+            'aud': 'https://{domain}.salesforce.com'.format(domain=domain),
+            'exp': '{exp:.0f}'.format(
+                exp=time.mktime(expiration.timetuple()) +
+                    expiration.microsecond / 1e6
+            )
+        }
+        with open(privatekey_file, 'rb') as key:
+            assertion = jwt.encode(header, payload, key.read())
+
+        login_token_request_data = {
+            'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            'assertion': assertion
+        }
+
+        return token_login(
+            'https://{domain}.salesforce.com/services/oauth2/token'.format(
+                domain=domain),
+            login_token_request_data, domain, consumer_key,
+            None, proxies, session)
     else:
         except_code = 'INVALID AUTH'
         except_msg = (
@@ -163,9 +199,15 @@ def SalesforceLogin(
         'charset': 'UTF-8',
         'SOAPAction': 'login'
     }
+
+    return soap_login(soap_url, login_soap_request_body,
+        login_soap_request_headers, proxies, session)
+
+
+def soap_login(soap_url, request_body, headers, proxies, session=None):
+    """Process SOAP specific login workflow."""
     response = (session or requests).post(
-        soap_url, login_soap_request_body, headers=login_soap_request_headers,
-        proxies=proxies)
+        soap_url, request_body, headers=headers, proxies=proxies)
 
     if response.status_code != 200:
         except_code = getUniqueElementValueFromXmlString(
@@ -186,3 +228,45 @@ def SalesforceLogin(
                    .replace('-api', ''))
 
     return session_id, sf_instance
+
+
+def token_login(token_url, token_data, domain, consumer_key,
+                headers, proxies, session=None):
+    """Process OAuth 2.0 JWT Bearer Token Flow."""
+    response = (session or requests).post(
+        token_url, token_data, headers=headers, proxies=proxies)
+
+    try:
+        json_response = response.json()
+    except JSONDecodeError:
+        raise SalesforceAuthenticationFailed(
+            response.status_code, response.text
+        )
+
+    if response.status_code != 200:
+        except_code = json_response.get('error')
+        except_msg = json_response.get('error_description')
+        if except_msg == "user hasn't approved this consumer":
+            auth_url = 'https://{domain}.salesforce.com/services/oauth2/' \
+                       'authorize?response_type=code&client_id=' \
+                       '{consumer_key}&redirect_uri=<approved URI>'.format(
+                            domain=domain,
+                            consumer_key=consumer_key
+                        )
+            warnings.warn("""
+    If your connected app policy is set to "All users may 
+    self-authorize", you may need to authorize this 
+    application first. Browse to 
+    %s 
+    in order to Allow Access. Check first to ensure you have a valid 
+    <approved URI>.""" % auth_url)
+        raise SalesforceAuthenticationFailed(except_code, except_msg)
+
+    access_token = json_response.get('access_token')
+    instance_url = json_response.get('instance_url')
+
+    sf_instance = instance_url.replace(
+        'http://', '').replace(
+        'https://', '')
+
+    return access_token, sf_instance
