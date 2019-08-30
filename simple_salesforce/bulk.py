@@ -193,7 +193,7 @@ class SFBulkType(object):
         return result
 
     def _bulk_operation(self, object_name, operation, data,
-                        external_id_field=None, wait=5, batchsize=10000):
+                        external_id_field=None, batchsize=10000):
         """ String together helper functions to create a complete
         end-to-end bulk API request
 
