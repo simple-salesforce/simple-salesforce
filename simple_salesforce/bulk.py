@@ -218,7 +218,7 @@ class SFBulkType(object):
                                        job=job,
                                        operation=operation)
 
-        list_of_results = multi_process_worker.map(multi_process_worker,
+        list_of_results = pool.map(multi_process_worker,
                                                    chunked_data)
 
         results = [i for sublist in list_of_results for i in sublist]
