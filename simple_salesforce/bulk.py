@@ -186,7 +186,7 @@ class SFBulkType(object):
                                                batch_id=batch['id'])['state']
 
             batch_results = self._get_batch_results(job_id=batch['jobId'],
-                                                    batch_id=batch['id'], 
+                                                    batch_id=batch['id'],
                                                     operation=operation)
             result_list.append(batch_results)
         result = [i for sublist in result_list for i in sublist]
@@ -210,17 +210,17 @@ class SFBulkType(object):
 
         job = self._create_job(object_name=object_name, operation=operation,
                                external_id_field=external_id_field)
-        chunked_data = [[i] for i in [data[i*batchsize:(i+1)*batchsize] 
+        chunked_data = [[i] for i in [data[i*batchsize:(i+1)*batchsize]
                                       for i in range((len(data)//batchsize+1))]]
 
 
-        multi_process_worker = partial(self.worker, 
-                                       job=job, 
+        multi_process_worker = partial(self.worker,
+                                       job=job,
                                        operation=operation)
-        
-        list_of_results = multi_process_worker.map(multi_process_worker, 
+
+        list_of_results = multi_process_worker.map(multi_process_worker,
                                                    chunked_data)
-        
+
         results = [i for sublist in list_of_results for i in sublist]
         pool.close()
         pool.join()
@@ -233,14 +233,14 @@ class SFBulkType(object):
     def delete(self, data, batchsize=10000):
         """ soft delete records """
         results = self._bulk_operation(object_name=self.object_name,
-                                       operation='delete', data=data, 
+                                       operation='delete', data=data,
                                        batchsize=batchsize)
         return results
 
     def insert(self, data, batchsize=10000):
         """ insert records """
         results = self._bulk_operation(object_name=self.object_name,
-                                       operation='insert', data=data, 
+                                       operation='insert', data=data,
                                        batchsize=batchsize)
         return results
 
@@ -255,14 +255,14 @@ class SFBulkType(object):
     def update(self, data, batchsize=10000):
         """ update records """
         results = self._bulk_operation(object_name=self.object_name,
-                                       operation='update', data=data, 
+                                       operation='update', data=data,
                                        batchsize=batchsize)
         return results
 
     def hard_delete(self, data, batchsize=10000):
         """ hard delete records """
         results = self._bulk_operation(object_name=self.object_name,
-                                       operation='hardDelete', data=data, 
+                                       operation='hardDelete', data=data,
                                        batchsize=batchsize)
         return results
 
