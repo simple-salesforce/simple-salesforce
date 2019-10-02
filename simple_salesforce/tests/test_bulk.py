@@ -13,11 +13,9 @@ import responses
 try:
     # Python 2.6/2.7
     import httplib as http
-    from mock import patch
 except ImportError:
     # Python 3
     import http.client as http
-    from unittest.mock import patch
 
 import requests
 
@@ -31,6 +29,7 @@ class TestSFBulkType(unittest.TestCase):
     """Tests for SFBulkType instance"""
     @responses.activate
     def test_get_batch_results(self):
+        """Ensure bulk API query interates over results"""
         # start a job
         responses.add(
             responses.POST,
@@ -62,7 +61,8 @@ class TestSFBulkType(unittest.TestCase):
         # add batchs by callback
         batch_ids = ['751D00000004YGZIA2', '751D00000004YGZIA3']
 
-        def batch_callback(request):
+        def batch_callback():
+            """Provides dynamic responses"""
             btch = batch_ids.pop()
             res = '''
                     {
@@ -82,12 +82,12 @@ class TestSFBulkType(unittest.TestCase):
 
         responses.add_callback(
             responses.POST,
-            re.compile(r'^https://.*/services/async/38.0/job/750D00000004SkGIAU/batch$'),
+            re.compile(r'^https://.*/job/750D00000004SkGIAU/batch$'),
             callback=batch_callback)
         # close job
         responses.add(
             responses.POST,
-            re.compile(r'^https://.*/services/async/38.0/job/750D00000004SkGIAU$'),
+            re.compile(r'^https://.*/job/750D00000004SkGIAU$'),
             body='''{
                        "apexProcessingTime":0,
                        "apiActiveProcessingTime":0,
@@ -104,7 +104,8 @@ class TestSFBulkType(unittest.TestCase):
         # batch status
         responses.add(
             responses.GET,
-            re.compile(r'^https://.*/services/async/38.0/job/750D00000004SkVIAU/batch/751D00000004YGZIA2$'),
+            re.compile(r'^https://.*/job/750D00000004SkVIAU/'
+                       r'batch/751D00000004YGZIA2$'),
             body='''{
                        "apexProcessingTime":0,
                        "apiActiveProcessingTime":0,
@@ -120,7 +121,8 @@ class TestSFBulkType(unittest.TestCase):
             status=http.OK)
         responses.add(
             responses.GET,
-            re.compile(r'^https://.*/services/async/38.0/job/750D00000004SkVIAU/batch/751D00000004YGZIA3$'),
+            re.compile(r'^https://.*/job/750D00000004SkVIAU/'
+                       r'batch/751D00000004YGZIA3$'),
             body='''{
                        "apexProcessingTime":0,
                        "apiActiveProcessingTime":0,
@@ -137,26 +139,30 @@ class TestSFBulkType(unittest.TestCase):
         # batch results
         responses.add(
             responses.GET,
-            re.compile(r'^https://.*/services/async/38.0/job/750D00000004SkVIAU/batch/751D00000004YGZIA3/result$'),
+            re.compile(r'^https://.*/job/750D00000004SkVIAU/'
+                       r'batch/751D00000004YGZIA3/result$'),
             body=tests.RESULT_OUTPUT,
             status=http.OK)
 
         responses.add(
             responses.GET,
             re.compile(
-                r'^https://.*/services/async/38.0/job/750D00000004SkVIAU/batch/751D00000004YGZIA3/result/7520y0000061ADL$'),
+                r'^https://.*/job/750D00000004SkVIAU/'
+                r'batch/751D00000004YGZIA3/result/7520y0000061ADL$'),
             json=[{'result_1': 'json_1'}],
             status=http.OK)
         responses.add(
             responses.GET,
             re.compile(
-                r'^https://.*/services/async/38.0/job/750D00000004SkVIAU/batch/751D00000004YGZIA3/result/7520y0000061ADQ$'),
+                r'^https://.*/job/750D00000004SkVIAU/'
+                r'batch/751D00000004YGZIA3/result/7520y0000061ADQ$'),
             json=[{'result_2': 'json_2'}],
             status=http.OK)
         responses.add(
             responses.GET,
             re.compile(
-                r'^https://.*/services/async/38.0/job/750D00000004SkVIAU/batch/751D00000004YGZIA3/result/7520y0000061ADa$'),
+                r'^https://.*/job/750D00000004SkVIAU/'
+                r'batch/751D00000004YGZIA3/result/7520y0000061ADa$'),
             json=[{'result_3': 'json_3'}],
             status=http.OK)
 
@@ -165,9 +171,9 @@ class TestSFBulkType(unittest.TestCase):
                             instance_url=tests.SERVER_URL,
                             session=session)
 
-        result = client.bulk.Account.query('')
+        results = client.bulk.Account.query('')
         result_list = []
-        for r in result:
-            for line in r:
+        for result in results:
+            for line in result:
                 result_list.append(line)
         self.assertEqual(result_list, [{'result_1': 'json_1'}, {'result_2': 'json_2'}, {'result_3': 'json_3'}])

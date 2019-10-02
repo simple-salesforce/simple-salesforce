@@ -160,8 +160,8 @@ class SFBulkType(object):
                                       method='GET',
                                       session=self.session,
                                       headers=self.headers).json()
-
-        return result.json()
+        else:
+            return result.json()
 
     #pylint: disable=R0913
     def _bulk_operation(self, object_name, operation, data,
