@@ -61,7 +61,7 @@ class TestSFBulkType(unittest.TestCase):
         # add batchs by callback
         batch_ids = ['751D00000004YGZIA2', '751D00000004YGZIA3']
 
-        def batch_callback():
+        def batch_callback(res):
             """Provides dynamic responses"""
             btch = batch_ids.pop()
             res = '''
@@ -176,4 +176,7 @@ class TestSFBulkType(unittest.TestCase):
         for result in results:
             for line in result:
                 result_list.append(line)
-        self.assertEqual(result_list, [{'result_1': 'json_1'}, {'result_2': 'json_2'}, {'result_3': 'json_3'}])
+        self.assertEqual(
+            result_list,
+            [{'result_1': 'json_1'}, {'result_2': 'json_2'}, {'result_3': 'json_3'}]
+        )

@@ -160,6 +160,7 @@ class SFBulkType(object):
                                       method='GET',
                                       session=self.session,
                                       headers=self.headers).json()
+            return
         else:
             return result.json()
 
