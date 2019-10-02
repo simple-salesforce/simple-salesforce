@@ -178,5 +178,7 @@ class TestSFBulkType(unittest.TestCase):
                 result_list.append(line)
         self.assertEqual(
             result_list,
-            [{'result_1': 'json_1'}, {'result_2': 'json_2'}, {'result_3': 'json_3'}]
+            [{'result_1': 'json_1'},
+             {'result_2': 'json_2'},
+             {'result_3': 'json_3'}]
         )
