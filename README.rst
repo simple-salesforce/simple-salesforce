@@ -231,7 +231,7 @@ To retrieve a list of top level description of instance metadata, user:
 Using Bulk
 ----------
 
-You can use this library to access Bulk API functions.
+You can use this library to access Bulk API functions. The multi-processing bulk jobs is enabled for updates,upserts,insert,delete, and hard delete. The default batch size for updates,upserts,insert,delete, and hard delete is 10,000 records. You can assign the batch size with the batch size parameter (batchsize).
 
 Create new records:
 
