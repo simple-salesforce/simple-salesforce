@@ -162,39 +162,60 @@ class SFBulkType:
 
     #pylint: disable=R0913
     def _bulk_operation(self, object_name, operation, data,
-                        external_id_field=None, wait=5):
+                        external_id_field=None, batchsize=10000, wait=5):
         """ String together helper functions to create a complete
         end-to-end bulk API request
-
         Arguments:
-
         * object_name -- SF object
         * operation -- Bulk operation to be performed by job
         * data -- list of dict to be passed as a batch
         * external_id_field -- unique identifier field for upsert operations
         * wait -- seconds to sleep between checking batch status
+        * batchsize -- number of records to assign for each batch in the job
         """
+        if operation != 'query':
+            pool = Pool()
 
-        job = self._create_job(object_name=object_name, operation=operation,
-                               external_id_field=external_id_field)
+            job = self._create_job(object_name=object_name, operation=operation,
+                                   external_id_field=external_id_field)
+            chunked_data = [[i] for i in [data[i*batchsize:(i+1)*batchsize]
+                                          for i in range((len(data)//batchsize+1))]]
 
-        batch = self._add_batch(job_id=job['id'], data=data,
-                                operation=operation)
 
-        self._close_job(job_id=job['id'])
+            multi_process_worker = partial(self.worker,
+                                           job=job,
+                                           operation=operation)
 
-        batch_status = self._get_batch(job_id=batch['jobId'],
-                                       batch_id=batch['id'])['state']
+            list_of_results = pool.map(multi_process_worker,
+                                                       chunked_data)
 
-        while batch_status not in ['Completed', 'Failed', 'Not Processed']:
-            sleep(wait)
+            results = [i for sublist in list_of_results for i in sublist]
+            pool.close()
+            pool.join()
+            self._close_job(job_id=job['id'])
+
+        if operation == 'query':
+            job = self._create_job(object_name=object_name, operation=operation,
+                                   external_id_field=external_id_field)
+
+            batch = self._add_batch(job_id=job['id'], data=data,
+                                    operation=operation)
+
+            self._close_job(job_id=job['id'])
+
             batch_status = self._get_batch(job_id=batch['jobId'],
                                            batch_id=batch['id'])['state']
 
-        results = self._get_batch_results(job_id=batch['jobId'],
-                                          batch_id=batch['id'],
-                                          operation=operation)
+            while batch_status not in ['Completed', 'Failed', 'Not Processed']:
+                sleep(wait)
+                batch_status = self._get_batch(job_id=batch['jobId'],
+                                               batch_id=batch['id'])['state']
+
+            results = self._get_batch_results(job_id=batch['jobId'],
+                                              batch_id=batch['id'],
+                                              operation=operation)
         return results
+
 
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
     def delete(self, data):
