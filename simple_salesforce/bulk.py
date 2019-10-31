@@ -210,7 +210,9 @@ class SFBulkType(object):
             job = self._create_job(object_name=object_name, operation=operation,
                                    external_id_field=external_id_field)
             chunked_data = [[i] for i in [data[i*batchsize:(i+1)*batchsize]
-                                          for i in range((len(data)//batchsize+1))]]
+                                          for i 
+                                          in range((len(data)
+                                                    //batchsize+1))]]
 
 
             multi_process_worker = partial(self.worker,
