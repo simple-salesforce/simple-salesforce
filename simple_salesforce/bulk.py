@@ -15,14 +15,16 @@ from simple_salesforce.util import call_salesforce
 class SFBulkHandler(object):
     """ Bulk API request handler
     Intermediate class which allows us to use commands,
-     such as 'sf.bulk.Contacts.insert(...)'
+     such as 'sf.bulk.Contacts.create(...)'
     This is really just a middle layer, whose sole purpose is
     to allow the above syntax
     """
 
     def __init__(self, session_id, bulk_url, proxies=None, session=None):
         """Initialize the instance with the given parameters.
+
         Arguments:
+
         * session_id -- the session ID for authenticating to Salesforce
         * bulk_url -- API endpoint set in Salesforce instance
         * proxies -- the optional map of scheme to proxy server
@@ -54,7 +56,9 @@ class SFBulkType(object):
 
     def __init__(self, object_name, bulk_url, headers, session):
         """Initialize the instance with the given parameters.
+
         Arguments:
+
         * object_name -- the name of the type of SObject this represents,
                          e.g. `Lead` or `Contact`
         * bulk_url -- API endpoint set in Salesforce instance
@@ -70,7 +74,9 @@ class SFBulkType(object):
 
     def _create_job(self, operation, object_name, external_id_field=None):
         """ Create a bulk job
+
         Arguments:
+
         * operation -- Bulk operation to be performed by job
         * object_name -- SF object
         * external_id_field -- unique identifier field for upsert operations
@@ -161,7 +167,9 @@ class SFBulkType(object):
                         external_id_field=None, wait=5):
         """ String together helper functions to create a complete
         end-to-end bulk API request
+
         Arguments:
+
         * object_name -- SF object
         * operation -- Bulk operation to be performed by job
         * data -- list of dict to be passed as a batch
@@ -198,7 +206,7 @@ class SFBulkType(object):
         return results
 
     def insert(self, data):
-        """ insert/create records """
+        """ insert records """
         results = self._bulk_operation(object_name=self.object_name,
                                        operation='insert', data=data)
         return results
