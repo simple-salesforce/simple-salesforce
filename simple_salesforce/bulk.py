@@ -10,8 +10,7 @@ import json
 import requests
 from time import sleep
 from simple_salesforce.util import call_salesforce
-from multiprocessing import Pool
-from functools import partial
+
 
 class SFBulkHandler(object):
     """ Bulk API request handler
@@ -164,127 +163,72 @@ class SFBulkType(object):
         return result.json()
 
     #pylint: disable=R0913
-    def worker(self, data, job, operation, wait=5):
-        """ Add batches to concurrent worker threads"""
-        result_list = []
-        while True:
-            data = data[0]
-            if not data:
-                break
-            if isinstance(data, dict):
-                break
-
-            batch = self._add_batch(job_id=job['id'], data=data,
-                                    operation=operation)
-
-            batch_status = self._get_batch(job_id=batch['jobId'],
-                                           batch_id=batch['id'])['state']
-
-            while batch_status not in ['Completed', 'Failed', 'Not Processed']:
-                sleep(wait)
-                batch_status = self._get_batch(job_id=batch['jobId'],
-                                               batch_id=batch['id'])['state']
-
-            batch_results = self._get_batch_results(job_id=batch['jobId'],
-                                                    batch_id=batch['id'],
-                                                    operation=operation)
-            result_list.append(batch_results)
-        result = [i for sublist in result_list for i in sublist]
-        return result
-
     def _bulk_operation(self, object_name, operation, data,
-                        external_id_field=None, batchsize=10000, wait=5):
+                        external_id_field=None, wait=5):
         """ String together helper functions to create a complete
         end-to-end bulk API request
+
         Arguments:
+
         * object_name -- SF object
         * operation -- Bulk operation to be performed by job
         * data -- list of dict to be passed as a batch
         * external_id_field -- unique identifier field for upsert operations
         * wait -- seconds to sleep between checking batch status
-        * batchsize -- number of records to assign for each batch in the job
         """
-        if operation != 'query':
-            pool = Pool()
 
-            job = self._create_job(object_name=object_name, operation=operation,
-                                   external_id_field=external_id_field)
-            chunked_data = [[i] for i in [data[i*batchsize:(i+1)*batchsize]
-                                          for i
-                                          in range((len(data)
-                                                    //batchsize+1))]]
+        job = self._create_job(object_name=object_name, operation=operation,
+                               external_id_field=external_id_field)
 
+        batch = self._add_batch(job_id=job['id'], data=data,
+                                operation=operation)
 
-            multi_process_worker = partial(self.worker,
-                                           job=job,
-                                           operation=operation)
+        self._close_job(job_id=job['id'])
 
-            list_of_results = pool.map(multi_process_worker,
-                                                       chunked_data)
+        batch_status = self._get_batch(job_id=batch['jobId'],
+                                       batch_id=batch['id'])['state']
 
-            results = [i for sublist in list_of_results for i in sublist]
-            pool.close()
-            pool.join()
-            self._close_job(job_id=job['id'])
-
-        if operation == 'query':
-            job = self._create_job(object_name=object_name, operation=operation,
-                                   external_id_field=external_id_field)
-
-            batch = self._add_batch(job_id=job['id'], data=data,
-                                    operation=operation)
-
-            self._close_job(job_id=job['id'])
-
+        while batch_status not in ['Completed', 'Failed', 'Not Processed']:
+            sleep(wait)
             batch_status = self._get_batch(job_id=batch['jobId'],
                                            batch_id=batch['id'])['state']
 
-            while batch_status not in ['Completed', 'Failed', 'Not Processed']:
-                sleep(wait)
-                batch_status = self._get_batch(job_id=batch['jobId'],
-                                               batch_id=batch['id'])['state']
-
-            results = self._get_batch_results(job_id=batch['jobId'],
-                                              batch_id=batch['id'],
-                                              operation=operation)
+        results = self._get_batch_results(job_id=batch['jobId'],
+                                          batch_id=batch['id'],
+                                          operation=operation)
         return results
-
 
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
-    def delete(self, data, batchsize=10000):
+    def delete(self, data):
         """ soft delete records """
         results = self._bulk_operation(object_name=self.object_name,
-                                       operation='delete', data=data,
-                                       batchsize=batchsize)
+                                       operation='delete', data=data)
         return results
 
-    def insert(self, data, batchsize=10000):
+    def insert(self, data):
         """ insert records """
         results = self._bulk_operation(object_name=self.object_name,
-                                       operation='insert', data=data,
-                                       batchsize=batchsize)
+                                       operation='insert', data=data)
         return results
 
-    def upsert(self, data, external_id_field, batchsize=10000):
+    def upsert(self, data, external_id_field):
         """ upsert records based on a unique identifier """
         results = self._bulk_operation(object_name=self.object_name,
                                        operation='upsert',
                                        external_id_field=external_id_field,
-                                       data=data, batchsize=batchsize)
+                                       data=data)
         return results
 
-    def update(self, data, batchsize=10000):
+    def update(self, data):
         """ update records """
         results = self._bulk_operation(object_name=self.object_name,
-                                       operation='update', data=data,
-                                       batchsize=batchsize)
+                                       operation='update', data=data)
         return results
 
-    def hard_delete(self, data, batchsize=10000):
+    def hard_delete(self, data):
         """ hard delete records """
         results = self._bulk_operation(object_name=self.object_name,
-                                       operation='hardDelete', data=data,
-                                       batchsize=batchsize)
+                                       operation='hardDelete', data=data)
         return results
 
     def query(self, data):
