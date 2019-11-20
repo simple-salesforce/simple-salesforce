@@ -1,8 +1,16 @@
+v0.75 (Unreleased)
+=====
+
+Features
+--------
+- [305] Support for JWT Bearer Token workflow
+
+
 v0.73.4
 =====
 
 Features
-----
+--------
 - [316] Added ability for multi-batch processing
 
 v0.72
