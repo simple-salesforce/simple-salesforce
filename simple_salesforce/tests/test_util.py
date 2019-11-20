@@ -38,6 +38,7 @@ class TestXMLParser(unittest.TestCase):
 
     def test_date_to_iso8601(self):
         """Test date conversion"""
+        # pylint: disable=no-value-for-parameter
         date = pytz.UTC.localize(datetime.datetime(2014, 3, 22, 00, 00, 00, 0))
         result = date_to_iso8601(date)
         expected = '2014-03-22T00%3A00%3A00%2B00%3A00'

@@ -55,12 +55,13 @@ class Salesforce(object):
     An instance of Salesforce is a handy way to wrap a Salesforce session
     for easy use of the Salesforce REST API.
     """
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
     def __init__(
             self, username=None, password=None, security_token=None,
             session_id=None, instance=None, instance_url=None,
             organizationId=None, sandbox=None, version=DEFAULT_API_VERSION,
-            proxies=None, session=None, client_id=None, domain=None):
+            proxies=None, session=None, client_id=None, domain=None,
+            consumer_key=None, privatekey_file=None):
         """Initialize the instance with the given parameters.
 
         Available kwargs
@@ -75,6 +76,12 @@ class Salesforce(object):
                     common domains, such as 'login' or 'test', or
                     Salesforce My domain. If not used, will default to
                     'login'.
+
+        OAuth 2.0 JWT Bearer Token Authentication:
+
+        * consumer_key -- the consumer key generated for the user
+        * privatekey_file -- the path to the private key file used
+                             for signing the JWT token
 
         Direct Session and Instance Access:
 
@@ -170,6 +177,19 @@ class Salesforce(object):
                 sf_version=self.sf_version,
                 proxies=self.proxies,
                 client_id=client_id,
+                domain=self.domain)
+
+        elif all(arg is not None for arg in (
+                username, consumer_key, privatekey_file)):
+            self.auth_type = "jwt-bearer"
+
+            # Pass along the username/password to our login helper
+            self.session_id, self.sf_instance = SalesforceLogin(
+                session=self.session,
+                username=username,
+                consumer_key=consumer_key,
+                privatekey_file=privatekey_file,
+                proxies=self.proxies,
                 domain=self.domain)
 
         else:

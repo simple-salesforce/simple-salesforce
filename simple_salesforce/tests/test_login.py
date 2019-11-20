@@ -1,6 +1,8 @@
 """Tests for login.py"""
 
 import re
+import os
+import warnings
 try:
     import unittest2 as unittest
 except ImportError:
@@ -213,3 +215,92 @@ class TestSalesforceLogin(unittest.TestCase):
                 domain='test'
             )
         self.assertTrue(self.mockrequest.post.called)
+
+    @responses.activate
+    def test_token_login_success(self):
+        """Test a successful JWT Token login"""
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://login.*$'),
+            body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS,
+            status=http.OK
+        )
+        session_state = {
+            'used': False,
+        }
+
+        # pylint: disable=missing-docstring,unused-argument
+        def on_response(*args, **kwargs):
+            session_state['used'] = True
+
+        session = requests.Session()
+        session.hooks = {
+            'response': on_response,
+        }
+        session_id, instance = SalesforceLogin(
+            session=session,
+            username='foo@bar.com',
+            consumer_key='12345.abcde',
+            privatekey_file=os.path.join(
+                os.path.dirname(__file__), 'sample-key.pem'
+            )
+        )
+        self.assertTrue(session_state['used'])
+        self.assertEqual(session_id, tests.SESSION_ID)
+        self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
+
+    def test_token_login_failure(self):
+        """Test a failed JWT Token login"""
+        return_mock = Mock()
+        return_mock.status_code = 400
+        # pylint: disable=line-too-long
+        return_mock.content = '{"error": "invalid_client_id", "error_description": "client identifier invalid"}'
+        self.mockrequest.post.return_value = return_mock
+
+        with self.assertRaises(SalesforceAuthenticationFailed):
+            SalesforceLogin(
+                username='myemail@example.com.sandbox',
+                consumer_key='12345.abcde',
+                privatekey_file=os.path.join(
+                    os.path.dirname(__file__), 'sample-key.pem'
+                )
+            )
+        self.assertTrue(self.mockrequest.post.called)
+
+    @responses.activate
+    def test_token_login_failure_with_warning(self):
+        """Test a failed JWT Token login that also produces a helful warning"""
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://login.*$'),
+            # pylint: disable=line-too-long
+            body='{"error": "invalid_grant", "error_description": "user hasn\'t approved this consumer"}',
+            status=400
+        )
+        session_state = {
+            'used': False,
+        }
+
+        # pylint: disable=missing-docstring,unused-argument
+        def on_response(*args, **kwargs):
+            session_state['used'] = True
+
+        session = requests.Session()
+        session.hooks = {
+            'response': on_response,
+        }
+        with warnings.catch_warnings(record=True) as warning:
+            with self.assertRaises(SalesforceAuthenticationFailed):
+                # pylint: disable=unused-variable
+                session_id, instance = SalesforceLogin(
+                    session=session,
+                    username='foo@bar.com',
+                    consumer_key='12345.abcde',
+                    privatekey_file=os.path.join(
+                        os.path.dirname(__file__), 'sample-key.pem'
+                    )
+                )
+            assert len(warning) >= 1
+            assert issubclass(warning[-1].category, UserWarning)
+            assert str(warning[-1].message) == tests.TOKEN_WARNING
+        self.assertTrue(session_state['used'])
