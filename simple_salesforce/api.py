@@ -221,7 +221,8 @@ class Salesforce(object):
         """Describes all available objects
         """
         url = self.base_url + "sobjects"
-        result = self._call_salesforce('GET', url, name='describe')
+        result = self._call_salesforce('GET', url,
+                                       name='describe', proxies=self.proxies)
 
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
@@ -455,7 +456,7 @@ class Salesforce(object):
             # fetch next batch if we're not done else break out of loop
             if not result['done']:
                 result = self.query_more(result['nextRecordsUrl'],
-                                         identifier_is_url=True)
+                                         identifier_is_url=True, **kwargs)
             else:
                 break
 
@@ -605,7 +606,8 @@ class SFType(object):
         """
         result = self._call_salesforce(
             method='GET', url=urljoin(self.base_url, 'describe'),
-            headers=headers
+            headers=headers,
+            proxies=self.session.proxies
         )
         return result.json(object_pairs_hook=OrderedDict)
 
