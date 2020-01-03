@@ -231,7 +231,7 @@ To retrieve a list of top level description of instance metadata, user:
 Using Bulk
 ----------
 
-You can use this library to access Bulk API functions. 
+You can use this library to access Bulk API functions. Batch sizes can be delcared using the batchsize arguement. Default is 10,000 records. Batch sizes are only supported in the following methods: insert,upsert,update,delete,hard_delete.
 
 Create new records:
 
