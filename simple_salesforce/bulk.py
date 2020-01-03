@@ -12,7 +12,6 @@ from time import sleep
 from simple_salesforce.util import call_salesforce
 import concurrent.futures
 from functools import partial
-                         
 
 class SFBulkHandler(object):
     """ Bulk API request handler
@@ -166,13 +165,23 @@ class SFBulkType(object):
 
     #pylint: disable=R0913
     def worker(self, data, job, operation, wait=5):
-        """ Add batches to concurrent worker threads"""
+        """ Add batches to concurrent worker threads."""
+        """ 
+        self._bulk_operation passes chunked_data which is a list of lists of lists. 
+        The worker receives a first level of the lists (unpacked with pool.map)  to a list of lists. 
+        The worker function unpacks the batches passed. 
+        Unpacking this way is necessary otherwise batches are multiplied so duplicate data is sent.
+        (ex. if only two batches are in the data, they are resent again (resulting in a total of 4 batches)
+        """
+        
         result_list = []
         while True:
+            # Check to ensure the passed data is not None
             data = data[0]
             if not data:
                 break
-            if isinstance(data, dict):
+            # Check to ensure the data is not 
+            if not isinstance(data, list):
                 break
 
             batch = self._add_batch(job_id=job['id'], data=data,
@@ -190,6 +199,7 @@ class SFBulkType(object):
                                                     batch_id=batch['id'],
                                                     operation=operation)
             result_list.append(batch_results)
+
         result = [i for sublist in result_list for i in sublist]
         return result
 
@@ -215,19 +225,15 @@ class SFBulkType(object):
             chunked_data = [[i] for i in [data[i*batchsize:(i+1)*batchsize]
                                           for i in range((len(data)//batchsize+1))]]
 
-                                                            
-                                                    
-
             multi_process_worker = partial(self.worker,
                                            job=job,
                                            operation=operation)
 
             list_of_results = pool.map(multi_process_worker,
                                                        chunked_data)
-
+            pool.shutdown()
             results = [i for sublist in list_of_results for i in sublist]
-            pool.close()
-            pool.join()
+            
             self._close_job(job_id=job['id'])
 
         if operation == 'query':
