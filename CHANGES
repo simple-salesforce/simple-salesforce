@@ -1,7 +1,7 @@
 v0.75.1
 Features
 -------
-- [345] Re-implented mutli-batch processing using multi-threading
+- [345] Re-implemented multi-batch processing using multi-threading
 
 v0.75 (Unreleased)
 =====
