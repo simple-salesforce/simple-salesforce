@@ -217,11 +217,15 @@ class Salesforce(object):
 
         self.api_usage = {}
 
-    def describe(self):
+    def describe(self, **kwargs):
         """Describes all available objects
+
+        Arguments:
+
+        * keyword arguments supported by requests.request (e.g. json, timeout)
         """
         url = self.base_url + "sobjects"
-        result = self._call_salesforce('GET', url, name='describe')
+        result = self._call_salesforce('GET', url, name='describe', **kwargs)
 
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
