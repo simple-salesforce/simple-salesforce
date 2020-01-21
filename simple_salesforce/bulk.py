@@ -267,7 +267,8 @@ class SFBulkType(object):
                                        batchsize=batchsize)
         return results
 
-    def insert(self, data, batchsize=10000):
+    def insert(self, data, batchsize=10000,
+               concurrency_mode=0):
         """ insert records """
         results = self._bulk_operation(object_name=self.object_name,
                                        concurrency_mode=concurrency_mode,
