@@ -71,20 +71,21 @@ class SFBulkType(object):
         self.session = session
         self.headers = headers
 
-    def _create_job(self, operation, object_name, concurrency_mode, external_id_field=None):
+    def _create_job(self, operation, object_name, concurrency_mode,
+                    external_id_field=None):
         """ Create a bulk job
         Arguments:
         * operation -- Bulk operation to be performed by job
         * object_name -- SF object
-        * concurrency_mode -- Concurrency mode for batch processing. Parallel = 0, Serial = 1
+        * concurrency_mode -- Concurrency mode for batch processing. Parallel
+        = 0, Serial = 1
         * external_id_field -- unique identifier field for upsert operations
         """
-        
 
         payload = {
             'operation': operation,
             'object': object_name,
-            'concurrencyMode':concurrency_mode,
+            'concurrencyMode': concurrency_mode,
             'contentType': 'JSON'
             }
 
@@ -216,7 +217,8 @@ class SFBulkType(object):
         if operation != 'query':
             pool = concurrent.futures.ThreadPoolExecutor()
 
-            job = self._create_job(object_name=object_name, operation=operation,concurrency_mode=concurrency_mode,
+            job = self._create_job(object_name=object_name, operation=operation,
+                                   concurrency_mode=concurrency_mode,
                                    external_id_field=external_id_field)
             chunked_data = [[i] for i in
                             [data[i * batchsize:(i + 1) * batchsize]
@@ -234,7 +236,8 @@ class SFBulkType(object):
             self._close_job(job_id=job['id'])
 
         if operation == 'query':
-            job = self._create_job(object_name=object_name, operation=operation,concurrency_mode=concurrency_mode,
+            job = self._create_job(object_name=object_name, operation=operation,
+                                   concurrency_mode=concurrency_mode,
                                    external_id_field=external_id_field)
 
             batch = self._add_batch(job_id=job['id'], data=data,
@@ -256,38 +259,44 @@ class SFBulkType(object):
         return results
 
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
-    def delete(self, data, batchsize=10000,concurrency_mode=0):
+    def delete(self, data, batchsize=10000, concurrency_mode=0):
         """ soft delete records """
-        results = self._bulk_operation(object_name=self.object_name, concurrency_mode=concurrency_mode,
+        results = self._bulk_operation(object_name=self.object_name,
+                                       concurrency_mode=concurrency_mode,
                                        operation='delete', data=data,
                                        batchsize=batchsize)
         return results
 
     def insert(self, data, batchsize=10000):
         """ insert records """
-        results = self._bulk_operation(object_name=self.object_name, concurrency_mode=concurrency_mode,
+        results = self._bulk_operation(object_name=self.object_name,
+                                       concurrency_mode=concurrency_mode,
                                        operation='insert', data=data,
                                        batchsize=batchsize)
         return results
 
-    def upsert(self, data, external_id_field, batchsize=10000,concurrency_mode=0):
+    def upsert(self, data, external_id_field, batchsize=10000,
+               concurrency_mode=0):
         """ upsert records based on a unique identifier """
-        results = self._bulk_operation(object_name=self.object_name, concurrency_mode=concurrency_mode,
+        results = self._bulk_operation(object_name=self.object_name,
+                                       concurrency_mode=concurrency_mode,
                                        operation='upsert',
                                        external_id_field=external_id_field,
                                        data=data, batchsize=batchsize)
         return results
 
-    def update(self, data, batchsize=10000,concurrency_mode=0):
+    def update(self, data, batchsize=10000, concurrency_mode=0):
         """ update records """
-        results = self._bulk_operation(object_name=self.object_name, concurrency_mode=concurrency_mode,
+        results = self._bulk_operation(object_name=self.object_name,
+                                       concurrency_mode=concurrency_mode,
                                        operation='update', data=data,
                                        batchsize=batchsize)
         return results
 
-    def hard_delete(self, data, batchsize=10000,concurrency_mode=0):
+    def hard_delete(self, data, batchsize=10000, concurrency_mode=0):
         """ hard delete records """
-        results = self._bulk_operation(object_name=self.object_name, concurrency_mode=concurrency_mode,
+        results = self._bulk_operation(object_name=self.object_name,
+                                       concurrency_mode=concurrency_mode,
                                        operation='hardDelete', data=data,
                                        batchsize=batchsize)
         return results
