@@ -77,8 +77,7 @@ class SFBulkType(object):
         Arguments:
         * operation -- Bulk operation to be performed by job
         * object_name -- SF object
-        * use_serial -- Default is parallel processing, set to False to use parrallel batch processing or True to process batches in serial.
-        = False, Serial = True
+        * use_serial -- Process batches in serial
         * external_id_field -- unique identifier field for upsert operations
         """
         
@@ -215,7 +214,7 @@ class SFBulkType(object):
         * object_name -- SF object
         * operation -- Bulk operation to be performed by job
         * data -- list of dict to be passed as a batch
-        * use_serial -- Default is parallel processing, set to False to use parrallel batch processing or True to process batches in serial.
+        * use_serial -- Process batches in serial
         * external_id_field -- unique identifier field for upsert operations
         * wait -- seconds to sleep between checking batch status
         * batchsize -- number of records to assign for each batch in the job
