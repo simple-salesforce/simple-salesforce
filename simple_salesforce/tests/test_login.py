@@ -12,7 +12,7 @@ import requests
 import responses
 from simple_salesforce import tests
 from simple_salesforce.exceptions import SalesforceAuthenticationFailed
-from simple_salesforce.login import SalesforceLogin
+from simple_salesforce.login import _is_valid_hostname, SalesforceLogin
 
 
 class TestSalesforceLogin(unittest.TestCase):
@@ -79,34 +79,26 @@ class TestSalesforceLogin(unittest.TestCase):
             login_args)
 
     @responses.activate
-    def test_custom_session_success(self):
-        """Test custom session"""
-        responses.add(
-            responses.POST,
-            re.compile(r'^https://.*$'),
-            body=tests.LOGIN_RESPONSE_SUCCESS,
-            status=http.OK
-        )
-        session_state = {
-            'used': False,
+    def test_custom_full_domain_success(self):
+        """Test login with the full_domain argument to SalesforceLogin."""
+        login_args = {
+            'password': 'password',
+            'security_token': 'token',
+            'full_domain': 'testdomain.my.example.com'
         }
+        self._test_login_success(
+            re.compile(r'^https://testdomain.my.example.com/.*$'), login_args)
 
-        # pylint: disable=missing-docstring,unused-argument
-        def on_response(*args, **kwargs):
-            session_state['used'] = True
-
-        session = requests.Session()
-        session.hooks = {
-            'response': on_response,
-        }
-        session_id, instance = SalesforceLogin(
-            session=session,
-            username='foo@bar.com',
-            password='password',
-            security_token='token')
-        self.assertTrue(session_state['used'])
-        self.assertEqual(session_id, tests.SESSION_ID)
-        self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
+    def test_domain_mutual_exclusion_failure(self):
+        """Test domain and full_domain mutual exclusion."""
+        with self.assertRaises(ValueError):
+            SalesforceLogin(
+                username='myemail@example.com.sandbox',
+                password='password',
+                security_token='token',
+                domain='login',
+                full_domain='login.salesforce.com'
+            )
 
     def test_failure(self):
         """Test A Failed Login Response"""
@@ -222,3 +214,9 @@ class TestSalesforceLogin(unittest.TestCase):
             assert issubclass(warning[-1].category, UserWarning)
             assert str(warning[-1].message) == tests.TOKEN_WARNING
         self.assertTrue(session_state['used'])
+
+    def test_is_valid_hostname(self):
+        """Test some basic cases of login._is_valid_hostname."""
+        self.assertTrue(_is_valid_hostname('test.salesforce.com'))
+        self.assertFalse(_is_valid_hostname('under_score.my.salesforce.com'))
+        self.assertFalse(_is_valid_hostname('test'))

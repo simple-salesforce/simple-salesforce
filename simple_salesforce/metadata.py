@@ -110,15 +110,11 @@ class SfdcMetadataApi:
         :rtype:
         """
         if hasattr(zipfile, 'read'):
-            file = zipfile
-            file.seek(0)
-            should_close = False
+            zipfile.seek(0)
+            raw = zipfile.read()
         else:
-            file = open(zipfile, 'rb')
-            should_close = True
-        raw = file.read()
-        if should_close:
-            file.close()
+            with open(zipfile, 'rb') as file:
+                raw = file.read()
         return b64encode(raw).decode("utf-8")
 
     def _retrieve_deploy_result(self, async_process_id, **kwargs):

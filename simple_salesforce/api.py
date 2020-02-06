@@ -13,7 +13,7 @@ import requests
 
 from .bulk import SFBulkHandler
 from .exceptions import SalesforceGeneralError
-from .login import SalesforceLogin
+from .login import pick_login_domain, SalesforceLogin
 from .util import date_to_iso8601, exception_handler
 from .metadata import SfdcMetadataApi
 
@@ -47,6 +47,7 @@ class Salesforce:
             session=None,
             client_id=None,
             domain=None,
+            full_domain=None,
             consumer_key=None,
             privatekey_file=None,
             privatekey=None,
@@ -61,10 +62,16 @@ class Salesforce:
         * username -- the Salesforce username to use for authentication
         * password -- the password for the username
         * security_token -- the security token for the username
-        * domain -- The domain to using for connecting to Salesforce. Use
+        * domain -- The domain to use for connecting to Salesforce. Use
                     common domains, such as 'login' or 'test', or
                     Salesforce My domain. If not used, will default to
                     'login'.
+        * full_domain -- Same as domain, except fully-qualified, so that you
+                         can log in on non-"salesforce.com" domains. Passing
+                         full_domain="foo.salesforce.com" is the same as
+                         passing domain="foo".
+
+        At most one of domain and full_domain may be specified.
 
         OAuth 2.0 JWT Bearer Token Authentication:
 
@@ -97,14 +104,10 @@ class Salesforce:
                      exposed by simple_salesforce.
 
         """
-
-        if domain is None:
-            domain = 'login'
-
         # Determine if the user passed in the optional version and/or
         # domain kwargs
         self.sf_version = version
-        self.domain = domain
+        self.full_domain = pick_login_domain(domain, full_domain)
         self.session = session or requests.Session()
         self.proxies = self.session.proxies
         # override custom session proxies dance
@@ -132,7 +135,7 @@ class Salesforce:
                 sf_version=self.sf_version,
                 proxies=self.proxies,
                 client_id=client_id,
-                domain=self.domain)
+                full_domain=self.full_domain)
 
         elif all(arg is not None for arg in (
                 session_id, instance or instance_url)):
@@ -159,7 +162,7 @@ class Salesforce:
                 sf_version=self.sf_version,
                 proxies=self.proxies,
                 client_id=client_id,
-                domain=self.domain)
+                full_domain=self.full_domain)
 
         elif all(arg is not None for arg in (
                 username, consumer_key, privatekey_file or privatekey)):
@@ -173,15 +176,14 @@ class Salesforce:
                 privatekey_file=privatekey_file,
                 privatekey=privatekey,
                 proxies=self.proxies,
-                domain=self.domain)
+                full_domain=self.full_domain)
 
         else:
             raise TypeError(
                 'You must provide login information or an instance and token'
             )
 
-        self.auth_site = ('https://{domain}.salesforce.com'
-                          .format(domain=self.domain))
+        self.auth_site = 'https://' + self.full_domain
 
         self.headers = {
             'Content-Type': 'application/json',

@@ -6,6 +6,7 @@ Heavily Modified from RestForce 1.0.0
 DEFAULT_CLIENT_ID_PREFIX = 'RestForce'
 
 
+import re
 import time
 import warnings
 from datetime import datetime, timedelta
@@ -31,6 +32,7 @@ def SalesforceLogin(
     session=None,
     client_id=None,
     domain=None,
+    full_domain=None,
     consumer_key=None,
     privatekey_file=None,
     privatekey=None,
@@ -53,21 +55,23 @@ def SalesforceLogin(
                  enables the use of requets Session features not otherwise
                  exposed by simple_salesforce.
     * client_id -- the ID of this client
-    * domain -- The domain to using for connecting to Salesforce. Use
+    * domain -- The domain to use for logging in to Salesforce. Use
                 common domains, such as 'login' or 'test', or
                 Salesforce My domain. If not used, will default to
                 'login'.
+    * full_domain -- Same as domain, except fully-qualified, so that you
+                     can log in on non-"salesforce.com" domains. Passing
+                     full_domain="foo.salesforce.com" is the same as
+                     passing domain="foo".
     * consumer_key -- the consumer key generated for the user
     * privatekey_file -- the path to the private key file used
                          for signing the JWT token.
     * privatekey -- the private key to use
                          for signing the JWT token.
     """
+    full_domain = pick_login_domain(domain, full_domain)
 
-    if domain is None:
-        domain = 'login'
-
-    soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
+    soap_url = 'https://{full_domain}/services/Soap/u/{sf_version}'
 
     if client_id:
         client_id = "{prefix}/{app_name}".format(
@@ -76,7 +80,7 @@ def SalesforceLogin(
     else:
         client_id = DEFAULT_CLIENT_ID_PREFIX
 
-    soap_url = soap_url.format(domain=domain,
+    soap_url = soap_url.format(full_domain=full_domain,
                                sf_version=sf_version)
 
     # pylint: disable=E0012,deprecated-method
@@ -161,7 +165,7 @@ def SalesforceLogin(
         payload = {
             'iss': consumer_key,
             'sub': username,
-            'aud': 'https://{domain}.salesforce.com'.format(domain=domain),
+            'aud': 'https://' + full_domain,
             'exp': '{exp:.0f}'.format(
                 exp=time.mktime(expiration.timetuple()) +
                     expiration.microsecond / 1e6
@@ -181,9 +185,9 @@ def SalesforceLogin(
         }
 
         return token_login(
-            'https://{domain}.salesforce.com/services/oauth2/token'.format(
-                domain=domain),
-            login_token_request_data, domain, consumer_key,
+            'https://{full_domain}/services/oauth2/token'.format(
+                full_domain=full_domain),
+            login_token_request_data, full_domain, consumer_key,
             None, proxies, session)
     else:
         except_code = 'INVALID AUTH'
@@ -229,7 +233,7 @@ def soap_login(soap_url, request_body, headers, proxies, session=None):
     return session_id, sf_instance
 
 
-def token_login(token_url, token_data, domain, consumer_key,
+def token_login(token_url, token_data, full_domain, consumer_key,
                 headers, proxies, session=None):
     """Process OAuth 2.0 JWT Bearer Token Flow."""
     response = (session or requests).post(
@@ -246,10 +250,10 @@ def token_login(token_url, token_data, domain, consumer_key,
         except_code = json_response.get('error')
         except_msg = json_response.get('error_description')
         if except_msg == "user hasn't approved this consumer":
-            auth_url = 'https://{domain}.salesforce.com/services/oauth2/' \
+            auth_url = 'https://{full_domain}/services/oauth2/' \
                        'authorize?response_type=code&client_id=' \
                        '{consumer_key}&redirect_uri=<approved URI>'.format(
-                            domain=domain,
+                            full_domain=full_domain,
                             consumer_key=consumer_key
                         )
             warnings.warn("""
@@ -269,3 +273,24 @@ def token_login(token_url, token_data, domain, consumer_key,
         'https://', '')
 
     return access_token, sf_instance
+
+
+def _is_valid_hostname(d):
+    """Returns a boolean indicating whether d is a fully-qualified hostname."""
+    return re.match(r'^([a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+$', d) is not None
+
+
+def pick_login_domain(domain, full_domain):
+    """Given arguments to Salesforce/SalesforceLogin, return login domain."""
+    if (domain is not None) and (full_domain is not None):
+        raise ValueError("At most one of 'domain', and 'full_domain' may be "
+                         "passed to Salesforce().")
+    if domain is not None:
+        d = domain + '.salesforce.com'
+    elif full_domain is not None:
+        d = full_domain
+    else:
+        d = 'login.salesforce.com'
+    if not _is_valid_hostname(d):
+        raise ValueError('%r is not a valid hostname.' % (d,))
+    return d
