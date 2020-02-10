@@ -80,7 +80,7 @@ class SFBulkType(object):
         * use_serial -- Process batches in serial
         * external_id_field -- unique identifier field for upsert operations
         """
-        
+
         if use_serial:
             use_serial = 1
         else:
