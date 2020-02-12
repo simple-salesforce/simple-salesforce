@@ -443,7 +443,7 @@ class Salesforce:
 
         records = self.query_all_iter(query, include_deleted=include_deleted,
                                       **kwargs)
-        all_records = list(records_lazy)
+        all_records = list(records)
         return {
             'records': all_records,
             # TODO: is this not returned any more? if it is, we'll need
