@@ -441,11 +441,13 @@ class Salesforce:
         * include_deleted -- True if the query should include deleted records.
         """
 
-        records_lazy = self.query_all_iter(query, include_deleted=include_deleted, **kwargs)
+        records = self.query_all_iter(query, include_deleted=include_deleted,
+                                      **kwargs)
         all_records = list(records_lazy)
         return {
             'records': all_records,
-            # TODO: is this not returned any more? if it is, we'll need to fix tests
+            # TODO: is this not returned any more? if it is, we'll need
+            # to fix tests
             # 'totalSize': len(all_records),
             'done': True,
         }
