@@ -660,6 +660,33 @@ class TestSalesforce(unittest.TestCase):
         self.assertEqual(result, {})
 
     @responses.activate
+    def test_query_all_iter(self):
+        """
+        Test that we get data only once we ask for them (lazily).
+        """
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/query/\?q=SELECT\+ID\+FROM\+Account$'),
+            body='{"records": [{"ID": "1"}], "done": false, "nextRecordsUrl": '
+                 '"https://example.com/query/next-records-id"}',
+            status=http.OK)
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/query/next-records-id$'),
+            body='{"records": [{"ID": "2"}], "done": true}',
+            status=http.OK)
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        result = client.query_all_iter('SELECT ID FROM Account')
+        self.assertEqual(next(result), OrderedDict([(u'ID', u'1')]))
+        self.assertEqual(next(result), OrderedDict([(u'ID', u'2')]))
+        with self.assertRaises(StopIteration):
+            next(result)
+
+    @responses.activate
     def test_query_all(self):
         """
         Test that we query and fetch additional result sets automatically.
