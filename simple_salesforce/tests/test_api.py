@@ -724,7 +724,8 @@ class TestSalesforce(unittest.TestCase):
             responses.GET,
             re.compile(r'^https://.*/queryAll/\?q=SELECT\+ID\+FROM\+Account$'),
             body='{"records": [{"ID": "1"}], "done": false, "nextRecordsUrl": '
-                 '"https://example.com/queryAll/next-records-id", "totalSize": 2}',
+                 '"https://example.com/queryAll/next-records-id",'
+                 '"totalSize": 2}',
             status=http.OK)
         responses.add(
             responses.GET,
