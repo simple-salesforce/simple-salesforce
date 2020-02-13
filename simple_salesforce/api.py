@@ -401,10 +401,9 @@ class Salesforce:
         using `query_all_iter`, only materializing the returned iterator to
         maintain backwards compatibility.
 
-        The one difference from `query_all` (apart from being lazy) is that
-        we don't return the totalSize here, because we'd have to return it
-        alongside the data iterator, which would lead to a clunky API.
-        # TODO: not sure about this paragraph above, will check against SFDC
+        The one big difference from `query_all` (apart from being lazy) is that
+        we don't return a dictionary with `totalSize` and `done` here,
+        we only return the records in an iterator.
 
         Arguments
 
@@ -446,9 +445,7 @@ class Salesforce:
         all_records = list(records)
         return {
             'records': all_records,
-            # TODO: is this not returned any more? if it is, we'll need
-            # to fix tests
-            # 'totalSize': len(all_records),
+            'totalSize': len(all_records),
             'done': True,
         }
 
