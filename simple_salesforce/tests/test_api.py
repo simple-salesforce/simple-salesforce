@@ -668,12 +668,12 @@ class TestSalesforce(unittest.TestCase):
             responses.GET,
             re.compile(r'^https://.*/query/\?q=SELECT\+ID\+FROM\+Account$'),
             body='{"records": [{"ID": "1"}], "done": false, "nextRecordsUrl": '
-                 '"https://example.com/query/next-records-id"}',
+                 '"https://example.com/query/next-records-id", "totalSize": 2}',
             status=http.OK)
         responses.add(
             responses.GET,
             re.compile(r'^https://.*/query/next-records-id$'),
-            body='{"records": [{"ID": "2"}], "done": true}',
+            body='{"records": [{"ID": "2"}], "done": true, "totalSize": 2}',
             status=http.OK)
         session = requests.Session()
         client = Salesforce(session_id=tests.SESSION_ID,
@@ -695,12 +695,12 @@ class TestSalesforce(unittest.TestCase):
             responses.GET,
             re.compile(r'^https://.*/query/\?q=SELECT\+ID\+FROM\+Account$'),
             body='{"records": [{"ID": "1"}], "done": false, "nextRecordsUrl": '
-                 '"https://example.com/query/next-records-id"}',
+                 '"https://example.com/query/next-records-id", "totalSize": 2}',
             status=http.OK)
         responses.add(
             responses.GET,
             re.compile(r'^https://.*/query/next-records-id$'),
-            body='{"records": [{"ID": "2"}], "done": true}',
+            body='{"records": [{"ID": "2"}], "done": true, "totalSize": 2}',
             status=http.OK)
         session = requests.Session()
         client = Salesforce(session_id=tests.SESSION_ID,
@@ -713,7 +713,7 @@ class TestSalesforce(unittest.TestCase):
             OrderedDict([('records', [
                 OrderedDict([('ID', '1')]),
                 OrderedDict([('ID', '2')])
-            ]), ('done', True)]))
+            ]), ('done', True), ('totalSize', 2)]))
 
     @responses.activate
     def test_query_all_include_deleted(self):
@@ -724,12 +724,12 @@ class TestSalesforce(unittest.TestCase):
             responses.GET,
             re.compile(r'^https://.*/queryAll/\?q=SELECT\+ID\+FROM\+Account$'),
             body='{"records": [{"ID": "1"}], "done": false, "nextRecordsUrl": '
-                 '"https://example.com/queryAll/next-records-id"}',
+                 '"https://example.com/queryAll/next-records-id", "totalSize": 2}',
             status=http.OK)
         responses.add(
             responses.GET,
             re.compile(r'^https://.*/queryAll/next-records-id$'),
-            body='{"records": [{"ID": "2"}], "done": true}',
+            body='{"records": [{"ID": "2"}], "done": true, "totalSize": 2}',
             status=http.OK)
         session = requests.Session()
         client = Salesforce(session_id=tests.SESSION_ID,
@@ -743,7 +743,7 @@ class TestSalesforce(unittest.TestCase):
             OrderedDict([('records', [
                 OrderedDict([('ID', '1')]),
                 OrderedDict([('ID', '2')])
-            ]), ('done', True)]))
+            ]), ('done', True), ('totalSize', 2)]))
 
     @responses.activate
     def test_api_limits(self):
