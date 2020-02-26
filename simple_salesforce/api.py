@@ -258,9 +258,20 @@ class Salesforce(object):
             return SFBulkHandler(self.session_id, self.bulk_url, self.proxies,
                                  self.session)
 
+        if name == 'Action':
+            # Deal with simple_email action
+            return SFAction(self.session_id,
+                            self.sf_instance,
+                            proxies=self.proxies,
+                            session=self.session)
+
         return SFType(
-            name, self.session_id, self.sf_instance, sf_version=self.sf_version,
-            proxies=self.proxies, session=self.session)
+            name,
+            self.session_id,
+            self.sf_instance,
+            sf_version=self.sf_version,
+            proxies=self.proxies,
+            session=self.session)
 
     # User utility methods
     def set_password(self, user, password):
@@ -552,6 +563,61 @@ class Salesforce(object):
                                                       name=groups[2])
 
         return result
+
+class SFAction(object):
+    """Interface for Salesforce Action.
+    Currently only simpleEmail is implemented.
+    More actions coming in the future
+    """
+
+    # pylint: disable=too-many-arguments
+    def __init__(self, session_id, sf_instance,
+            sf_version='32.0', proxies=None, session=None):
+        """
+        Initialize SF Action. Note default sf_version='32.0'
+        because some actions are available after version 32
+        """
+        self.session_id = session_id
+        self.session = session or requests.Session()
+        if not session and proxies is not None:
+            self.session.proxies = proxies
+        self.sf_version = sf_version
+
+        self.base_url = (
+            u'https://{instance}/services/data/v{sf_version}/actions/'
+                .format(instance=sf_instance, sf_version=sf_version))
+
+    def emailSimple(self, emailAddresses, emailSubject, emailBody):
+        """Utility method for sending simpleEmail via Salesforce.
+        :param EmailAdresses: string like "user1@email.com,user2@email.com"
+        :param emailSubject:  string like "An email from salesforce",
+        :param emailBody:     string (note html code does not work)
+        Returns a `requests.result` object.
+        """
+
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + self.session_id,
+            'X-PrettyPrint': '1'
+        }
+
+        email_data = {'inputs':[
+            {
+            "emailBody": emailBody,
+            "emailAddresses": emailAddresses,
+            "emailSubject": emailSubject,
+            "senderType": "CurrentUser"
+            }
+        ]
+        }
+
+        result = self.session.request('POST',
+                      urljoin(self.base_url, 'standard/emailSimple/'),
+                      headers=headers, data=json.dumps(email_data))
+
+        if result.status_code >= 300:
+            exception_handler(result)
+
 
 class SFType(object):
     """An interface to a specific type of SObject"""
