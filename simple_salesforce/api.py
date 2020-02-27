@@ -712,7 +712,7 @@ class SFType(object):
 
         """ Append the external key to the end of our URL. Then remove it
         because Salesforce requires it not be present in the actual upsert. """
-        fullUrl=urljoin(self.base_url, record_id) + '/' + data[external_key]
+        fullUrl=urljoin(self.base_url, external_key) + '/' + data[external_key]
         del data[external_key]
         result = self._call_salesforce(
             method='PATCH', url=fullUrl,
