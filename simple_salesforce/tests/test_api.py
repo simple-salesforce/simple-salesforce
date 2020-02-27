@@ -321,8 +321,8 @@ class TestSFType(unittest.TestCase):
 
         sf_type = _create_sf_type()
         result = sf_type.upsert(
-            record_id='some-case-id',
-            data={'some': 'data'},
+            external_key='some-case-id',
+            data={'some': 'data', 'some-case-id':'externalKey'},
             headers={'Sforce-Auto-Assign': 'FALSE'}
         )
 
@@ -343,8 +343,8 @@ class TestSFType(unittest.TestCase):
 
         sf_type = _create_sf_type()
         result = sf_type.upsert(
-            record_id='some-case-id',
-            data={'some': 'data'}
+            external_key='some-case-id',
+            data={'some': 'data', 'some-case-id':'externalKey'},
         )
 
         self.assertEqual(result, http.OK)
