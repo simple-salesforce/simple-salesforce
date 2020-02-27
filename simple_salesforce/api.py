@@ -709,13 +709,11 @@ class SFType(object):
                           directly, instead of the status code.
         * headers -- a dict with additional request headers.
         """
-
-        """ Append the external key to the end of our URL. Then remove it
-        because Salesforce requires it not be present in the actual upsert. """
-        fullUrl=urljoin(self.base_url, external_key) + '/' + data[external_key]
+        # Append the external key to the end of our URL. Then remove it because Salesforce requires it not be present in the actual upsert. #
+        full_url=urljoin(self.base_url, external_key) + '/' + data[external_key]
         del data[external_key]
         result = self._call_salesforce(
-            method='PATCH', url=fullUrl,
+            method='PATCH', url=full_url,
             data=json.dumps(data), headers=headers
         )
         return self._raw_response(result, raw_response)
