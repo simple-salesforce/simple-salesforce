@@ -691,9 +691,9 @@ class SFType(object):
         )
         return result.json(object_pairs_hook=OrderedDict)
 
-    def upsert(self, record_id, data, raw_response=False, headers=None):
+    def upsert(self, external_key, data, raw_response=False, headers=None):
         """Creates or updates an SObject using a PATCH to
-        `.../{object_name}/{record_id}`.
+        `.../{object_name}/{external_key}/data[external_key]`.
 
         If `raw_response` is false (the default), returns the status code
         returned by Salesforce. Otherwise, return the `requests.Response`
@@ -709,8 +709,14 @@ class SFType(object):
                           directly, instead of the status code.
         * headers -- a dict with additional request headers.
         """
+
+        """ Append the external key to the end of our URL. Then remove it
+        because Salesforce requires it not be present in the actual upsert. """
+        fullUrl=urljoin(self.base_url, record_id) + '/' + data[external_key]
+        del data[external_key]
+
         result = self._call_salesforce(
-            method='PATCH', url=urljoin(self.base_url, record_id),
+            method='PATCH', url=fullUrl,
             data=json.dumps(data), headers=headers
         )
         return self._raw_response(result, raw_response)
