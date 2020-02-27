@@ -314,7 +314,7 @@ class TestSFType(unittest.TestCase):
         """Ensure custom headers are used for upserts"""
         responses.add(
             responses.PATCH,
-            re.compile(r'^https://.*/Case/some-case-id$'),
+            re.compile(r'^https://.*/Case/some-case-id/externalKey$'),
             body='{}',
             status=http.OK
         )
@@ -336,7 +336,7 @@ class TestSFType(unittest.TestCase):
         """Ensure upserts work without custom headers"""
         responses.add(
             responses.PATCH,
-            re.compile(r'^https://.*/Case/some-case-id$'),
+            re.compile(r'^https://.*/Case/some-case-id/externalKey$'),
             body='{}',
             status=http.OK
         )
