@@ -117,6 +117,15 @@ To change that contact's last name from 'Smith' to 'Jones' and add a first name 
 
     sf.Contact.update('003e0000003GuNXAA0',{'LastName': 'Jones', 'FirstName': 'John'})
 
+To upsert the contact:
+
+.. code-block:: python
+
+    sf.Contact.upsert('externalKeyField__c',{'LastName': 'Jones', 'FirstName': 'John', 'externalKeyField__c':'1234567890'})
+
+Pass in the entire JSON object including your external key field, denoting which field it is. The endpoint for this PATCH call is `.../{sobject_name}/{external_key__c}/external_key__c.fieldValue`. This field will process a single upsert via the REST API. Please see the BULK API instructions further below for processing in batches. This REST approach is recommended for records under 2000. 
+
+
 To delete the contact:
 
 .. code-block:: python
