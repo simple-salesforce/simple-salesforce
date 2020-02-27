@@ -714,7 +714,6 @@ class SFType(object):
         because Salesforce requires it not be present in the actual upsert. """
         fullUrl=urljoin(self.base_url, record_id) + '/' + data[external_key]
         del data[external_key]
-
         result = self._call_salesforce(
             method='PATCH', url=fullUrl,
             data=json.dumps(data), headers=headers
