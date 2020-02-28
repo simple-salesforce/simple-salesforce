@@ -13,6 +13,11 @@ install:
 script: tox
 matrix:
   fast_finish: true
+  exclude:
+    - python: "2.7"
+      env: TOXENV=static
+    - python: "pypy"
+      env: TOXENV=static
 # turn off email notifications
 notifications:
   email: false
