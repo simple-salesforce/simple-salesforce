@@ -13,10 +13,8 @@ install:
 script: tox
 matrix:
   fast_finish: true
-  exclude:
-    - python: "2.7"
-      env: TOXENV=static
-    - python: "pypy"
+  include:
+    - python: "3.8"
       env: TOXENV=static
 # turn off email notifications
 notifications:
@@ -35,4 +33,3 @@ deploy:
     repo: simple-salesforce/simple-salesforce
 env:
   - TOXENV=unit
-  - TOXENV=static
