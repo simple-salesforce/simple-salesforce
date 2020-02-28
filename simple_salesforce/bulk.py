@@ -12,6 +12,7 @@ from time import sleep
 from simple_salesforce.util import call_salesforce
 
 
+# pylint: disable=useless-object-inheritance
 class SFBulkHandler(object):
     """ Bulk API request handler
     Intermediate class which allows us to use commands,
@@ -51,6 +52,8 @@ class SFBulkHandler(object):
         return SFBulkType(object_name=name, bulk_url=self.bulk_url,
                           headers=self.headers, session=self.session)
 
+
+# pylint: disable=useless-object-inheritance
 class SFBulkType(object):
     """ Interface to Bulk/Async API functions"""
 

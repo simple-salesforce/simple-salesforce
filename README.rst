@@ -231,14 +231,14 @@ To retrieve a list of top level description of instance metadata, user:
 Using Bulk
 ----------
 
-You can use this library to access Bulk API functions. 
+You can use this library to access Bulk API functions.
 
 Create new records:
 
 .. code-block:: python
 
     data = [
-          {'LastName':'Smith','Email':'example@example.com'}, 
+          {'LastName':'Smith','Email':'example@example.com'},
           {'LastName':'Jones','Email':'test@test.com'}
         ]
 
@@ -249,7 +249,7 @@ Update existing records:
 .. code-block:: python
 
     data = [
-          {'Id': '0000000000AAAAA', 'Email': 'examplenew@example.com'}, 
+          {'Id': '0000000000AAAAA', 'Email': 'examplenew@example.com'},
           {'Id': '0000000000BBBBB', 'Email': 'testnew@test.com'}
         ]
 
@@ -260,7 +260,7 @@ Upsert records:
 .. code-block:: python
 
     data = [
-          {'Id': '0000000000AAAAA', 'Email': 'examplenew2@example.com'}, 
+          {'Id': '0000000000AAAAA', 'Email': 'examplenew2@example.com'},
           {'Email': 'foo@foo.com'}
         ]
 
@@ -368,4 +368,4 @@ The latest build status can be found at `Travis CI`_
 .. _community contributors: https://github.com/simple-salesforce/simple-salesforce/graphs/contributors
 .. _RestForce: http://pypi.python.org/pypi/RestForce/
 .. _GitHub Repo: https://github.com/simple-salesforce/simple-salesforce
-.. _Travis CI: https://travis-ci.org/simple-salesforce/simple-salesforce
+.. _Travis CI: https://travis-ci.com/simple-salesforce/simple-salesforce
