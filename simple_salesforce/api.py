@@ -48,7 +48,7 @@ Usage = namedtuple('Usage', 'used total')
 PerAppUsage = namedtuple('PerAppUsage', 'used total name')
 
 
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes,useless-object-inheritance
 class Salesforce(object):
     """Salesforce Instance
 
@@ -553,6 +553,8 @@ class Salesforce(object):
 
         return result
 
+
+# pylint: disable=useless-object-inheritance
 class SFType(object):
     """An interface to a specific type of SObject"""
 
