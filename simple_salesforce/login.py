@@ -27,7 +27,7 @@ from authlib.jose import jwt
 # pylint: disable=invalid-name,too-many-arguments,too-many-locals
 def SalesforceLogin(
         username=None, password=None, security_token=None,
-        organizationId=None, sandbox=None, sf_version=DEFAULT_API_VERSION,
+        organizationId=None, sf_version=DEFAULT_API_VERSION,
         proxies=None, session=None, client_id=None, domain=None,
         consumer_key=None, privatekey_file=None):
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
@@ -41,7 +41,6 @@ def SalesforceLogin(
     * security_token -- the security token for the username
     * organizationId -- the ID of your organization
             NOTE: security_token an organizationId are mutually exclusive
-    * sandbox -- DEPRECATED: Use domain instead.
     * sf_version -- the version of the Salesforce API to use, for example
                     "27.0"
     * proxies -- the optional map of scheme to proxy server
@@ -57,18 +56,6 @@ def SalesforceLogin(
     * privatekey_file -- the path to the private key file used
                          for signing the JWT token
     """
-    if (sandbox is not None) and (domain is not None):
-        raise ValueError("Both 'sandbox' and 'domain' arguments were "
-                         "supplied. Either may be supplied, but not "
-                         "both.")
-
-    if sandbox is not None:
-        warnings.warn("'sandbox' argument is deprecated. Use "
-                      "'domain' instead. Overriding 'domain' "
-                      "with 'sandbox' value.",
-                      DeprecationWarning)
-
-        domain = 'test' if sandbox else 'login'
 
     if domain is None:
         domain = 'login'

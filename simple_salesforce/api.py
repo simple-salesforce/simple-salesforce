@@ -35,15 +35,6 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-def _warn_request_deprecation():
-    """Deprecation for (Salesforce/SFType).request attribute"""
-    warnings.warn(
-        'The request attribute has been deprecated and will be removed in a '
-        'future version. Please use Salesforce.session instead.',
-        DeprecationWarning
-    )
-
-
 Usage = namedtuple('Usage', 'used total')
 PerAppUsage = namedtuple('PerAppUsage', 'used total name')
 
@@ -59,7 +50,7 @@ class Salesforce(object):
     def __init__(
             self, username=None, password=None, security_token=None,
             session_id=None, instance=None, instance_url=None,
-            organizationId=None, sandbox=None, version=DEFAULT_API_VERSION,
+            organizationId=None, version=DEFAULT_API_VERSION,
             proxies=None, session=None, client_id=None, domain=None,
             consumer_key=None, privatekey_file=None):
         """Initialize the instance with the given parameters.
@@ -71,7 +62,6 @@ class Salesforce(object):
         * username -- the Salesforce username to use for authentication
         * password -- the password for the username
         * security_token -- the security token for the username
-        * sandbox -- DEPRECATED: Use domain instead.
         * domain -- The domain to using for connecting to Salesforce. Use
                     common domains, such as 'login' or 'test', or
                     Salesforce My domain. If not used, will default to
@@ -103,18 +93,6 @@ class Salesforce(object):
                      exposed by simple_salesforce.
 
         """
-        if (sandbox is not None) and (domain is not None):
-            raise ValueError("Both 'sandbox' and 'domain' arguments were "
-                             "supplied. Either may be supplied, but not "
-                             "both.")
-
-        if sandbox is not None:
-            warnings.warn("'sandbox' argument is deprecated. Use "
-                          "'domain' instead. Overriding 'domain' "
-                          "with 'sandbox' value.",
-                          DeprecationWarning)
-
-            domain = 'test' if sandbox else 'login'
 
         if domain is None:
             domain = 'login'
@@ -291,25 +269,6 @@ class Salesforce(object):
             return None
 
         return json_result
-
-    # pylint: disable=invalid-name
-    def setPassword(self, user, password):
-        # pylint: disable=line-too-long
-        """Sets the password of a user
-
-        salesforce dev documentation link:
-        https://www.salesforce.com/us/developer/docs/api_rest/Content/dome_sobject_user_password.htm
-
-        Arguments:
-
-        * user: the userID of the user to set
-        * password: the new password
-        """
-        warnings.warn(
-            "This method has been deprecated."
-            "Please use set_password instead.",
-            DeprecationWarning)
-        return self.set_password(user, password)
 
     # Generic Rest Function
     def restful(self, path, params=None, method='GET', **kwargs):
@@ -510,18 +469,6 @@ class Salesforce(object):
             self.api_usage = self.parse_api_usage(sforce_limit_info)
 
         return result
-
-    @property
-    def request(self):
-        """Deprecated access to self.session for backwards compatibility"""
-        _warn_request_deprecation()
-        return self.session
-
-    @request.setter
-    def request(self, session):
-        """Deprecated setter for self.session"""
-        _warn_request_deprecation()
-        self.session = session
 
     @staticmethod
     def parse_api_usage(sforce_limit_info):
@@ -836,16 +783,3 @@ class SFType(object):
             return response.status_code
 
         return response
-
-    @property
-    def request(self):
-        """Deprecated access to self.session for backwards compatibility"""
-        _warn_request_deprecation()
-        return self.session
-
-    @request.setter
-    def request(self, session):
-        """Deprecated setter for self.session"""
-        _warn_request_deprecation()
-        self.session = session
-
