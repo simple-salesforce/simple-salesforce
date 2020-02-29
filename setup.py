@@ -1,9 +1,8 @@
 """Simple-Salesforce Package Setup"""
 
-from setuptools import setup
-import textwrap
-import sys
 import os
+import sys
+import textwrap
 
 from setuptools import setup
 

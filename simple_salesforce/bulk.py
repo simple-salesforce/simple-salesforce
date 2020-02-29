@@ -1,10 +1,12 @@
 """ Classes for interacting with Salesforce Bulk API """
 
 import json
-import requests
 from collections import OrderedDict
 from time import sleep
-from simple_salesforce.util import call_salesforce
+
+import requests
+
+from .util import call_salesforce
 
 
 class SFBulkHandler():

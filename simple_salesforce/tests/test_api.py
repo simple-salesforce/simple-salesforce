@@ -2,22 +2,15 @@
 
 import http.client as http
 import re
-from datetime import datetime
-
 import unittest
 from collections import OrderedDict
+from datetime import datetime
 from unittest.mock import patch
 
 import requests
-
+import responses
 from simple_salesforce import tests
-from simple_salesforce.api import (
-    Salesforce,
-    SFType,
-    Usage,
-    PerAppUsage
-)
-
+from simple_salesforce.api import PerAppUsage, Salesforce, SFType, Usage
 
 
 def _create_sf_type(

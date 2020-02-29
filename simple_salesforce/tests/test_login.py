@@ -1,19 +1,18 @@
 """Tests for login.py"""
 
-import re
 import http.client as http
 import os
+import re
 import unittest
 import warnings
 from unittest.mock import Mock, patch
 from urllib.parse import urlparse
 
-import responses
 import requests
-
+import responses
 from simple_salesforce import tests
-from simple_salesforce.login import SalesforceLogin
 from simple_salesforce.exceptions import SalesforceAuthenticationFailed
+from simple_salesforce.login import SalesforceLogin
 
 
 class TestSalesforceLogin(unittest.TestCase):

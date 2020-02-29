@@ -5,21 +5,19 @@
 DEFAULT_API_VERSION = '42.0'
 
 
-import logging
-import warnings
-import requests
 import json
+import logging
 import re
+import warnings
 from collections import OrderedDict, namedtuple
 from urllib.parse import urljoin, urlparse
 
-from simple_salesforce.login import SalesforceLogin
-from simple_salesforce.util import date_to_iso8601, exception_handler
-from simple_salesforce.exceptions import (
-    SalesforceGeneralError
-)
-from simple_salesforce.bulk import SFBulkHandler
+import requests
 
+from .bulk import SFBulkHandler
+from .exceptions import SalesforceGeneralError
+from .login import SalesforceLogin
+from .util import date_to_iso8601, exception_handler
 
 #pylint: disable=invalid-name
 logger = logging.getLogger(__name__)

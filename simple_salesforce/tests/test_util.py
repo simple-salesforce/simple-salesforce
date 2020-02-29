@@ -1,20 +1,17 @@
 """Tests for simple-salesforce utility functions"""
 import datetime
-import pytz
 import unittest
 from unittest.mock import Mock
 
-from simple_salesforce.exceptions import (
-    SalesforceMoreThanOneRecord,
-    SalesforceMalformedRequest,
-    SalesforceExpiredSession,
-    SalesforceRefusedRequest,
-    SalesforceResourceNotFound,
-    SalesforceGeneralError
-)
-from simple_salesforce.util import (
-    getUniqueElementValueFromXmlString, date_to_iso8601, exception_handler
-)
+import pytz
+from simple_salesforce.exceptions import (SalesforceExpiredSession,
+                                          SalesforceGeneralError,
+                                          SalesforceMalformedRequest,
+                                          SalesforceMoreThanOneRecord,
+                                          SalesforceRefusedRequest,
+                                          SalesforceResourceNotFound)
+from simple_salesforce.util import (date_to_iso8601, exception_handler,
+                                    getUniqueElementValueFromXmlString)
 
 
 class TestXMLParser(unittest.TestCase):

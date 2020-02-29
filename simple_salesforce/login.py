@@ -6,17 +6,18 @@ Heavily Modified from RestForce 1.0.0
 DEFAULT_CLIENT_ID_PREFIX = 'RestForce'
 
 
-from simple_salesforce.api import DEFAULT_API_VERSION
-from simple_salesforce.util import getUniqueElementValueFromXmlString
-from simple_salesforce.exceptions import SalesforceAuthenticationFailed
-
-import requests
-import warnings
 import time
+import warnings
 from datetime import datetime, timedelta
 from html import escape
 from json.decoder import JSONDecodeError
+
+import requests
 from authlib.jose import jwt
+
+from .api import DEFAULT_API_VERSION
+from .exceptions import SalesforceAuthenticationFailed
+from .util import getUniqueElementValueFromXmlString
 
 
 # pylint: disable=invalid-name,too-many-arguments,too-many-locals

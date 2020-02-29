@@ -2,11 +2,10 @@
 
 import xml.dom.minidom
 
-from simple_salesforce.exceptions import (
-    SalesforceGeneralError, SalesforceExpiredSession,
-    SalesforceMalformedRequest, SalesforceMoreThanOneRecord,
-    SalesforceRefusedRequest, SalesforceResourceNotFound
-)
+from .exceptions import (SalesforceExpiredSession, SalesforceGeneralError,
+                         SalesforceMalformedRequest,
+                         SalesforceMoreThanOneRecord, SalesforceRefusedRequest,
+                         SalesforceResourceNotFound)
 
 
 # pylint: disable=invalid-name
