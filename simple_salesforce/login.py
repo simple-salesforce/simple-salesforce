@@ -241,11 +241,11 @@ def token_login(token_url, token_data, domain, consumer_key,
                             consumer_key=consumer_key
                         )
             warnings.warn("""
-    If your connected app policy is set to "All users may 
-    self-authorize", you may need to authorize this 
-    application first. Browse to 
-    %s 
-    in order to Allow Access. Check first to ensure you have a valid 
+    If your connected app policy is set to "All users may
+    self-authorize", you may need to authorize this
+    application first. Browse to
+    %s
+    in order to Allow Access. Check first to ensure you have a valid
     <approved URI>.""" % auth_url)
         raise SalesforceAuthenticationFailed(except_code, except_msg)
 
