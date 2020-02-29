@@ -10,17 +10,12 @@ from simple_salesforce.api import DEFAULT_API_VERSION
 from simple_salesforce.util import getUniqueElementValueFromXmlString
 from simple_salesforce.exceptions import SalesforceAuthenticationFailed
 
-try:
-    # Python 3+
-    from html import escape
-    from json.decoder import JSONDecodeError
-except ImportError:
-    from cgi import escape
-    JSONDecodeError = ValueError
 import requests
 import warnings
 import time
 from datetime import datetime, timedelta
+from html import escape
+from json.decoder import JSONDecodeError
 from authlib.jose import jwt
 
 

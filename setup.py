@@ -5,16 +5,7 @@ import textwrap
 import sys
 import os
 
-
-pyver_install_requires = []
-pyver_tests_require = []
-if sys.version_info < (2, 7):
-    pyver_install_requires.append('ordereddict>=1.1')
-    pyver_tests_require.append('unittest2>=0.5.1')
-
-if sys.version_info < (3, 0):
-    pyver_tests_require.append('mock==1.0.1')
-
+from setuptools import setup
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -39,14 +30,13 @@ setup(
     install_requires=[
         'requests>=2.22.0',
         'authlib'
-    ] + pyver_install_requires,
+    ],
     tests_require=[
         'nose>=1.3.0',
         'pytz>=2014.1.1',
         'responses>=0.5.1',
-    ] + pyver_tests_require,
+    ],
     test_suite = 'nose.collector',
-
     keywords=about['__keywords__'],
     classifiers=[
         'Development Status :: 4 - Beta',
@@ -55,12 +45,10 @@ setup(
         'Intended Audience :: System Administrators',
         'Operating System :: OS Independent',
         'Topic :: Internet :: WWW/HTTP',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: Implementation :: PyPy'
     ]
 )

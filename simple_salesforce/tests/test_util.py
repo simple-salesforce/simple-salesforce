@@ -1,19 +1,8 @@
 """Tests for simple-salesforce utility functions"""
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
-
-try:
-    # Python 2.6/2.7
-    from mock import Mock
-except ImportError:
-    # Python 3
-    from unittest.mock import Mock
-
-
 import datetime
 import pytz
+import unittest
+from unittest.mock import Mock
 
 from simple_salesforce.exceptions import (
     SalesforceMoreThanOneRecord,

@@ -1,26 +1,12 @@
 """Tests for api.py"""
 
+import http.client as http
 import re
 from datetime import datetime
 
+import unittest
 from collections import OrderedDict
-
-try:
-    # Python 2.6
-    import unittest2 as unittest
-except ImportError:
-    import unittest
-
-import responses
-
-try:
-    # Python 2.6/2.7
-    import httplib as http
-    from mock import patch
-except ImportError:
-    # Python 3
-    import http.client as http
-    from unittest.mock import patch
+from unittest.mock import patch
 
 import requests
 
@@ -702,10 +688,10 @@ class TestSalesforce(unittest.TestCase):
         result = client.query_all('SELECT ID FROM Account')
         self.assertEqual(
             result,
-            OrderedDict([(u'records', [
-                OrderedDict([(u'ID', u'1')]),
-                OrderedDict([(u'ID', u'2')])
-            ]), (u'done', True)]))
+            OrderedDict([('records', [
+                OrderedDict([('ID', '1')]),
+                OrderedDict([('ID', '2')])
+            ]), ('done', True)]))
 
     @responses.activate
     def test_query_all_include_deleted(self):
@@ -732,10 +718,10 @@ class TestSalesforce(unittest.TestCase):
                                   include_deleted=True)
         self.assertEqual(
             result,
-            OrderedDict([(u'records', [
-                OrderedDict([(u'ID', u'1')]),
-                OrderedDict([(u'ID', u'2')])
-            ]), (u'done', True)]))
+            OrderedDict([('records', [
+                OrderedDict([('ID', '1')]),
+                OrderedDict([('ID', '2')])
+            ]), ('done', True)]))
 
     @responses.activate
     def test_api_limits(self):

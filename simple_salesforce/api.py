@@ -10,13 +10,8 @@ import warnings
 import requests
 import json
 import re
-from collections import namedtuple
-
-try:
-    from urlparse import urlparse, urljoin
-except ImportError:
-    # Python 3+
-    from urllib.parse import urlparse, urljoin
+from collections import OrderedDict, namedtuple
+from urllib.parse import urljoin, urlparse
 
 from simple_salesforce.login import SalesforceLogin
 from simple_salesforce.util import date_to_iso8601, exception_handler
@@ -25,11 +20,6 @@ from simple_salesforce.exceptions import (
 )
 from simple_salesforce.bulk import SFBulkHandler
 
-try:
-    from collections import OrderedDict
-except ImportError:
-    # Python < 2.7
-    from ordereddict import OrderedDict
 
 #pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
@@ -39,8 +29,8 @@ Usage = namedtuple('Usage', 'used total')
 PerAppUsage = namedtuple('PerAppUsage', 'used total name')
 
 
-# pylint: disable=too-many-instance-attributes,useless-object-inheritance
-class Salesforce(object):
+# pylint: disable=too-many-instance-attributes
+class Salesforce():
     """Salesforce Instance
 
     An instance of Salesforce is a handy way to wrap a Salesforce session
@@ -325,7 +315,7 @@ class Salesforce(object):
                     string will be wrapped to read `FIND {Waldo}` before being
                     sent to Salesforce
         """
-        search_string = u'FIND {{{search_string}}}'.format(search_string=search)
+        search_string = 'FIND {{{search_string}}}'.format(search_string=search)
         return self.search(search_string)
 
     def limits(self, **kwargs):
@@ -381,7 +371,7 @@ class Salesforce(object):
         """
         if identifier_is_url:
             # Don't use `self.base_url` here because the full URI is provided
-            url = (u'https://{instance}{next_record_url}'
+            url = ('https://{instance}{next_record_url}'
                    .format(instance=self.sf_instance,
                            next_record_url=next_records_identifier))
         else:
@@ -501,8 +491,7 @@ class Salesforce(object):
         return result
 
 
-# pylint: disable=useless-object-inheritance
-class SFType(object):
+class SFType():
     """An interface to a specific type of SObject"""
 
     # pylint: disable=too-many-arguments
@@ -532,7 +521,7 @@ class SFType(object):
         self.api_usage = {}
 
         self.base_url = (
-            u'https://{instance}/services/data/v{sf_version}/sobjects'
+            'https://{instance}/services/data/v{sf_version}/sobjects'
             '/{object_name}/'.format(instance=sf_instance,
                                      object_name=object_name,
                                      sf_version=sf_version))
