@@ -37,7 +37,7 @@ setup(
     test_suite = 'nose.collector',
     keywords=about['__keywords__'],
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: Apache Software License',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
