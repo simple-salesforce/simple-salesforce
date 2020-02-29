@@ -557,7 +557,7 @@ class TestSalesforce(unittest.TestCase):
         )
 
         client = Salesforce.__new__(Salesforce)
-        client.request = requests.Session()
+        client.session = requests.Session()
         client.headers = {}
         client.base_url = 'https://localhost'
         client.query('q')
@@ -578,7 +578,7 @@ class TestSalesforce(unittest.TestCase):
         )
 
         client = Salesforce.__new__(Salesforce)
-        client.request = requests.Session()
+        client.session = requests.Session()
         client.headers = {}
         client.base_url = 'https://localhost'
         client.query('q')

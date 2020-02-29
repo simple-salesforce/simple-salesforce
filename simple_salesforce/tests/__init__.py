@@ -61,11 +61,11 @@ TOKEN_LOGIN_RESPONSE_SUCCESS = """{
 }""" % (SESSION_ID, INSTANCE_URL, TOKEN_ID)
 
 TOKEN_WARNING = """
-    If your connected app policy is set to "All users may 
-    self-authorize", you may need to authorize this 
-    application first. Browse to 
-    https://login.salesforce.com/services/oauth2/authorize?response_type=code&client_id=12345.abcde&redirect_uri=<approved URI> 
-    in order to Allow Access. Check first to ensure you have a valid 
+    If your connected app policy is set to "All users may
+    self-authorize", you may need to authorize this
+    application first. Browse to
+    https://login.salesforce.com/services/oauth2/authorize?response_type=code&client_id=12345.abcde&redirect_uri=<approved URI>
+    in order to Allow Access. Check first to ensure you have a valid
     <approved URI>."""
 
 ORGANIZATION_LIMITS_RESPONSE = {
