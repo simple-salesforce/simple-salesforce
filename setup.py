@@ -37,7 +37,7 @@ setup(
     long_description=textwrap.dedent(open('README.rst', 'r').read()),
 
     install_requires=[
-        'requests[security]',
+        'requests>=2.22.0',
         'authlib'
     ] + pyver_install_requires,
     tests_require=[
