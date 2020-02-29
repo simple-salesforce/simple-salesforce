@@ -849,37 +849,3 @@ class SFType(object):
         _warn_request_deprecation()
         self.session = session
 
-
-class SalesforceAPI(Salesforce):
-    """Deprecated SalesforceAPI Instance
-
-    This class implements the Username/Password Authentication Mechanism using
-    Arguments It has since been surpassed by the 'Salesforce' class, which
-    relies on kwargs
-
-    """
-    # pylint: disable=too-many-arguments
-    def __init__(self, username, password, security_token, sandbox=False,
-                 sf_version='27.0'):
-        """Initialize the instance with the given parameters.
-
-        Arguments:
-
-        * username -- the Salesforce username to use for authentication
-        * password -- the password for the username
-        * security_token -- the security token for the username
-        * sandbox -- True if you want to login to `test.salesforce.com`, False
-                     if you want to login to `login.salesforce.com`.
-        * sf_version -- the version of the Salesforce API to use, for example
-                        "27.0"
-        """
-        warnings.warn(
-            "Use of login arguments has been deprecated. Please use kwargs",
-            DeprecationWarning
-        )
-
-        super(SalesforceAPI, self).__init__(username=username,
-                                            password=password,
-                                            security_token=security_token,
-                                            sandbox=sandbox,
-                                            version=sf_version)

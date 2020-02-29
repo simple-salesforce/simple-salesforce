@@ -3,7 +3,6 @@
 
 from simple_salesforce.api import (
     Salesforce,
-    SalesforceAPI,
     SFType
 )
 
