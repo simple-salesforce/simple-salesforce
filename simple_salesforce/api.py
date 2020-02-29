@@ -8,7 +8,6 @@ DEFAULT_API_VERSION = '42.0'
 import json
 import logging
 import re
-import warnings
 from collections import OrderedDict, namedtuple
 from urllib.parse import urljoin, urlparse
 

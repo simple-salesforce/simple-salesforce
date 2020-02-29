@@ -25,7 +25,6 @@ setup(
     license=about['__license__'],
     description=about['__description__'],
     long_description=textwrap.dedent(open('README.rst', 'r').read()),
-
     install_requires=[
         'requests>=2.22.0',
         'authlib'
