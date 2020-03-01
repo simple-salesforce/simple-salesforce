@@ -29,6 +29,7 @@ def _create_sf_type(
 
 class TestSFType(unittest.TestCase):
     """Tests for the SFType instance"""
+
     def setUp(self):
         request_patcher = patch('simple_salesforce.api.requests')
         self.mockrequest = request_patcher.start()
@@ -441,6 +442,7 @@ class TestSFType(unittest.TestCase):
 
 class TestSalesforce(unittest.TestCase):
     """Tests for the Salesforce instance"""
+
     def setUp(self):
         """Setup the SalesforceLogin tests"""
         request_patcher = patch('simple_salesforce.api.requests')

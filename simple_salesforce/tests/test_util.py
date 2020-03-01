@@ -39,6 +39,7 @@ class TestXMLParser(unittest.TestCase):
 
 class TestExceptionHandler(unittest.TestCase):
     """Test the exception router"""
+
     def setUp(self):
         """Setup the exception router tests"""
         self.mockresult = Mock()

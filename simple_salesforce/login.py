@@ -22,10 +22,18 @@ from .util import getUniqueElementValueFromXmlString
 
 # pylint: disable=invalid-name,too-many-arguments,too-many-locals
 def SalesforceLogin(
-        username=None, password=None, security_token=None,
-        organizationId=None, sf_version=DEFAULT_API_VERSION,
-        proxies=None, session=None, client_id=None, domain=None,
-        consumer_key=None, privatekey_file=None):
+    username=None,
+    password=None,
+    security_token=None,
+    organizationId=None,
+    sf_version=DEFAULT_API_VERSION,
+    proxies=None,
+    session=None,
+    client_id=None,
+    domain=None,
+    consumer_key=None,
+    privatekey_file=None,
+):
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
     the domain of the instance of Salesforce to use for the session.

@@ -17,6 +17,7 @@ from simple_salesforce.login import SalesforceLogin
 
 class TestSalesforceLogin(unittest.TestCase):
     """Tests for the SalesforceLogin function"""
+
     def setUp(self):
         """Setup the SalesforceLogin tests"""
         request_patcher = patch('simple_salesforce.login.requests')

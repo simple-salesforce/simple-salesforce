@@ -18,7 +18,7 @@ from .exceptions import SalesforceGeneralError
 from .login import SalesforceLogin
 from .util import date_to_iso8601, exception_handler
 
-#pylint: disable=invalid-name
+# pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
 
 
@@ -27,19 +27,31 @@ PerAppUsage = namedtuple('PerAppUsage', 'used total name')
 
 
 # pylint: disable=too-many-instance-attributes
-class Salesforce():
+class Salesforce:
     """Salesforce Instance
 
     An instance of Salesforce is a handy way to wrap a Salesforce session
     for easy use of the Salesforce REST API.
     """
+
     # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
     def __init__(
-            self, username=None, password=None, security_token=None,
-            session_id=None, instance=None, instance_url=None,
-            organizationId=None, version=DEFAULT_API_VERSION,
-            proxies=None, session=None, client_id=None, domain=None,
-            consumer_key=None, privatekey_file=None):
+        self,
+        username=None,
+        password=None,
+        security_token=None,
+        session_id=None,
+        instance=None,
+        instance_url=None,
+        organizationId=None,
+        version=DEFAULT_API_VERSION,
+        proxies=None,
+        session=None,
+        client_id=None,
+        domain=None,
+        consumer_key=None,
+        privatekey_file=None,
+    ):
         """Initialize the instance with the given parameters.
 
         Available kwargs
@@ -488,13 +500,19 @@ class Salesforce():
         return result
 
 
-class SFType():
+class SFType:
     """An interface to a specific type of SObject"""
 
     # pylint: disable=too-many-arguments
     def __init__(
-            self, object_name, session_id, sf_instance,
-            sf_version=DEFAULT_API_VERSION, proxies=None, session=None):
+        self,
+        object_name,
+        session_id,
+        sf_instance,
+        sf_version=DEFAULT_API_VERSION,
+        proxies=None,
+        session=None,
+    ):
         """Initialize the instance with the given parameters.
 
         Arguments:

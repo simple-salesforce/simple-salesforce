@@ -34,7 +34,7 @@ setup(
         'pytz>=2014.1.1',
         'responses>=0.5.1',
     ],
-    test_suite = 'nose.collector',
+    test_suite='nose.collector',
     keywords=about['__keywords__'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
