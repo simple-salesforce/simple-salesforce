@@ -1,31 +1,23 @@
 """Tests for login.py"""
 
+import http.client as http
+import os
 import re
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+import unittest
+import warnings
+from unittest.mock import Mock, patch
+from urllib.parse import urlparse
 
-import responses
 import requests
-try:
-    # Python 2.6/2.7
-    import httplib as http
-    from urlparse import urlparse
-    from mock import Mock, patch
-except ImportError:
-    # Python 3
-    import http.client as http
-    from unittest.mock import Mock, patch
-    from urllib.parse import urlparse
-
+import responses
 from simple_salesforce import tests
-from simple_salesforce.login import SalesforceLogin
 from simple_salesforce.exceptions import SalesforceAuthenticationFailed
+from simple_salesforce.login import SalesforceLogin
 
 
 class TestSalesforceLogin(unittest.TestCase):
     """Tests for the SalesforceLogin function"""
+
     def setUp(self):
         """Setup the SalesforceLogin tests"""
         request_patcher = patch('simple_salesforce.login.requests')
@@ -94,80 +86,6 @@ class TestSalesforceLogin(unittest.TestCase):
         self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
 
     @responses.activate
-    def test_deprecated_sandbox_disabled_success(self):
-        """Test sandbox argument set to False"""
-        responses.add(
-            responses.POST,
-            re.compile(r'^https://login.*$'),
-            body=tests.LOGIN_RESPONSE_SUCCESS,
-            status=http.OK
-        )
-        session_state = {
-            'used': False,
-        }
-
-        # pylint: disable=missing-docstring,unused-argument
-        def on_response(*args, **kwargs):
-            session_state['used'] = True
-
-        session = requests.Session()
-        session.hooks = {
-            'response': on_response,
-        }
-        session_id, instance = SalesforceLogin(
-            session=session,
-            username='foo@bar.com',
-            password='password',
-            security_token='token',
-            sandbox=False)
-        self.assertTrue(session_state['used'])
-        self.assertEqual(session_id, tests.SESSION_ID)
-        self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
-
-    @responses.activate
-    def test_deprecated_sandbox_enabled_success(self):
-        """Test sandbox argument set to True"""
-        responses.add(
-            responses.POST,
-            re.compile(r'^https://test.*$'),
-            body=tests.LOGIN_RESPONSE_SUCCESS,
-            status=http.OK
-        )
-        session_state = {
-            'used': False,
-        }
-
-        # pylint: disable=missing-docstring,unused-argument
-        def on_response(*args, **kwargs):
-            session_state['used'] = True
-
-        session = requests.Session()
-        session.hooks = {
-            'response': on_response,
-        }
-        session_id, instance = SalesforceLogin(
-            session=session,
-            username='foo@bar.com',
-            password='password',
-            security_token='token',
-            sandbox=True)
-        self.assertTrue(session_state['used'])
-        self.assertEqual(session_id, tests.SESSION_ID)
-        self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
-
-    def test_domain_sandbox_mutual_exclusion_failure(self):
-        """Test sandbox and domain mutual exclusion"""
-
-        with self.assertRaises(ValueError):
-            SalesforceLogin(
-                username='myemail@example.com.sandbox',
-                password='password',
-                security_token='token',
-                domain='login',
-                sandbox=False
-            )
-
-    @responses.activate
     def test_custom_session_success(self):
         """Test custom session"""
         responses.add(
@@ -213,3 +131,92 @@ class TestSalesforceLogin(unittest.TestCase):
                 domain='test'
             )
         self.assertTrue(self.mockrequest.post.called)
+
+    @responses.activate
+    def test_token_login_success(self):
+        """Test a successful JWT Token login"""
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://login.*$'),
+            body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS,
+            status=http.OK
+        )
+        session_state = {
+            'used': False,
+        }
+
+        # pylint: disable=missing-docstring,unused-argument
+        def on_response(*args, **kwargs):
+            session_state['used'] = True
+
+        session = requests.Session()
+        session.hooks = {
+            'response': on_response,
+        }
+        session_id, instance = SalesforceLogin(
+            session=session,
+            username='foo@bar.com',
+            consumer_key='12345.abcde',
+            privatekey_file=os.path.join(
+                os.path.dirname(__file__), 'sample-key.pem'
+            )
+        )
+        self.assertTrue(session_state['used'])
+        self.assertEqual(session_id, tests.SESSION_ID)
+        self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
+
+    def test_token_login_failure(self):
+        """Test a failed JWT Token login"""
+        return_mock = Mock()
+        return_mock.status_code = 400
+        # pylint: disable=line-too-long
+        return_mock.content = '{"error": "invalid_client_id", "error_description": "client identifier invalid"}'
+        self.mockrequest.post.return_value = return_mock
+
+        with self.assertRaises(SalesforceAuthenticationFailed):
+            SalesforceLogin(
+                username='myemail@example.com.sandbox',
+                consumer_key='12345.abcde',
+                privatekey_file=os.path.join(
+                    os.path.dirname(__file__), 'sample-key.pem'
+                )
+            )
+        self.assertTrue(self.mockrequest.post.called)
+
+    @responses.activate
+    def test_token_login_failure_with_warning(self):
+        """Test a failed JWT Token login that also produces a helful warning"""
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://login.*$'),
+            # pylint: disable=line-too-long
+            body='{"error": "invalid_grant", "error_description": "user hasn\'t approved this consumer"}',
+            status=400
+        )
+        session_state = {
+            'used': False,
+        }
+
+        # pylint: disable=missing-docstring,unused-argument
+        def on_response(*args, **kwargs):
+            session_state['used'] = True
+
+        session = requests.Session()
+        session.hooks = {
+            'response': on_response,
+        }
+        with warnings.catch_warnings(record=True) as warning:
+            with self.assertRaises(SalesforceAuthenticationFailed):
+                # pylint: disable=unused-variable
+                session_id, instance = SalesforceLogin(
+                    session=session,
+                    username='foo@bar.com',
+                    consumer_key='12345.abcde',
+                    privatekey_file=os.path.join(
+                        os.path.dirname(__file__), 'sample-key.pem'
+                    )
+                )
+            assert len(warning) >= 1
+            assert issubclass(warning[-1].category, UserWarning)
+            assert str(warning[-1].message) == tests.TOKEN_WARNING
+        self.assertTrue(session_state['used'])
