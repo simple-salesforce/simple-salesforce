@@ -1,19 +1,15 @@
 """ Classes for interacting with Salesforce Bulk API """
 
-try:
-    from collections import OrderedDict
-except ImportError:
-    # Python < 2.7
-    from ordereddict import OrderedDict
-
 import json
-import requests
+from collections import OrderedDict
 from time import sleep
-from simple_salesforce.util import call_salesforce
+
+import requests
+
+from .util import call_salesforce
 
 
-# pylint: disable=useless-object-inheritance
-class SFBulkHandler(object):
+class SFBulkHandler:
     """ Bulk API request handler
     Intermediate class which allows us to use commands,
      such as 'sf.bulk.Contacts.create(...)'
@@ -53,8 +49,7 @@ class SFBulkHandler(object):
                           headers=self.headers, session=self.session)
 
 
-# pylint: disable=useless-object-inheritance
-class SFBulkType(object):
+class SFBulkType:
     """ Interface to Bulk/Async API functions"""
 
     def __init__(self, object_name, bulk_url, headers, session):

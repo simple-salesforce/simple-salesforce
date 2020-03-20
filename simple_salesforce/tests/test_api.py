@@ -1,37 +1,16 @@
 """Tests for api.py"""
 
+import http.client as http
 import re
-from datetime import datetime
-
+import unittest
 from collections import OrderedDict
-
-try:
-    # Python 2.6
-    import unittest2 as unittest
-except ImportError:
-    import unittest
-
-import responses
-
-try:
-    # Python 2.6/2.7
-    import httplib as http
-    from mock import patch
-except ImportError:
-    # Python 3
-    import http.client as http
-    from unittest.mock import patch
+from datetime import datetime
+from unittest.mock import patch
 
 import requests
-
+import responses
 from simple_salesforce import tests
-from simple_salesforce.api import (
-    Salesforce,
-    SFType,
-    Usage,
-    PerAppUsage
-)
-
+from simple_salesforce.api import PerAppUsage, Salesforce, SFType, Usage
 
 
 def _create_sf_type(
@@ -50,6 +29,7 @@ def _create_sf_type(
 
 class TestSFType(unittest.TestCase):
     """Tests for the SFType instance"""
+
     def setUp(self):
         request_patcher = patch('simple_salesforce.api.requests')
         self.mockrequest = request_patcher.start()
@@ -462,6 +442,7 @@ class TestSFType(unittest.TestCase):
 
 class TestSalesforce(unittest.TestCase):
     """Tests for the Salesforce instance"""
+
     def setUp(self):
         """Setup the SalesforceLogin tests"""
         request_patcher = patch('simple_salesforce.api.requests')
@@ -578,7 +559,7 @@ class TestSalesforce(unittest.TestCase):
         )
 
         client = Salesforce.__new__(Salesforce)
-        client.request = requests.Session()
+        client.session = requests.Session()
         client.headers = {}
         client.base_url = 'https://localhost'
         client.query('q')
@@ -599,7 +580,7 @@ class TestSalesforce(unittest.TestCase):
         )
 
         client = Salesforce.__new__(Salesforce)
-        client.request = requests.Session()
+        client.session = requests.Session()
         client.headers = {}
         client.base_url = 'https://localhost'
         client.query('q')
@@ -702,10 +683,10 @@ class TestSalesforce(unittest.TestCase):
         result = client.query_all('SELECT ID FROM Account')
         self.assertEqual(
             result,
-            OrderedDict([(u'records', [
-                OrderedDict([(u'ID', u'1')]),
-                OrderedDict([(u'ID', u'2')])
-            ]), (u'done', True)]))
+            OrderedDict([('records', [
+                OrderedDict([('ID', '1')]),
+                OrderedDict([('ID', '2')])
+            ]), ('done', True)]))
 
     @responses.activate
     def test_query_all_include_deleted(self):
@@ -732,10 +713,10 @@ class TestSalesforce(unittest.TestCase):
                                   include_deleted=True)
         self.assertEqual(
             result,
-            OrderedDict([(u'records', [
-                OrderedDict([(u'ID', u'1')]),
-                OrderedDict([(u'ID', u'2')])
-            ]), (u'done', True)]))
+            OrderedDict([('records', [
+                OrderedDict([('ID', '1')]),
+                OrderedDict([('ID', '2')])
+            ]), ('done', True)]))
 
     @responses.activate
     def test_api_limits(self):

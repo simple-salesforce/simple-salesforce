@@ -2,66 +2,56 @@
 
 
 # has to be defined prior to login import
-DEFAULT_API_VERSION = '38.0'
+DEFAULT_API_VERSION = '42.0'
 
 
-import logging
-import warnings
-import requests
 import json
+import logging
 import re
-from collections import namedtuple
+from collections import OrderedDict, namedtuple
+from urllib.parse import urljoin, urlparse
 
-try:
-    from urlparse import urlparse, urljoin
-except ImportError:
-    # Python 3+
-    from urllib.parse import urlparse, urljoin
+import requests
 
-from simple_salesforce.login import SalesforceLogin
-from simple_salesforce.util import date_to_iso8601, exception_handler
-from simple_salesforce.exceptions import (
-    SalesforceGeneralError
-)
-from simple_salesforce.bulk import SFBulkHandler
+from .bulk import SFBulkHandler
+from .exceptions import SalesforceGeneralError
+from .login import SalesforceLogin
+from .util import date_to_iso8601, exception_handler
 
-try:
-    from collections import OrderedDict
-except ImportError:
-    # Python < 2.7
-    from ordereddict import OrderedDict
-
-#pylint: disable=invalid-name
+# pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
-
-
-def _warn_request_deprecation():
-    """Deprecation for (Salesforce/SFType).request attribute"""
-    warnings.warn(
-        'The request attribute has been deprecated and will be removed in a '
-        'future version. Please use Salesforce.session instead.',
-        DeprecationWarning
-    )
 
 
 Usage = namedtuple('Usage', 'used total')
 PerAppUsage = namedtuple('PerAppUsage', 'used total name')
 
 
-# pylint: disable=too-many-instance-attributes,useless-object-inheritance
-class Salesforce(object):
+# pylint: disable=too-many-instance-attributes
+class Salesforce:
     """Salesforce Instance
 
     An instance of Salesforce is a handy way to wrap a Salesforce session
     for easy use of the Salesforce REST API.
     """
+
     # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
     def __init__(
-            self, username=None, password=None, security_token=None,
-            session_id=None, instance=None, instance_url=None,
-            organizationId=None, sandbox=None, version=DEFAULT_API_VERSION,
-            proxies=None, session=None, client_id=None, domain=None,
-            consumer_key=None, privatekey_file=None):
+        self,
+        username=None,
+        password=None,
+        security_token=None,
+        session_id=None,
+        instance=None,
+        instance_url=None,
+        organizationId=None,
+        version=DEFAULT_API_VERSION,
+        proxies=None,
+        session=None,
+        client_id=None,
+        domain=None,
+        consumer_key=None,
+        privatekey_file=None,
+    ):
         """Initialize the instance with the given parameters.
 
         Available kwargs
@@ -71,7 +61,6 @@ class Salesforce(object):
         * username -- the Salesforce username to use for authentication
         * password -- the password for the username
         * security_token -- the security token for the username
-        * sandbox -- DEPRECATED: Use domain instead.
         * domain -- The domain to using for connecting to Salesforce. Use
                     common domains, such as 'login' or 'test', or
                     Salesforce My domain. If not used, will default to
@@ -103,18 +92,6 @@ class Salesforce(object):
                      exposed by simple_salesforce.
 
         """
-        if (sandbox is not None) and (domain is not None):
-            raise ValueError("Both 'sandbox' and 'domain' arguments were "
-                             "supplied. Either may be supplied, but not "
-                             "both.")
-
-        if sandbox is not None:
-            warnings.warn("'sandbox' argument is deprecated. Use "
-                          "'domain' instead. Overriding 'domain' "
-                          "with 'sandbox' value.",
-                          DeprecationWarning)
-
-            domain = 'test' if sandbox else 'login'
 
         if domain is None:
             domain = 'login'
@@ -292,25 +269,6 @@ class Salesforce(object):
 
         return json_result
 
-    # pylint: disable=invalid-name
-    def setPassword(self, user, password):
-        # pylint: disable=line-too-long
-        """Sets the password of a user
-
-        salesforce dev documentation link:
-        https://www.salesforce.com/us/developer/docs/api_rest/Content/dome_sobject_user_password.htm
-
-        Arguments:
-
-        * user: the userID of the user to set
-        * password: the new password
-        """
-        warnings.warn(
-            "This method has been deprecated."
-            "Please use set_password instead.",
-            DeprecationWarning)
-        return self.set_password(user, password)
-
     # Generic Rest Function
     def restful(self, path, params=None, method='GET', **kwargs):
         """Allows you to make a direct REST call if you know the path
@@ -366,7 +324,7 @@ class Salesforce(object):
                     string will be wrapped to read `FIND {Waldo}` before being
                     sent to Salesforce
         """
-        search_string = u'FIND {{{search_string}}}'.format(search_string=search)
+        search_string = 'FIND {{{search_string}}}'.format(search_string=search)
         return self.search(search_string)
 
     def limits(self, **kwargs):
@@ -422,7 +380,7 @@ class Salesforce(object):
         """
         if identifier_is_url:
             # Don't use `self.base_url` here because the full URI is provided
-            url = (u'https://{instance}{next_record_url}'
+            url = ('https://{instance}{next_record_url}'
                    .format(instance=self.sf_instance,
                            next_record_url=next_records_identifier))
         else:
@@ -511,18 +469,6 @@ class Salesforce(object):
 
         return result
 
-    @property
-    def request(self):
-        """Deprecated access to self.session for backwards compatibility"""
-        _warn_request_deprecation()
-        return self.session
-
-    @request.setter
-    def request(self, session):
-        """Deprecated setter for self.session"""
-        _warn_request_deprecation()
-        self.session = session
-
     @staticmethod
     def parse_api_usage(sforce_limit_info):
         """parse API usage and limits out of the Sforce-Limit-Info header
@@ -554,14 +500,19 @@ class Salesforce(object):
         return result
 
 
-# pylint: disable=useless-object-inheritance
-class SFType(object):
+class SFType:
     """An interface to a specific type of SObject"""
 
     # pylint: disable=too-many-arguments
     def __init__(
-            self, object_name, session_id, sf_instance,
-            sf_version=DEFAULT_API_VERSION, proxies=None, session=None):
+        self,
+        object_name,
+        session_id,
+        sf_instance,
+        sf_version=DEFAULT_API_VERSION,
+        proxies=None,
+        session=None,
+    ):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -585,7 +536,7 @@ class SFType(object):
         self.api_usage = {}
 
         self.base_url = (
-            u'https://{instance}/services/data/v{sf_version}/sobjects'
+            'https://{instance}/services/data/v{sf_version}/sobjects'
             '/{object_name}/'.format(instance=sf_instance,
                                      object_name=object_name,
                                      sf_version=sf_version))
@@ -836,50 +787,3 @@ class SFType(object):
             return response.status_code
 
         return response
-
-    @property
-    def request(self):
-        """Deprecated access to self.session for backwards compatibility"""
-        _warn_request_deprecation()
-        return self.session
-
-    @request.setter
-    def request(self, session):
-        """Deprecated setter for self.session"""
-        _warn_request_deprecation()
-        self.session = session
-
-
-class SalesforceAPI(Salesforce):
-    """Deprecated SalesforceAPI Instance
-
-    This class implements the Username/Password Authentication Mechanism using
-    Arguments It has since been surpassed by the 'Salesforce' class, which
-    relies on kwargs
-
-    """
-    # pylint: disable=too-many-arguments
-    def __init__(self, username, password, security_token, sandbox=False,
-                 sf_version='27.0'):
-        """Initialize the instance with the given parameters.
-
-        Arguments:
-
-        * username -- the Salesforce username to use for authentication
-        * password -- the password for the username
-        * security_token -- the security token for the username
-        * sandbox -- True if you want to login to `test.salesforce.com`, False
-                     if you want to login to `login.salesforce.com`.
-        * sf_version -- the version of the Salesforce API to use, for example
-                        "27.0"
-        """
-        warnings.warn(
-            "Use of login arguments has been deprecated. Please use kwargs",
-            DeprecationWarning
-        )
-
-        super(SalesforceAPI, self).__init__(username=username,
-                                            password=password,
-                                            security_token=security_token,
-                                            sandbox=sandbox,
-                                            version=sf_version)

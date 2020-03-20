@@ -4,7 +4,7 @@
 class SalesforceError(Exception):
     """Base Salesforce API exception"""
 
-    message = u'Unknown error occurred for {url}. Response content: {content}'
+    message = 'Unknown error occurred for {url}. Response content: {content}'
 
     def __init__(self, url, status, resource_name, content):
         """Initialize the SalesforceError exception
@@ -38,7 +38,8 @@ class SalesforceMoreThanOneRecord(SalesforceError):
     The value returned when an external ID exists in more than one record. The
     response body contains the list of matching records.
     """
-    message = u"More than one record for {url}. Response content: {content}"
+
+    message = 'More than one record for {url}. Response content: {content}'
 
 
 class SalesforceMalformedRequest(SalesforceError):
@@ -47,7 +48,8 @@ class SalesforceMalformedRequest(SalesforceError):
     The request couldn't be understood, usually because the JSON or XML body
     contains an error.
     """
-    message = u"Malformed request {url}. Response content: {content}"
+
+    message = 'Malformed request {url}. Response content: {content}'
 
 
 class SalesforceExpiredSession(SalesforceError):
@@ -56,7 +58,8 @@ class SalesforceExpiredSession(SalesforceError):
     The session ID or OAuth token used has expired or is invalid. The response
     body contains the message and errorCode.
     """
-    message = u"Expired session for {url}. Response content: {content}"
+
+    message = 'Expired session for {url}. Response content: {content}'
 
 
 class SalesforceRefusedRequest(SalesforceError):
@@ -65,7 +68,8 @@ class SalesforceRefusedRequest(SalesforceError):
     The request has been refused. Verify that the logged-in user has
     appropriate permissions.
     """
-    message = u"Request refused for {url}. Response content: {content}"
+
+    message = 'Request refused for {url}. Response content: {content}'
 
 
 class SalesforceResourceNotFound(SalesforceError):
@@ -74,7 +78,8 @@ class SalesforceResourceNotFound(SalesforceError):
     The requested resource couldn't be found. Check the URI for errors, and
     verify that there are no sharing issues.
     """
-    message = u'Resource {name} Not Found. Response content: {content}'
+
+    message = 'Resource {name} Not Found. Response content: {content}'
 
     def __str__(self):
         return self.message.format(name=self.resource_name,
@@ -84,6 +89,7 @@ class SalesforceAuthenticationFailed(SalesforceError):
     """
     Thrown to indicate that authentication with Salesforce failed.
     """
+
     def __init__(self, code, message):
         # TODO exceptions don't seem to be using parent constructors at all.
         # this should be fixed.
@@ -92,14 +98,15 @@ class SalesforceAuthenticationFailed(SalesforceError):
         self.message = message
 
     def __str__(self):
-        return u'{code}: {message}'.format(code=self.code,
-                                           message=self.message)
+        return '{code}: {message}'.format(code=self.code, message=self.message)
+
 
 class SalesforceGeneralError(SalesforceError):
     """
     A non-specific Salesforce error.
     """
-    message = u'Error Code {status}. Response content: {content}'
+
+    message = 'Error Code {status}. Response content: {content}'
 
     def __str__(self):
         return self.message.format(status=self.status, content=self.content)

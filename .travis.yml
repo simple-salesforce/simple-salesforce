@@ -1,29 +1,28 @@
+os: linux
 dist: bionic
 language: python
 python:
-  - "2.7"
   - "3.5"
   - "3.6"
   - "3.7"
   - "3.8"
   - "pypy3"
-# command to install dependencies (mock & nose are already installed)
-install:
-  - pip install tox
-# command to run tests
-script: tox
-matrix:
+jobs:
   fast_finish: true
   include:
     - python: "3.8"
       env: TOXENV=static
-# turn off email notifications
+env:
+  - TOXENV=unit
+install:
+  - pip install tox
+script: tox
 notifications:
   email: false
 deploy:
   # Allow travis-ci to deploy new tags to PyPI
   provider: pypi
-  user: simple-salesforce
+  username: simple-salesforce
   password:
     secure: "RdkngWbRCGN5qSOk4babeda3w0jhsxB+zbuPjnFIOCHYz3OOQkIccXsoFPJso/E4k35mRNTU1J6PEBeL9W3KEtSgsl6k3lX8jamgJzkZU/HPoV8OH5tvybd3uiSikKA6EoxS5yfGjgTuSdOo07AzS69X4+FxNkRnTnug37tLjds="
   distributions: "sdist bdist_wheel"
@@ -32,5 +31,3 @@ deploy:
     tags: true
     all_branches: true
     repo: simple-salesforce/simple-salesforce
-env:
-  - TOXENV=unit
