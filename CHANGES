@@ -1,3 +1,11 @@
+v1.1.0
+=====
+
+Features
+--------
+- [316] Added support for bulk multi-batch processing records
+- [349] Added support for bulk concurrency mode
+
 v1.0.0
 ======
 
@@ -20,13 +28,6 @@ Features
 - [305] Support for JWT Bearer Token workflow
 - [354] Ability to load large results lazily (query_all_iter)
 
-
-v0.73.4
-=====
-
-Features
---------
-- [316] Added ability for multi-batch processing
 
 v0.72
 =====
