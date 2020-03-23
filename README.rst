@@ -9,7 +9,7 @@ Simple Salesforce
    :target: http://simple-salesforce.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-Simple Salesforce is a basic Salesforce.com REST API client built for Python 2.6, 2.7, 3.3, 3.4, 3.5, and 3.6. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
+Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.3, 3.4, 3.5, and 3.6. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
 
 You can find out more regarding the format of the results in the `Official Salesforce.com REST API Documentation`_
 
@@ -239,7 +239,7 @@ To retrieve a list of top level description of instance metadata, user:
 Using Bulk
 ----------
 
-You can use this library to access Bulk API functions.
+You can use this library to access Bulk API functions. The data element can be a list of records of any size and by default batch sizes are 10,000 records and run in parrallel concurrency mode. To set the batch size for insert, upsert, delete, hard_delete, and update use the batch_size arguement. To set the concurrency mode for the salesforce job the use_serial arguement can be set to use_serial=True.
 
 Create new records:
 
@@ -250,7 +250,7 @@ Create new records:
           {'LastName':'Jones','Email':'test@test.com'}
         ]
 
-    sf.bulk.Contact.insert(data)
+    sf.bulk.Contact.insert(data,batch_size=10000,use_serial=True)
 
 Update existing records:
 
@@ -261,7 +261,7 @@ Update existing records:
           {'Id': '0000000000BBBBB', 'Email': 'testnew@test.com'}
         ]
 
-    sf.bulk.Contact.update(data)
+    sf.bulk.Contact.update(data,batch_size=10000,use_serial=True)
 
 Upsert records:
 
@@ -272,7 +272,7 @@ Upsert records:
           {'Email': 'foo@foo.com'}
         ]
 
-    sf.bulk.Contact.upsert(data, 'Id')
+    sf.bulk.Contact.upsert(data,batch_size=10000,use_serial=True, 'Id')
 
 Query records:
 
@@ -288,7 +288,7 @@ Delete records (soft deletion):
 
     data = [{'Id': '0000000000AAAAA'}]
 
-    sf.bulk.Contact.delete(data)
+    sf.bulk.Contact.delete(data,batch_size=10000,use_serial=True)
 
 Hard deletion:
 
@@ -296,7 +296,7 @@ Hard deletion:
 
     data = [{'Id': '0000000000BBBBB'}]
 
-    sf.bulk.Contact.hard_delete(data)
+    sf.bulk.Contact.hard_delete(data,batch_size=10000,use_serial=True)
 
 
 Using Apex
