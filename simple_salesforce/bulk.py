@@ -258,6 +258,15 @@ class SFBulkType:
                                        batch_size=batch_size)
         return results
 
+    # _bulk_operation wrappers to expose supported Salesforce bulk operations
+    def delete(self, data, batch_size=10000, use_serial=False):
+        """ soft delete records """
+        results = self._bulk_operation(object_name=self.object_name,
+                                       use_serial=use_serial,
+                                       operation='delete', data=data,
+                                       batch_size=batch_size)
+        return results
+
     def insert(self, data, batch_size=10000,
                use_serial=False):
         """ insert records """
