@@ -173,7 +173,7 @@ class SFBulkType:
     def worker(self, batch, operation, wait=5):
         """ Gets batches from concurrent worker threads.
         self._bulk_operation passes batch jobs.
-        The worker function checks each batch job waiting for it complete 
+        The worker function checks each batch job waiting for it complete
         and appends the results.
         """
 
