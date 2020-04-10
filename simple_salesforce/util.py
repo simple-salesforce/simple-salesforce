@@ -2,11 +2,10 @@
 
 import xml.dom.minidom
 
-from simple_salesforce.exceptions import (
-    SalesforceGeneralError, SalesforceExpiredSession,
-    SalesforceMalformedRequest, SalesforceMoreThanOneRecord,
-    SalesforceRefusedRequest, SalesforceResourceNotFound
-)
+from .exceptions import (SalesforceExpiredSession, SalesforceGeneralError,
+                         SalesforceMalformedRequest,
+                         SalesforceMoreThanOneRecord, SalesforceRefusedRequest,
+                         SalesforceResourceNotFound)
 
 
 # pylint: disable=invalid-name
@@ -23,8 +22,12 @@ def getUniqueElementValueFromXmlString(xmlString, elementName):
     elementsByName = xmlStringAsDom.getElementsByTagName(elementName)
     elementValue = None
     if len(elementsByName) > 0:
-        elementValue = elementsByName[0].toxml().replace(
-            '<' + elementName + '>', '').replace('</' + elementName + '>', '')
+        elementValue = (
+            elementsByName[0]
+            .toxml()
+            .replace('<' + elementName + '>', '')
+            .replace('</' + elementName + '>', '')
+        )
     return elementValue
 
 
@@ -33,12 +36,16 @@ def date_to_iso8601(date):
     datetimestr = date.strftime('%Y-%m-%dT%H:%M:%S')
     timezone_sign = date.strftime('%z')[0:1]
     timezone_str = '%s:%s' % (
-        date.strftime('%z')[1:3], date.strftime('%z')[3:5])
-    return '{datetimestr}{tzsign}{timezone}'.format(
-        datetimestr=datetimestr,
-        tzsign=timezone_sign,
-        timezone=timezone_str
-        ).replace(':', '%3A').replace('+', '%2B')
+        date.strftime('%z')[1:3],
+        date.strftime('%z')[3:5],
+    )
+    return (
+        '{datetimestr}{tzsign}{timezone}'.format(
+            datetimestr=datetimestr, tzsign=timezone_sign, timezone=timezone_str
+        )
+        .replace(':', '%3A')
+        .replace('+', '%2B')
+    )
 
 
 def exception_handler(result, name=""):

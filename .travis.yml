@@ -1,42 +1,33 @@
+os: linux
+dist: bionic
 language: python
 python:
-  - "2.6"
-  - "2.7"
-  - "3.2"
-  - "3.3"
-  - "3.4"
   - "3.5"
   - "3.6"
-  - "pypy"
-# command to install dependencies (mock & nose are already installed)
+  - "3.7"
+  - "3.8"
+  - "pypy3"
+jobs:
+  fast_finish: true
+  include:
+    - python: "3.8"
+      env: TOXENV=static
+env:
+  - TOXENV=unit
 install:
   - pip install tox
-# command to run tests
 script: tox
-matrix:
-  fast_finish: true
-  allow_failures:
-    # pylint 1.8.2 dropped support for python 3.3
-    - python: "3.3"
-    # Python 3.2 doesn't appear to work. With 3.3 and 3.4 in the world this
-    # probably isn't a priority, but lets keep an eye on it anyways
-    - python: "3.2"
-    # pylint doesn't run under 2.6. this can be solved later.
-    - python: "2.6"
-# turn off email notifications
 notifications:
   email: false
 deploy:
   # Allow travis-ci to deploy new tags to PyPI
   provider: pypi
-  user: simple-salesforce
+  username: simple-salesforce
   password:
-    secure: "J7qjXx9tmsjZQIyLMRK3roEV1+6GmmME34UrdomlipNixc5MELQLZP2gUThIOf3++824AGX9Dgkq0h5YyAwnawXq7QQFcsOOcz8evcE9v6nVc7EEKCOvIeZ7dXHTAk1a+nLH4I7S5t4B+2bpLI5W3AyHxdpD8TrbZ28tFtuQ2e4="
+    secure: "RdkngWbRCGN5qSOk4babeda3w0jhsxB+zbuPjnFIOCHYz3OOQkIccXsoFPJso/E4k35mRNTU1J6PEBeL9W3KEtSgsl6k3lX8jamgJzkZU/HPoV8OH5tvybd3uiSikKA6EoxS5yfGjgTuSdOo07AzS69X4+FxNkRnTnug37tLjds="
   distributions: "sdist bdist_wheel"
+  skip_existing: true
   on:
     tags: true
     all_branches: true
     repo: simple-salesforce/simple-salesforce
-env:
-  - TOXENV=unit
-  - TOXENV=static

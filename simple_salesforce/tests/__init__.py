@@ -2,6 +2,8 @@
 # pylint: disable=line-too-long
 
 SESSION_ID = '12345'
+INSTANCE_URL = 'https://na15.salesforce.com'
+TOKEN_ID = 'https://na15.salesforce.com/id/00Di0000000icUB/0DFi00000008UYO'
 METADATA_URL = 'https://na15.salesforce.com/services/Soap/m/29.0/00Di0000000icUB'
 SERVER_URL = 'https://na15.salesforce.com/services/Soap/c/29.0/00Di0000000icUB/0DFi00000008UYO'
 PROXIES = {
@@ -50,97 +52,44 @@ LOGIN_RESPONSE_SUCCESS = """<?xml version="1.0" encoding="UTF-8"?>
 </soapenv:Envelope>
 """ % (METADATA_URL, SERVER_URL, SESSION_ID)
 
+TOKEN_LOGIN_RESPONSE_SUCCESS = """{
+    "access_token": "%s",
+    "scope": "web api",
+    "instance_url": "%s",
+    "id": "%s",
+    "token_type": "Bearer"
+}""" % (SESSION_ID, INSTANCE_URL, TOKEN_ID)
+
+TOKEN_WARNING = """
+    If your connected app policy is set to "All users may
+    self-authorize", you may need to authorize this
+    application first. Browse to
+    https://login.salesforce.com/services/oauth2/authorize?response_type=code&client_id=12345.abcde&redirect_uri=<approved URI>
+    in order to Allow Access. Check first to ensure you have a valid
+    <approved URI>."""
+
 ORGANIZATION_LIMITS_RESPONSE = {
-    "ConcurrentAsyncGetReportInstances": {
-        "Max": 200,
-        "Remaining": 200
-    },
-    "ConcurrentSyncReportRuns": {
-        "Max": 20,
-        "Remaining": 20
-    },
-    "DailyApiRequests": {
-        "Max": 15000,
-        "Remaining": 14998
-    },
-    "DailyAsyncApexExecutions": {
-        "Max": 250000,
-        "Remaining": 250000
-    },
-    "DailyBulkApiRequests": {
-        "Max": 5000,
-        "Remaining": 5000
-    },
-    "DailyDurableGenericStreamingApiEvents": {
-        "Max": 10000,
-        "Remaining": 10000
-    },
-    "DailyDurableStreamingApiEvents": {
-        "Max": 10000,
-        "Remaining": 10000
-    },
-    "DailyGenericStreamingApiEvents": {
-        "Max": 10000,
-        "Remaining": 10000
-    },
-    "DailyStreamingApiEvents": {
-        "Max": 10000,
-        "Remaining": 10000
-    },
-    "DailyWorkflowEmails": {
-        "Max": 390,
-        "Remaining": 390
-    },
-    "DataStorageMB": {
-        "Max": 5,
-        "Remaining": 5
-    },
-    "DurableStreamingApiConcurrentClients": {
-        "Max": 20,
-        "Remaining": 20
-    },
-    "FileStorageMB": {
-        "Max": 20,
-        "Remaining": 20
-    },
-    "HourlyAsyncReportRuns": {
-        "Max": 1200,
-        "Remaining": 1200
-    },
-    "HourlyDashboardRefreshes": {
-        "Max": 200,
-        "Remaining": 200
-    },
-    "HourlyDashboardResults": {
-        "Max": 5000,
-        "Remaining": 5000
-    },
-    "HourlyDashboardStatuses": {
-        "Max": 999999999,
-        "Remaining": 999999999
-    },
-    "HourlyODataCallout": {
-        "Max": 10000,
-        "Remaining": 9999
-    },
-    "HourlySyncReportRuns": {
-        "Max": 500,
-        "Remaining": 500
-    },
-    "HourlyTimeBasedWorkflow": {
-        "Max": 50,
-        "Remaining": 50
-    },
-    "MassEmail": {
-        "Max": 10,
-        "Remaining": 10
-    },
-    "SingleEmail": {
-        "Max": 15,
-        "Remaining": 15
-    },
-    "StreamingApiConcurrentClients": {
-        "Max": 20,
-        "Remaining": 20
-    }
+    "ConcurrentAsyncGetReportInstances": {"Max": 200, "Remaining": 200},
+    "ConcurrentSyncReportRuns": {"Max": 20, "Remaining": 20},
+    "DailyApiRequests": {"Max": 15000, "Remaining": 14998},
+    "DailyAsyncApexExecutions": {"Max": 250000, "Remaining": 250000},
+    "DailyBulkApiRequests": {"Max": 5000, "Remaining": 5000},
+    "DailyDurableGenericStreamingApiEvents": {"Max": 10000, "Remaining": 10000},
+    "DailyDurableStreamingApiEvents": {"Max": 10000, "Remaining": 10000},
+    "DailyGenericStreamingApiEvents": {"Max": 10000, "Remaining": 10000},
+    "DailyStreamingApiEvents": {"Max": 10000, "Remaining": 10000},
+    "DailyWorkflowEmails": {"Max": 390, "Remaining": 390},
+    "DataStorageMB": {"Max": 5, "Remaining": 5},
+    "DurableStreamingApiConcurrentClients": {"Max": 20, "Remaining": 20},
+    "FileStorageMB": {"Max": 20, "Remaining": 20},
+    "HourlyAsyncReportRuns": {"Max": 1200, "Remaining": 1200},
+    "HourlyDashboardRefreshes": {"Max": 200, "Remaining": 200},
+    "HourlyDashboardResults": {"Max": 5000, "Remaining": 5000},
+    "HourlyDashboardStatuses": {"Max": 999999999, "Remaining": 999999999},
+    "HourlyODataCallout": {"Max": 10000, "Remaining": 9999},
+    "HourlySyncReportRuns": {"Max": 500, "Remaining": 500},
+    "HourlyTimeBasedWorkflow": {"Max": 50, "Remaining": 50},
+    "MassEmail": {"Max": 10, "Remaining": 10},
+    "SingleEmail": {"Max": 15, "Remaining": 15},
+    "StreamingApiConcurrentClients": {"Max": 20, "Remaining": 20},
 }

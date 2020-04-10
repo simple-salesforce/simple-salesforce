@@ -1,21 +1,18 @@
 """ Classes for interacting with Salesforce Bulk API """
 
-try:
-    from collections import OrderedDict
-except ImportError:
-    # Python < 2.7
-    from ordereddict import OrderedDict
-
 import json
-import requests
+from collections import OrderedDict
 from time import sleep
-from simple_salesforce.util import call_salesforce
+
+import requests
+
+from .util import call_salesforce
 
 
-class SFBulkHandler(object):
+class SFBulkHandler:
     """ Bulk API request handler
     Intermediate class which allows us to use commands,
-     such as 'sf.bulk.Contacts.insert(...)'
+     such as 'sf.bulk.Contacts.create(...)'
     This is really just a middle layer, whose sole purpose is
     to allow the above syntax
     """
@@ -52,7 +49,7 @@ class SFBulkHandler(object):
                           headers=self.headers, session=self.session)
 
 
-class SFBulkType(object):
+class SFBulkType:
     """ Interface to Bulk/Async API functions"""
 
     def __init__(self, object_name, bulk_url, headers, session):
@@ -211,7 +208,7 @@ class SFBulkType(object):
         return results
 
     def insert(self, data):
-        """ insert/create records """
+        """ insert records """
         results = self._bulk_operation(object_name=self.object_name,
                                        operation='insert', data=data)
         return results
