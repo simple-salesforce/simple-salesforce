@@ -276,6 +276,8 @@ Query records:
 
 Query all records:
 
+QueryAll will return records that have been deleted because of a merge or delete. QueryAll will also return information about archived Task and Event records.
+
 .. code-block:: python
 
     query = 'SELECT Id, Name FROM Account LIMIT 10'
