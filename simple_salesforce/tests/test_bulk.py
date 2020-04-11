@@ -1,13 +1,13 @@
+"""Test for bulk.py"""
 import http.client as http
 import re
 import unittest
-from unittest.mock import patch, DEFAULT
+from unittest.mock import patch
 
 import requests
 import responses
 from simple_salesforce import tests
 from simple_salesforce.api import Salesforce
-from simple_salesforce.bulk import SFBulkHandler, SFBulkType
 
 
 class TestSFBulkHandler(unittest.TestCase):
@@ -49,13 +49,17 @@ class TestSFBulkType(unittest.TestCase):
         ]
         self.expected_query = [
             {"Id": "001xx000003DHP0AAO", "AccountId": "ID-13",
-                "Email": "contact1@example.com", "FirstName": "Bob", "LastName": "x"},
+             "Email": "contact1@example.com",
+             "FirstName": "Bob", "LastName": "x"},
             {"Id": "001xx000003DHP1AAO", "AccountId": "ID-24",
-                "Email": "contact2@example.com", "FirstName": "Alice", "LastName": "y"},
+             "Email": "contact2@example.com",
+             "FirstName": "Alice", "LastName": "y"},
             {"Id": "001xx000003DHP0AAO", "AccountId": "ID-13",
-                "Email": "contact1@example.com", "FirstName": "Bob", "LastName": "x"},
+             "Email": "contact1@example.com",
+             "FirstName": "Bob", "LastName": "x"},
             {"Id": "001xx000003DHP1AAO", "AccountId": "ID-24",
-                "Email": "contact2@example.com", "FirstName": "Alice", "LastName": "y"}
+             "Email": "contact2@example.com",
+             "FirstName": "Alice", "LastName": "y"}
         ]
 
     def test_bulk_type(self):
@@ -76,7 +80,9 @@ class TestSFBulkType(unittest.TestCase):
         responses.add(
             responses.POST,
             re.compile(r'^https://[^/job].*/job$'),
-            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel","contentType": "JSON","id": "Job-1","object": "Contact","operation": "%s","state": "Open"}' % operation,
+            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
+            '"contentType": "JSON","id": "Job-1","object": "Contact",'
+            '"operation": "%s","state": "Open"}' % operation,
             status=http.OK)
         responses.add(
             responses.POST,
@@ -87,7 +93,9 @@ class TestSFBulkType(unittest.TestCase):
         responses.add(
             responses.POST,
             re.compile(r'^https://[^/job].*/job/Job-1$'),
-            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel","contentType" : "JSON","id" : "Job-1","object" : "Contact","operation" : "%s","state" : "Closed"}' % operation,
+            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
+            '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
+            '"operation" : "%s","state" : "Closed"}' % operation,
             status=http.OK
         )
         responses.add(
@@ -106,7 +114,9 @@ class TestSFBulkType(unittest.TestCase):
             responses.GET,
             re.compile(
                 r'^https://[^/job].*/job/Job-1/batch/Batch-1/result$'),
-            body='[{"success": true,"created": true,"id": "001xx000003DHP0AAO","errors": []},{"success": true,"created": true,"id": "001xx000003DHP1AAO","errors": []}]',
+            body='[{"success": true,"created": true,"id": "001xx000003DHP0AAO",'
+            '"errors": []},{"success": true,"created": true,'
+            '"id": "001xx000003DHP1AAO","errors": []}]',
             status=http.OK
         )
         data = [{
@@ -128,7 +138,9 @@ class TestSFBulkType(unittest.TestCase):
         responses.add(
             responses.POST,
             re.compile(r'^https://[^/job].*/job$'),
-            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel","contentType": "JSON","id": "Job-1","object": "Contact","operation": "%s","state": "Open"}' % operation,
+            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
+            '"contentType": "JSON","id": "Job-1","object": "Contact",'
+            '"operation": "%s","state": "Open"}' % operation,
             status=http.OK)
         responses.add(
             responses.POST,
@@ -139,7 +151,9 @@ class TestSFBulkType(unittest.TestCase):
         responses.add(
             responses.POST,
             re.compile(r'^https://[^/job].*/job/Job-1$'),
-            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel","contentType" : "JSON","id" : "Job-1","object" : "Contact","operation" : "%s","state" : "Closed"}' % operation,
+            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
+            '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
+            '"operation" : "%s","state" : "Closed"}' % operation,
             status=http.OK
         )
         responses.add(
@@ -158,7 +172,9 @@ class TestSFBulkType(unittest.TestCase):
             responses.GET,
             re.compile(
                 r'^https://[^/job].*/job/Job-1/batch/Batch-1/result$'),
-            body='[{"success": true,"created": true,"id": "001xx000003DHP0AAO","errors": []},{"success": true,"created": true,"id": "001xx000003DHP1AAO","errors": []}]',
+            body='[{"success": true,"created": true,"id": "001xx000003DHP0AAO",'
+            '"errors": []},{"success": true,"created": true,'
+            '"id": "001xx000003DHP1AAO","errors": []}]',
             status=http.OK
         )
 
@@ -187,7 +203,9 @@ class TestSFBulkType(unittest.TestCase):
         responses.add(
             responses.POST,
             re.compile(r'^https://[^/job].*/job$'),
-            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel","contentType": "JSON","id": "Job-1","object": "Contact","operation": "%s","state": "Open"}' % operation,
+            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
+            '"contentType": "JSON","id": "Job-1","object": "Contact",'
+            '"operation": "%s","state": "Open"}' % operation,
             status=http.OK)
         responses.add(
             responses.POST,
@@ -198,7 +216,9 @@ class TestSFBulkType(unittest.TestCase):
         responses.add(
             responses.POST,
             re.compile(r'^https://[^/job].*/job/Job-1$'),
-            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel","contentType" : "JSON","id" : "Job-1","object" : "Contact","operation" : "%s","state" : "Closed"}' % operation,
+            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
+            '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
+            '"operation" : "%s","state" : "Closed"}' % operation,
             status=http.OK
         )
         responses.add(
@@ -217,7 +237,9 @@ class TestSFBulkType(unittest.TestCase):
             responses.GET,
             re.compile(
                 r'^https://[^/job].*/job/Job-1/batch/Batch-1/result$'),
-            body='[{"success": true,"created": true,"id": "001xx000003DHP0AAO","errors": []},{"success": true,"created": true,"id": "001xx000003DHP1AAO","errors": []}]',
+            body='[{"success": true,"created": true,"id": "001xx000003DHP0AAO",'
+            '"errors": []},{"success": true,"created": true,'
+            '"id": "001xx000003DHP1AAO","errors": []}]',
             status=http.OK
         )
 
@@ -248,7 +270,9 @@ class TestSFBulkType(unittest.TestCase):
         responses.add(
             responses.POST,
             re.compile(r'^https://[^/job].*/job$'),
-            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel","contentType": "JSON","id": "Job-1","object": "Contact","operation": "%s","state": "Open"}' % operation,
+            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
+            '"contentType": "JSON","id": "Job-1","object": "Contact",'
+            '"operation": "%s","state": "Open"}' % operation,
             status=http.OK)
         responses.add(
             responses.POST,
@@ -259,7 +283,9 @@ class TestSFBulkType(unittest.TestCase):
         responses.add(
             responses.POST,
             re.compile(r'^https://[^/job].*/job/Job-1$'),
-            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel","contentType" : "JSON","id" : "Job-1","object" : "Contact","operation" : "%s","state" : "Closed"}' % operation,
+            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
+            '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
+            '"operation" : "%s","state" : "Closed"}' % operation,
             status=http.OK
         )
         responses.add(
@@ -278,7 +304,9 @@ class TestSFBulkType(unittest.TestCase):
             responses.GET,
             re.compile(
                 r'^https://[^/job].*/job/Job-1/batch/Batch-1/result$'),
-            body='[{"success": true,"created": true,"id": "001xx000003DHP0AAO","errors": []},{"success": true,"created": true,"id": "001xx000003DHP1AAO","errors": []}]',
+            body='[{"success": true,"created": true,"id": "001xx000003DHP0AAO",'
+            '"errors": []},{"success": true,"created": true,'
+            '"id": "001xx000003DHP1AAO","errors": []}]',
             status=http.OK
         )
 
@@ -309,7 +337,9 @@ class TestSFBulkType(unittest.TestCase):
         responses.add(
             responses.POST,
             re.compile(r'^https://[^/job].*/job$'),
-            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel","contentType": "JSON","id": "Job-1","object": "Contact","operation": "%s","state": "Open"}' % operation,
+            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
+            '"contentType": "JSON","id": "Job-1","object": "Contact",'
+            '"operation": "%s","state": "Open"}' % operation,
             status=http.OK)
         responses.add(
             responses.POST,
@@ -320,7 +350,9 @@ class TestSFBulkType(unittest.TestCase):
         responses.add(
             responses.POST,
             re.compile(r'^https://[^/job].*/job/Job-1$'),
-            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel","contentType" : "JSON","id" : "Job-1","object" : "Contact","operation" : "%s","state" : "Closed"}' % operation,
+            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
+            '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
+            '"operation" : "%s","state" : "Closed"}' % operation,
             status=http.OK
         )
         responses.add(
@@ -345,15 +377,25 @@ class TestSFBulkType(unittest.TestCase):
         responses.add(
             responses.GET,
             re.compile(
-                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result/752x000000000F1$'),
-            body='[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13","Email": "contact1@example.com","FirstName": "Bob","LastName": "x"},{"Id": "001xx000003DHP1AAO", "AccountId": "ID-24","Email": "contact2@example.com","FirstName": "Alice","LastName": "y"}]',
+                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result/ \
+                    752x000000000F1$'),
+            body='[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13",'
+            '"Email": "contact1@example.com","FirstName": "Bob",'
+            '"LastName": "x"},{"Id": "001xx000003DHP1AAO",'
+            '"AccountId": "ID-24","Email": "contact2@example.com",'
+            '"FirstName": "Alice","LastName": "y"}]',
             status=http.OK
         )
         responses.add(
             responses.GET,
             re.compile(
-                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result/752x000000000F2$'),
-            body='[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13","Email": "contact1@example.com","FirstName": "Bob","LastName": "x"},{"Id": "001xx000003DHP1AAO", "AccountId": "ID-24","Email": "contact2@example.com","FirstName": "Alice","LastName": "y"}]',
+                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result/ \
+                    752x000000000F2$'),
+            body='[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13",'
+            '"Email": "contact1@example.com","FirstName": "Bob",'
+            '"LastName": "x"},{"Id": "001xx000003DHP1AAO",'
+            '"AccountId": "ID-24","Email": "contact2@example.com",'
+            '"FirstName": "Alice","LastName": "y"}]',
             status=http.OK
         )
 
@@ -372,7 +414,9 @@ class TestSFBulkType(unittest.TestCase):
         responses.add(
             responses.POST,
             re.compile(r'^https://[^/job].*/job$'),
-            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel","contentType": "JSON","id": "Job-1","object": "Contact","operation": "%s","state": "Open"}' % operation,
+            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
+            '"contentType": "JSON","id": "Job-1","object": "Contact",'
+            '"operation": "%s","state": "Open"}' % operation,
             status=http.OK)
         responses.add(
             responses.POST,
@@ -383,7 +427,9 @@ class TestSFBulkType(unittest.TestCase):
         responses.add(
             responses.POST,
             re.compile(r'^https://[^/job].*/job/Job-1$'),
-            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel","contentType" : "JSON","id" : "Job-1","object" : "Contact","operation" : "%s","state" : "Closed"}' % operation,
+            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
+            '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
+            '"operation" : "%s","state" : "Closed"}' % operation,
             status=http.OK
         )
         responses.add(
@@ -408,15 +454,25 @@ class TestSFBulkType(unittest.TestCase):
         responses.add(
             responses.GET,
             re.compile(
-                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result/752x000000000F1$'),
-            body='[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13","Email": "contact1@example.com","FirstName": "Bob","LastName": "x"},{"Id": "001xx000003DHP1AAO", "AccountId": "ID-24","Email": "contact2@example.com","FirstName": "Alice","LastName": "y"}]',
+                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result/ \
+                    752x000000000F1$'),
+            body='[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13",'
+            '"Email": "contact1@example.com","FirstName": "Bob",'
+            '"LastName": "x"},{"Id": "001xx000003DHP1AAO",'
+            '"AccountId": "ID-24","Email": "contact2@example.com",'
+            '"FirstName": "Alice","LastName": "y"}]',
             status=http.OK
         )
         responses.add(
             responses.GET,
             re.compile(
-                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result/752x000000000F2$'),
-            body='[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13","Email": "contact1@example.com","FirstName": "Bob","LastName": "x"},{"Id": "001xx000003DHP1AAO", "AccountId": "ID-24","Email": "contact2@example.com","FirstName": "Alice","LastName": "y"}]',
+                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result/ \
+                    752x000000000F2$'),
+            body='[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13",'
+            '"Email": "contact1@example.com","FirstName": "Bob",'
+            '"LastName": "x"},{"Id": "001xx000003DHP1AAO",'
+            '"AccountId": "ID-24","Email": "contact2@example.com",'
+            '"FirstName": "Alice","LastName": "y"}]',
             status=http.OK
         )
 
