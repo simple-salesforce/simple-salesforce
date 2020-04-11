@@ -70,7 +70,7 @@ class SFBulkType:
         self.session = session
         self.headers = headers
 
-    def _create_job(self, operation, object_name, external_id_field=None):
+    def _create_job(self, operation, external_id_field=None):
         """ Create a bulk job
 
         Arguments:
@@ -82,7 +82,7 @@ class SFBulkType:
 
         payload = {
             'operation': operation,
-            'object': object_name,
+            'object': self.object_name,
             'contentType': 'JSON'
         }
 
@@ -166,7 +166,7 @@ class SFBulkType:
         return result.json()
 
     # pylint: disable=R0913
-    def _bulk_operation(self, object_name, operation, data,
+    def _bulk_operation(self, operation, data,
                         external_id_field=None, wait=5):
         """ String together helper functions to create a complete
         end-to-end bulk API request
@@ -180,7 +180,7 @@ class SFBulkType:
         * wait -- seconds to sleep between checking batch status
         """
 
-        job = self._create_job(object_name=object_name, operation=operation,
+        job = self._create_job(operation=operation,
                                external_id_field=external_id_field)
 
         batch = self._add_batch(job_id=job['id'], data=data,
@@ -204,44 +204,37 @@ class SFBulkType:
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
     def delete(self, data):
         """ soft delete records """
-        results = self._bulk_operation(object_name=self.object_name,
-                                       operation='delete', data=data)
+        results = self._bulk_operation(operation='delete', data=data)
         return results
 
     def insert(self, data):
         """ insert records """
-        results = self._bulk_operation(object_name=self.object_name,
-                                       operation='insert', data=data)
+        results = self._bulk_operation(operation='insert', data=data)
         return results
 
     def upsert(self, data, external_id_field):
         """ upsert records based on a unique identifier """
-        results = self._bulk_operation(object_name=self.object_name,
-                                       operation='upsert',
+        results = self._bulk_operation(operation='upsert',
                                        external_id_field=external_id_field,
                                        data=data)
         return results
 
     def update(self, data):
         """ update records """
-        results = self._bulk_operation(object_name=self.object_name,
-                                       operation='update', data=data)
+        results = self._bulk_operation(operation='update', data=data)
         return results
 
     def hard_delete(self, data):
         """ hard delete records """
-        results = self._bulk_operation(object_name=self.object_name,
-                                       operation='hardDelete', data=data)
+        results = self._bulk_operation(operation='hardDelete', data=data)
         return results
 
     def query(self, data):
         """ bulk query """
-        results = self._bulk_operation(object_name=self.object_name,
-                                       operation='query', data=data)
+        results = self._bulk_operation(operation='query', data=data)
         return results
 
     def query_all(self, data):
         """ bulk queryAll """
-        results = self._bulk_operation(object_name=self.object_name,
-                                       operation='queryAll', data=data)
+        results = self._bulk_operation(operation='queryAll', data=data)
         return results
