@@ -374,11 +374,11 @@ class TestSFBulkType(unittest.TestCase):
             body='["752x000000000F1","752x000000000F2"]',
             status=http.OK
         )
+
         responses.add(
             responses.GET,
-            re.compile(
-                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result/ \
-                    752x000000000F1$'),
+            re.compile(r"""^https://[^/job].*/job/Job-1/batch/Batch-1/result
+            /752x000000000F1$""", re.X),
             body='[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13",'
             '"Email": "contact1@example.com","FirstName": "Bob",'
             '"LastName": "x"},{"Id": "001xx000003DHP1AAO",'
@@ -389,8 +389,8 @@ class TestSFBulkType(unittest.TestCase):
         responses.add(
             responses.GET,
             re.compile(
-                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result/ \
-                    752x000000000F2$'),
+                r"""^https://[^/job].*/job/Job-1/batch/Batch-1/result
+                /752x000000000F2$""", re.X),
             body='[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13",'
             '"Email": "contact1@example.com","FirstName": "Bob",'
             '"LastName": "x"},{"Id": "001xx000003DHP1AAO",'
@@ -453,9 +453,8 @@ class TestSFBulkType(unittest.TestCase):
         )
         responses.add(
             responses.GET,
-            re.compile(
-                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result/ \
-                    752x000000000F1$'),
+            re.compile(r"""^https://[^/job].*/job/Job-1/batch/Batch-1/result
+            /752x000000000F1$""", re.X),
             body='[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13",'
             '"Email": "contact1@example.com","FirstName": "Bob",'
             '"LastName": "x"},{"Id": "001xx000003DHP1AAO",'
@@ -466,8 +465,8 @@ class TestSFBulkType(unittest.TestCase):
         responses.add(
             responses.GET,
             re.compile(
-                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result/ \
-                    752x000000000F2$'),
+                r"""^https://[^/job].*/job/Job-1/batch/Batch-1/result
+                /752x000000000F2$""", re.X),
             body='[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13",'
             '"Email": "contact1@example.com","FirstName": "Bob",'
             '"LastName": "x"},{"Id": "001xx000003DHP1AAO",'
