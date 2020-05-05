@@ -392,6 +392,37 @@ class Salesforce:
 
         return result.json(object_pairs_hook=OrderedDict)
 
+    def query_all_iter(self, query, include_deleted=False, **kwargs):
+        """This is a lazy alternative to `query_all` - it does not construct
+        the whole result set into one container, but returns objects from each
+        page it retrieves from the API.
+
+        Since `query_all` has always been eagerly executed, we reimplemented it
+        using `query_all_iter`, only materializing the returned iterator to
+        maintain backwards compatibility.
+
+        The one big difference from `query_all` (apart from being lazy) is that
+        we don't return a dictionary with `totalSize` and `done` here,
+        we only return the records in an iterator.
+
+        Arguments
+
+        * query -- the SOQL query to send to Salesforce, e.g.
+                   SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
+        * include_deleted -- True if the query should include deleted records.
+        """
+
+        result = self.query(query, include_deleted=include_deleted, **kwargs)
+        while True:
+            for record in result['records']:
+                yield record
+            # fetch next batch if we're not done else break out of loop
+            if not result['done']:
+                result = self.query_more(result['nextRecordsUrl'],
+                                         identifier_is_url=True)
+            else:
+                return
+
     def query_all(self, query, include_deleted=False, **kwargs):
         """Returns the full set of results for the `query`. This is a
         convenience
@@ -409,20 +440,15 @@ class Salesforce:
         * include_deleted -- True if the query should include deleted records.
         """
 
-        result = self.query(query, include_deleted=include_deleted, **kwargs)
-        all_records = []
+        records = self.query_all_iter(query, include_deleted=include_deleted,
+                                      **kwargs)
+        all_records = list(records)
+        return {
+            'records': all_records,
+            'totalSize': len(all_records),
+            'done': True,
+        }
 
-        while True:
-            all_records.extend(result['records'])
-            # fetch next batch if we're not done else break out of loop
-            if not result['done']:
-                result = self.query_more(result['nextRecordsUrl'],
-                                         identifier_is_url=True)
-            else:
-                break
-
-        result['records'] = all_records
-        return result
 
     def apexecute(self, action, method='GET', data=None, **kwargs):
         """Makes an HTTP request to an APEX REST endpoint

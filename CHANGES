@@ -18,6 +18,7 @@ v0.75
 Features
 --------
 - [305] Support for JWT Bearer Token workflow
+- [354] Ability to load large results lazily (query_all_iter)
 
 
 v0.73.4
