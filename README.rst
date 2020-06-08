@@ -35,7 +35,7 @@ If you have the full URL of your instance (perhaps including the schema, as is i
     from simple_salesforce import Salesforce
     sf = Salesforce(instance_url='https://na1.salesforce.com', session_id='')
 
-There are also two means of authentication, one that uses username, password and security token and the other that uses IP filtering, username, password  and organizationId
+There are also three means of authentication, one that uses username, password and security token; one that uses IP filtering, username, password  and organizationId; and the other that uses a private key to sign a JWT.
 
 To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password):
 
@@ -50,6 +50,13 @@ To login using IP-whitelist Organization ID method, simply use your Salesforce u
 
     from simple_salesforce import Salesforce
     sf = Salesforce(password='password', username='myemail@example.com', organizationId='OrgId')
+
+To login using the JWT method, use your Salesforce username, consumer key from your app, and private key:
+
+.. code-block:: python
+
+    from simple_salesforce import Salesforce
+    sf = Salesforce(username='myemail@example.com', consumer_key='XYZ', privatekey_file='filename.key')
 
 If you'd like to enter a sandbox, simply add ``domain='test'`` to your ``Salesforce()`` call.
 
