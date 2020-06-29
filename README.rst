@@ -188,6 +188,26 @@ While ``query_all`` materializes the whole result into a Python list, ``query_al
     for row in data:
       process(row)
 
+Values used in SOQL queries can be quoted and escaped using ``format_soql``:
+
+.. code-block:: python
+
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE LastName = {}", "Jones"))
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE LastName = {last_name}", last_name="Jones"))
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE LastName IN {names}", names=["Smith", "Jones"]))
+
+To skip quoting and escaping for one value while still using the format string, use ``:literal``:
+
+.. code-block:: python
+
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE Income > {:literal}", "USD100"))
+
+To escape a substring used in a LIKE expression while being able to use % around it, use ``:like``:
+
+.. code-block:: python
+
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE Name LIKE '{:like}%'", "Jones"))
+
 SOSL queries are done via:
 
 .. code-block:: python
@@ -214,6 +234,12 @@ To insert or update (upsert) a record using an external ID, use:
 .. code-block:: python
 
     sf.Contact.upsert('customExtIdField__c/11999',{'LastName': 'Smith','Email': 'smith@example.com'})
+
+To format an external ID that could contain non-URL-safe characters, use:
+
+.. code-block:: python
+
+    external_id = format_external_id('customExtIdField__c', 'this/that & the other')
 
 To retrieve basic metadata use:
 

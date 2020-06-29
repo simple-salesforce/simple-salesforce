@@ -7,6 +7,12 @@ To insert or update (upsert) a record using an external ID, use:
 
     sf.Contact.upsert('customExtIdField__c/11999',{'LastName': 'Smith','Email': 'smith@example.com'})
 
+To format an external ID that could contain non-URL-safe characters, use:
+
+.. code-block:: python
+
+    external_id = format_external_id('customExtIdField__c', 'this/that & the other')
+
 To retrieve basic metadata use:
 
 .. code-block:: python

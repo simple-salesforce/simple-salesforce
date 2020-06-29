@@ -9,3 +9,4 @@ from .exceptions import (SalesforceAuthenticationFailed, SalesforceError,
                          SalesforceMoreThanOneRecord, SalesforceRefusedRequest,
                          SalesforceResourceNotFound)
 from .login import SalesforceLogin
+from .format import format_soql, format_external_id
