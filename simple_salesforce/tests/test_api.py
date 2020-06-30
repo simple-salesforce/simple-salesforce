@@ -765,3 +765,48 @@ class TestSalesforce(unittest.TestCase):
         result = client.limits()
 
         self.assertEqual(result, tests.ORGANIZATION_LIMITS_RESPONSE)
+
+    @responses.activate
+    def test_apexecute_get_request(self):
+        """Test method for a GET HTTP request to an APEX Rest endpoint"""
+
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{"test": "data"}',
+            status=http.OK
+        )
+
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        result = client.apexecute('foo', method='GET')
+
+        self.assertEqual(result, {u'test': u'data'})
+
+    @responses.activate
+    @patch('simple_salesforce.api.requests.session')
+    def test_apexecute_post_request(self, session_mock):
+        """Test method for a POST HTTP request to an APEX Rest endpoint"""
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+        )
+
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        payload = {
+            "activity": [
+                {"user": "12345", "test": "update page", "time": "2019-04-21T13:00:15Z"}
+            ]
+        }
+        result = client.apexecute('foo', method='POST', data=payload)
+
+        self.assertEqual(result, {})
