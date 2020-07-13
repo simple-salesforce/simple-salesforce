@@ -305,7 +305,7 @@ Upsert records:
           {'Email': 'foo@foo.com'}
         ]
 
-    sf.bulk.Contact.upsert(data,batch_size=10000,use_serial=True, 'Id')
+    sf.bulk.Contact.upsert(data, 'Id', batch_size=10000, use_serial=True)
 
 Query records:
 
