@@ -1,4 +1,15 @@
-v1.1.0
+v1.10.1
+======
+
+Other
+-----
+
+- [405] Update readme to remove syntax error in bulk
+- [394] Add format_soql and format_external_id functions
+- [393] Updated readme for JWT authentication
+- Update readme to remove python 3.3/3.4
+
+v1.10.0
 =====
 
 Features
