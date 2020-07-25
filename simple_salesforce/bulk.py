@@ -152,7 +152,6 @@ class SFBulkType:
                                  headers=self.headers)
 
         if operation in ('query', 'queryAll'):
-            query_result = []
             for batch_result in result.json():
                 url_query_results = "{}{}{}".format(url, '/', batch_result)
                 batch_query_result = call_salesforce(url=url_query_results,
@@ -160,10 +159,9 @@ class SFBulkType:
                                                      session=self.session,
                                                      headers=self.headers
                                                      ).json()
-                query_result.extend(batch_query_result)
-            return query_result
-
-        return result.json()
+                yield batch_query_result
+        else:
+            yield result.json()
 
     # pylint: disable=R0913
     def _bulk_operation(self, operation, data,
@@ -201,40 +199,54 @@ class SFBulkType:
                                           operation=operation)
         return results
 
+    def _create_list_results(self, fetch_results):
+        ret_val = []
+        for list_results in fetch_results:
+            ret_val.extend(list_results)
+        return ret_val
+
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
     def delete(self, data):
         """ soft delete records """
         results = self._bulk_operation(operation='delete', data=data)
-        return results
+        return self._create_list_results(results)
 
     def insert(self, data):
         """ insert records """
         results = self._bulk_operation(operation='insert', data=data)
-        return results
+        return self._create_list_results(results)
 
     def upsert(self, data, external_id_field):
         """ upsert records based on a unique identifier """
         results = self._bulk_operation(operation='upsert',
                                        external_id_field=external_id_field,
                                        data=data)
-        return results
+        return self._create_list_results(results)
 
     def update(self, data):
         """ update records """
         results = self._bulk_operation(operation='update', data=data)
-        return results
+        return self._create_list_results(results)
 
     def hard_delete(self, data):
         """ hard delete records """
         results = self._bulk_operation(operation='hardDelete', data=data)
-        return results
+        return self._create_list_results(results)
 
-    def query(self, data):
+    def query(self, data, lazy_operation=False):
         """ bulk query """
         results = self._bulk_operation(operation='query', data=data)
-        return results
 
-    def query_all(self, data):
+        if lazy_operation:
+            return results
+        else:
+            return self._create_list_results(results)
+
+    def query_all(self, data, lazy_operation=False):
         """ bulk queryAll """
         results = self._bulk_operation(operation='queryAll', data=data)
-        return results
+        
+        if lazy_operation:
+            return results
+        else:
+            return self._create_list_results(results)

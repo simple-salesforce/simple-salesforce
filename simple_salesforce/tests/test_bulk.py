@@ -408,6 +408,87 @@ class TestSFBulkType(unittest.TestCase):
         self.assertEqual(self.expected_query, contact)
 
     @responses.activate
+    def test_query_lazy(self):
+        """Test query records"""
+        operation = 'query'
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job$'),
+            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
+            '"contentType": "JSON","id": "Job-1","object": "Contact",'
+            '"operation": "%s","state": "Open"}' % operation,
+            status=http.OK)
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "Queued"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1$'),
+            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
+            '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
+            '"operation" : "%s","state" : "Closed"}' % operation,
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-1$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "InProgress"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-1$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "Completed"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(
+                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result$'),
+            body='["752x000000000F1","752x000000000F2"]',
+            status=http.OK
+        )
+
+        responses.add(
+            responses.GET,
+            re.compile(r"""^https://[^/job].*/job/Job-1/batch/Batch-1/result
+            /752x000000000F1$""", re.X),
+            body='[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13",'
+            '"Email": "contact1@example.com","FirstName": "Bob",'
+            '"LastName": "x"},{"Id": "001xx000003DHP1AAO",'
+            '"AccountId": "ID-24","Email": "contact2@example.com",'
+            '"FirstName": "Alice","LastName": "y"}]',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(
+                r"""^https://[^/job].*/job/Job-1/batch/Batch-1/result
+                /752x000000000F2$""", re.X),
+            body='[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13",'
+            '"Email": "contact1@example.com","FirstName": "Bob",'
+            '"LastName": "x"},{"Id": "001xx000003DHP1AAO",'
+            '"AccountId": "ID-24","Email": "contact2@example.com",'
+            '"FirstName": "Alice","LastName": "y"}]',
+            status=http.OK
+        )
+
+        data = 'SELECT Id,AccountId,Email,FirstName,LastName FROM Contact'
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        contact = []
+        for list_results in client.bulk.Contact.query(data, True):
+            contact.extend(list_results)
+
+        self.assertEqual(self.expected_query, contact)
+
+    @responses.activate
     def test_query_all(self):
         """Test queryAll records"""
         operation = 'queryAll'
