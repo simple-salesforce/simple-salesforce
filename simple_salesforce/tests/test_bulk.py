@@ -75,7 +75,7 @@ class TestSFBulkType(unittest.TestCase):
 
     @responses.activate
     def test_delete(self):
-        """Test delete records"""
+        """Test bulk delete records"""
         operation = 'delete'
         responses.add(
             responses.POST,
@@ -129,11 +129,11 @@ class TestSFBulkType(unittest.TestCase):
                             instance_url=tests.SERVER_URL,
                             session=session)
         contact = client.bulk.Contact.delete(data)
-        self.assertEqual(self.expected, contact)
+        self.assertEqual([self.expected], contact)
 
     @responses.activate
     def test_insert(self):
-        """Test insert records"""
+        """Test bulk insert records"""
         operation = 'insert'
         responses.add(
             responses.POST,
@@ -194,11 +194,11 @@ class TestSFBulkType(unittest.TestCase):
                             instance_url=tests.SERVER_URL,
                             session=session)
         contact = client.bulk.Contact.insert(data)
-        self.assertEqual(self.expected, contact)
+        self.assertEqual([self.expected], contact)
 
     @responses.activate
     def test_upsert(self):
-        """Test upsert records"""
+        """Test bulk upsert records"""
         operation = 'upsert'
         responses.add(
             responses.POST,
@@ -261,11 +261,11 @@ class TestSFBulkType(unittest.TestCase):
                             instance_url=tests.SERVER_URL,
                             session=session)
         contact = client.bulk.Contact.upsert(data, 'Custom_Id__c')
-        self.assertEqual(self.expected, contact)
+        self.assertEqual([self.expected], contact)
 
     @responses.activate
     def test_update(self):
-        """Test update records"""
+        """Test bulk update records"""
         operation = 'upsert'
         responses.add(
             responses.POST,
@@ -328,11 +328,11 @@ class TestSFBulkType(unittest.TestCase):
                             instance_url=tests.SERVER_URL,
                             session=session)
         contact = client.bulk.Contact.update(data)
-        self.assertEqual(self.expected, contact)
+        self.assertEqual([self.expected], contact)
 
     @responses.activate
     def test_query(self):
-        """Test query records"""
+        """Test bulk query records"""
         operation = 'query'
         responses.add(
             responses.POST,
@@ -409,7 +409,7 @@ class TestSFBulkType(unittest.TestCase):
 
     @responses.activate
     def test_query_lazy(self):
-        """Test query records"""
+        """Test bulk query records"""
         operation = 'query'
         responses.add(
             responses.POST,
@@ -490,7 +490,7 @@ class TestSFBulkType(unittest.TestCase):
 
     @responses.activate
     def test_query_all(self):
-        """Test queryAll records"""
+        """Test bulk queryAll records"""
         operation = 'queryAll'
         responses.add(
             responses.POST,

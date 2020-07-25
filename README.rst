@@ -9,7 +9,7 @@ Simple Salesforce
    :target: http://simple-salesforce.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-Simple Salesforce is a basic Salesforce.com REST API client built for Python 2.6, 2.7, 3.3, 3.4, 3.5, and 3.6. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
+Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.5, 3.6, 3.7 and 3.8. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
 
 You can find out more regarding the format of the results in the `Official Salesforce.com REST API Documentation`_
 
@@ -35,7 +35,7 @@ If you have the full URL of your instance (perhaps including the schema, as is i
     from simple_salesforce import Salesforce
     sf = Salesforce(instance_url='https://na1.salesforce.com', session_id='')
 
-There are also two means of authentication, one that uses username, password and security token and the other that uses IP filtering, username, password  and organizationId
+There are also three means of authentication, one that uses username, password and security token; one that uses IP filtering, username, password  and organizationId; and the other that uses a private key to sign a JWT.
 
 To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password):
 
@@ -50,6 +50,13 @@ To login using IP-whitelist Organization ID method, simply use your Salesforce u
 
     from simple_salesforce import Salesforce
     sf = Salesforce(password='password', username='myemail@example.com', organizationId='OrgId')
+
+To login using the JWT method, use your Salesforce username, consumer key from your app, and private key:
+
+.. code-block:: python
+
+    from simple_salesforce import Salesforce
+    sf = Salesforce(username='myemail@example.com', consumer_key='XYZ', privatekey_file='filename.key')
 
 If you'd like to enter a sandbox, simply add ``domain='test'`` to your ``Salesforce()`` call.
 
@@ -173,6 +180,34 @@ As a convenience, to retrieve all of the results in a single local method call u
 
     sf.query_all("SELECT Id, Email FROM Contact WHERE LastName = 'Jones'")
 
+While ``query_all`` materializes the whole result into a Python list, ``query_all_iter`` returns an iterator, which allows you to lazily process each element separately
+
+.. code-block:: python
+
+    data = sf.query_all_iter("SELECT Id, Email FROM Contact WHERE LastName = 'Jones'")
+    for row in data:
+      process(row)
+
+Values used in SOQL queries can be quoted and escaped using ``format_soql``:
+
+.. code-block:: python
+
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE LastName = {}", "Jones"))
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE LastName = {last_name}", last_name="Jones"))
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE LastName IN {names}", names=["Smith", "Jones"]))
+
+To skip quoting and escaping for one value while still using the format string, use ``:literal``:
+
+.. code-block:: python
+
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE Income > {:literal}", "USD100"))
+
+To escape a substring used in a LIKE expression while being able to use % around it, use ``:like``:
+
+.. code-block:: python
+
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE Name LIKE '{:like}%'", "Jones"))
+
 SOSL queries are done via:
 
 .. code-block:: python
@@ -199,6 +234,12 @@ To insert or update (upsert) a record using an external ID, use:
 .. code-block:: python
 
     sf.Contact.upsert('customExtIdField__c/11999',{'LastName': 'Smith','Email': 'smith@example.com'})
+
+To format an external ID that could contain non-URL-safe characters, use:
+
+.. code-block:: python
+
+    external_id = format_external_id('customExtIdField__c', 'this/that & the other')
 
 To retrieve basic metadata use:
 
@@ -231,7 +272,7 @@ To retrieve a list of top level description of instance metadata, user:
 Using Bulk
 ----------
 
-You can use this library to access Bulk API functions.
+You can use this library to access Bulk API functions. The data element can be a list of records of any size and by default batch sizes are 10,000 records and run in parrallel concurrency mode. To set the batch size for insert, upsert, delete, hard_delete, and update use the batch_size argument. To set the concurrency mode for the salesforce job the use_serial argument can be set to use_serial=True.
 
 Create new records:
 
@@ -242,7 +283,7 @@ Create new records:
           {'LastName':'Jones','Email':'test@test.com'}
         ]
 
-    sf.bulk.Contact.insert(data)
+    sf.bulk.Contact.insert(data,batch_size=10000,use_serial=True)
 
 Update existing records:
 
@@ -253,7 +294,7 @@ Update existing records:
           {'Id': '0000000000BBBBB', 'Email': 'testnew@test.com'}
         ]
 
-    sf.bulk.Contact.update(data)
+    sf.bulk.Contact.update(data,batch_size=10000,use_serial=True)
 
 Upsert records:
 
@@ -264,7 +305,7 @@ Upsert records:
           {'Email': 'foo@foo.com'}
         ]
 
-    sf.bulk.Contact.upsert(data, 'Id')
+    sf.bulk.Contact.upsert(data, 'Id', batch_size=10000, use_serial=True)
 
 Query records:
 
@@ -318,7 +359,7 @@ Delete records (soft deletion):
 
     data = [{'Id': '0000000000AAAAA'}]
 
-    sf.bulk.Contact.delete(data)
+    sf.bulk.Contact.delete(data,batch_size=10000,use_serial=True)
 
 Hard deletion:
 
@@ -326,7 +367,7 @@ Hard deletion:
 
     data = [{'Id': '0000000000BBBBB'}]
 
-    sf.bulk.Contact.hard_delete(data)
+    sf.bulk.Contact.hard_delete(data,batch_size=10000,use_serial=True)
 
 
 Using Apex
