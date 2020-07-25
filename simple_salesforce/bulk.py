@@ -8,7 +8,7 @@ from functools import partial
 
 import requests
 
-from .util import call_salesforce
+from .util import call_salesforce, list_from_generator
 
 
 class SFBulkHandler:
@@ -252,12 +252,6 @@ class SFBulkType:
                                               operation=operation)
         return results
 
-    def _create_list_results(self, fetch_results):
-        ret_val = []
-        for list_results in fetch_results:
-            ret_val.extend(list_results)
-        return ret_val
-
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
     def delete(self, data, batch_size=10000, use_serial=False):
         """ soft delete records """
@@ -303,14 +297,13 @@ class SFBulkType:
 
         if lazy_operation:
             return results
-        else:
-            return self._create_list_results(results)
+
+        return list_from_generator(results)
 
     def query_all(self, data, lazy_operation=False):
         """ bulk queryAll """
         results = self._bulk_operation(operation='queryAll', data=data)
-        
+
         if lazy_operation:
             return results
-        else:
-            return self._create_list_results(results)
+        return list_from_generator(results)
