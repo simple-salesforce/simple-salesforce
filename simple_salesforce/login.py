@@ -33,7 +33,7 @@ def SalesforceLogin(
     domain=None,
     consumer_key=None,
     privatekey_file=None,
-    set_exp_to_local = False
+    set_exp_to_local=False,
 ):
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
