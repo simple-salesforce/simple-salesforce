@@ -33,6 +33,7 @@ def SalesforceLogin(
     domain=None,
     consumer_key=None,
     privatekey_file=None,
+    set_exp_to_local = False
 ):
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
@@ -154,7 +155,10 @@ def SalesforceLogin(
             consumer_key is not None and \
             privatekey_file is not None:
         header = {'alg': 'RS256'}
-        expiration = datetime.now(timezone.utc).astimezone() + timedelta(minutes=3)
+        dt = datetime.utcnow()
+        if set_exp_to_local:
+            dt = datetime.now(timezone.utc).astimezone()
+        expiration = dt + timedelta(minutes=3)
         payload = {
             'iss': consumer_key,
             'sub': username,
