@@ -155,9 +155,7 @@ def SalesforceLogin(
             consumer_key is not None and \
             privatekey_file is not None:
         header = {'alg': 'RS256'}
-        dt = datetime.utcnow()
-        if set_exp_to_local:
-            dt = datetime.now(timezone.utc).astimezone()
+        dt = datetime.now(timezone.utc).astimezone() if set_exp_to_local else datetime.utcnow()
         expiration = dt + timedelta(minutes=3)
         payload = {
             'iss': consumer_key,
