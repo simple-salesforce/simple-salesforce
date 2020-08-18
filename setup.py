@@ -16,7 +16,7 @@ with open(os.path.join(here, 'simple_salesforce', '__version__.py'), 'r') as f:
 setup(
     name=about['__title__'],
     version=about['__version__'],
-    author=about['__author__'],
+    author=about['__author_name__'],
     author_email=about['__author_email__'],
     maintainer=about['__maintainer__'],
     maintainer_email=about['__maintainer_email__'],
