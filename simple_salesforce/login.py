@@ -103,7 +103,7 @@ def SalesforceLogin(
             </env:Body>
         </env:Envelope>""".format(
             username=username, password=password, token=security_token,
-            client_id=client_id).encode(encoding='UTF-8',errors='strict')
+            client_id=client_id).encode(encoding='UTF-8', errors='strict')
 
     # Check if IP Filtering is used in conjunction with organizationId
     elif organizationId is not None:
@@ -129,7 +129,7 @@ def SalesforceLogin(
             </soapenv:Body>
         </soapenv:Envelope>""".format(
             username=username, password=password, organizationId=organizationId,
-            client_id=client_id).encode(encoding='UTF-8',errors='strict')
+            client_id=client_id).encode(encoding='UTF-8', errors='strict')
     elif username is not None and password is not None:
         # IP Filtering for non self-service users
         login_soap_request_body = """<?xml version="1.0" encoding="utf-8" ?>
@@ -148,8 +148,8 @@ def SalesforceLogin(
                     <urn:password>{password}</urn:password>
                 </urn:login>
             </soapenv:Body>
-        </soapenv:Envelope>""".format(
-            username=username, password=password, client_id=client_id).encode(encoding='UTF-8',errors='strict')
+        </soapenv:Envelope>""".format(username=username, password=password,
+            client_id=client_id).encode(encoding='UTF-8', errors='strict')
     elif username is not None and \
             consumer_key is not None and \
             privatekey_file is not None:
