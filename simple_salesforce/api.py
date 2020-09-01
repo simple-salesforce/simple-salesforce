@@ -51,6 +51,7 @@ class Salesforce:
         domain=None,
         consumer_key=None,
         privatekey_file=None,
+        privatekey_file_contents=None
     ):
         """Initialize the instance with the given parameters.
 
@@ -71,6 +72,8 @@ class Salesforce:
         * consumer_key -- the consumer key generated for the user
         * privatekey_file -- the path to the private key file used
                              for signing the JWT token
+        * privatekey_file_contents -- the contents of the private key file used
+                            for signing the JWT token
 
         Direct Session and Instance Access:
 
@@ -166,6 +169,7 @@ class Salesforce:
                 username=username,
                 consumer_key=consumer_key,
                 privatekey_file=privatekey_file,
+                privatekey_file_contents=privatekey_file_contents,
                 proxies=self.proxies,
                 domain=self.domain)
 
