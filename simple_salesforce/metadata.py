@@ -104,7 +104,7 @@ class SfdcMetadataApi:
     def get_component_error_count(value):
         try:
             return int(value)
-        except:
+        except ValueError:
             return 0
 
     def check_deploy_status(self, async_process_id):
@@ -168,8 +168,8 @@ class SfdcMetadataApi:
             members = options['unpackaged'][metadata_type]
             unpackaged += '<types>'
             for member in members:
-                unpackaged += '<members>{0}</members>'.format(member)
-            unpackaged += '<name>{0}</name></types>'.format(metadata_type)
+                unpackaged += '<members>{member}</members>'.format(member=member)
+            unpackaged += '<name>{metadata_type}</name></types>'.format(metadata_type=metadata_type)
         # Compose retrieve request XML
         attributes = {
             'client': 'Metahelper',
@@ -196,7 +196,7 @@ class SfdcMetadataApi:
 
         return async_process_id, state
 
-    def _retrieve_retrieve_result(self, async_process_id, include_zip):
+    def retrieve_retrieve_result(self, async_process_id, include_zip):
         """ Retrieves status for specified retrieval id """
         attributes = {
             'client': 'Metahelper',

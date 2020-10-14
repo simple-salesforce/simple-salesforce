@@ -17,6 +17,7 @@ from .bulk import SFBulkHandler
 from .exceptions import SalesforceGeneralError
 from .login import SalesforceLogin
 from .util import date_to_iso8601, exception_handler
+from .metadata import SfdcMetadataApi
 
 # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
@@ -528,6 +529,36 @@ class Salesforce:
 
         return result
 
+    #file-based deployment function
+    def deploy(self, zipfile, options):
+        """Deploy using the Salesforce Metadata API. Wrapper for SfdcMetaDataApi.deploy(...).
+
+        Arguments:
+
+        * zipfile: a .zip archive to deploy to an org, given as ("path/to/zipfile.zip")
+        * options: salesforce DeployOptions in .json format.
+            (https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_deploy.htm)
+
+        Returns a process id and state for this deployment.
+        """
+        mdapi = SfdcMetadataApi(self.session)
+        asyncId, state = mdapi.deploy(zipfile, options)
+        return asyncId, state
+
+    #check on a file-based deployment
+    def checkDeployStatus(self, asyncId):
+        """Check on the progress of a file-based deployment via Salesforce Metadata API.
+        Wrapper for SfdcMetaDataApi._retrieve_deploy_result(...).
+
+        Arguments:
+
+        * asyncId: deployment async process ID, returned by Salesforce.deploy()
+
+        Returns status of the deployment the asyncId given.
+        """
+        mdapi = SfdcMetadataApi(self.session)
+        status = mdapi.retrieve_deploy_result(asyncId)
+        return status
 
 class SFType:
     """An interface to a specific type of SObject"""
