@@ -18,7 +18,7 @@ from .exceptions import SalesforceGeneralError
 from .login import SalesforceLogin
 from .util import date_to_iso8601, exception_handler
 from .metadata import SfdcMetadataApi
-from .session import SfdcSession
+from .sfdc_session import SfdcSession
 
 # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
@@ -542,7 +542,8 @@ class Salesforce:
 
         Returns a process id and state for this deployment.
         """
-        sfdc_session = SfdcSession(instance=self.sf_instance, session_id=self.session_id)
+        sfdc_instance = re.sub(r'\.salesforce\.com$', '', self.sf_instance)
+        sfdc_session = SfdcSession(instance=sfdc_instance, session_id=self.session_id)
         mdapi = SfdcMetadataApi(sfdc_session)
         asyncId, state = mdapi.deploy(zipfile, options)
         return asyncId, state
@@ -558,7 +559,8 @@ class Salesforce:
 
         Returns status of the deployment the asyncId given.
         """
-        sfdc_session = SfdcSession(instance=self.sf_instance, session_id=self.session_id)
+        sfdc_instance = re.sub(r'\.salesforce\.com$', '', self.sf_instance)
+        sfdc_session = SfdcSession(instance=sfdc_instance, session_id=self.session_id)
         mdapi = SfdcMetadataApi(sfdc_session)
         state, state_detail, deployment_detail, unit_test_detail = mdapi.check_deploy_status(asyncId)
         return state, state_detail, deployment_detail, unit_test_detail

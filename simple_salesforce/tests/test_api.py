@@ -5,7 +5,7 @@ import re
 import unittest
 from collections import OrderedDict
 from datetime import datetime
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import requests
 import responses
@@ -765,3 +765,41 @@ class TestSalesforce(unittest.TestCase):
         result = client.limits()
 
         self.assertEqual(result, tests.ORGANIZATION_LIMITS_RESPONSE)
+
+    @patch("simple_salesforce.sfdc_session.SfdcSession.post")
+    @patch("simple_salesforce.metadata.SfdcMetadataApi._read_deploy_zip")
+    def test_md_deploy_success(self, mock_read_zip, mock_post):
+        """"
+        Test method for metadata deployment
+        """
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.text = '<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns="http://soap.sforce.com/2006/04/metadata"><soapenv:Body><deployResponse><result><done>false</done><id>0Af3B00001CMyfASAT</id><state>Queued</state></result></deployResponse></soapenv:Body></soapenv:Envelope>'
+        mock_post.return_value = mock_response
+
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance=tests.SERVER_URL,
+                            session=session)
+        pid, state = client.deploy("path/to/fake/zip.zip", {})
+        self.assertEqual(pid, "0Af3B00001CMyfASAT")
+        self.assertEqual(state, "Queued")
+
+    @patch("simple_salesforce.sfdc_session.SfdcSession.post")
+    @patch("simple_salesforce.metadata.SfdcMetadataApi._read_deploy_zip")
+    def test_md_deploy_failed_status_code(self, mock_read_zip, mock_post):
+        """"
+        Test method for metadata deployment
+        """
+        mock_response = Mock()
+        mock_response.status_code = 2599
+        mock_response.text = "Unrecognized Error"
+        mock_post.return_value = mock_response
+
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance=tests.SERVER_URL,
+                            session=session)
+        with self.assertRaises(Exception):
+            client.deploy("path/to/fake/zip.zip", {})
+
