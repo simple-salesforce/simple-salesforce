@@ -5,7 +5,7 @@ from xml.etree import ElementTree as ET
 
 
 class SfdcSession(Session):
-    _DEFAULT_API_VERSION = "37.0"
+    _DEFAULT_API_VERSION = "43.0"
     _LOGIN_URL = "https://{instance}.salesforce.com"
     _SOAP_API_BASE_URI = "/services/Soap/c/{version}"
     _XML_NAMESPACES = {
