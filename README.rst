@@ -236,20 +236,20 @@ First, convert and zip the file with:
 .. code-block::
 
    sfdx force:source:convert -r src/folder_name -d dx
-   
-Then navigate into the converted folder and zip it up.
+
+Then navigate into the converted folder and zip it up:
 
 .. code-block::
 
    zip -r -X package.zip *
 
-Then you can use this to deploy that zipfile.
+Then you can use this to deploy that zipfile:
 
 .. code-block:: python
 
    aysncId, state = sf.deploy("path/to/zip", options)
-   
-You can check on the progress of the deploy with 
+
+You can check on the progress of the deploy with:
 
 .. code-block:: python
 
