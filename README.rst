@@ -315,6 +315,44 @@ Query records:
 
     sf.bulk.Account.query(query)
 
+To retrieve large amounts of data, use 
+
+.. code-block:: python
+
+    query = 'SELECT Id, Name FROM Account'
+
+    # generator on the results page
+    fetch_results = sf.bulk.Account.query(query, lazy_operation=True)
+
+    # the generator provides the list of results for every call to next()
+    all_results = []
+    for list_results in fetch_results:
+      all_results.extend(list_results)
+
+Query all records:
+
+QueryAll will return records that have been deleted because of a merge or delete. QueryAll will also return information about archived Task and Event records.
+
+.. code-block:: python
+
+    query = 'SELECT Id, Name FROM Account LIMIT 10'
+
+    sf.bulk.Account.query_all(query)
+
+To retrieve large amounts of data, use 
+
+.. code-block:: python
+
+    query = 'SELECT Id, Name FROM Account'
+
+    # generator on the results page
+    fetch_results = sf.bulk.Account.query_all(query, lazy_operation=True)
+
+    # the generator provides the list of results for every call to next()
+    all_results = []
+    for list_results in fetch_results:
+      all_results.extend(list_results)
+
 Delete records (soft deletion):
 
 .. code-block:: python
