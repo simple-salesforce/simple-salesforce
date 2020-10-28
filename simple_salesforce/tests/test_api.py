@@ -803,3 +803,63 @@ class TestSalesforce(unittest.TestCase):
         with self.assertRaises(Exception):
             client.deploy("path/to/fake/zip.zip", {})
 
+
+    @patch("simple_salesforce.sfdc_session.SfdcSession.post")
+    def test_check_status_pending(self, mock_post):
+        """"
+        Test method for metadata deployment
+        """
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.text = '<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns="http://soap.sforce.com/2006/04/metadata"><soapenv:Body><checkDeployStatusResponse><result><checkOnly>true</checkOnly><createdBy>0053D0000052Xaq</createdBy><createdByName>User User</createdByName><createdDate>2020-10-28T15:38:34.000Z</createdDate><details><runTestResult><numFailures>0</numFailures><numTestsRun>0</numTestsRun><totalTime>0.0</totalTime></runTestResult></details><done>false</done><id>0Af3D00001NViC1SAL</id><ignoreWarnings>false</ignoreWarnings><lastModifiedDate>2020-10-28T15:38:34.000Z</lastModifiedDate><numberComponentErrors>0</numberComponentErrors><numberComponentsDeployed>0</numberComponentsDeployed><numberComponentsTotal>0</numberComponentsTotal><numberTestErrors>0</numberTestErrors><numberTestsCompleted>0</numberTestsCompleted><numberTestsTotal>0</numberTestsTotal><rollbackOnError>true</rollbackOnError><runTestsEnabled>false</runTestsEnabled><status>Pending</status><success>false</success></result></checkDeployStatusResponse></soapenv:Body></soapenv:Envelope>'
+        mock_post.return_value = mock_response
+
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance=tests.SERVER_URL,
+                            session=session)
+        state, state_detail, deployment_detail, unit_test_detail = client.checkDeployStatus("abdcefg")
+        self.assertEqual(state, "Pending")
+        self.assertEqual(state_detail, None)
+        self.assertEqual(deployment_detail, {'total_count': '0', 'failed_count': '0', 'deployed_count': '0', 'errors': []})
+        self.assertEqual(unit_test_detail, {'total_count': '0', 'failed_count': '0', 'completed_count': '0', 'errors': []})
+
+    @patch("simple_salesforce.sfdc_session.SfdcSession.post")
+    def test_check_status_success(self, mock_post):
+        """"
+        Test method for metadata deployment
+        """
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.text = '<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns="http://soap.sforce.com/2006/04/metadata"><soapenv:Body><checkDeployStatusResponse><result><checkOnly>false</checkOnly><completedDate>2020-10-28T13:33:29.000Z</completedDate><createdBy>0053D0000052Xaq</createdBy><createdByName>User User</createdByName><createdDate>2020-10-28T13:33:25.000Z</createdDate><details><componentSuccesses><changed>true</changed><componentType>ApexSettings</componentType><created>false</created><createdDate>2020-10-28T13:33:29.000Z</createdDate><deleted>false</deleted><fileName>shape/settings/Apex.settings</fileName><fullName>Apex</fullName><success>true</success></componentSuccesses><componentSuccesses><changed>true</changed><componentType>ChatterSettings</componentType><created>false</created><createdDate>2020-10-28T13:33:29.000Z</createdDate><deleted>false</deleted><fileName>shape/settings/Chatter.settings</fileName><fullName>Chatter</fullName><success>true</success></componentSuccesses><componentSuccesses><changed>true</changed><componentType></componentType><created>false</created><createdDate>2020-10-28T13:33:29.000Z</createdDate><deleted>false</deleted><fileName>shape/package.xml</fileName><fullName>package.xml</fullName><success>true</success></componentSuccesses><componentSuccesses><changed>true</changed><componentType>LightningExperienceSettings</componentType><created>false</created><createdDate>2020-10-28T13:33:29.000Z</createdDate><deleted>false</deleted><fileName>shape/settings/LightningExperience.settings</fileName><fullName>LightningExperience</fullName><success>true</success></componentSuccesses><componentSuccesses><changed>true</changed><componentType>LanguageSettings</componentType><created>false</created><createdDate>2020-10-28T13:33:29.000Z</createdDate><deleted>false</deleted><fileName>shape/settings/Language.settings</fileName><fullName>Language</fullName><success>true</success></componentSuccesses><runTestResult><numFailures>0</numFailures><numTestsRun>0</numTestsRun><totalTime>0.0</totalTime></runTestResult></details><done>true</done><id>0Af3D00001NVCnwSAH</id><ignoreWarnings>false</ignoreWarnings><lastModifiedDate>2020-10-28T13:33:29.000Z</lastModifiedDate><numberComponentErrors>0</numberComponentErrors><numberComponentsDeployed>4</numberComponentsDeployed><numberComponentsTotal>4</numberComponentsTotal><numberTestErrors>0</numberTestErrors><numberTestsCompleted>0</numberTestsCompleted><numberTestsTotal>0</numberTestsTotal><rollbackOnError>true</rollbackOnError><runTestsEnabled>false</runTestsEnabled><startDate>2020-10-28T13:33:26.000Z</startDate><status>Succeeded</status><success>true</success></result></checkDeployStatusResponse></soapenv:Body></soapenv:Envelope>'
+        mock_post.return_value = mock_response
+
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance=tests.SERVER_URL,
+                            session=session)
+        state, state_detail, deployment_detail, unit_test_detail = client.checkDeployStatus("abdcefg")
+        self.assertEqual(state, "Succeeded")
+        self.assertEqual(state_detail, None)
+        self.assertEqual(deployment_detail, {'total_count': '4', 'failed_count': '0', 'deployed_count': '4', 'errors': []})
+        self.assertEqual(unit_test_detail, {'total_count': '0', 'failed_count': '0', 'completed_count': '0', 'errors': []})
+
+    @patch("simple_salesforce.sfdc_session.SfdcSession.post")
+    def test_check_status_payload_error(self, mock_post):
+        """"
+        Test method for metadata deployment
+        """
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.text = '<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns="http://soap.sforce.com/2006/04/metadata"><soapenv:Body><checkDeployStatusResponse><result><checkOnly>true</checkOnly><completedDate>2020-10-28T13:37:48.000Z</completedDate><createdBy>0053D0000052Xaq</createdBy><createdByName>User User</createdByName><createdDate>2020-10-28T13:37:46.000Z</createdDate><details><componentFailures><changed>false</changed><componentType></componentType><created>false</created><createdDate>2020-10-28T13:37:47.000Z</createdDate><deleted>false</deleted><fileName>package.xml</fileName><fullName>package.xml</fullName><problem>No package.xml found</problem><problemType>Error</problemType><success>false</success></componentFailures><runTestResult><numFailures>0</numFailures><numTestsRun>0</numTestsRun><totalTime>0.0</totalTime></runTestResult></details><done>true</done><id>0Af3D00001NVD0TSAX</id><ignoreWarnings>false</ignoreWarnings><lastModifiedDate>2020-10-28T13:37:48.000Z</lastModifiedDate><numberComponentErrors>0</numberComponentErrors><numberComponentsDeployed>0</numberComponentsDeployed><numberComponentsTotal>0</numberComponentsTotal><numberTestErrors>0</numberTestErrors><numberTestsCompleted>0</numberTestsCompleted><numberTestsTotal>0</numberTestsTotal><rollbackOnError>true</rollbackOnError><runTestsEnabled>false</runTestsEnabled><startDate>2020-10-28T13:37:47.000Z</startDate><status>Failed</status><success>false</success></result></checkDeployStatusResponse></soapenv:Body></soapenv:Envelope>'
+        mock_post.return_value = mock_response
+
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance=tests.SERVER_URL,
+                            session=session)
+        state, state_detail, deployment_detail, unit_test_detail = client.checkDeployStatus("abdcefg")
+        self.assertEqual(state, "Failed")
+        self.assertEqual(state_detail, None)
+        self.assertEqual(deployment_detail, {'total_count': '0', 'failed_count': '0', 'deployed_count': '0', 'errors': [{'type': None, 'file': 'package.xml', 'status': 'Error', 'message': 'No package.xml found'}]})
+        self.assertEqual(unit_test_detail, {'total_count': '0', 'failed_count': '0', 'completed_count': '0', 'errors': []})
