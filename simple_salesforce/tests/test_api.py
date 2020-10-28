@@ -863,3 +863,24 @@ class TestSalesforce(unittest.TestCase):
         self.assertEqual(state_detail, None)
         self.assertEqual(deployment_detail, {'total_count': '0', 'failed_count': '0', 'deployed_count': '0', 'errors': [{'type': None, 'file': 'package.xml', 'status': 'Error', 'message': 'No package.xml found'}]})
         self.assertEqual(unit_test_detail, {'total_count': '0', 'failed_count': '0', 'completed_count': '0', 'errors': []})
+
+
+    @patch("simple_salesforce.sfdc_session.SfdcSession.post")
+    def test_check_status_in_progress(self, mock_post):
+        """"
+        Test method for metadata deployment
+        """
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.text = '<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns="http://soap.sforce.com/2006/04/metadata"><soapenv:Body><checkDeployStatusResponse><result><checkOnly>false</checkOnly><createdBy>0053D0000052Xaq</createdBy><createdByName>User User</createdByName><createdDate>2020-10-28T17:24:30.000Z</createdDate><details><runTestResult><numFailures>0</numFailures><numTestsRun>0</numTestsRun><totalTime>0.0</totalTime></runTestResult></details><done>false</done><id>0Af3D00001NW8mnSAD</id><ignoreWarnings>false</ignoreWarnings><lastModifiedDate>2020-10-28T17:37:08.000Z</lastModifiedDate><numberComponentErrors>0</numberComponentErrors><numberComponentsDeployed>2</numberComponentsDeployed><numberComponentsTotal>3</numberComponentsTotal><numberTestErrors>0</numberTestErrors><numberTestsCompleted>0</numberTestsCompleted><numberTestsTotal>0</numberTestsTotal><rollbackOnError>true</rollbackOnError><runTestsEnabled>false</runTestsEnabled><startDate>2020-10-28T17:24:30.000Z</startDate><status>InProgress</status><success>false</success></result></checkDeployStatusResponse></soapenv:Body></soapenv:Envelope>'
+        mock_post.return_value = mock_response
+
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance=tests.SERVER_URL,
+                            session=session)
+        state, state_detail, deployment_detail, unit_test_detail = client.checkDeployStatus("abdcefg")
+        self.assertEqual(state, "InProgress")
+        self.assertEqual(state_detail, None)
+        self.assertEqual(deployment_detail, {'total_count': '3', 'failed_count': '0', 'deployed_count': '2', 'errors': []})
+        self.assertEqual(unit_test_detail, {'total_count': '0', 'failed_count': '0', 'completed_count': '0', 'errors': []})
