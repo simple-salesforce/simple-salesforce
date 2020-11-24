@@ -6,9 +6,8 @@ Heavily Modified from RestForce 1.0.0
 DEFAULT_CLIENT_ID_PREFIX = 'RestForce'
 
 
-import time
 import warnings
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from html import escape
 from json.decoder import JSONDecodeError
 
@@ -154,14 +153,13 @@ def SalesforceLogin(
             consumer_key is not None and \
             privatekey_file is not None:
         header = {'alg': 'RS256'}
-        expiration = datetime.utcnow() + timedelta(minutes=3)
+        expiration = datetime.now(timezone.utc) + timedelta(minutes=3)
         payload = {
             'iss': consumer_key,
             'sub': username,
             'aud': 'https://{domain}.salesforce.com'.format(domain=domain),
             'exp': '{exp:.0f}'.format(
-                exp=time.mktime(expiration.timetuple()) +
-                    expiration.microsecond / 1e6
+                exp=expiration.timestamp()
             )
         }
         with open(privatekey_file, 'rb') as key:
