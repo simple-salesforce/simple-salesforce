@@ -56,7 +56,7 @@ class SfdcMetadataApi:
             'singlePackage': singlePackage,
             }
 
-        if self._sandbox:
+        if not self._sandbox:
             attributes['allowMissingFiles'] = False
             attributes['rollbackOnError'] = True
 
