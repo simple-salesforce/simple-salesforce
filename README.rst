@@ -10,6 +10,7 @@ Simple Salesforce
    :alt: Documentation Status
 
 Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.5, 3.6, 3.7 and 3.8. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
+=======
 
 You can find out more regarding the format of the results in the `Official Salesforce.com REST API Documentation`_
 
@@ -306,6 +307,7 @@ Upsert records:
         ]
 
     sf.bulk.Contact.upsert(data, 'Id', batch_size=10000, use_serial=True)
+
 
 Query records:
 
