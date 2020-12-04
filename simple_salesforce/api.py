@@ -191,7 +191,7 @@ class Salesforce:
         self.bulk_url = ('https://{instance}/services/async/{version}/'
                          .format(instance=self.sf_instance,
                                  version=self.sf_version))
-        self.metadata_url = ('https://{instance}//services/Soap/m/{version}/'
+        self.metadata_url = ('https://{instance}/services/Soap/m/{version}/'
                              .format(instance=self.sf_instance,
                                      version=self.sf_version))
 
@@ -214,11 +214,15 @@ class Salesforce:
         return json_result
 
     def is_sandbox(self):
-        is_sandbox = self.query_all("SELECT IsSandbox "
-                                    "FROM Organization LIMIT 1")
-        is_sandbox = is_sandbox.get('records', [{'IsSandbox': None}])[0].get(
-            'IsSandbox')
-        return is_sandbox
+        if self.session_id:
+            is_sandbox = self.query_all("SELECT IsSandbox "
+                                        "FROM Organization LIMIT 1")
+            is_sandbox = is_sandbox.get('records', [{'IsSandbox': None}])[
+                0].get(
+                'IsSandbox')
+            return is_sandbox
+        else:
+            return None
 
     # SObject Handler
     def __getattr__(self, name):
@@ -539,9 +543,9 @@ class Salesforce:
         return result
 
     # file-based deployment function
-    def deploy(self, zipfile, **kwargs):
+    def deploy(self, zipfile, sandbox, **kwargs):
 
-        """Deploy using the Salesforce Metadata API. Wrapper for 
+        """Deploy using the Salesforce Metadata API. Wrapper for
         SfdcMetaDataApi.deploy(...).
 
         Arguments:
@@ -557,16 +561,17 @@ class Salesforce:
         mdapi = SfdcMetadataApi(session=self.session,
                                 session_id=self.session_id,
                                 instance=self.sf_instance,
-                                sandbox=self.is_sandbox(),
+                                sandbox=sandbox,
                                 metadata_url=self.metadata_url,
                                 api_version=self.sf_version,
                                 headers=self.headers)
         asyncId, state = mdapi.deploy(zipfile, **kwargs)
-        return asyncId, state
+        result = {'asyncId': asyncId, 'state': state}
+        return result
 
     # check on a file-based deployment
-    def checkDeployStatus(self, asyncId, **kwargs):
-        """Check on the progress of a file-based deployment via Salesforce 
+    def checkDeployStatus(self, asyncId, sandbox, **kwargs):
+        """Check on the progress of a file-based deployment via Salesforce
         Metadata API.
         Wrapper for SfdcMetaDataApi.check_deploy_status(...).
 
@@ -579,7 +584,7 @@ class Salesforce:
         mdapi = SfdcMetadataApi(session=self.session,
                                 session_id=self.session_id,
                                 instance=self.sf_instance,
-                                sandbox=self.is_sandbox(),
+                                sandbox=sandbox,
                                 metadata_url=self.metadata_url,
                                 api_version=self.sf_version,
                                 headers=self.headers)
