@@ -181,8 +181,6 @@ class Salesforce:
             'X-PrettyPrint': '1'
             }
 
-        # self.is_sandbox = self.is_sandbox()
-
         self.base_url = ('https://{instance}/services/data/v{version}/'
                          .format(instance=self.sf_instance,
                                  version=self.sf_version))
