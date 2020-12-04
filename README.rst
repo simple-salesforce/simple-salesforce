@@ -9,7 +9,8 @@ Simple Salesforce
    :target: http://simple-salesforce.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.3, 3.4, 3.5, and 3.6. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
+Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.5, 3.6, 3.7 and 3.8. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
+=======
 
 You can find out more regarding the format of the results in the `Official Salesforce.com REST API Documentation`_
 
@@ -35,7 +36,7 @@ If you have the full URL of your instance (perhaps including the schema, as is i
     from simple_salesforce import Salesforce
     sf = Salesforce(instance_url='https://na1.salesforce.com', session_id='')
 
-There are also two means of authentication, one that uses username, password and security token and the other that uses IP filtering, username, password  and organizationId
+There are also three means of authentication, one that uses username, password and security token; one that uses IP filtering, username, password  and organizationId; and the other that uses a private key to sign a JWT.
 
 To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password):
 
@@ -50,6 +51,13 @@ To login using IP-whitelist Organization ID method, simply use your Salesforce u
 
     from simple_salesforce import Salesforce
     sf = Salesforce(password='password', username='myemail@example.com', organizationId='OrgId')
+
+To login using the JWT method, use your Salesforce username, consumer key from your app, and private key:
+
+.. code-block:: python
+
+    from simple_salesforce import Salesforce
+    sf = Salesforce(username='myemail@example.com', consumer_key='XYZ', privatekey_file='filename.key')
 
 If you'd like to enter a sandbox, simply add ``domain='test'`` to your ``Salesforce()`` call.
 
@@ -181,6 +189,26 @@ While ``query_all`` materializes the whole result into a Python list, ``query_al
     for row in data:
       process(row)
 
+Values used in SOQL queries can be quoted and escaped using ``format_soql``:
+
+.. code-block:: python
+
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE LastName = {}", "Jones"))
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE LastName = {last_name}", last_name="Jones"))
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE LastName IN {names}", names=["Smith", "Jones"]))
+
+To skip quoting and escaping for one value while still using the format string, use ``:literal``:
+
+.. code-block:: python
+
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE Income > {:literal}", "USD100"))
+
+To escape a substring used in a LIKE expression while being able to use % around it, use ``:like``:
+
+.. code-block:: python
+
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE Name LIKE '{:like}%'", "Jones"))
+
 SOSL queries are done via:
 
 .. code-block:: python
@@ -207,6 +235,12 @@ To insert or update (upsert) a record using an external ID, use:
 .. code-block:: python
 
     sf.Contact.upsert('customExtIdField__c/11999',{'LastName': 'Smith','Email': 'smith@example.com'})
+
+To format an external ID that could contain non-URL-safe characters, use:
+
+.. code-block:: python
+
+    external_id = format_external_id('customExtIdField__c', 'this/that & the other')
 
 To retrieve basic metadata use:
 
@@ -272,7 +306,8 @@ Upsert records:
           {'Email': 'foo@foo.com'}
         ]
 
-    sf.bulk.Contact.upsert(data,batch_size=10000,use_serial=True, 'Id')
+    sf.bulk.Contact.upsert(data, 'Id', batch_size=10000, use_serial=True)
+
 
 Query records:
 
@@ -281,6 +316,44 @@ Query records:
     query = 'SELECT Id, Name FROM Account LIMIT 10'
 
     sf.bulk.Account.query(query)
+
+To retrieve large amounts of data, use 
+
+.. code-block:: python
+
+    query = 'SELECT Id, Name FROM Account'
+
+    # generator on the results page
+    fetch_results = sf.bulk.Account.query(query, lazy_operation=True)
+
+    # the generator provides the list of results for every call to next()
+    all_results = []
+    for list_results in fetch_results:
+      all_results.extend(list_results)
+
+Query all records:
+
+QueryAll will return records that have been deleted because of a merge or delete. QueryAll will also return information about archived Task and Event records.
+
+.. code-block:: python
+
+    query = 'SELECT Id, Name FROM Account LIMIT 10'
+
+    sf.bulk.Account.query_all(query)
+
+To retrieve large amounts of data, use 
+
+.. code-block:: python
+
+    query = 'SELECT Id, Name FROM Account'
+
+    # generator on the results page
+    fetch_results = sf.bulk.Account.query_all(query, lazy_operation=True)
+
+    # the generator provides the list of results for every call to next()
+    all_results = []
+    for list_results in fetch_results:
+      all_results.extend(list_results)
 
 Delete records (soft deletion):
 

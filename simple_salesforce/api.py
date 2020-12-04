@@ -460,11 +460,14 @@ class Salesforce:
         * data -- A dict of parameters to send in a POST / PUT request
         * kwargs -- Additional kwargs to pass to `requests.request`
         """
+        # If data is None, we should send an empty body, not "null", which is
+        # None in json.
+        json_data = json.dumps(data) if data is not None else None
         result = self._call_salesforce(
             method,
             self.apex_url + action,
             name="apexexcute",
-            data=json.dumps(data), **kwargs
+            data=json_data, **kwargs
         )
         try:
             response_content = result.json()
