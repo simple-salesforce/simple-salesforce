@@ -24,13 +24,19 @@ class TestSalesforceLogin(unittest.TestCase):
         self.mockrequest = request_patcher.start()
         self.addCleanup(request_patcher.stop)
 
-    @responses.activate
-    def test_default_domain_success(self):
-        """Test default domain logic and login"""
+    def _test_login_success(self, url_regex, salesforce_login_kwargs,
+                            response_body=tests.LOGIN_RESPONSE_SUCCESS):
+        """Test SalesforceLogin with one set of arguments.
+
+        Mock login requests at url_regex, returning a successful response,
+        response_body. Check that the fake-login process works when passing
+        salesforce_login_kwargs as keyword arguments to SalesforceLogin in
+        addition to the mocked session and a default username.
+        """
         responses.add(
             responses.POST,
-            re.compile(r'^https://login.*$'),
-            body=tests.LOGIN_RESPONSE_SUCCESS,
+            url_regex,
+            body=response_body,
             status=http.OK
         )
         session_state = {
@@ -48,42 +54,29 @@ class TestSalesforceLogin(unittest.TestCase):
         session_id, instance = SalesforceLogin(
             session=session,
             username='foo@bar.com',
-            password='password',
-            security_token='token')
+            **salesforce_login_kwargs
+        )
         self.assertTrue(session_state['used'])
         self.assertEqual(session_id, tests.SESSION_ID)
         self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
+
+    @responses.activate
+    def test_default_domain_success(self):
+        """Test default domain logic and login"""
+        login_args = {'password': 'password', 'security_token': 'token'}
+        self._test_login_success(re.compile(r'^https://login.*$'), login_args)
 
     @responses.activate
     def test_custom_domain_success(self):
         """Test custom domain login"""
-        responses.add(
-            responses.POST,
-            re.compile(r'^https://testdomain.my.*$'),
-            body=tests.LOGIN_RESPONSE_SUCCESS,
-            status=http.OK
-        )
-        session_state = {
-            'used': False,
+        login_args = {
+            'password': 'password',
+            'security_token': 'token',
+            'domain': 'testdomain.my'
         }
-
-        # pylint: disable=missing-docstring,unused-argument
-        def on_response(*args, **kwargs):
-            session_state['used'] = True
-
-        session = requests.Session()
-        session.hooks = {
-            'response': on_response,
-        }
-        session_id, instance = SalesforceLogin(
-            session=session,
-            username='foo@bar.com',
-            password='password',
-            security_token='token',
-            domain='testdomain.my')
-        self.assertTrue(session_state['used'])
-        self.assertEqual(session_id, tests.SESSION_ID)
-        self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
+        self._test_login_success(
+            re.compile(r'^https://testdomain.my.salesforce.com/.*$'),
+            login_args)
 
     @responses.activate
     def test_custom_session_success(self):
@@ -135,35 +128,14 @@ class TestSalesforceLogin(unittest.TestCase):
     @responses.activate
     def test_token_login_success(self):
         """Test a successful JWT Token login"""
-        responses.add(
-            responses.POST,
-            re.compile(r'^https://login.*$'),
-            body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS,
-            status=http.OK
-        )
-        session_state = {
-            'used': False,
+        pkey_file = os.path.join(os.path.dirname(__file__), 'sample-key.pem')
+        login_args = {
+            'consumer_key': '12345.abcde',
+            'privatekey_file': pkey_file
         }
-
-        # pylint: disable=missing-docstring,unused-argument
-        def on_response(*args, **kwargs):
-            session_state['used'] = True
-
-        session = requests.Session()
-        session.hooks = {
-            'response': on_response,
-        }
-        session_id, instance = SalesforceLogin(
-            session=session,
-            username='foo@bar.com',
-            consumer_key='12345.abcde',
-            privatekey_file=os.path.join(
-                os.path.dirname(__file__), 'sample-key.pem'
-            )
-        )
-        self.assertTrue(session_state['used'])
-        self.assertEqual(session_id, tests.SESSION_ID)
-        self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
+        self._test_login_success(
+            re.compile(r'^https://login.salesforce.com/.*$'), login_args,
+            response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
 
     def test_token_login_failure(self):
         """Test a failed JWT Token login"""
