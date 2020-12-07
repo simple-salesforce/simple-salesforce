@@ -1,9 +1,7 @@
 """Core classes and exceptions for Simple-Salesforce"""
 
-
 # has to be defined prior to login import
 DEFAULT_API_VERSION = '42.0'
-
 
 import json
 import logging
@@ -17,10 +15,10 @@ from .bulk import SFBulkHandler
 from .exceptions import SalesforceGeneralError
 from .login import SalesforceLogin
 from .util import date_to_iso8601, exception_handler
+from .metadata import SfdcMetadataApi
 
 # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
-
 
 Usage = namedtuple('Usage', 'used total')
 PerAppUsage = namedtuple('PerAppUsage', 'used total name')
@@ -36,22 +34,22 @@ class Salesforce:
 
     # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
     def __init__(
-        self,
-        username=None,
-        password=None,
-        security_token=None,
-        session_id=None,
-        instance=None,
-        instance_url=None,
-        organizationId=None,
-        version=DEFAULT_API_VERSION,
-        proxies=None,
-        session=None,
-        client_id=None,
-        domain=None,
-        consumer_key=None,
-        privatekey_file=None,
-    ):
+            self,
+            username=None,
+            password=None,
+            security_token=None,
+            session_id=None,
+            instance=None,
+            instance_url=None,
+            organizationId=None,
+            version=DEFAULT_API_VERSION,
+            proxies=None,
+            session=None,
+            client_id=None,
+            domain=None,
+            consumer_key=None,
+            privatekey_file=None,
+            ):
         """Initialize the instance with the given parameters.
 
         Available kwargs
@@ -110,7 +108,7 @@ class Salesforce:
                 logger.warning(
                     'Proxies must be defined on custom session object, '
                     'ignoring proxies: %s', proxies
-                )
+                    )
 
         # Determine if the user wants to use our username/password auth or pass
         # in their own information
@@ -172,7 +170,7 @@ class Salesforce:
         else:
             raise TypeError(
                 'You must provide login information or an instance and token'
-            )
+                )
 
         self.auth_site = ('https://{domain}.salesforce.com'
                           .format(domain=self.domain))
@@ -181,7 +179,7 @@ class Salesforce:
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
-        }
+            }
 
         self.base_url = ('https://{instance}/services/data/v{version}/'
                          .format(instance=self.sf_instance,
@@ -191,6 +189,9 @@ class Salesforce:
         self.bulk_url = ('https://{instance}/services/async/{version}/'
                          .format(instance=self.sf_instance,
                                  version=self.sf_version))
+        self.metadata_url = ('https://{instance}/services/Soap/m/{version}/'
+                             .format(instance=self.sf_instance,
+                                     version=self.sf_version))
 
         self.api_usage = {}
 
@@ -210,6 +211,17 @@ class Salesforce:
 
         return json_result
 
+    def is_sandbox(self):
+        """After connection returns is the organization is a sandbox"""
+        is_sandbox = None
+        if self.session_id:
+            is_sandbox = self.query_all("SELECT IsSandbox "
+                                        "FROM Organization LIMIT 1")
+            is_sandbox = is_sandbox.get('records', [{'IsSandbox': None}])[
+                0].get(
+                'IsSandbox')
+        return is_sandbox
+
     # SObject Handler
     def __getattr__(self, name):
         """Returns an `SFType` instance for the given Salesforce object type
@@ -228,7 +240,7 @@ class Salesforce:
         # fix to enable serialization
         # (https://github.com/heroku/simple-salesforce/issues/60)
         if name.startswith('__'):
-            return super(Salesforce, self).__getattr__(name)
+            return super().__getattr__(name)
 
         if name == 'bulk':
             # Deal with bulk API functions
@@ -244,7 +256,8 @@ class Salesforce:
         """Sets the password of a user
 
         salesforce dev documentation link:
-        https://www.salesforce.com/us/developer/docs/api_rest/Content/dome_sobject_user_password.htm
+        https://www.salesforce.com/us/developer/docs/api_rest/Content
+        /dome_sobject_user_password.htm
 
         Arguments:
 
@@ -447,8 +460,7 @@ class Salesforce:
             'records': all_records,
             'totalSize': len(all_records),
             'done': True,
-        }
-
+            }
 
     def apexecute(self, action, method='GET', data=None, **kwargs):
         """Makes an HTTP request to an APEX REST endpoint
@@ -468,7 +480,7 @@ class Salesforce:
             self.apex_url + action,
             name="apexexcute",
             data=json_data, **kwargs
-        )
+            )
         try:
             response_content = result.json()
         # pylint: disable=broad-except
@@ -528,20 +540,78 @@ class Salesforce:
 
         return result
 
+    # file-based deployment function
+    def deploy(self, zipfile, sandbox, **kwargs):
+
+        """Deploy using the Salesforce Metadata API. Wrapper for
+        SfdcMetaDataApi.deploy(...).
+
+        Arguments:
+
+        * zipfile: a .zip archive to deploy to an org, given as (
+        "path/to/zipfile.zip")
+        * options: salesforce DeployOptions in .json format.
+            (https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta
+            /api_meta/meta_deploy.htm)
+
+        Returns a process id and state for this deployment.
+        """
+        mdapi = SfdcMetadataApi(session=self.session,
+                                session_id=self.session_id,
+                                instance=self.sf_instance,
+                                sandbox=sandbox,
+                                metadata_url=self.metadata_url,
+                                api_version=self.sf_version,
+                                headers=self.headers)
+        asyncId, state = mdapi.deploy(zipfile, **kwargs)
+        result = {'asyncId': asyncId, 'state': state}
+        return result
+
+    # check on a file-based deployment
+    def checkDeployStatus(self, asyncId, sandbox, **kwargs):
+        """Check on the progress of a file-based deployment via Salesforce
+        Metadata API.
+        Wrapper for SfdcMetaDataApi.check_deploy_status(...).
+
+        Arguments:
+
+        * asyncId: deployment async process ID, returned by Salesforce.deploy()
+
+        Returns status of the deployment the asyncId given.
+        """
+        mdapi = SfdcMetadataApi(session=self.session,
+                                session_id=self.session_id,
+                                instance=self.sf_instance,
+                                sandbox=sandbox,
+                                metadata_url=self.metadata_url,
+                                api_version=self.sf_version,
+                                headers=self.headers)
+
+        state, state_detail, deployment_detail, unit_test_detail = \
+            mdapi.check_deploy_status(asyncId, **kwargs)
+        results = {
+            'state': state,
+            'state_detail': state_detail,
+            'deployment_detail': deployment_detail,
+            'unit_test_detail': unit_test_detail
+            }
+
+        return results
+
 
 class SFType:
     """An interface to a specific type of SObject"""
 
     # pylint: disable=too-many-arguments
     def __init__(
-        self,
-        object_name,
-        session_id,
-        sf_instance,
-        sf_version=DEFAULT_API_VERSION,
-        proxies=None,
-        session=None,
-    ):
+            self,
+            object_name,
+            session_id,
+            sf_instance,
+            sf_version=DEFAULT_API_VERSION,
+            proxies=None,
+            session=None,
+            ):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -592,7 +662,7 @@ class SFType:
         result = self._call_salesforce(
             method='GET', url=urljoin(self.base_url, 'describe'),
             headers=headers
-        )
+            )
         return result.json(object_pairs_hook=OrderedDict)
 
     def describe_layout(self, record_id, headers=None):
@@ -609,12 +679,12 @@ class SFType:
         """
         custom_url_part = 'describe/layouts/{record_id}'.format(
             record_id=record_id
-        )
+            )
         result = self._call_salesforce(
             method='GET',
             url=urljoin(self.base_url, custom_url_part),
             headers=headers
-        )
+            )
         return result.json(object_pairs_hook=OrderedDict)
 
     def get(self, record_id, headers=None):
@@ -629,7 +699,7 @@ class SFType:
         result = self._call_salesforce(
             method='GET', url=urljoin(self.base_url, record_id),
             headers=headers
-        )
+            )
         return result.json(object_pairs_hook=OrderedDict)
 
     def get_by_custom_id(self, custom_id_field, custom_id, headers=None):
@@ -649,11 +719,11 @@ class SFType:
         custom_url = urljoin(
             self.base_url, '{custom_id_field}/{custom_id}'.format(
                 custom_id_field=custom_id_field, custom_id=custom_id
+                )
             )
-        )
         result = self._call_salesforce(
             method='GET', url=custom_url, headers=headers
-        )
+            )
         return result.json(object_pairs_hook=OrderedDict)
 
     def create(self, data, headers=None):
@@ -670,7 +740,7 @@ class SFType:
         result = self._call_salesforce(
             method='POST', url=self.base_url,
             data=json.dumps(data), headers=headers
-        )
+            )
         return result.json(object_pairs_hook=OrderedDict)
 
     def upsert(self, record_id, data, raw_response=False, headers=None):
@@ -694,7 +764,7 @@ class SFType:
         result = self._call_salesforce(
             method='PATCH', url=urljoin(self.base_url, record_id),
             data=json.dumps(data), headers=headers
-        )
+            )
         return self._raw_response(result, raw_response)
 
     def update(self, record_id, data, raw_response=False, headers=None):
@@ -717,7 +787,7 @@ class SFType:
         result = self._call_salesforce(
             method='PATCH', url=urljoin(self.base_url, record_id),
             data=json.dumps(data), headers=headers
-        )
+            )
         return self._raw_response(result, raw_response)
 
     def delete(self, record_id, raw_response=False, headers=None):
@@ -738,7 +808,7 @@ class SFType:
         result = self._call_salesforce(
             method='DELETE', url=urljoin(self.base_url, record_id),
             headers=headers
-        )
+            )
         return self._raw_response(result, raw_response)
 
     def deleted(self, start, end, headers=None):
@@ -747,7 +817,8 @@ class SFType:
 
         Use the SObject Get Deleted resource to get a list of deleted records
         for the specified object.
-        .../deleted/?start=2013-05-05T00:00:00+00:00&end=2013-05-10T00:00:00+00:00
+        .../deleted/?start=2013-05-05T00:00:00+00:00&end=2013-05-10T00:00:00
+        +00:00
 
         * start -- start datetime object
         * end -- end datetime object
@@ -756,8 +827,8 @@ class SFType:
         url = urljoin(
             self.base_url, 'deleted/?start={start}&end={end}'.format(
                 start=date_to_iso8601(start), end=date_to_iso8601(end)
+                )
             )
-        )
         result = self._call_salesforce(method='GET', url=url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -768,7 +839,8 @@ class SFType:
         Use the SObject Get Updated resource to get a list of updated
         (modified or added) records for the specified object.
 
-         .../updated/?start=2014-03-20T00:00:00+00:00&end=2014-03-22T00:00:00+00:00
+         .../updated/?start=2014-03-20T00:00:00+00:00&end=2014-03-22T00:00:00
+         +00:00
 
         * start -- start datetime object
         * end -- end datetime object
@@ -777,8 +849,8 @@ class SFType:
         url = urljoin(
             self.base_url, 'updated/?start={start}&end={end}'.format(
                 start=date_to_iso8601(start), end=date_to_iso8601(end)
+                )
             )
-        )
         result = self._call_salesforce(method='GET', url=url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -791,7 +863,7 @@ class SFType:
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
-        }
+            }
         additional_headers = kwargs.pop('headers', dict())
         headers.update(additional_headers or dict())
         result = self.session.request(method, url, headers=headers, **kwargs)

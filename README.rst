@@ -227,6 +227,63 @@ More details about syntax is available on the `Salesforce Query Language Documen
 
 .. _Salesforce Query Language Documentation Developer Website: http://www.salesforce.com/us/developer/docs/soql_sosl/index.htm
 
+File Based Metadata API Calls
+-------------
+
+You can use simple_salesforce to make file-based calls to the Metadata API, to deploy a zip file to an org.
+
+First, convert and zip the file with:
+
+.. code-block::
+
+   sfdx force:source:convert -r src/folder_name -d dx
+
+Then navigate into the converted folder and zip it up:
+
+.. code-block::
+
+   zip -r -X package.zip *
+
+Then you can use this to deploy that zipfile:
+
+.. code-block:: python
+
+   result = sf.deploy("path/to/zip", sandbox=False, **kwargs)
+   asyncId = result.get('asyncId')
+   state = result.get('state')
+
+Both deploy and checkDeployStatus take keyword arguements. The single package arguement is not currently available to be set for deployments. More details on the deploy options can be found at https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_deploy.htm
+
+You can check on the progress of the deploy which returns a dictionary with status, state_detail, deployment_detail, unit_test_detail:
+
+.. code-block:: python
+
+   sf.checkDeployStatus(asyncId)
+
+Example of a use-case:
+
+.. code-block:: python
+
+   from simple_salesforce import Salesforce
+
+   deployment_finished = False
+   successful = False
+
+   sf = Salesforce(session_id="id", instance="instance")
+   sf.deploy("path/to/zip", sandbox=False ,**kwargs)
+
+   while not deployment_finished:
+       result = sf.checkDeployStatus(asyncId)
+       if result.get('status') in ["Succeeded", "Completed", "Error", "Failed", None]:
+           deployment_finished = True
+       if result.get('status') in ["Succeeded", "Completed"]:
+           successful = True
+
+   if successful:
+       print("✅")
+   else:
+       print("🥔")
+
 Other Options
 -------------
 
