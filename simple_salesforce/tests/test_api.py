@@ -1,5 +1,5 @@
-"""Tests for api.py"""
 # pylint: disable-msg=C0302
+"""Tests for api.py"""
 import http.client as http
 import re
 import unittest
@@ -883,6 +883,7 @@ class TestSalesforce(unittest.TestCase):
         """"
         Test method for metadata deployment
         """
+        # pylint: disable-msg=C0301
         mock_response = '<?xml version="1.0" ' \
                         'encoding="UTF-8"?><soapenv:Envelope ' \
                         'xmlns:soapenv="http://schemas.xmlsoap.org/soap' \
@@ -944,6 +945,7 @@ class TestSalesforce(unittest.TestCase):
         """"
         Test method for metadata deployment
         """
+        # pylint: disable-msg=C0301
         mock_response = '<?xml version="1.0" ' \
                         'encoding="UTF-8"?><soapenv:Envelope ' \
                         'xmlns:soapenv="http://schemas.xmlsoap.org/soap' \
