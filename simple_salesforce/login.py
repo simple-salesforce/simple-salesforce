@@ -229,10 +229,10 @@ def token_login(token_url, token_data, domain, consumer_key,
 
     try:
         json_response = response.json()
-    except JSONDecodeError:
+    except JSONDecodeError as json_decode_error:
         raise SalesforceAuthenticationFailed(
             response.status_code, response.text
-        )
+        ) from json_decode_error
 
     if response.status_code != 200:
         except_code = json_response.get('error')
