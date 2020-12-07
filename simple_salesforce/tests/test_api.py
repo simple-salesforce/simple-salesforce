@@ -775,6 +775,7 @@ class TestSalesforce(unittest.TestCase):
         """"
         Test method for metadata deployment
         """
+        #pylint: disable=unused-argument
         mock_response = '<?xml version="1.0" ' \
                         'encoding="UTF-8"?><soapenv:Envelope ' \
                         'xmlns:soapenv="http://schemas.xmlsoap.org/soap' \
@@ -805,6 +806,7 @@ class TestSalesforce(unittest.TestCase):
         """"
         Test method for metadata deployment
         """
+        #pylint: disable=unused-argument
         responses.add(
             responses.POST,
             re.compile(r'^https://.*'),
