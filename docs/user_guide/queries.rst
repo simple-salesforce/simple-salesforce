@@ -22,6 +22,34 @@ As a convenience, to retrieve all of the results in a single local method call u
 
     sf.query_all("SELECT Id, Email FROM Contact WHERE LastName = 'Jones'")
 
+While ``query_all`` materializes the whole result into a Python list, ``query_all_iter`` returns an iterator, which allows you to lazily process each element separately
+
+.. code-block:: python
+
+    data = sf.query_all_iter("SELECT Id, Email FROM Contact WHERE LastName = 'Jones'")
+    for row in data:
+      process(row)
+
+Values used in SOQL queries can be quoted and escaped using ``format_soql``:
+
+.. code-block:: python
+
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE LastName = {}", "Jones"))
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE LastName = {last_name}", last_name="Jones"))
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE LastName IN {names}", names=["Smith", "Jones"]))
+
+To skip quoting and escaping for one value while still using the format string, use ``:literal``:
+
+.. code-block:: python
+
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE Income > {:literal}", "USD100"))
+
+To escape a substring used in a LIKE expression while being able to use % around it, use ``:like``:
+
+.. code-block:: python
+
+    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE Name LIKE '{:like}%'", "Jones"))
+
 SOSL queries are done via:
 
 .. code-block:: python

@@ -1,33 +1,23 @@
 """Tests for login.py"""
 
-import re
+import http.client as http
 import os
+import re
+import unittest
 import warnings
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+from unittest.mock import Mock, patch
+from urllib.parse import urlparse
 
-import responses
 import requests
-try:
-    # Python 2.6/2.7
-    import httplib as http
-    from urlparse import urlparse
-    from mock import Mock, patch
-except ImportError:
-    # Python 3
-    import http.client as http
-    from unittest.mock import Mock, patch
-    from urllib.parse import urlparse
-
+import responses
 from simple_salesforce import tests
-from simple_salesforce.login import SalesforceLogin
 from simple_salesforce.exceptions import SalesforceAuthenticationFailed
+from simple_salesforce.login import SalesforceLogin
 
 
 class TestSalesforceLogin(unittest.TestCase):
     """Tests for the SalesforceLogin function"""
+
     def setUp(self):
         """Setup the SalesforceLogin tests"""
         request_patcher = patch('simple_salesforce.login.requests')
@@ -89,38 +79,34 @@ class TestSalesforceLogin(unittest.TestCase):
             login_args)
 
     @responses.activate
-    def test_deprecated_sandbox_disabled_success(self):
-        """Test sandbox=False logs into login.salesforce.com."""
-        login_args = {
-            'password': 'password',
-            'security_token': 'token',
-            'sandbox': False
+    def test_custom_session_success(self):
+        """Test custom session"""
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://.*$'),
+            body=tests.LOGIN_RESPONSE_SUCCESS,
+            status=http.OK
+        )
+        session_state = {
+            'used': False,
         }
-        self._test_login_success(
-            re.compile(r'^https://login.salesforce.com/.*$'), login_args)
 
-    @responses.activate
-    def test_deprecated_sandbox_enabled_success(self):
-        """Test sandbox=True logs into test.salesforce.com."""
-        login_args = {
-            'password': 'password',
-            'security_token': 'token',
-            'sandbox': True
+        # pylint: disable=missing-docstring,unused-argument
+        def on_response(*args, **kwargs):
+            session_state['used'] = True
+
+        session = requests.Session()
+        session.hooks = {
+            'response': on_response,
         }
-        self._test_login_success(
-            re.compile(r'^https://test.salesforce.com/.*$'), login_args)
-
-    def test_domain_sandbox_mutual_exclusion_failure(self):
-        """Test sandbox and domain mutual exclusion."""
-
-        with self.assertRaises(ValueError):
-            SalesforceLogin(
-                username='myemail@example.com.sandbox',
-                password='password',
-                security_token='token',
-                domain='login',
-                sandbox=False
-            )
+        session_id, instance = SalesforceLogin(
+            session=session,
+            username='foo@bar.com',
+            password='password',
+            security_token='token')
+        self.assertTrue(session_state['used'])
+        self.assertEqual(session_id, tests.SESSION_ID)
+        self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
 
     def test_failure(self):
         """Test A Failed Login Response"""
