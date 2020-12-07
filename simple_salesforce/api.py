@@ -213,13 +213,14 @@ class Salesforce:
 
     def is_sandbox(self):
         """After connection returns is the organization is a sandbox"""
+        is_sandbox = None
         if self.session_id:
             is_sandbox = self.query_all("SELECT IsSandbox "
                                         "FROM Organization LIMIT 1")
             is_sandbox = is_sandbox.get('records', [{'IsSandbox': None}])[
                 0].get(
                 'IsSandbox')
-            return is_sandbox
+        return is_sandbox
 
     # SObject Handler
     def __getattr__(self, name):
