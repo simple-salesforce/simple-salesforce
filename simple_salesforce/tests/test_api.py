@@ -771,7 +771,7 @@ class TestSalesforce(unittest.TestCase):
 
     @responses.activate
     @patch("simple_salesforce.metadata.SfdcMetadataApi._read_deploy_zip")
-    def test_md_deploy_success(self):
+    def test_md_deploy_success(self, mock_read_zip):
         """"
         Test method for metadata deployment
         """
@@ -801,7 +801,7 @@ class TestSalesforce(unittest.TestCase):
 
     @responses.activate
     @patch("simple_salesforce.metadata.SfdcMetadataApi._read_deploy_zip")
-    def test_md_deploy_failed_status_code(self):
+    def test_md_deploy_failed_status_code(self, mock_read_zip):
         """"
         Test method for metadata deployment
         """
