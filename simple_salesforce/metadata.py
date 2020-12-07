@@ -3,7 +3,8 @@ from base64 import b64encode, b64decode
 from xml.etree import ElementTree as ET
 import json
 from .util import call_salesforce
-from .messages import *
+from .messages import DEPLOY_MSG,CHECK_DEPLOY_STATUS_MSG,\
+    CHECK_RETRIEVE_STATUS_MSG,RETRIEVE_MSG
 
 
 class SfdcMetadataApi:
@@ -14,6 +15,7 @@ class SfdcMetadataApi:
         'mt': 'http://soap.sforce.com/2006/04/metadata'
         }
 
+    # pylint: disable=R0913
     def __init__(self, session, session_id, instance, sandbox, metadata_url,
                  headers, api_version):
         """ Initialize and check session """
@@ -26,8 +28,17 @@ class SfdcMetadataApi:
         self._api_version = api_version
         self._deploy_zip = None
 
+    # pylint: disable=R0914
+    # pylint: disable-msg=C0103
     def deploy(self, zipfile, **kwargs):
-        """ Kicks off async deployment, returns deployment id """
+        """ Kicks off async deployment, returns deployment id
+        :param zipfile:
+        :type zipfile:
+        :param kwargs:
+        :type kwargs:
+        :return:
+        :rtype:
+        """
         client = kwargs.get('client', 'simple_salesforce_metahelper')
         checkOnly = kwargs.get('checkOnly', False)
         testLevel = kwargs.get('testLevel')
@@ -92,6 +103,12 @@ class SfdcMetadataApi:
 
     @staticmethod
     def _read_deploy_zip(zipfile):
+        """
+        :param zipfile:
+        :type zipfile:
+        :return:
+        :rtype:
+        """
         if hasattr(zipfile, 'read'):
             file = zipfile
             file.seek(0)
@@ -105,7 +122,14 @@ class SfdcMetadataApi:
         return b64encode(raw).decode("utf-8")
 
     def _retrieve_deploy_result(self, async_process_id, **kwargs):
-        """ Retrieves status for specified deployment id """
+        """ Retrieves status for specified deployment id
+        :param async_process_id:
+        :type async_process_id:
+        :param kwargs:
+        :type kwargs:
+        :return:
+        :rtype:
+        """
         client = kwargs.get('client', 'simple_salesforce_metahelper')
 
         attributes = {
@@ -144,7 +168,15 @@ class SfdcMetadataApi:
             return 0
 
     def check_deploy_status(self, async_process_id, **kwargs):
-        """ Checks whether deployment succeeded """
+        """
+        Checks whether deployment succeeded
+        :param async_process_id:
+        :type async_process_id:
+        :param kwargs:
+        :type kwargs:
+        :return:
+        :rtype:
+        """
         result = self._retrieve_deploy_result(async_process_id, **kwargs)
 
         state = result.find('mt:status', self._XML_NAMESPACES).text
@@ -214,7 +246,7 @@ class SfdcMetadataApi:
         print("Results: %s" % ET.tostring(result, encoding="us-ascii",
                                           method="xml"))
 
-    def retrieve(self, **kwargs):
+    def retrieve(self, async_process_id, **kwargs):
         """ Submits retrieve request """
         # Compose unpackaged XML
         client = kwargs.get('client', 'simple_salesforce_metahelper')
