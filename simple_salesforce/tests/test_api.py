@@ -1,5 +1,5 @@
 """Tests for api.py"""
-
+# pylint: disable-msg=C0101
 import http.client as http
 import re
 import unittest
@@ -771,7 +771,7 @@ class TestSalesforce(unittest.TestCase):
 
     @responses.activate
     @patch("simple_salesforce.metadata.SfdcMetadataApi._read_deploy_zip")
-    def test_md_deploy_success(self, mock_read_zip):
+    def test_md_deploy_success(self):
         """"
         Test method for metadata deployment
         """
@@ -801,7 +801,7 @@ class TestSalesforce(unittest.TestCase):
 
     @responses.activate
     @patch("simple_salesforce.metadata.SfdcMetadataApi._read_deploy_zip")
-    def test_md_deploy_failed_status_code(self, mock_read_zip):
+    def test_md_deploy_failed_status_code(self):
         """"
         Test method for metadata deployment
         """
@@ -824,6 +824,7 @@ class TestSalesforce(unittest.TestCase):
         """"
         Test method for metadata deployment
         """
+        # pylint: disable-msg=C0301
         mock_response = '<?xml version="1.0" ' \
                         'encoding="UTF-8"?><soapenv:Envelope ' \
                         'xmlns:soapenv="http://schemas.xmlsoap.org/soap' \
