@@ -1,5 +1,5 @@
 """Tests for api.py"""
-# pylint: disable-msg=C0101
+# pylint: disable-msg=C0302
 import http.client as http
 import re
 import unittest
