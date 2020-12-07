@@ -1,13 +1,13 @@
 """ Class to work with Salesforce Metadata API """
 from base64 import b64encode, b64decode
 from xml.etree import ElementTree as ET
-import json
 from .util import call_salesforce
 from .messages import DEPLOY_MSG,CHECK_DEPLOY_STATUS_MSG,\
     CHECK_RETRIEVE_STATUS_MSG,RETRIEVE_MSG
 
 
 class SfdcMetadataApi:
+    # pylint: disable=too-many-instance-attributes
     """ Class to work with Salesforce Metadata API """
     _METADATA_API_BASE_URI = "/services/Soap/m/{version}"
     _XML_NAMESPACES = {
@@ -162,6 +162,7 @@ class SfdcMetadataApi:
 
     @staticmethod
     def get_component_error_count(value):
+        """Get component error counts"""
         try:
             return int(value)
         except ValueError:
