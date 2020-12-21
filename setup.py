@@ -12,7 +12,6 @@ about = {}
 with open(os.path.join(here, 'simple_salesforce', '__version__.py'), 'r') as f:
     exec(f.read(), about)
 
-
 setup(
     name=about['__title__'],
     version=about['__version__'],
