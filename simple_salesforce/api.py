@@ -49,7 +49,7 @@ class Salesforce:
             domain=None,
             consumer_key=None,
             privatekey_file=None,
-            ):
+    ):
         """Initialize the instance with the given parameters.
 
         Available kwargs
@@ -108,7 +108,7 @@ class Salesforce:
                 logger.warning(
                     'Proxies must be defined on custom session object, '
                     'ignoring proxies: %s', proxies
-                    )
+                )
 
         # Determine if the user wants to use our username/password auth or pass
         # in their own information
@@ -170,7 +170,7 @@ class Salesforce:
         else:
             raise TypeError(
                 'You must provide login information or an instance and token'
-                )
+            )
 
         self.auth_site = ('https://{domain}.salesforce.com'
                           .format(domain=self.domain))
@@ -179,7 +179,7 @@ class Salesforce:
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
-            }
+        }
 
         self.base_url = ('https://{instance}/services/data/v{version}/'
                          .format(instance=self.sf_instance,
@@ -192,6 +192,7 @@ class Salesforce:
         self.metadata_url = ('https://{instance}/services/Soap/m/{version}/'
                              .format(instance=self.sf_instance,
                                      version=self.sf_version))
+        self.tooling_url = '{base_url}tooling/'.format(base_url=self.base_url)
 
         self.api_usage = {}
 
@@ -460,7 +461,34 @@ class Salesforce:
             'records': all_records,
             'totalSize': len(all_records),
             'done': True,
-            }
+        }
+
+    def toolingexecute(self, action, method='GET', data=None, **kwargs):
+        """Makes an HTTP request to an TOOLING REST endpoint
+
+        Arguments:
+
+        * action -- The REST endpoint for the request.
+        * method -- HTTP method for the request (default GET)
+        * data -- A dict of parameters to send in a POST / PUT request
+        * kwargs -- Additional kwargs to pass to `requests.request`
+        """
+        # If data is None, we should send an empty body, not "null", which is
+        # None in json.
+        json_data = json.dumps(data) if data is not None else None
+        result = self._call_salesforce(
+            method,
+            self.tooling_url + action,
+            name="toolingexecute",
+            data=json_data, **kwargs
+        )
+        try:
+            response_content = result.json()
+        # pylint: disable=broad-except
+        except Exception:
+            response_content = result.text
+
+        return response_content
 
     def apexecute(self, action, method='GET', data=None, **kwargs):
         """Makes an HTTP request to an APEX REST endpoint
@@ -480,7 +508,7 @@ class Salesforce:
             self.apex_url + action,
             name="apexexcute",
             data=json_data, **kwargs
-            )
+        )
         try:
             response_content = result.json()
         # pylint: disable=broad-except
@@ -594,7 +622,7 @@ class Salesforce:
             'state_detail': state_detail,
             'deployment_detail': deployment_detail,
             'unit_test_detail': unit_test_detail
-            }
+        }
 
         return results
 
@@ -611,7 +639,7 @@ class SFType:
             sf_version=DEFAULT_API_VERSION,
             proxies=None,
             session=None,
-            ):
+    ):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -662,7 +690,7 @@ class SFType:
         result = self._call_salesforce(
             method='GET', url=urljoin(self.base_url, 'describe'),
             headers=headers
-            )
+        )
         return result.json(object_pairs_hook=OrderedDict)
 
     def describe_layout(self, record_id, headers=None):
@@ -679,12 +707,12 @@ class SFType:
         """
         custom_url_part = 'describe/layouts/{record_id}'.format(
             record_id=record_id
-            )
+        )
         result = self._call_salesforce(
             method='GET',
             url=urljoin(self.base_url, custom_url_part),
             headers=headers
-            )
+        )
         return result.json(object_pairs_hook=OrderedDict)
 
     def get(self, record_id, headers=None):
@@ -699,7 +727,7 @@ class SFType:
         result = self._call_salesforce(
             method='GET', url=urljoin(self.base_url, record_id),
             headers=headers
-            )
+        )
         return result.json(object_pairs_hook=OrderedDict)
 
     def get_by_custom_id(self, custom_id_field, custom_id, headers=None):
@@ -719,11 +747,11 @@ class SFType:
         custom_url = urljoin(
             self.base_url, '{custom_id_field}/{custom_id}'.format(
                 custom_id_field=custom_id_field, custom_id=custom_id
-                )
             )
+        )
         result = self._call_salesforce(
             method='GET', url=custom_url, headers=headers
-            )
+        )
         return result.json(object_pairs_hook=OrderedDict)
 
     def create(self, data, headers=None):
@@ -740,7 +768,7 @@ class SFType:
         result = self._call_salesforce(
             method='POST', url=self.base_url,
             data=json.dumps(data), headers=headers
-            )
+        )
         return result.json(object_pairs_hook=OrderedDict)
 
     def upsert(self, record_id, data, raw_response=False, headers=None):
@@ -764,7 +792,7 @@ class SFType:
         result = self._call_salesforce(
             method='PATCH', url=urljoin(self.base_url, record_id),
             data=json.dumps(data), headers=headers
-            )
+        )
         return self._raw_response(result, raw_response)
 
     def update(self, record_id, data, raw_response=False, headers=None):
@@ -787,7 +815,7 @@ class SFType:
         result = self._call_salesforce(
             method='PATCH', url=urljoin(self.base_url, record_id),
             data=json.dumps(data), headers=headers
-            )
+        )
         return self._raw_response(result, raw_response)
 
     def delete(self, record_id, raw_response=False, headers=None):
@@ -808,7 +836,7 @@ class SFType:
         result = self._call_salesforce(
             method='DELETE', url=urljoin(self.base_url, record_id),
             headers=headers
-            )
+        )
         return self._raw_response(result, raw_response)
 
     def deleted(self, start, end, headers=None):
@@ -827,8 +855,8 @@ class SFType:
         url = urljoin(
             self.base_url, 'deleted/?start={start}&end={end}'.format(
                 start=date_to_iso8601(start), end=date_to_iso8601(end)
-                )
             )
+        )
         result = self._call_salesforce(method='GET', url=url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -849,8 +877,8 @@ class SFType:
         url = urljoin(
             self.base_url, 'updated/?start={start}&end={end}'.format(
                 start=date_to_iso8601(start), end=date_to_iso8601(end)
-                )
             )
+        )
         result = self._call_salesforce(method='GET', url=url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -863,7 +891,7 @@ class SFType:
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
-            }
+        }
         additional_headers = kwargs.pop('headers', dict())
         headers.update(additional_headers or dict())
         result = self.session.request(method, url, headers=headers, **kwargs)
