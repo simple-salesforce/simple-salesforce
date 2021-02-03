@@ -27,11 +27,27 @@ class SfdcMetadataApi:
     def deploy(self, zipfile, options):
         """ Kicks off async deployment, returns deployment id """
         check_only = ""
-        if 'checkonly' in options:
+        if 'checkOnly' in options:
             check_only = "<met:checkOnly>%s</met:checkOnly>" % options['checkonly']
 
+        rollback_on_error = ""
+        if 'rollbackOnError' in options:
+            rollback_on_error = "<met:rollbackOnError>%s</met:rollbackOnError>" % options['rollbackOnError']
+
+        single_package = ""
+        if 'singlePackage' in options:
+            single_package = "<met:singlePackage>%s</met:singlePackage>" % options['singlePackage']
+
+        auto_update_package = ""
+        if 'autoUpdatePackage' in options:
+            auto_update_package = "<met:autoUpdatePackage>%s</met:autoUpdatePackage>" % options['autoUpdatePackage']
+
+        ignore_warnings = ""
+        if 'ignoreWarnings' in options:
+            ignore_warnings = "<met:ignoreWarnings>%s</met:ignoreWarnings>" % options['ignoreWarnings']
+
         test_level = ""
-        if 'testlevel' in options:
+        if 'testLevel' in options:
             test_level = "<met:testLevel>%s</met:testLevel>" % options['testlevel']
 
         tests_tag = ""
@@ -42,6 +58,10 @@ class SfdcMetadataApi:
         attributes = {
             'client': 'Metahelper',
             'checkOnly': check_only,
+            'rollbackOnError': rollback_on_error,
+            'singlePackage': single_package,
+            'autoUpdatePackage': auto_update_package,
+            'ignoreWarnings': ignore_warnings,
             'sessionId': self._session.get_session_id(),
             'ZipFile': self._read_deploy_zip(zipfile),
             'testLevel': test_level,
