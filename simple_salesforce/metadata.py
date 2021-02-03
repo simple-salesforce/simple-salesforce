@@ -35,7 +35,7 @@ class SfdcMetadataApi:
             rollback_on_error = "<met:rollbackOnError>%s</met:rollbackOnError>" % options['rollbackOnError']
 
         single_package = ""
-        if 'singlePackage' in options:
+        if 'singlepackage' in options:
             single_package = "<met:singlePackage>%s</met:singlePackage>" % options['singlePackage']
 
         auto_update_package = ""
