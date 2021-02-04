@@ -27,7 +27,7 @@ class SfdcMetadataApi:
     def deploy(self, zipfile, options):
         """ Kicks off async deployment, returns deployment id """
         check_only = ""
-        if 'checkOnly' in options:
+        if 'checkonly' in options:
             check_only = "<met:checkOnly>%s</met:checkOnly>" % options['checkonly']
 
         test_level = ""
