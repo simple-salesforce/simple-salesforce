@@ -126,12 +126,42 @@ class TestSalesforceLogin(unittest.TestCase):
         self.assertTrue(self.mockrequest.post.called)
 
     @responses.activate
-    def test_token_login_success(self):
-        """Test a successful JWT Token login"""
+    def test_token_login_success_with_key_file(self):
+        """Test a successful JWT Token login with a key file"""
         pkey_file = os.path.join(os.path.dirname(__file__), 'sample-key.pem')
         login_args = {
             'consumer_key': '12345.abcde',
             'privatekey_file': pkey_file
+        }
+        self._test_login_success(
+            re.compile(r'^https://login.salesforce.com/.*$'), login_args,
+            response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
+
+    @responses.activate
+    def test_token_login_success_with_key(self):
+        """Test a successful JWT Token login with a key from a string"""
+        pkey_file = os.path.join(os.path.dirname(__file__), 'sample-key.pem')
+        with open(pkey_file, 'rb') as key_file:
+            key = key_file.read().decode("utf-8")
+
+        login_args = {
+            'consumer_key': '12345.abcde',
+            'privatekey': key
+        }
+        self._test_login_success(
+            re.compile(r'^https://login.salesforce.com/.*$'), login_args,
+            response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
+
+    @responses.activate
+    def test_token_login_success_with_key_bytes(self):
+        """Test a successful JWT Token login with key bytes"""
+        pkey_file = os.path.join(os.path.dirname(__file__), 'sample-key.pem')
+        with open(pkey_file, 'rb') as key:
+            key_bytes = key.read()
+
+        login_args = {
+            'consumer_key': '12345.abcde',
+            'privatekey': key_bytes
         }
         self._test_login_success(
             re.compile(r'^https://login.salesforce.com/.*$'), login_args,
