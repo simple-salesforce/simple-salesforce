@@ -146,6 +146,7 @@ class SfdcMetadataApi:
             'deployed_count': result.find('mt:numberComponentsDeployed', self._XML_NAMESPACES).text,
             'rollbackOnError': result.find('mt:rollbackOnError', self._XML_NAMESPACES).text,
             'checkOnly': result.find('mt:checkOnly', self._XML_NAMESPACES).text,
+            'keys': result.keys(),
             'errors': deployment_errors
         }
         unit_test_detail = {
