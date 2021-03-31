@@ -22,6 +22,8 @@ notifications:
 deploy:
   # Allow travis-ci to deploy new tags to PyPI
   provider: pypi
+  edge:
+    branch: v1.8.45
   username: simple-salesforce
   password:
     secure: "RdkngWbRCGN5qSOk4babeda3w0jhsxB+zbuPjnFIOCHYz3OOQkIccXsoFPJso/E4k35mRNTU1J6PEBeL9W3KEtSgsl6k3lX8jamgJzkZU/HPoV8OH5tvybd3uiSikKA6EoxS5yfGjgTuSdOo07AzS69X4+FxNkRnTnug37tLjds="
