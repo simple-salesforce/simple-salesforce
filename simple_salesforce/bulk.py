@@ -102,7 +102,7 @@ class SFBulkType:
 
         result = call_salesforce(url=url, method='POST', session=self.session,
                                  headers=self.headers,
-                                 data=json.dumps(payload))
+                                 data=json.dumps(payload, allow_nan=False))
         return result.json(object_pairs_hook=OrderedDict)
 
     def _close_job(self, job_id):
@@ -115,7 +115,7 @@ class SFBulkType:
 
         result = call_salesforce(url=url, method='POST', session=self.session,
                                  headers=self.headers,
-                                 data=json.dumps(payload))
+                                 data=json.dumps(payload, allow_nan=False))
         return result.json(object_pairs_hook=OrderedDict)
 
     def _get_job(self, job_id):
@@ -135,7 +135,7 @@ class SFBulkType:
         url = "{}{}{}{}".format(self.bulk_url, 'job/', job_id, '/batch')
 
         if operation not in ('query', 'queryAll'):
-            data = json.dumps(data)
+            data = json.dumps(data, allow_nan=False)
 
         result = call_salesforce(url=url, method='POST', session=self.session,
                                  headers=self.headers, data=data)

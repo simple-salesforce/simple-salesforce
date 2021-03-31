@@ -33,6 +33,7 @@ def SalesforceLogin(
     domain=None,
     consumer_key=None,
     privatekey_file=None,
+    privatekey=None,
 ):
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
@@ -58,7 +59,9 @@ def SalesforceLogin(
                 'login'.
     * consumer_key -- the consumer key generated for the user
     * privatekey_file -- the path to the private key file used
-                         for signing the JWT token
+                         for signing the JWT token.
+    * privatekey -- the private key to use
+                         for signing the JWT token.
     """
 
     if domain is None:
@@ -152,7 +155,7 @@ def SalesforceLogin(
             username=username, password=password, client_id=client_id)
     elif username is not None and \
             consumer_key is not None and \
-            privatekey_file is not None:
+            (privatekey_file is not None or privatekey is not None):
         header = {'alg': 'RS256'}
         expiration = datetime.utcnow() + timedelta(minutes=3)
         payload = {
@@ -164,8 +167,13 @@ def SalesforceLogin(
                     expiration.microsecond / 1e6
             )
         }
-        with open(privatekey_file, 'rb') as key:
-            assertion = jwt.encode(header, payload, key.read())
+        if privatekey_file is not None:
+            with open(privatekey_file, 'rb') as key_file:
+                key = key_file.read()
+        else:
+            key = privatekey
+
+        assertion = jwt.encode(header, payload, key)
 
         login_token_request_data = {
             'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
