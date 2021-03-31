@@ -259,7 +259,7 @@ class SfdcMetadataApi:
         unpackaged = ''
         if kwargs.get('unpackaged'):
             for metadata_type in kwargs.get('unpackaged'):
-                if isinstance(metadata_type, dict):
+                if isinstance(kwargs.get('unpackaged'), dict):
                     members = kwargs.get('unpackaged')[metadata_type]
                     unpackaged += '<types>'
                     for member in members:
@@ -332,7 +332,7 @@ class SfdcMetadataApi:
 
     def retrieve_zip(self, async_process_id, **kwargs):
         """ Retrieves ZIP file """
-        result = self._retrieve_retrieve_result(async_process_id, 'true',
+        result = self.retrieve_retrieve_result(async_process_id, 'true',
                                                 **kwargs)
         state = result.find('mt:status', self._XML_NAMESPACES).text
         error_message = result.find('mt:errorMessage', self._XML_NAMESPACES)
@@ -357,7 +357,7 @@ class SfdcMetadataApi:
 
     def check_retrieve_status(self, async_process_id, **kwargs):
         """ Checks whether retrieval succeeded """
-        result = self._retrieve_retrieve_result(async_process_id, 'false',
+        result = self.retrieve_retrieve_result(async_process_id, 'false',
                                                 **kwargs)
         state = result.find('mt:status', self._XML_NAMESPACES).text
         error_message = result.find('mt:errorMessage', self._XML_NAMESPACES)
