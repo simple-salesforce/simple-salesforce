@@ -506,7 +506,7 @@ class Salesforce:
         result = self._call_salesforce(
             method,
             self.apex_url + action,
-            name="apexexcute",
+            name="apexecute",
             data=json_data, **kwargs
         )
         try:
