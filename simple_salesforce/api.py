@@ -49,7 +49,9 @@ class Salesforce:
             domain=None,
             consumer_key=None,
             privatekey_file=None,
-    ):
+            privatekey=None,
+            ):
+
         """Initialize the instance with the given parameters.
 
         Available kwargs
@@ -67,8 +69,13 @@ class Salesforce:
         OAuth 2.0 JWT Bearer Token Authentication:
 
         * consumer_key -- the consumer key generated for the user
+
+        Then either
         * privatekey_file -- the path to the private key file used
                              for signing the JWT token
+        OR
+        * privatekey -- the private key to use
+                         for signing the JWT token
 
         Direct Session and Instance Access:
 
@@ -155,7 +162,7 @@ class Salesforce:
                 domain=self.domain)
 
         elif all(arg is not None for arg in (
-                username, consumer_key, privatekey_file)):
+                username, consumer_key, privatekey_file or privatekey)):
             self.auth_type = "jwt-bearer"
 
             # Pass along the username/password to our login helper
@@ -164,6 +171,7 @@ class Salesforce:
                 username=username,
                 consumer_key=consumer_key,
                 privatekey_file=privatekey_file,
+                privatekey=privatekey,
                 proxies=self.proxies,
                 domain=self.domain)
 
