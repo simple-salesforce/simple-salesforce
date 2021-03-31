@@ -1,3 +1,16 @@
+v1.11.1
+======
+Features
+--------
+- [445] Added wrapper for Tooling API
+- [451] Support JWT without file for private key
+
+
+Bugs
+----
+- [454] Fixed typo in metadata file
+- [443] Fix to prevent silent failure by preventing NaN in payload
+
 v1.11.0
 ======
 - [375] Added file based metadata deployment
