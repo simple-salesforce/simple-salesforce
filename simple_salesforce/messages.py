@@ -1,8 +1,8 @@
 """ Salesforce API message templates """
 DEPLOY_MSG = \
     """<soapenv:Envelope
-xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-xmlns:met="http://soap.sforce.com/2006/04/metadata">
+        xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:met="http://soap.sforce.com/2006/04/metadata">
    <soapenv:Header>
       <met:CallOptions>
          <met:client>{client}</met:client>
@@ -15,14 +15,14 @@ xmlns:met="http://soap.sforce.com/2006/04/metadata">
       <met:deploy>
          <met:ZipFile>{ZipFile}</met:ZipFile>
          <met:DeployOptions>
-            <met:allowMissingFiles>false</met:allowMissingFiles>
-            <met:autoUpdatePackage>false</met:autoUpdatePackage>
-            {checkOnly}
-            <met:ignoreWarnings>false</met:ignoreWarnings>
-            <met:performRetrieve>false</met:performRetrieve>
-            <met:purgeOnDelete>false</met:purgeOnDelete>
-            <met:rollbackOnError>true</met:rollbackOnError>
-            <met:singlePackage>true</met:singlePackage>
+            <met:allowMissingFiles>{allowMissingFiles}</met:allowMissingFiles>
+            <met:autoUpdatePackage>{autoUpdatePackage}</met:autoUpdatePackage>
+            <met:checkOnly>{checkOnly}</met:checkOnly>
+            <met:ignoreWarnings>{ignoreWarnings}</met:ignoreWarnings>
+            <met:performRetrieve>{performRetrieve}</met:performRetrieve>
+            <met:purgeOnDelete>{purgeOnDelete}</met:purgeOnDelete>
+            <met:rollbackOnError>{rollbackOnError}</met:rollbackOnError>
+            <met:singlePackage>{singlePackage}</met:singlePackage>
             {testLevel}
             {tests}
          </met:DeployOptions>

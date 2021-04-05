@@ -82,3 +82,10 @@ def call_salesforce(url, method, session, headers, **kwargs):
         exception_handler(result)
 
     return result
+
+def list_from_generator(generator_function):
+    """Utility method for constructing a list from a generator function"""
+    ret_val = []
+    for list_results in generator_function:
+        ret_val.extend(list_results)
+    return ret_val
