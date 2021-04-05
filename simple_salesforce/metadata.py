@@ -100,25 +100,25 @@ class SfdcMetadataApi:
 
         return result
 
-    def _retrieve_deploy_result_steven(self, async_process_id):
-        """ Retrieves status for specified deployment id """
-        attributes = {
-            'client': 'Metahelper',
-            'sessionId': self._session.get_session_id(),
-            'asyncProcessId': async_process_id,
-            'includeDetails': 'true'
-            }
-        mt_request = msg.CHECK_DEPLOY_STATUS_MSG.format(**attributes)
-        headers = {'Content-type': 'text/xml', 'SOAPAction': 'checkDeployStatus'}
-        res = self._session.post(self._get_api_url(), headers=headers, data=mt_request)
-        root = ET.fromstring(res.text)
-        # result = root.find(
-        #     'soapenv:Body/mt:checkDeployStatusResponse/mt:result',
-        #     self._XML_NAMESPACES)
-        # if result is None:
-        #     raise Exception("Result node could not be found: %s" % res.text)
+    # def _retrieve_deploy_result_steven(self, async_process_id):
+    #     """ Retrieves status for specified deployment id """
+    #     attributes = {
+    #         'client': 'Metahelper',
+    #         'sessionId': self._session.get_session_id(),
+    #         'asyncProcessId': async_process_id,
+    #         'includeDetails': 'true'
+    #         }
+    #     mt_request = msg.CHECK_DEPLOY_STATUS_MSG.format(**attributes)
+    #     headers = {'Content-type': 'text/xml', 'SOAPAction': 'checkDeployStatus'}
+    #     res = self._session.post(self._get_api_url(), headers=headers, data=mt_request)
+    #     root = ET.fromstring(res.text)
+    #     result = root.find(
+    #         'soapenv:Body/mt:checkDeployStatusResponse/mt:result',
+    #         self._XML_NAMESPACES)
+    #     if result is None:
+    #         raise Exception("Result node could not be found: %s" % res.text)
 
-        return root
+    #     return result
 
     @staticmethod
     def get_component_error_count(value):
@@ -130,13 +130,12 @@ class SfdcMetadataApi:
     def check_deploy_status(self, async_process_id):
         """ Checks whether deployment succeeded """
         result = self._retrieve_deploy_result(async_process_id)
-        root = self._retrieve_deploy_result_steven(async_process_id)
-        keys = result.keys()
+        # root = self._retrieve_deploy_result_steven(async_process_id)
+        # keys = result.keys()
         state = result.find('mt:status', self._XML_NAMESPACES).text
         state_detail = result.find('mt:stateDetail', self._XML_NAMESPACES)
         if state_detail is not None:
             state_detail = state_detail.text
-
         unit_test_errors = []
         deployment_errors = []
         failed_count = self.get_component_error_count(result.find('mt:numberComponentErrors', self._XML_NAMESPACES).text)
