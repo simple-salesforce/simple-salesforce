@@ -198,7 +198,7 @@ class SfdcMetadataApi:
         if result is None:
             raise Exception("Result node could not be found: %s" % res.text)
 
-        return root
+        return result
 
     @staticmethod
     def get_component_error_count(value):
@@ -218,8 +218,8 @@ class SfdcMetadataApi:
         :return:
         :rtype:
         """
-        result = self._retrieve_deploy_result(async_process_id, **kwargs)
-        #result = self._retrieve_deploy_result_steven(async_process_id, **kwargs)
+        # result = self._retrieve_deploy_result(async_process_id, **kwargs)
+        result = self._retrieve_deploy_result_steven(async_process_id, **kwargs)
         state = result.find('mt:status', self._XML_NAMESPACES).text
         state_detail = result.find('mt:stateDetail', self._XML_NAMESPACES)
         if state_detail is not None:
