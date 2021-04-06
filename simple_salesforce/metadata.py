@@ -236,7 +236,7 @@ class SfdcMetadataApi:
                                            self._XML_NAMESPACES).text,
             'errors': unit_test_errors
             }
-        return state, state_detail, deployment_detail, unit_test_detail
+        return state, state_detail, deployment_detail, unit_test_detail, result
 
     def download_unit_test_logs(self, async_process_id):
         """ Downloads Apex logs for unit tests executed during specified
