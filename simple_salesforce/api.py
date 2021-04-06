@@ -630,7 +630,8 @@ class Salesforce:
             'state': state,
             'state_detail': state_detail,
             'deployment_detail': deployment_detail,
-            'unit_test_detail': unit_test_detail
+            'unit_test_detail': unit_test_detail,
+            'result': result
         }
 
         return results
