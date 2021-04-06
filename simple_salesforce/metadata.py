@@ -198,7 +198,7 @@ class SfdcMetadataApi:
         if result is None:
             raise Exception("Result node could not be found: %s" % res.text)
 
-        return res
+        return root
 
     @staticmethod
     def get_component_error_count(value):
