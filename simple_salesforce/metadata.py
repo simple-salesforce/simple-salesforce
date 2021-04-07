@@ -258,17 +258,18 @@ class SfdcMetadataApi:
                                                 self._XML_NAMESPACES).text
                     })
 
-        deployment_detail = {
-            'total_count': result.find('mt:numberComponentsTotal',
-                                       self._XML_NAMESPACES).text,
-            'failed_count': result.find('mt:numberComponentErrors',
-                                        self._XML_NAMESPACES).text,
-            'deployed_count': result.find('mt:numberComponentsDeployed',
-                                          self._XML_NAMESPACES).text,
-            'checkOnly': result.find('mt:checkOnly',
-                                        self._XML_NAMESPACES).text,
-            'errors': deployment_errors,
-            }
+        # deployment_detail = {
+        #     'total_count': result.find('mt:numberComponentsTotal',
+        #                                self._XML_NAMESPACES).text,
+        #     'failed_count': result.find('mt:numberComponentErrors',
+        #                                 self._XML_NAMESPACES).text,
+        #     'deployed_count': result.find('mt:numberComponentsDeployed',
+        #                                   self._XML_NAMESPACES).text,
+        #     'checkOnly': result.find('mt:checkOnly',
+        #                                 self._XML_NAMESPACES).text,
+        #     'errors': deployment_errors,
+        #     }
+        deployment_detail = result
         unit_test_detail = {
             'total_count': result.find('mt:numberTestsTotal',
                                        self._XML_NAMESPACES).text,
@@ -278,7 +279,7 @@ class SfdcMetadataApi:
                                            self._XML_NAMESPACES).text,
             'errors': unit_test_errors
             }
-        return state, state_detail, deployment_detail, unit_test_detail, result
+        return state, state_detail, deployment_detail, unit_test_detail
 
     def download_unit_test_logs(self, async_process_id):
         """ Downloads Apex logs for unit tests executed during specified

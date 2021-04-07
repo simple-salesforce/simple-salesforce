@@ -624,15 +624,14 @@ class Salesforce:
                                 api_version=self.sf_version,
                                 headers=self.headers)
 
-        state, state_detail, deployment_detail, unit_test_detail, result = \
+        state, state_detail, deployment_detail, unit_test_detail = \
             mdapi.check_deploy_status(asyncId, **kwargs)
         results = {
             'state': state,
             'state_detail': state_detail,
             'deployment_detail': deployment_detail,
-            'unit_test_detail': unit_test_detail,
-            'result': result
-        }
+            'unit_test_detail': unit_test_detail
+                    }
 
         return results
 
