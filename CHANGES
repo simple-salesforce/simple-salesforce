@@ -1,3 +1,9 @@
+v1.11.2
+======
+Bugs
+--------
+- [469] Fix bulk call results returning nested list
+
 v1.11.1
 ======
 Features
