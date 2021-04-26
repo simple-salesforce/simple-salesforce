@@ -129,7 +129,7 @@ class TestSFBulkType(unittest.TestCase):
                             instance_url=tests.SERVER_URL,
                             session=session)
         contact = client.bulk.Contact.delete(data)
-        self.assertEqual([self.expected], contact)
+        self.assertEqual(self.expected, contact)
 
     @responses.activate
     def test_insert(self):
@@ -194,7 +194,7 @@ class TestSFBulkType(unittest.TestCase):
                             instance_url=tests.SERVER_URL,
                             session=session)
         contact = client.bulk.Contact.insert(data)
-        self.assertEqual([self.expected], contact)
+        self.assertEqual(self.expected, contact)
 
     @responses.activate
     def test_upsert(self):
@@ -261,7 +261,7 @@ class TestSFBulkType(unittest.TestCase):
                             instance_url=tests.SERVER_URL,
                             session=session)
         contact = client.bulk.Contact.upsert(data, 'Custom_Id__c')
-        self.assertEqual([self.expected], contact)
+        self.assertEqual(self.expected, contact)
 
     @responses.activate
     def test_update(self):
@@ -328,7 +328,7 @@ class TestSFBulkType(unittest.TestCase):
                             instance_url=tests.SERVER_URL,
                             session=session)
         contact = client.bulk.Contact.update(data)
-        self.assertEqual([self.expected], contact)
+        self.assertEqual(self.expected, contact)
 
     @responses.activate
     def test_query(self):
