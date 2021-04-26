@@ -1,5 +1,11 @@
 v1.11.1
 ======
+Bugs
+--------
+- [469] Fix bulk call results returning nested list
+
+v1.11.1
+======
 Features
 --------
 - [445] Added wrapper for Tooling API
