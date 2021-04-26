@@ -225,7 +225,8 @@ class SFBulkType:
             multi_thread_worker = partial(self.worker, operation=operation)
             list_of_results = pool.map(multi_thread_worker, batches)
 
-            results = [i for sublist in list_of_results for i in sublist]
+            results = [x for sublist in list_of_results for i in
+                       sublist for x in i]
 
             self._close_job(job_id=job['id'])
 
