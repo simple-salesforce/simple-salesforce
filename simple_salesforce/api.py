@@ -204,6 +204,20 @@ class Salesforce:
 
         self.api_usage = {}
 
+        self._mdapi = None
+
+    @property
+    def mdapi(self, sandbox=False):
+        if not self._mdapi:
+            self._mdapi = SfdcMetadataApi(session=self.session,
+                                          session_id=self.session_id,
+                                          instance=self.sf_instance,
+                                          sandbox=sandbox,
+                                          metadata_url=self.metadata_url,
+                                          api_version=self.sf_version,
+                                          headers=self.headers)
+        return self._mdapi
+
     def describe(self, **kwargs):
         """Describes all available objects
 
@@ -592,19 +606,12 @@ class Salesforce:
 
         Returns a process id and state for this deployment.
         """
-        mdapi = SfdcMetadataApi(session=self.session,
-                                session_id=self.session_id,
-                                instance=self.sf_instance,
-                                sandbox=sandbox,
-                                metadata_url=self.metadata_url,
-                                api_version=self.sf_version,
-                                headers=self.headers)
-        asyncId, state = mdapi.deploy(zipfile, **kwargs)
+        asyncId, state = self._mdapi(sandbox=sandbox).deploy(zipfile, **kwargs)
         result = {'asyncId': asyncId, 'state': state}
         return result
 
     # check on a file-based deployment
-    def checkDeployStatus(self, asyncId, sandbox, **kwargs):
+    def checkDeployStatus(self, asyncId, **kwargs):
         """Check on the progress of a file-based deployment via Salesforce
         Metadata API.
         Wrapper for SfdcMetaDataApi.check_deploy_status(...).
@@ -615,16 +622,8 @@ class Salesforce:
 
         Returns status of the deployment the asyncId given.
         """
-        mdapi = SfdcMetadataApi(session=self.session,
-                                session_id=self.session_id,
-                                instance=self.sf_instance,
-                                sandbox=sandbox,
-                                metadata_url=self.metadata_url,
-                                api_version=self.sf_version,
-                                headers=self.headers)
-
         state, state_detail, deployment_detail, unit_test_detail = \
-            mdapi.check_deploy_status(asyncId, **kwargs)
+            self._mdapi.check_deploy_status(asyncId, **kwargs)
         results = {
             'state': state,
             'state_detail': state_detail,
