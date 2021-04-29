@@ -8,6 +8,146 @@ from .messages import DEPLOY_MSG, CHECK_DEPLOY_STATUS_MSG,\
 from zeep import Client, Settings
 
 
+class MetadataType:
+    def __init__(self, name, service, zeep_type, session_header):
+        """
+        Initialize metadata type
+
+        :param name: Name of metadata type
+        :type name: str
+        :param service: Zeep service
+        :type service: zeep.proxy.ServiceProxy
+        :param zeep_type: Zeep type object
+        :type zeep_type: zeep.xsd.ComplexType or zeep.xsd.AnySimpleType
+        :param session_header: Session Id header for Metadata API calls
+        """
+        self._name = name
+        self._service = service
+        self._zeep_type = zeep_type
+        self._session_header = session_header
+
+    @staticmethod
+    def _handle_api_response(response):
+        """
+        Parses SaveResult and DeleteResult objects to identify if there was an error, and raises exception accordingly
+
+        :param response: List of zeep.objects.SaveResult or zeep.objects.DeleteResult objects
+        :type response: list
+        :raises Exception: If any Result object contains one or more error messages
+        """
+        err_string = ""
+        for result in response:
+            if not result.success:
+                err_string += f"\n{result.fullName}: "
+                for error in result.errors:
+                    err_string += f"({error.statusCode}, {error.message}), "
+        if err_string:
+            raise Exception(err_string)
+
+    def new(self, *args, **kwargs):
+        """
+        Creates a new object of this metadata type
+
+        :param args: Parameters to pass to zeep.xsd.AnySimpleType
+        :param kwargs: Parameters to pass to zeep.xsd.ComplexType
+        :returns: An object of metadata type
+        """
+        return self._zeep_type(*args, **kwargs)
+
+    def create(self, metadata):
+        """
+        Performs a createMetadata call
+
+        :param metadata: Array of one or more metadata components.
+                         Limit: 10. (For CustomMetadata and CustomApplication only, the limit is 200.)
+                         You must submit arrays of only one type of component. For example, you can submit an
+                         array of 10 custom objects or 10 profiles, but not a mix of both types.
+        :type metadata: list
+        :raises Exception: If creation of one or more metadata components is not successful
+        """
+        response = self._service.createMetadata(metadata, _soapheaders=[self._session_header])
+        self._handle_api_response(response)
+
+    def read(self, full_names):
+        """
+        Performs a readMetadata call
+
+        :param full_names: Array of full names of the components to read.
+                           Limit: 10. (For CustomMetadata and CustomApplication only, the limit is 200.)
+                           You must submit arrays of only one type of component. For example, you can submit an array
+                           of 10 custom objects or 10 profiles, but not a mix of both types.
+        :type full_names: list
+        :returns: A list of objects of zeep.objects.metadata_type
+        :rtype: list
+        """
+        return self._service.readMetadata(self._name, full_names, _soapheaders=[self._session_header])
+
+    def update(self, metadata):
+        """
+        Performs an updateMetadata call. All required fields must be passed for each component
+
+        :param metadata: Array of one or more metadata components.
+                         Limit: 10. (For CustomMetadata and CustomApplication only, the limit is 200.)
+                         You must submit arrays of only one type of component. For example, you can submit an
+                         array of 10 custom objects or 10 profiles, but not a mix of both types.
+        :type metadata: list
+        :raises Exception: If update of one or more metadata components is not successful
+        """
+        response = self._service.updateMetadata(metadata, _soapheaders=[self._session_header])
+        self._handle_api_response(response)
+
+    def upsert(self, metadata):
+        """
+        Performs an upsertMetadata call. All required fields must be passed for each component
+
+        :param metadata: Array of one or more metadata components.
+                         Limit: 10. (For CustomMetadata and CustomApplication only, the limit is 200.)
+                         You must submit arrays of only one type of component. For example, you can submit an
+                         array of 10 custom objects or 10 profiles, but not a mix of both types.
+        :type metadata: list
+        :raises Exception: If update of one or more metadata components is not successful
+        """
+        response = self._service.updateMetadata(metadata, _soapheaders=[self._session_header])
+        self._handle_api_response(response)
+
+    def delete(self, full_names):
+        """
+        Performs a deleteMetadata call
+
+        :param full_names: Array of full names of the components to delete.
+                           Limit: 10. (For CustomMetadata and CustomApplication only, the limit is 200.)
+                           You must submit arrays of only one type of component. For example, you can submit an array
+                           of 10 custom objects or 10 profiles, but not a mix of both types.
+        :type full_names: list
+        :raises Exception: If delete of one or more metadata components is not successful.
+        """
+        response = self._service.deleteMetadata(self._name, full_names, _soapheaders=[self._session_header])
+        self._handle_api_response(response)
+
+    def rename(self, old_full_name, new_full_name):
+        """
+        Performs a renameMetadata call
+
+        :param old_full_name: The current component full name.
+        :type old_full_name: str
+        :param new_full_name: The new component full name.
+        :type new_full_name: str
+        :raises Exception: If rename is not successful
+        """
+        result = self._service.renameMetadata(self._name, old_full_name, new_full_name,
+                                              _soapheaders=[self._session_header])
+        self._handle_api_response([result])
+
+    def describe(self):
+        """
+        Performs a describeValueType call
+
+        :returns: A zeep.objects.DescribeValueTypeResult
+        """
+        return self._service.describeValueType(f"{{http://soap.sforce.com/2006/04/metadata}}{self._name}",
+                                               _soapheaders=[self._session_header])
+
+
 class SfdcMetadataApi:
     # pylint: disable=too-many-instance-attributes
     """ Class to work with Salesforce Metadata API """
@@ -31,135 +171,11 @@ class SfdcMetadataApi:
         self._deploy_zip = None
         wsdl_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'metadata.wsdl')
         self._client = Client(os.path.join('simple_salesforce', wsdl_path), settings=Settings(strict=False))
-        self._service = self._client.create_service(
-            '{http://soap.sforce.com/2006/04/metadata}MetadataBinding',
-            self.metadata_url
-        )
+        self._service = self._client.create_service(f"{self._XML_NAMESPACES['mt']}MetadataBinding", self.metadata_url)
         self._session_header = self._client.get_element('ns0:SessionHeader')(sessionId=self._session_id)
 
-    def wsdl_object(self, wsdl_type, *args, **kwargs):
-        """
-        Get a zeep WSDL object of given data type with parameters from *args or **kwargs
-
-        :param wsdl_type: A data type defined in Salesforce metadata WSDL
-        :type wsdl_type: str
-        :param args: A single argument to create an object of a simple data type. For example,
-                        text_field = mdapi.wsdl_object('FieldType', 'Text')
-        :param kwargs: Named parameters to use to create an object of a complex data type. For example,
-                            custom_field = mdapi.wsdl_object('CustomField', label='Field Name', type=text_field)
-        :returns: An object of zeep.objects.wsdl_type
-        """
-        if len(args):
-            return self._client.get_type('ns0:' + wsdl_type)(*args)
-        return self._client.get_type('ns0:' + wsdl_type)(**kwargs)
-
-    @staticmethod
-    def _handle_api_response(response):
-        """
-        Parses SaveResult and DeleteResult objects to identify if there was an error, and raises exception accordingly
-
-        :param response: List of zeep.objects.SaveResult or zeep.objects.DeleteResult objects
-        :type response: list
-        :raises Exception: If any Result object contains one or more error messages
-        """
-        err_string = ""
-        for result in response:
-            if not result.success:
-                err_string += f"\n{result.fullName}: "
-                for error in result.errors:
-                    err_string += f"({error.statusCode}, {error.message}), "
-        if err_string:
-            raise Exception(err_string)
-
-    def create_metadata(self, metadata):
-        """
-        Performs a createMetadata call
-
-        :param metadata: Array of one or more metadata components.
-                         Limit: 10. (For CustomMetadata and CustomApplication only, the limit is 200.)
-                         You must submit arrays of only one type of component. For example, you can submit an
-                         array of 10 custom objects or 10 profiles, but not a mix of both types.
-        :type metadata: list
-        :raises Exception: If creation of one or more metadata components is not successful
-        """
-        response = self._service.createMetadata(metadata, _soapheaders=[self._session_header])
-        self._handle_api_response(response)
-
-    def read_metadata(self, metadata_type, full_names):
-        """
-        Performs a readMetadata call
-
-        :param metadata_type: The metadata type of the components to read.
-        :type metadata_type: str
-        :param full_names: Array of full names of the components to read.
-                           Limit: 10. (For CustomMetadata and CustomApplication only, the limit is 200.)
-                           You must submit arrays of only one type of component. For example, you can submit an array
-                           of 10 custom objects or 10 profiles, but not a mix of both types.
-        :type full_names: list
-        :returns: A list of objects of zeep.objects.metadata_type
-        :rtype: list
-        """
-        return self._service.readMetadata(metadata_type, full_names, _soapheaders=[self._session_header])
-
-    def update_metadata(self, metadata):
-        """
-        Performs an updateMetadata call. All required fields must be passed for each component
-
-        :param metadata: Array of one or more metadata components.
-                         Limit: 10. (For CustomMetadata and CustomApplication only, the limit is 200.)
-                         You must submit arrays of only one type of component. For example, you can submit an
-                         array of 10 custom objects or 10 profiles, but not a mix of both types.
-        :type metadata: list
-        :raises Exception: If update of one or more metadata components is not successful
-        """
-        response = self._service.updateMetadata(metadata, _soapheaders=[self._session_header])
-        self._handle_api_response(response)
-
-    def upsert_metadata(self, metadata):
-        """
-        Performs an upsertMetadata call. All required fields must be passed for each component
-
-        :param metadata: Array of one or more metadata components.
-                         Limit: 10. (For CustomMetadata and CustomApplication only, the limit is 200.)
-                         You must submit arrays of only one type of component. For example, you can submit an
-                         array of 10 custom objects or 10 profiles, but not a mix of both types.
-        :type metadata: list
-        :raises Exception: If update of one or more metadata components is not successful
-        """
-        response = self._service.updateMetadata(metadata, _soapheaders=[self._session_header])
-        self._handle_api_response(response)
-
-    def delete_metadata(self, metadata_type, full_names):
-        """
-        Performs a deleteMetadata call
-
-        :param metadata_type: The metadata type of the components to delete.
-        :type metadata_type: str
-        :param full_names: Array of full names of the components to delete.
-                           Limit: 10. (For CustomMetadata and CustomApplication only, the limit is 200.)
-                           You must submit arrays of only one type of component. For example, you can submit an array
-                           of 10 custom objects or 10 profiles, but not a mix of both types.
-        :type full_names: list
-        :raises Exception: If delete of one or more metadata components is not successful.
-        """
-        response = self._service.deleteMetadata(metadata_type, full_names, _soapheaders=[self._session_header])
-        self._handle_api_response(response)
-
-    def rename_metadata(self, metadata_type, old_full_name, new_full_name):
-        """
-        Performs a renameMetadata call
-
-        :param metadata_type: The metadata type of the component to rename.
-        :type metadata_type: str
-        :param old_full_name: The current component full name.
-        :type old_full_name: str
-        :param new_full_name: The new component full name.
-        :type new_full_name: str
-        :raises Exception: If rename is not successful
-        """
-        result = self._service.renameMetadata(metadata_type, old_full_name, new_full_name,
-                                              _soapheaders=[self._session_header])
-        self._handle_api_response([result])
+    def __getattr__(self, item):
+        return MetadataType(item, self._service, self._client.get_type('ns0:' + item), self._session_header)
 
     def describe_metadata(self):
         """
@@ -168,17 +184,6 @@ class SfdcMetadataApi:
         :returns: An object of zeep.objects.DescribeMetadataResult
         """
         return self._service.describeMetadata(self._api_version, _soapheaders=[self._session_header])
-
-    def describe_value_type(self, metadata_type):
-        """
-        Performs a describeValueType call
-
-        :param metadata_type: The name of the metadata type for which you want metadata; for example, ApexClass.
-        :type metadata_type: str
-        :returns: A zeep.objects.DescribeValueTypeResult
-        """
-        return self._service.describeValueType(f"{{{self._XML_NAMESPACES['mt']}}}{metadata_type}",
-                                               _soapheaders=[self._session_header])
 
     def list_metadata(self, queries):
         """
