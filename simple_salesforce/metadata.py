@@ -50,7 +50,7 @@ class MetadataType:
 
         :param args: Parameters to pass to zeep.xsd.AnySimpleType
         :param kwargs: Parameters to pass to zeep.xsd.ComplexType
-        :returns: An object of metadata type
+        :returns: An object of type self._name
         """
         return self._zeep_type(*args, **kwargs)
 
@@ -63,7 +63,6 @@ class MetadataType:
                          You must submit arrays of only one type of component. For example, you can submit an
                          array of 10 custom objects or 10 profiles, but not a mix of both types.
         :type metadata: list
-        :raises Exception: If creation of one or more metadata components is not successful
         """
         response = self._service.createMetadata(metadata, _soapheaders=[self._session_header])
         self._handle_api_response(response)
@@ -77,7 +76,7 @@ class MetadataType:
                            You must submit arrays of only one type of component. For example, you can submit an array
                            of 10 custom objects or 10 profiles, but not a mix of both types.
         :type full_names: list
-        :returns: A list of objects of zeep.objects.metadata_type
+        :returns: A list of metadata components
         :rtype: list
         """
         return self._service.readMetadata(self._name, full_names, _soapheaders=[self._session_header])
@@ -91,7 +90,6 @@ class MetadataType:
                          You must submit arrays of only one type of component. For example, you can submit an
                          array of 10 custom objects or 10 profiles, but not a mix of both types.
         :type metadata: list
-        :raises Exception: If update of one or more metadata components is not successful
         """
         response = self._service.updateMetadata(metadata, _soapheaders=[self._session_header])
         self._handle_api_response(response)
@@ -105,7 +103,6 @@ class MetadataType:
                          You must submit arrays of only one type of component. For example, you can submit an
                          array of 10 custom objects or 10 profiles, but not a mix of both types.
         :type metadata: list
-        :raises Exception: If update of one or more metadata components is not successful
         """
         response = self._service.updateMetadata(metadata, _soapheaders=[self._session_header])
         self._handle_api_response(response)
@@ -119,7 +116,6 @@ class MetadataType:
                            You must submit arrays of only one type of component. For example, you can submit an array
                            of 10 custom objects or 10 profiles, but not a mix of both types.
         :type full_names: list
-        :raises Exception: If delete of one or more metadata components is not successful.
         """
         response = self._service.deleteMetadata(self._name, full_names, _soapheaders=[self._session_header])
         self._handle_api_response(response)
@@ -132,7 +128,6 @@ class MetadataType:
         :type old_full_name: str
         :param new_full_name: The new component full name.
         :type new_full_name: str
-        :raises Exception: If rename is not successful
         """
         result = self._service.renameMetadata(self._name, old_full_name, new_full_name,
                                               _soapheaders=[self._session_header])
@@ -142,7 +137,7 @@ class MetadataType:
         """
         Performs a describeValueType call
 
-        :returns: A zeep.objects.DescribeValueTypeResult
+        :returns: DescribeValueTypeResult
         """
         return self._service.describeValueType(f"{{http://soap.sforce.com/2006/04/metadata}}{self._name}",
                                                _soapheaders=[self._session_header])
