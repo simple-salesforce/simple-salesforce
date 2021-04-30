@@ -44,7 +44,7 @@ class MetadataType:
         if err_string:
             raise Exception(err_string)
 
-    def new(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs):
         """
         Creates a new object of this metadata type
 
@@ -165,7 +165,8 @@ class SfdcMetadataApi:
         self._api_version = api_version
         self._deploy_zip = None
         wsdl_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'metadata.wsdl')
-        self._client = Client(os.path.join('simple_salesforce', wsdl_path), settings=Settings(strict=False))
+        self._client = Client(os.path.join('simple_salesforce', wsdl_path),
+                              settings=Settings(strict=False, xsd_ignore_sequence_order=True))
         self._service = self._client.create_service(f"{{{self._XML_NAMESPACES['mt']}}}MetadataBinding", self.metadata_url)
         self._session_header = self._client.get_element('ns0:SessionHeader')(sessionId=self._session_id)
 
