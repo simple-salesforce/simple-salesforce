@@ -115,7 +115,6 @@ class SfdcMetadataApi:
             file.seek(0)
             should_close = False
         else:
-            
             file = open(zipfile, 'rb')
             should_close = True
         raw = file.read()
