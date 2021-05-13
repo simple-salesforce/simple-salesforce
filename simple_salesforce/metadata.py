@@ -102,6 +102,7 @@ class SfdcMetadataApi:
         return async_process_id, state
 
     @staticmethod
+    # pylint: disable=R1732
     def _read_deploy_zip(zipfile):
         """
         :param zipfile:
@@ -114,6 +115,7 @@ class SfdcMetadataApi:
             file.seek(0)
             should_close = False
         else:
+            
             file = open(zipfile, 'rb')
             should_close = True
         raw = file.read()
