@@ -1,6 +1,8 @@
 """Core classes and exceptions for Simple-Salesforce"""
 
 # has to be defined prior to login import
+import base64
+
 DEFAULT_API_VERSION = '42.0'
 
 import json
@@ -50,7 +52,7 @@ class Salesforce:
             consumer_key=None,
             privatekey_file=None,
             privatekey=None,
-            ):
+    ):
 
         """Initialize the instance with the given parameters.
 
@@ -924,3 +926,36 @@ class SFType:
             return response.status_code
 
         return response
+
+    def upload_base64(self, file_path, base64_field='Body', data={}, headers=None, **kwargs):
+        with open(file_path, "rb") as f:
+            body = base64.b64encode(f.read()).decode('utf-8')
+        data[base64_field] = body
+        result = self._call_salesforce(method='POST', url=self.base_url, headers=headers, json=data, **kwargs)
+
+        return result
+
+    def update_base64(self, record_id, file_path, base64_field='Body', data={}, headers=None, raw_response=False,
+                      **kwargs):
+        with open(file_path, "rb") as f:
+            body = base64.b64encode(f.read()).decode('utf-8')
+        data[base64_field] = body
+        result = self._call_salesforce(method='PATCH', url=urljoin(self.base_url, record_id), json=data,
+                                       headers=headers, **kwargs)
+
+        return self._raw_response(result, raw_response)
+
+    def get_base64(self, record_id, base64_field='Body', data=None, headers=None, **kwargs):
+        """Returns binary stream of base64 object at specific path.
+
+        Arguments:
+
+        * path: The path of the request
+            Example: sobjects/Attachment/ABC123/Body
+                     sobjects/ContentVersion/ABC123/VersionData
+        """
+        result = self._call_salesforce(method='GET', url=urljoin(self.base_url, f"{record_id}/{base64_field}"),
+                                       data=data,
+                                       headers=headers, **kwargs)
+
+        return result.content
