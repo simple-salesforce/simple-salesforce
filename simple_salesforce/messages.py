@@ -1,6 +1,5 @@
 """ Salesforce API message templates """
-DEPLOY_MSG = \
-    """<soapenv:Envelope
+DEPLOY_MSG = """<soapenv:Envelope
 xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
 xmlns:met="http://soap.sforce.com/2006/04/metadata">
    <soapenv:Header>
@@ -30,8 +29,7 @@ xmlns:met="http://soap.sforce.com/2006/04/metadata">
    </soapenv:Body>
 </soapenv:Envelope>"""
 
-CHECK_DEPLOY_STATUS_MSG = \
-    """<soapenv:Envelope
+CHECK_DEPLOY_STATUS_MSG = """<soapenv:Envelope
 xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
 xmlns:met="http://soap.sforce.com/2006/04/metadata">
    <soapenv:Header>
@@ -50,8 +48,7 @@ xmlns:met="http://soap.sforce.com/2006/04/metadata">
    </soapenv:Body>
 </soapenv:Envelope>"""
 
-RETRIEVE_MSG = \
-    """<soapenv:Envelope
+RETRIEVE_MSG = """<soapenv:Envelope
 xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
 xmlns:met="http://soap.sforce.com/2006/04/metadata">
    <soapenv:Header>
@@ -73,8 +70,7 @@ xmlns:met="http://soap.sforce.com/2006/04/metadata">
    </soapenv:Body>
 </soapenv:Envelope>"""
 
-CHECK_RETRIEVE_STATUS_MSG = \
-    """<soapenv:Envelope
+CHECK_RETRIEVE_STATUS_MSG = """<soapenv:Envelope
 xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
 xmlns:met="http://soap.sforce.com/2006/04/metadata">
    <soapenv:Header>

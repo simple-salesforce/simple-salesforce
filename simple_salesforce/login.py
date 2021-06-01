@@ -3,7 +3,7 @@
 Heavily Modified from RestForce 1.0.0
 """
 
-DEFAULT_CLIENT_ID_PREFIX = 'RestForce'
+DEFAULT_CLIENT_ID_PREFIX = "RestForce"
 
 
 import time
@@ -62,19 +62,16 @@ def SalesforceLogin(
     """
 
     if domain is None:
-        domain = 'login'
+        domain = "login"
 
-    soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
+    soap_url = "https://{domain}.salesforce.com/services/Soap/u/{sf_version}"
 
     if client_id:
-        client_id = "{prefix}/{app_name}".format(
-            prefix=DEFAULT_CLIENT_ID_PREFIX,
-            app_name=client_id)
+        client_id = "{prefix}/{app_name}".format(prefix=DEFAULT_CLIENT_ID_PREFIX, app_name=client_id)
     else:
         client_id = DEFAULT_CLIENT_ID_PREFIX
 
-    soap_url = soap_url.format(domain=domain,
-                               sf_version=sf_version)
+    soap_url = soap_url.format(domain=domain, sf_version=sf_version)
 
     # pylint: disable=E0012,deprecated-method
     username = escape(username) if username else None
@@ -102,8 +99,8 @@ def SalesforceLogin(
                 </n1:login>
             </env:Body>
         </env:Envelope>""".format(
-            username=username, password=password, token=security_token,
-            client_id=client_id)
+            username=username, password=password, token=security_token, client_id=client_id
+        )
 
     # Check if IP Filtering is used in conjunction with organizationId
     elif organizationId is not None:
@@ -128,8 +125,8 @@ def SalesforceLogin(
                 </urn:login>
             </soapenv:Body>
         </soapenv:Envelope>""".format(
-            username=username, password=password, organizationId=organizationId,
-            client_id=client_id)
+            username=username, password=password, organizationId=organizationId, client_id=client_id
+        )
     elif username is not None and password is not None:
         # IP Filtering for non self-service users
         login_soap_request_body = """<?xml version="1.0" encoding="utf-8" ?>
@@ -149,115 +146,91 @@ def SalesforceLogin(
                 </urn:login>
             </soapenv:Body>
         </soapenv:Envelope>""".format(
-            username=username, password=password, client_id=client_id)
-    elif username is not None and \
-            consumer_key is not None and \
-            privatekey_file is not None:
-        header = {'alg': 'RS256'}
+            username=username, password=password, client_id=client_id
+        )
+    elif username is not None and consumer_key is not None and privatekey_file is not None:
+        header = {"alg": "RS256"}
         expiration = datetime.utcnow() + timedelta(minutes=3)
         payload = {
-            'iss': consumer_key,
-            'sub': username,
-            'aud': 'https://{domain}.salesforce.com'.format(domain=domain),
-            'exp': '{exp:.0f}'.format(
-                exp=time.mktime(expiration.timetuple()) +
-                    expiration.microsecond / 1e6
-            )
+            "iss": consumer_key,
+            "sub": username,
+            "aud": "https://{domain}.salesforce.com".format(domain=domain),
+            "exp": "{exp:.0f}".format(exp=time.mktime(expiration.timetuple()) + expiration.microsecond / 1e6),
         }
-        with open(privatekey_file, 'rb') as key:
+        with open(privatekey_file, "rb") as key:
             assertion = jwt.encode(header, payload, key.read())
 
-        login_token_request_data = {
-            'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-            'assertion': assertion
-        }
+        login_token_request_data = {"grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer", "assertion": assertion}
 
         return token_login(
-            'https://{domain}.salesforce.com/services/oauth2/token'.format(
-                domain=domain),
-            login_token_request_data, domain, consumer_key,
-            None, proxies, session)
-    else:
-        except_code = 'INVALID AUTH'
-        except_msg = (
-            'You must submit either a security token or organizationId for '
-            'authentication'
+            "https://{domain}.salesforce.com/services/oauth2/token".format(domain=domain),
+            login_token_request_data,
+            domain,
+            consumer_key,
+            None,
+            proxies,
+            session,
         )
+    else:
+        except_code = "INVALID AUTH"
+        except_msg = "You must submit either a security token or organizationId for " "authentication"
         raise SalesforceAuthenticationFailed(except_code, except_msg)
 
-    login_soap_request_headers = {
-        'content-type': 'text/xml',
-        'charset': 'UTF-8',
-        'SOAPAction': 'login'
-    }
+    login_soap_request_headers = {"content-type": "text/xml", "charset": "UTF-8", "SOAPAction": "login"}
 
-    return soap_login(soap_url, login_soap_request_body,
-        login_soap_request_headers, proxies, session)
+    return soap_login(soap_url, login_soap_request_body, login_soap_request_headers, proxies, session)
 
 
 def soap_login(soap_url, request_body, headers, proxies, session=None):
     """Process SOAP specific login workflow."""
-    response = (session or requests).post(
-        soap_url, request_body, headers=headers, proxies=proxies)
+    response = (session or requests).post(soap_url, request_body, headers=headers, proxies=proxies)
 
     if response.status_code != 200:
-        except_code = getUniqueElementValueFromXmlString(
-            response.content, 'sf:exceptionCode')
-        except_msg = getUniqueElementValueFromXmlString(
-            response.content, 'sf:exceptionMessage')
+        except_code = getUniqueElementValueFromXmlString(response.content, "sf:exceptionCode")
+        except_msg = getUniqueElementValueFromXmlString(response.content, "sf:exceptionMessage")
         raise SalesforceAuthenticationFailed(except_code, except_msg)
 
-    session_id = getUniqueElementValueFromXmlString(
-        response.content, 'sessionId')
-    server_url = getUniqueElementValueFromXmlString(
-        response.content, 'serverUrl')
+    session_id = getUniqueElementValueFromXmlString(response.content, "sessionId")
+    server_url = getUniqueElementValueFromXmlString(response.content, "serverUrl")
 
-    sf_instance = (server_url
-                   .replace('http://', '')
-                   .replace('https://', '')
-                   .split('/')[0]
-                   .replace('-api', ''))
+    sf_instance = server_url.replace("http://", "").replace("https://", "").split("/")[0].replace("-api", "")
 
     return session_id, sf_instance
 
 
-def token_login(token_url, token_data, domain, consumer_key,
-                headers, proxies, session=None):
+def token_login(token_url, token_data, domain, consumer_key, headers, proxies, session=None):
     """Process OAuth 2.0 JWT Bearer Token Flow."""
-    response = (session or requests).post(
-        token_url, token_data, headers=headers, proxies=proxies)
+    response = (session or requests).post(token_url, token_data, headers=headers, proxies=proxies)
 
     try:
         json_response = response.json()
     except JSONDecodeError:
-        raise SalesforceAuthenticationFailed(
-            response.status_code, response.text
-        )
+        raise SalesforceAuthenticationFailed(response.status_code, response.text)
 
     if response.status_code != 200:
-        except_code = json_response.get('error')
-        except_msg = json_response.get('error_description')
+        except_code = json_response.get("error")
+        except_msg = json_response.get("error_description")
         if except_msg == "user hasn't approved this consumer":
-            auth_url = 'https://{domain}.salesforce.com/services/oauth2/' \
-                       'authorize?response_type=code&client_id=' \
-                       '{consumer_key}&redirect_uri=<approved URI>'.format(
-                            domain=domain,
-                            consumer_key=consumer_key
-                        )
-            warnings.warn("""
+            auth_url = (
+                "https://{domain}.salesforce.com/services/oauth2/"
+                "authorize?response_type=code&client_id="
+                "{consumer_key}&redirect_uri=<approved URI>".format(domain=domain, consumer_key=consumer_key)
+            )
+            warnings.warn(
+                """
     If your connected app policy is set to "All users may
     self-authorize", you may need to authorize this
     application first. Browse to
     %s
     in order to Allow Access. Check first to ensure you have a valid
-    <approved URI>.""" % auth_url)
+    <approved URI>."""
+                % auth_url
+            )
         raise SalesforceAuthenticationFailed(except_code, except_msg)
 
-    access_token = json_response.get('access_token')
-    instance_url = json_response.get('instance_url')
+    access_token = json_response.get("access_token")
+    instance_url = json_response.get("instance_url")
 
-    sf_instance = instance_url.replace(
-        'http://', '').replace(
-        'https://', '')
+    sf_instance = instance_url.replace("http://", "").replace("https://", "")
 
     return access_token, sf_instance

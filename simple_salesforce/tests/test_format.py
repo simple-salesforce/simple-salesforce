@@ -18,32 +18,21 @@ class TestFormatSoql(unittest.TestCase):
         """ Quotes but doesn't escape simple values """
         query = "select foo from bar where x = {} and y = {named}"
         expected = "select foo from bar where x = 'value1' and y = 'value2'"
-        quoted = format_soql(query, 'value1', named='value2')
+        quoted = format_soql(query, "value1", named="value2")
         self.assertEqual(quoted, expected)
 
     def test_escaped_chars(self):
         """ Quotes and escape special chars """
         query = "select foo from bar where x = {} and y = {named}"
-        expected = (
-            "select foo from bar where"
-            " x = 'val\\'ue1\\n' and y = 'val\\'ue2\\n'"
-        )
-        quoted = format_soql(query, 'val\'ue1\n', named='val\'ue2\n')
+        expected = "select foo from bar where" " x = 'val\\'ue1\\n' and y = 'val\\'ue2\\n'"
+        quoted = format_soql(query, "val'ue1\n", named="val'ue2\n")
         self.assertEqual(quoted, expected)
 
     def test_lists(self):
         """ Conversion of lists to parentheses groups """
         query = "select foo from bar where x in {} and y in {named}"
-        expected = (
-            "select foo from bar where"
-            " x in ('value1','val\\'ue1\\n')"
-            " and y in ('value2','val\\'ue2\\n')"
-        )
-        quoted = format_soql(
-            query,
-            ['value1', 'val\'ue1\n'],
-            named=['value2', 'val\'ue2\n']
-        )
+        expected = "select foo from bar where" " x in ('value1','val\\'ue1\\n')" " and y in ('value2','val\\'ue2\\n')"
+        quoted = format_soql(query, ["value1", "val'ue1\n"], named=["value2", "val'ue2\n"])
         self.assertEqual(quoted, expected)
 
     def test_number(self):
@@ -78,30 +67,27 @@ class TestFormatSoql(unittest.TestCase):
         """ Datetime literals are inserted """
         query = "select foo from bar where date = {}"
         expected = "select foo from bar where date = 1987-02-01T01:02:03+00:00"
-        quoted = format_soql(
-            query,
-            datetime(1987, 2, 1, 1, 2, 3, tzinfo=timezone.utc)
-        )
+        quoted = format_soql(query, datetime(1987, 2, 1, 1, 2, 3, tzinfo=timezone.utc))
         self.assertEqual(quoted, expected)
 
     def test_literal(self):
         """ :literal format spec """
         query = "select foo from bar where income > {amt:literal}"
         expected = "select foo from bar where income > USD100"
-        quoted = format_soql(query, amt='USD100')
+        quoted = format_soql(query, amt="USD100")
         self.assertEqual(quoted, expected)
 
     def test_like(self):
         """ :like format spec """
         query = "select foo from bar where name like '%{:like}%'"
         expected = "select foo from bar where name like '%foo\\'\\%bar\\_%'"
-        quoted = format_soql(query, 'foo\'%bar_')
+        quoted = format_soql(query, "foo'%bar_")
         self.assertEqual(quoted, expected)
 
     def test_invalid(self):
         """ Unexpected value type """
         with self.assertRaises(ValueError):
-            format_soql('select foo from bar where x = {}', {'x': 'y'})
+            format_soql("select foo from bar where x = {}", {"x": "y"})
 
 
 class TestFormatExternalId(unittest.TestCase):
@@ -109,10 +95,10 @@ class TestFormatExternalId(unittest.TestCase):
 
     def test_plain_string(self):
         """ Case where no escaping is needed """
-        ext_id = format_external_id('name', 'something')
-        self.assertEqual(ext_id, 'name/something')
+        ext_id = format_external_id("name", "something")
+        self.assertEqual(ext_id, "name/something")
 
     def test_quoted(self):
         """ Value requring some quoting """
-        ext_id = format_external_id('name', 'some/other\'type value')
-        self.assertEqual(ext_id, 'name/some%2Fother%27type%20value')
+        ext_id = format_external_id("name", "some/other'type value")
+        self.assertEqual(ext_id, "name/some%2Fother%27type%20value")
