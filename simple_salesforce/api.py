@@ -2,7 +2,7 @@
 
 
 # has to be defined prior to login import
-DEFAULT_API_VERSION = '42.0'
+DEFAULT_API_VERSION = "42.0"
 
 
 import json
@@ -24,8 +24,8 @@ from .sfdc_session import SfdcSession
 logger = logging.getLogger(__name__)
 
 
-Usage = namedtuple('Usage', 'used total')
-PerAppUsage = namedtuple('PerAppUsage', 'used total name')
+Usage = namedtuple("Usage", "used total")
+PerAppUsage = namedtuple("PerAppUsage", "used total name")
 
 
 # pylint: disable=too-many-instance-attributes
@@ -96,7 +96,7 @@ class Salesforce:
         """
 
         if domain is None:
-            domain = 'login'
+            domain = "login"
 
         # Determine if the user passed in the optional version and/or
         # domain kwargs
@@ -109,15 +109,11 @@ class Salesforce:
             if not session:
                 self.session.proxies = self.proxies = proxies
             else:
-                logger.warning(
-                    'Proxies must be defined on custom session object, '
-                    'ignoring proxies: %s', proxies
-                )
+                logger.warning("Proxies must be defined on custom session object, " "ignoring proxies: %s", proxies)
 
         # Determine if the user wants to use our username/password auth or pass
         # in their own information
-        if all(arg is not None for arg in (
-                username, password, security_token)):
+        if all(arg is not None for arg in (username, password, security_token)):
             self.auth_type = "password"
 
             # Pass along the username/password to our login helper
@@ -129,10 +125,10 @@ class Salesforce:
                 sf_version=self.sf_version,
                 proxies=self.proxies,
                 client_id=client_id,
-                domain=self.domain)
+                domain=self.domain,
+            )
 
-        elif all(arg is not None for arg in (
-                session_id, instance or instance_url)):
+        elif all(arg is not None for arg in (session_id, instance or instance_url)):
             self.auth_type = "direct"
             self.session_id = session_id
 
@@ -143,9 +139,8 @@ class Salesforce:
             else:
                 self.sf_instance = instance
 
-        elif all(arg is not None for arg in (
-                username, password, organizationId)):
-            self.auth_type = 'ipfilter'
+        elif all(arg is not None for arg in (username, password, organizationId)):
+            self.auth_type = "ipfilter"
 
             # Pass along the username/password to our login helper
             self.session_id, self.sf_instance = SalesforceLogin(
@@ -156,10 +151,10 @@ class Salesforce:
                 sf_version=self.sf_version,
                 proxies=self.proxies,
                 client_id=client_id,
-                domain=self.domain)
+                domain=self.domain,
+            )
 
-        elif all(arg is not None for arg in (
-                username, consumer_key, privatekey_file)):
+        elif all(arg is not None for arg in (username, consumer_key, privatekey_file)):
             self.auth_type = "jwt-bearer"
 
             # Pass along the username/password to our login helper
@@ -169,30 +164,27 @@ class Salesforce:
                 consumer_key=consumer_key,
                 privatekey_file=privatekey_file,
                 proxies=self.proxies,
-                domain=self.domain)
-
-        else:
-            raise TypeError(
-                'You must provide login information or an instance and token'
+                domain=self.domain,
             )
 
-        self.auth_site = ('https://{domain}.salesforce.com'
-                          .format(domain=self.domain))
+        else:
+            raise TypeError("You must provide login information or an instance and token")
+
+        self.auth_site = "https://{domain}.salesforce.com".format(domain=self.domain)
 
         self.headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + self.session_id,
-            'X-PrettyPrint': '1'
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + self.session_id,
+            "X-PrettyPrint": "1",
         }
 
-        self.base_url = ('https://{instance}/services/data/v{version}/'
-                         .format(instance=self.sf_instance,
-                                 version=self.sf_version))
-        self.apex_url = ('https://{instance}/services/apexrest/'
-                         .format(instance=self.sf_instance))
-        self.bulk_url = ('https://{instance}/services/async/{version}/'
-                         .format(instance=self.sf_instance,
-                                 version=self.sf_version))
+        self.base_url = "https://{instance}/services/data/v{version}/".format(
+            instance=self.sf_instance, version=self.sf_version
+        )
+        self.apex_url = "https://{instance}/services/apexrest/".format(instance=self.sf_instance)
+        self.bulk_url = "https://{instance}/services/async/{version}/".format(
+            instance=self.sf_instance, version=self.sf_version
+        )
 
         self.api_usage = {}
 
@@ -204,7 +196,7 @@ class Salesforce:
         * keyword arguments supported by requests.request (e.g. json, timeout)
         """
         url = self.base_url + "sobjects"
-        result = self._call_salesforce('GET', url, name='describe', **kwargs)
+        result = self._call_salesforce("GET", url, name="describe", **kwargs)
 
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
@@ -229,17 +221,21 @@ class Salesforce:
 
         # fix to enable serialization
         # (https://github.com/heroku/simple-salesforce/issues/60)
-        if name.startswith('__'):
+        if name.startswith("__"):
             return super(Salesforce, self).__getattr__(name)
 
-        if name == 'bulk':
+        if name == "bulk":
             # Deal with bulk API functions
-            return SFBulkHandler(self.session_id, self.bulk_url, self.proxies,
-                                 self.session)
+            return SFBulkHandler(self.session_id, self.bulk_url, self.proxies, self.session)
 
         return SFType(
-            name, self.session_id, self.sf_instance, sf_version=self.sf_version,
-            proxies=self.proxies, session=self.session)
+            name,
+            self.session_id,
+            self.sf_instance,
+            sf_version=self.sf_version,
+            proxies=self.proxies,
+            session=self.session,
+        )
 
     # User utility methods
     def set_password(self, user, password):
@@ -254,17 +250,14 @@ class Salesforce:
         * password: the new password
         """
 
-        url = self.base_url + 'sobjects/User/%s/password' % user
-        params = {'NewPassword': password}
+        url = self.base_url + "sobjects/User/%s/password" % user
+        params = {"NewPassword": password}
 
-        result = self._call_salesforce('POST', url, data=json.dumps(params))
+        result = self._call_salesforce("POST", url, data=json.dumps(params))
 
         # salesforce return 204 No Content when the request is successful
         if result.status_code != 200 and result.status_code != 204:
-            raise SalesforceGeneralError(url,
-                                         result.status_code,
-                                         'User',
-                                         result.content)
+            raise SalesforceGeneralError(url, result.status_code, "User", result.content)
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
@@ -272,7 +265,7 @@ class Salesforce:
         return json_result
 
     # Generic Rest Function
-    def restful(self, path, params=None, method='GET', **kwargs):
+    def restful(self, path, params=None, method="GET", **kwargs):
         """Allows you to make a direct REST call if you know the path
 
         Arguments:
@@ -285,8 +278,7 @@ class Salesforce:
         """
 
         url = self.base_url + path
-        result = self._call_salesforce(method, url, name=path, params=params,
-                                       **kwargs)
+        result = self._call_salesforce(method, url, name=path, params=params, **kwargs)
 
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
@@ -304,11 +296,11 @@ class Salesforce:
         * search -- the fully formatted SOSL search string, e.g.
                     `FIND {Waldo}`
         """
-        url = self.base_url + 'search/'
+        url = self.base_url + "search/"
 
         # `requests` will correctly encode the query string passed as `params`
-        params = {'q': search}
-        result = self._call_salesforce('GET', url, name='search', params=params)
+        params = {"q": search}
+        result = self._call_salesforce("GET", url, name="search", params=params)
 
         json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
@@ -326,15 +318,15 @@ class Salesforce:
                     string will be wrapped to read `FIND {Waldo}` before being
                     sent to Salesforce
         """
-        search_string = 'FIND {{{search_string}}}'.format(search_string=search)
+        search_string = "FIND {{{search_string}}}".format(search_string=search)
         return self.search(search_string)
 
     def limits(self, **kwargs):
         """Return the result of a Salesforce request to list Organization
         limits.
         """
-        url = self.base_url + 'limits/'
-        result = self._call_salesforce('GET', url, **kwargs)
+        url = self.base_url + "limits/"
+        result = self._call_salesforce("GET", url, **kwargs)
 
         if result.status_code != 200:
             exception_handler(result)
@@ -352,17 +344,14 @@ class Salesforce:
                    SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
         * include_deleted -- True if deleted records should be included
         """
-        url = self.base_url + ('queryAll/' if include_deleted else 'query/')
-        params = {'q': query}
+        url = self.base_url + ("queryAll/" if include_deleted else "query/")
+        params = {"q": query}
         # `requests` will correctly encode the query string passed as `params`
-        result = self._call_salesforce('GET', url, name='query',
-                                       params=params, **kwargs)
+        result = self._call_salesforce("GET", url, name="query", params=params, **kwargs)
 
         return result.json(object_pairs_hook=OrderedDict)
 
-    def query_more(
-            self, next_records_identifier, identifier_is_url=False,
-            include_deleted=False, **kwargs):
+    def query_more(self, next_records_identifier, identifier_is_url=False, include_deleted=False, **kwargs):
         """Retrieves more results from a query that returned more results
         than the batch maximum. Returns a dict decoded from the Salesforce
         response JSON payload.
@@ -382,15 +371,14 @@ class Salesforce:
         """
         if identifier_is_url:
             # Don't use `self.base_url` here because the full URI is provided
-            url = ('https://{instance}{next_record_url}'
-                   .format(instance=self.sf_instance,
-                           next_record_url=next_records_identifier))
+            url = "https://{instance}{next_record_url}".format(
+                instance=self.sf_instance, next_record_url=next_records_identifier
+            )
         else:
-            endpoint = 'queryAll' if include_deleted else 'query'
-            url = self.base_url + '{query_endpoint}/{next_record_id}'
-            url = url.format(query_endpoint=endpoint,
-                             next_record_id=next_records_identifier)
-        result = self._call_salesforce('GET', url, name='query_more', **kwargs)
+            endpoint = "queryAll" if include_deleted else "query"
+            url = self.base_url + "{query_endpoint}/{next_record_id}"
+            url = url.format(query_endpoint=endpoint, next_record_id=next_records_identifier)
+        result = self._call_salesforce("GET", url, name="query_more", **kwargs)
 
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -416,12 +404,11 @@ class Salesforce:
 
         result = self.query(query, include_deleted=include_deleted, **kwargs)
         while True:
-            for record in result['records']:
+            for record in result["records"]:
                 yield record
             # fetch next batch if we're not done else break out of loop
-            if not result['done']:
-                result = self.query_more(result['nextRecordsUrl'],
-                                         identifier_is_url=True)
+            if not result["done"]:
+                result = self.query_more(result["nextRecordsUrl"], identifier_is_url=True)
             else:
                 return
 
@@ -442,17 +429,15 @@ class Salesforce:
         * include_deleted -- True if the query should include deleted records.
         """
 
-        records = self.query_all_iter(query, include_deleted=include_deleted,
-                                      **kwargs)
+        records = self.query_all_iter(query, include_deleted=include_deleted, **kwargs)
         all_records = list(records)
         return {
-            'records': all_records,
-            'totalSize': len(all_records),
-            'done': True,
+            "records": all_records,
+            "totalSize": len(all_records),
+            "done": True,
         }
 
-
-    def apexecute(self, action, method='GET', data=None, **kwargs):
+    def apexecute(self, action, method="GET", data=None, **kwargs):
         """Makes an HTTP request to an APEX REST endpoint
 
         Arguments:
@@ -465,12 +450,7 @@ class Salesforce:
         # If data is None, we should send an empty body, not "null", which is
         # None in json.
         json_data = json.dumps(data) if data is not None else None
-        result = self._call_salesforce(
-            method,
-            self.apex_url + action,
-            name="apexexcute",
-            data=json_data, **kwargs
-        )
+        result = self._call_salesforce(method, self.apex_url + action, name="apexexcute", data=json_data, **kwargs)
         try:
             response_content = result.json()
         # pylint: disable=broad-except
@@ -485,16 +465,15 @@ class Salesforce:
         Returns a `requests.result` object.
         """
         headers = self.headers.copy()
-        additional_headers = kwargs.pop('headers', dict())
+        additional_headers = kwargs.pop("headers", dict())
         headers.update(additional_headers)
 
-        result = self.session.request(
-            method, url, headers=headers, **kwargs)
+        result = self.session.request(method, url, headers=headers, **kwargs)
 
         if result.status_code >= 300:
             exception_handler(result, name=name)
 
-        sforce_limit_info = result.headers.get('Sforce-Limit-Info')
+        sforce_limit_info = result.headers.get("Sforce-Limit-Info")
         if sforce_limit_info:
             self.api_usage = self.parse_api_usage(sforce_limit_info)
 
@@ -513,24 +492,20 @@ class Salesforce:
         """
         result = {}
 
-        api_usage = re.match(r'[^-]?api-usage=(?P<used>\d+)/(?P<tot>\d+)',
-                             sforce_limit_info)
-        pau = r'.+per-app-api-usage=(?P<u>\d+)/(?P<t>\d+)\(appName=(?P<n>.+)\)'
+        api_usage = re.match(r"[^-]?api-usage=(?P<used>\d+)/(?P<tot>\d+)", sforce_limit_info)
+        pau = r".+per-app-api-usage=(?P<u>\d+)/(?P<t>\d+)\(appName=(?P<n>.+)\)"
         per_app_api_usage = re.match(pau, sforce_limit_info)
 
         if api_usage and api_usage.groups():
             groups = api_usage.groups()
-            result['api-usage'] = Usage(used=int(groups[0]),
-                                        total=int(groups[1]))
+            result["api-usage"] = Usage(used=int(groups[0]), total=int(groups[1]))
         if per_app_api_usage and per_app_api_usage.groups():
             groups = per_app_api_usage.groups()
-            result['per-app-api-usage'] = PerAppUsage(used=int(groups[0]),
-                                                      total=int(groups[1]),
-                                                      name=groups[2])
+            result["per-app-api-usage"] = PerAppUsage(used=int(groups[0]), total=int(groups[1]), name=groups[2])
 
         return result
 
-    #file-based deployment function
+    # file-based deployment function
     def deploy(self, zipfile, options):
         """Deploy using the Salesforce Metadata API. Wrapper for SfdcMetaDataApi.deploy(...).
 
@@ -542,13 +517,13 @@ class Salesforce:
 
         Returns a process id and state for this deployment.
         """
-        sfdc_instance = re.sub(r'\.salesforce\.com$', '', self.sf_instance)
+        sfdc_instance = re.sub(r"\.salesforce\.com$", "", self.sf_instance)
         sfdc_session = SfdcSession(instance=sfdc_instance, session_id=self.session_id)
         mdapi = SfdcMetadataApi(sfdc_session)
         asyncId, state = mdapi.deploy(zipfile, options)
         return asyncId, state
 
-    #check on a file-based deployment
+    # check on a file-based deployment
     def checkDeployStatus(self, asyncId):
         """Check on the progress of a file-based deployment via Salesforce Metadata API.
         Wrapper for SfdcMetaDataApi.check_deploy_status(...).
@@ -559,11 +534,12 @@ class Salesforce:
 
         Returns status of the deployment the asyncId given.
         """
-        sfdc_instance = re.sub(r'\.salesforce\.com$', '', self.sf_instance)
+        sfdc_instance = re.sub(r"\.salesforce\.com$", "", self.sf_instance)
         sfdc_session = SfdcSession(instance=sfdc_instance, session_id=self.session_id)
         mdapi = SfdcMetadataApi(sfdc_session)
         state, state_detail, deployment_detail, unit_test_detail = mdapi.check_deploy_status(asyncId)
         return state, state_detail, deployment_detail, unit_test_detail
+
 
 class SFType:
     """An interface to a specific type of SObject"""
@@ -600,11 +576,9 @@ class SFType:
             self.session.proxies = proxies
         self.api_usage = {}
 
-        self.base_url = (
-            'https://{instance}/services/data/v{sf_version}/sobjects'
-            '/{object_name}/'.format(instance=sf_instance,
-                                     object_name=object_name,
-                                     sf_version=sf_version))
+        self.base_url = "https://{instance}/services/data/v{sf_version}/sobjects" "/{object_name}/".format(
+            instance=sf_instance, object_name=object_name, sf_version=sf_version
+        )
 
     def metadata(self, headers=None):
         """Returns the result of a GET to `.../{object_name}/` as a dict
@@ -614,7 +588,7 @@ class SFType:
 
         * headers -- a dict with additional request headers.
         """
-        result = self._call_salesforce('GET', self.base_url, headers=headers)
+        result = self._call_salesforce("GET", self.base_url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
     def describe(self, headers=None):
@@ -625,10 +599,7 @@ class SFType:
 
         * headers -- a dict with additional request headers.
         """
-        result = self._call_salesforce(
-            method='GET', url=urljoin(self.base_url, 'describe'),
-            headers=headers
-        )
+        result = self._call_salesforce(method="GET", url=urljoin(self.base_url, "describe"), headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
     def describe_layout(self, record_id, headers=None):
@@ -643,14 +614,8 @@ class SFType:
         * record_id -- the Id of the SObject to get
         * headers -- a dict with additional request headers.
         """
-        custom_url_part = 'describe/layouts/{record_id}'.format(
-            record_id=record_id
-        )
-        result = self._call_salesforce(
-            method='GET',
-            url=urljoin(self.base_url, custom_url_part),
-            headers=headers
-        )
+        custom_url_part = "describe/layouts/{record_id}".format(record_id=record_id)
+        result = self._call_salesforce(method="GET", url=urljoin(self.base_url, custom_url_part), headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
     def get(self, record_id, headers=None):
@@ -662,10 +627,7 @@ class SFType:
         * record_id -- the Id of the SObject to get
         * headers -- a dict with additional request headers.
         """
-        result = self._call_salesforce(
-            method='GET', url=urljoin(self.base_url, record_id),
-            headers=headers
-        )
+        result = self._call_salesforce(method="GET", url=urljoin(self.base_url, record_id), headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
     def get_by_custom_id(self, custom_id_field, custom_id, headers=None):
@@ -683,13 +645,9 @@ class SFType:
         * headers -- a dict with additional request headers.
         """
         custom_url = urljoin(
-            self.base_url, '{custom_id_field}/{custom_id}'.format(
-                custom_id_field=custom_id_field, custom_id=custom_id
-            )
+            self.base_url, "{custom_id_field}/{custom_id}".format(custom_id_field=custom_id_field, custom_id=custom_id)
         )
-        result = self._call_salesforce(
-            method='GET', url=custom_url, headers=headers
-        )
+        result = self._call_salesforce(method="GET", url=custom_url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
     def create(self, data, headers=None):
@@ -703,10 +661,7 @@ class SFType:
                   JSON-encoded before being transmitted.
         * headers -- a dict with additional request headers.
         """
-        result = self._call_salesforce(
-            method='POST', url=self.base_url,
-            data=json.dumps(data), headers=headers
-        )
+        result = self._call_salesforce(method="POST", url=self.base_url, data=json.dumps(data), headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
     def upsert(self, record_id, data, raw_response=False, headers=None):
@@ -728,8 +683,7 @@ class SFType:
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            method='PATCH', url=urljoin(self.base_url, record_id),
-            data=json.dumps(data), headers=headers
+            method="PATCH", url=urljoin(self.base_url, record_id), data=json.dumps(data), headers=headers
         )
         return self._raw_response(result, raw_response)
 
@@ -751,8 +705,7 @@ class SFType:
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            method='PATCH', url=urljoin(self.base_url, record_id),
-            data=json.dumps(data), headers=headers
+            method="PATCH", url=urljoin(self.base_url, record_id), data=json.dumps(data), headers=headers
         )
         return self._raw_response(result, raw_response)
 
@@ -771,10 +724,7 @@ class SFType:
                           directly, instead of the status code.
         * headers -- a dict with additional request headers.
         """
-        result = self._call_salesforce(
-            method='DELETE', url=urljoin(self.base_url, record_id),
-            headers=headers
-        )
+        result = self._call_salesforce(method="DELETE", url=urljoin(self.base_url, record_id), headers=headers)
         return self._raw_response(result, raw_response)
 
     def deleted(self, start, end, headers=None):
@@ -790,11 +740,10 @@ class SFType:
         * headers -- a dict with additional request headers.
         """
         url = urljoin(
-            self.base_url, 'deleted/?start={start}&end={end}'.format(
-                start=date_to_iso8601(start), end=date_to_iso8601(end)
-            )
+            self.base_url,
+            "deleted/?start={start}&end={end}".format(start=date_to_iso8601(start), end=date_to_iso8601(end)),
         )
-        result = self._call_salesforce(method='GET', url=url, headers=headers)
+        result = self._call_salesforce(method="GET", url=url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
     def updated(self, start, end, headers=None):
@@ -811,11 +760,10 @@ class SFType:
         * headers -- a dict with additional request headers.
         """
         url = urljoin(
-            self.base_url, 'updated/?start={start}&end={end}'.format(
-                start=date_to_iso8601(start), end=date_to_iso8601(end)
-            )
+            self.base_url,
+            "updated/?start={start}&end={end}".format(start=date_to_iso8601(start), end=date_to_iso8601(end)),
         )
-        result = self._call_salesforce(method='GET', url=url, headers=headers)
+        result = self._call_salesforce(method="GET", url=url, headers=headers)
         return result.json(object_pairs_hook=OrderedDict)
 
     def _call_salesforce(self, method, url, **kwargs):
@@ -824,18 +772,18 @@ class SFType:
         Returns a `requests.result` object.
         """
         headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + self.session_id,
-            'X-PrettyPrint': '1'
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + self.session_id,
+            "X-PrettyPrint": "1",
         }
-        additional_headers = kwargs.pop('headers', dict())
+        additional_headers = kwargs.pop("headers", dict())
         headers.update(additional_headers or dict())
         result = self.session.request(method, url, headers=headers, **kwargs)
 
         if result.status_code >= 300:
             exception_handler(result, self.name)
 
-        sforce_limit_info = result.headers.get('Sforce-Limit-Info')
+        sforce_limit_info = result.headers.get("Sforce-Limit-Info")
         if sforce_limit_info:
             self.api_usage = Salesforce.parse_api_usage(sforce_limit_info)
 

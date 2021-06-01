@@ -1,11 +1,11 @@
 """Simple-Salesforce Tests"""
 # pylint: disable=line-too-long
 
-SESSION_ID = '12345'
-INSTANCE_URL = 'https://na15.salesforce.com'
-TOKEN_ID = 'https://na15.salesforce.com/id/00Di0000000icUB/0DFi00000008UYO'
-METADATA_URL = 'https://na15.salesforce.com/services/Soap/m/29.0/00Di0000000icUB'
-SERVER_URL = 'https://na15.salesforce.com/services/Soap/c/29.0/00Di0000000icUB/0DFi00000008UYO'
+SESSION_ID = "12345"
+INSTANCE_URL = "https://na15.salesforce.com"
+TOKEN_ID = "https://na15.salesforce.com/id/00Di0000000icUB/0DFi00000008UYO"
+METADATA_URL = "https://na15.salesforce.com/services/Soap/m/29.0/00Di0000000icUB"
+SERVER_URL = "https://na15.salesforce.com/services/Soap/c/29.0/00Di0000000icUB/0DFi00000008UYO"
 PROXIES = {
     "http": "http://10.10.1.10:3128",
     "https": "http://10.10.1.10:1080",
@@ -50,7 +50,11 @@ LOGIN_RESPONSE_SUCCESS = """<?xml version="1.0" encoding="UTF-8"?>
       </loginResponse>
    </soapenv:Body>
 </soapenv:Envelope>
-""" % (METADATA_URL, SERVER_URL, SESSION_ID)
+""" % (
+    METADATA_URL,
+    SERVER_URL,
+    SESSION_ID,
+)
 
 TOKEN_LOGIN_RESPONSE_SUCCESS = """{
     "access_token": "%s",
@@ -58,7 +62,11 @@ TOKEN_LOGIN_RESPONSE_SUCCESS = """{
     "instance_url": "%s",
     "id": "%s",
     "token_type": "Bearer"
-}""" % (SESSION_ID, INSTANCE_URL, TOKEN_ID)
+}""" % (
+    SESSION_ID,
+    INSTANCE_URL,
+    TOKEN_ID,
+)
 
 TOKEN_WARNING = """
     If your connected app policy is set to "All users may
