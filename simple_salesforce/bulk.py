@@ -193,6 +193,36 @@ class SFBulkType:
         result = batch_results
         return result
 
+    def _add_autosized_batches(self, operation, data, job):
+        """
+        Auto create batches that respect number of records or max file size limits for bulk api
+        """
+
+        file_limit = 1024 * 1024 * 10 # 10MB in bytes
+        rec_limit = 10000
+
+        batches = []
+        breaks = []
+        nrecs, outsize = 0, 0
+        for i, rec in enumerate(data):
+            recsize = len(json.dumps(rec, default=str).encode()) + 1  # + 1 for ,
+            if (outsize + recsize + 2) > file_limit or nrecs > rec_limit:
+                breaks.append(i)
+                outsize, nrecs = 0, 0
+
+        for l, u in zip([0] + breaks, breaks + [len(data)]):
+            # l < u handles the case where data has length 0 or
+            # a break happens at the end of data
+            if l < u:
+                batches.append(
+                    self._add_batch(
+                        job_id=job['id'],
+                        data=data[l:u],
+                        operation=operation
+                    )
+                )
+        return batches
+
     # pylint: disable=R0913
     def _bulk_operation(self, operation, data, use_serial=False,
                         external_id_field=None, batch_size=10000, wait=5):
@@ -205,23 +235,32 @@ class SFBulkType:
         * external_id_field -- unique identifier field for upsert operations
         * wait -- seconds to sleep between checking batch status
         * batch_size -- number of records to assign for each batch in the job
+                        or `auto`
         """
+        # check for batch size type since now it accepts both integers
+        # & the string `auto`
+        if not (isinstance(batch_size, int) or batch_size == 'auto'):
+                raise ValueError('batch size should be auto or an integer')
 
         if operation not in ('query', 'queryAll'):
             # Checks to prevent batch limit
-            if len(data) >= 10000 and batch_size > 10000:
-                batch_size = 10000
+            if batch_size != 'auto':
+                batch_size = min(batch_size, len(data), 10000)
+
             with concurrent.futures.ThreadPoolExecutor() as pool:
 
                 job = self._create_job(operation=operation,
                                        use_serial=use_serial,
                                        external_id_field=external_id_field)
-                batches = [
-                    self._add_batch(job_id=job['id'], data=i,
-                                    operation=operation)
-                    for i in
-                    [data[i * batch_size:(i + 1) * batch_size]
-                     for i in range((len(data) // batch_size + 1))] if i]
+                if batch_size == 'auto':
+                    batches = self._add_autosized_batches(operation, data, job)
+                else:
+                    batches = [
+                        self._add_batch(job_id=job['id'], data=i,
+                                        operation=operation)
+                        for i in
+                        [data[i * batch_size:(i + 1) * batch_size]
+                        for i in range((len(data) // batch_size + 1))] if i]
 
                 multi_thread_worker = partial(self.worker, operation=operation)
                 list_of_results = pool.map(multi_thread_worker, batches)
