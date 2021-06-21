@@ -279,17 +279,17 @@ class Salesforce:
 
         result = self._call_salesforce('POST', url, data=json.dumps(params))
 
+        if result.status_code == 204:
+            return None
+
         # salesforce return 204 No Content when the request is successful
-        if result.status_code != 200 and result.status_code != 204:
+        if result.status_code != 200:
             raise SalesforceGeneralError(url,
                                          result.status_code,
                                          'User',
                                          result.content)
-        json_result = result.json(object_pairs_hook=OrderedDict)
-        if len(json_result) == 0:
-            return None
+        return result.json(object_pairs_hook=OrderedDict)
 
-        return json_result
 
     # Generic Rest Function
     def restful(self, path, params=None, method='GET', **kwargs):
