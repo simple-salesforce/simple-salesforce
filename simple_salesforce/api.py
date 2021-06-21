@@ -221,7 +221,7 @@ class Salesforce:
         return json_result
 
     def is_sandbox(self):
-        """After connection returns is the organization is a sandbox"""
+        """After connection returns is the organization in a sandbox"""
         is_sandbox = None
         if self.session_id:
             is_sandbox = self.query_all("SELECT IsSandbox "
