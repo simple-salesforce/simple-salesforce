@@ -77,7 +77,7 @@ class SfdcMetadataApi:
 
         tests_tag = ''
         if tests and \
-                str(tests).lower() == 'runspecifiedtests':
+                str(testLevel).lower() == 'runspecifiedtests':
             for test in tests:
                 tests_tag += '<met:runTests>%s</met:runTests>\n' % test
             attributes['tests'] = tests_tag
