@@ -245,7 +245,8 @@ class Salesforce:
 
         * name -- the name of a Salesforce object type, e.g. Lead or Contact
         """
-
+        logging.info(type(name), name)
+        logging.info(name)
         # fix to enable serialization
         # (https://github.com/heroku/simple-salesforce/issues/60)
         if name.startswith('__'):
