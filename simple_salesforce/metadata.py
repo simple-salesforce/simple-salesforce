@@ -79,10 +79,10 @@ class MetadataType:
         :returns: A list of metadata components
         :rtype: list
         """
-        metadata = self._service.readMetadata(self._name, full_names, _soapheaders=[self._session_header])
-        if len(metadata) == 1:
-            return metadata[0]
-        return metadata
+        response = self._service.readMetadata(self._name, full_names, _soapheaders=[self._session_header])
+        if len(response) == 1:
+            return response[0]
+        return response
 
     def update(self, metadata):
         """
