@@ -9,6 +9,7 @@ from functools import partial
 import requests
 
 from .util import call_salesforce, list_from_generator
+from .exceptions import SalesforceGeneralError
 
 
 class SFBulkHandler:
@@ -241,13 +242,20 @@ class SFBulkType:
             self._close_job(job_id=job['id'])
 
             batch_status = self._get_batch(job_id=batch['jobId'],
-                                           batch_id=batch['id'])['state']
+                                           batch_id=batch['id'])
 
-            while batch_status not in ['Completed', 'Failed', 'Not Processed']:
+            while batch_status['state'] not in [
+                'Completed', 'Failed', 'Not Processed'
+                ]:
                 sleep(wait)
                 batch_status = self._get_batch(job_id=batch['jobId'],
-                                               batch_id=batch['id'])['state']
+                                               batch_id=batch['id'])
 
+            if batch_status['state'] == 'Failed':
+                raise SalesforceGeneralError('',
+                                             batch_status['state'],
+                                             batch_status['jobId'],
+                                             batch_status['stateMessage'])
             results = self._get_batch_results(job_id=batch['jobId'],
                                               batch_id=batch['id'],
                                               operation=operation)
