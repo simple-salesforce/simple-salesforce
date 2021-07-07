@@ -50,6 +50,7 @@ class Salesforce:
             consumer_key=None,
             privatekey_file=None,
             privatekey=None,
+            parse_float=None,
             ):
 
         """Initialize the instance with the given parameters.
@@ -203,6 +204,8 @@ class Salesforce:
         self.tooling_url = '{base_url}tooling/'.format(base_url=self.base_url)
 
         self.api_usage = {}
+
+        self.parse_float = parse_float
 
     def describe(self, **kwargs):
         """Describes all available objects
@@ -378,7 +381,7 @@ class Salesforce:
         result = self._call_salesforce('GET', url, name='query',
                                        params=params, **kwargs)
 
-        return result.json(object_pairs_hook=OrderedDict)
+        return result.json(object_pairs_hook=OrderedDict, parse_float=self.parse_float)
 
     def query_more(
             self, next_records_identifier, identifier_is_url=False,
@@ -412,7 +415,7 @@ class Salesforce:
                              next_record_id=next_records_identifier)
         result = self._call_salesforce('GET', url, name='query_more', **kwargs)
 
-        return result.json(object_pairs_hook=OrderedDict)
+        return result.json(object_pairs_hook=OrderedDict, parse_float=self.parse_float)
 
     def query_all_iter(self, query, include_deleted=False, **kwargs):
         """This is a lazy alternative to `query_all` - it does not construct

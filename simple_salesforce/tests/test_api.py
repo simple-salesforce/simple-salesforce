@@ -1060,3 +1060,53 @@ class TestSalesforce(unittest.TestCase):
             'total_count': '0', 'failed_count': '0', 'completed_count': '0',
             'errors': []
             })
+
+    @responses.activate
+    def test_query_parse_float_to_decimal(self):
+        """Test querying generates float as Decimal values"""
+        import decimal
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/query/\?q=SELECT\+currency\+FROM\+Account$'),
+            body='{"currency": 1.0}',
+            status=http.OK,
+        )
+        session = requests.Session()
+        client = Salesforce(
+            session_id=tests.SESSION_ID,
+            instance_url=tests.SERVER_URL,
+            session=session,
+            parse_float=decimal.Decimal,
+        )
+
+        result = client.query('SELECT currency FROM Account')
+        self.assertIsInstance(result["currency"], decimal.Decimal)
+        self.assertNotIsInstance(result["currency"], float)
+        self.assertEqual(result, {"currency": decimal.Decimal(1.0)})
+        self.assertEqual(result, {"currency": 1.0})
+        self.assertNotEqual(result, {"currency": "1.0"})
+
+    @responses.activate
+    def test_query_more_parse_float_to_decimal(self):
+        """Test querying generates float as Decimal values"""
+        import decimal
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/query/next-records-id$'),
+            body='{"currency": 1.0}',
+            status=http.OK,
+        )
+        session = requests.Session()
+        client = Salesforce(
+            session_id=tests.SESSION_ID,
+            instance_url=tests.SERVER_URL,
+            session=session,
+            parse_float=decimal.Decimal,
+        )
+
+        result = client.query_more('next-records-id', identifier_is_url=False)
+        self.assertIsInstance(result["currency"], decimal.Decimal)
+        self.assertNotIsInstance(result["currency"], float)
+        self.assertEqual(result, {"currency": decimal.Decimal(1.0)})
+        self.assertEqual(result, {"currency": 1.0})
+        self.assertNotEqual(result, {"currency": "1.0"})
