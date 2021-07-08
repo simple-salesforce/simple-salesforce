@@ -440,6 +440,36 @@ class TestSFType(unittest.TestCase):
 
         self.assertEqual(result, {})
 
+    @responses.activate
+    def test_get_parse_float_as_float(self):
+        """Ensure custom headers are used for get requests"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/Case/444$'),
+            body='{"currency": 42.0}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.get(record_id='444')
+        self.assertEqual(result, {"currency": 42.0})
+
+    @responses.activate
+    def test_get_parse_float_as_decimal(self):
+        """Ensure custom headers are used for get requests"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/Case/444$'),
+            body='{"currency": 42.0}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        sf_type._parse_float = decimal.Decimal
+        result = sf_type.get(record_id='444')
+
+        self.assertEqual(result, {"currency": decimal.Decimal("42.0")})
+
 
 class TestSalesforce(unittest.TestCase):
     """Tests for the Salesforce instance"""
