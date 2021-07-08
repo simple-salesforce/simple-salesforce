@@ -3,6 +3,7 @@
 import http.client as http
 import re
 import unittest
+import decimal
 from collections import OrderedDict
 from datetime import datetime
 from unittest.mock import patch
@@ -1064,10 +1065,11 @@ class TestSalesforce(unittest.TestCase):
     @responses.activate
     def test_query_parse_float_to_decimal(self):
         """Test querying generates float as Decimal values"""
-        import decimal
         responses.add(
             responses.GET,
-            re.compile(r'^https://.*/query/\?q=SELECT\+currency\+FROM\+Account$'),
+            re.compile(
+                r'^https://.*/query/\?q=SELECT\+currency\+FROM\+Account$'
+            ),
             body='{"currency": 1.0}',
             status=http.OK,
         )
@@ -1089,7 +1091,6 @@ class TestSalesforce(unittest.TestCase):
     @responses.activate
     def test_query_more_parse_float_to_decimal(self):
         """Test querying generates float as Decimal values"""
-        import decimal
         responses.add(
             responses.GET,
             re.compile(r'^https://.*/query/next-records-id$'),

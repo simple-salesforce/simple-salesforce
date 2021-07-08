@@ -26,12 +26,12 @@ PerAppUsage = namedtuple('PerAppUsage', 'used total name')
 
 # pylint: disable=too-many-instance-attributes
 class Salesforce:
-    _parse_float = None
     """Salesforce Instance
 
     An instance of Salesforce is a handy way to wrap a Salesforce session
     for easy use of the Salesforce REST API.
     """
+    _parse_float = None
 
     # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
     def __init__(
@@ -97,7 +97,8 @@ class Salesforce:
         * session -- Custom requests session, created in calling code. This
                      enables the use of requests Session features not otherwise
                      exposed by simple_salesforce.
-
+        * parse_float -- Function to parse float values with. Is passed along to
+                         https://docs.python.org/3/library/json.html#json.load
         """
 
         if domain is None:
@@ -638,7 +639,9 @@ class Salesforce:
         return results
 
     def parse_result_to_json(self, result):
-        return result.json(object_pairs_hook=OrderedDict, parse_float=self._parse_float)
+        """"Parse json from a Response object"""
+        return result.json(object_pairs_hook=OrderedDict,
+                           parse_float=self._parse_float)
 
 
 class SFType:
@@ -669,6 +672,8 @@ class SFType:
         * session -- Custom requests session, created in calling code. This
                      enables the use of requests Session features not otherwise
                      exposed by simple_salesforce.
+        * parse_float -- Function to parse float values with. Is passed along to
+                         https://docs.python.org/3/library/json.html#json.load
         """
         self.session_id = session_id
         self.name = object_name
@@ -936,4 +941,6 @@ class SFType:
         return response
 
     def parse_result_to_json(self, result):
-        return result.json(object_pairs_hook=OrderedDict, parse_float=self._parse_float)
+        """"Parse json from a Response object"""
+        return result.json(object_pairs_hook=OrderedDict,
+                           parse_float=self._parse_float)
