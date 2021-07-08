@@ -452,6 +452,7 @@ class TestSFType(unittest.TestCase):
 
         sf_type = _create_sf_type()
         result = sf_type.get(record_id='444')
+        self.assertIsInstance(result['currency'], float)
         self.assertEqual(result, {"currency": 42.0})
 
     @responses.activate
@@ -472,6 +473,7 @@ class TestSFType(unittest.TestCase):
             parse_float=decimal.Decimal
         )
         result = sf_type.get(record_id='444')
+        self.assertIsInstance(result['currency'], decimal.Decimal)
         self.assertEqual(result, {"currency": decimal.Decimal("42.0")})
 
 
