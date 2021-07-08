@@ -464,10 +464,14 @@ class TestSFType(unittest.TestCase):
             status=http.OK
         )
 
-        sf_type = _create_sf_type()
-        sf_type._parse_float = decimal.Decimal
+        sf_type = SFType(
+            object_name='Case',
+            session_id='5',
+            sf_instance='my.salesforce.com',
+            session=requests.Session(),
+            parse_float=decimal.Decimal
+        )
         result = sf_type.get(record_id='444')
-
         self.assertEqual(result, {"currency": decimal.Decimal("42.0")})
 
 
