@@ -1,3 +1,9 @@
+v1.11.3
+======
+Bugs
+--------
+- [431] Fix timezone handling
+
 v1.11.2
 ======
 Bugs
