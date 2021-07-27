@@ -6,9 +6,8 @@ Heavily Modified from RestForce 1.0.0
 DEFAULT_CLIENT_ID_PREFIX = 'RestForce'
 
 
-import time
 import warnings
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from html import escape
 from json.decoder import JSONDecodeError
 
@@ -157,14 +156,13 @@ def SalesforceLogin(
             consumer_key is not None and \
             (privatekey_file is not None or privatekey is not None):
         header = {'alg': 'RS256'}
-        expiration = datetime.utcnow() + timedelta(minutes=3)
+        expiration = datetime.now(timezone.utc) + timedelta(minutes=3)
         payload = {
             'iss': consumer_key,
             'sub': username,
             'aud': 'https://{domain}.salesforce.com'.format(domain=domain),
             'exp': '{exp:.0f}'.format(
-                exp=time.mktime(expiration.timetuple()) +
-                    expiration.microsecond / 1e6
+                exp=expiration.timestamp()
             )
         }
         if privatekey_file is not None:
@@ -237,10 +235,10 @@ def token_login(token_url, token_data, domain, consumer_key,
 
     try:
         json_response = response.json()
-    except JSONDecodeError as json_decode_error:
+    except JSONDecodeError as exc:
         raise SalesforceAuthenticationFailed(
             response.status_code, response.text
-        ) from json_decode_error
+        ) from exc
 
     if response.status_code != 200:
         except_code = json_response.get('error')
