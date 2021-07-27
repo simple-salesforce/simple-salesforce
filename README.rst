@@ -11,12 +11,14 @@ Simple Salesforce
 
 Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.5, 3.6, 3.7 and 3.8. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
 
+=============
+
 You can find out more regarding the format of the results in the `Official Salesforce.com REST API Documentation`_
 
 .. _Official Salesforce.com REST API Documentation: http://www.salesforce.com/us/developer/docs/api_rest/index.htm
 
 Examples
---------
+--------------------------
 There are two ways to gain access to Salesforce
 
 The first is to simply pass the domain of your Salesforce instance and an access token straight to ``Salesforce()``
@@ -96,7 +98,7 @@ For example:
       session=session)
 
 Record Management
------------------
+--------------------------
 
 To create a new 'Contact' in Salesforce:
 
@@ -157,7 +159,7 @@ Make sure to have all the required fields for any entry. The `Salesforce API`_ h
 .. _Salesforce API: https://www.salesforce.com/developer/docs/api/
 
 Queries
--------
+--------------------------
 
 It's also possible to write select queries in Salesforce Object Query Language (SOQL) and search queries in Salesforce Object Search Language (SOSL).
 
@@ -226,8 +228,65 @@ More details about syntax is available on the `Salesforce Query Language Documen
 
 .. _Salesforce Query Language Documentation Developer Website: http://www.salesforce.com/us/developer/docs/soql_sosl/index.htm
 
+File Based Metadata API Calls
+-----------------------------
+
+You can use simple_salesforce to make file-based calls to the Metadata API, to deploy a zip file to an org.
+
+First, convert and zip the file with:
+
+.. code-block::
+
+   sfdx force:source:convert -r src/folder_name -d dx
+
+Then navigate into the converted folder and zip it up:
+
+.. code-block::
+
+   zip -r -X package.zip *
+
+Then you can use this to deploy that zipfile:
+
+.. code-block:: python
+
+   result = sf.deploy("path/to/zip", sandbox=False, **kwargs)
+   asyncId = result.get('asyncId')
+   state = result.get('state')
+
+Both deploy and checkDeployStatus take keyword arguements. The single package arguement is not currently available to be set for deployments. More details on the deploy options can be found at https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_deploy.htm
+
+You can check on the progress of the deploy which returns a dictionary with status, state_detail, deployment_detail, unit_test_detail:
+
+.. code-block:: python
+
+   sf.checkDeployStatus(asyncId)
+
+Example of a use-case:
+
+.. code-block:: python
+
+   from simple_salesforce import Salesforce
+
+   deployment_finished = False
+   successful = False
+
+   sf = Salesforce(session_id="id", instance="instance")
+   sf.deploy("path/to/zip", sandbox=False ,**kwargs)
+
+   while not deployment_finished:
+       result = sf.checkDeployStatus(asyncId)
+       if result.get('status') in ["Succeeded", "Completed", "Error", "Failed", None]:
+           deployment_finished = True
+       if result.get('status') in ["Succeeded", "Completed"]:
+           successful = True
+
+   if successful:
+       print("✅")
+   else:
+       print("🥔")
+
 Other Options
--------------
+--------------------------
 
 To insert or update (upsert) a record using an external ID, use:
 
@@ -270,7 +329,7 @@ To retrieve a list of top level description of instance metadata, user:
 
 
 Using Bulk
-----------
+--------------------------
 
 You can use this library to access Bulk API functions. The data element can be a list of records of any size and by default batch sizes are 10,000 records and run in parrallel concurrency mode. To set the batch size for insert, upsert, delete, hard_delete, and update use the batch_size argument. To set the concurrency mode for the salesforce job the use_serial argument can be set to use_serial=True.
 
@@ -306,6 +365,7 @@ Upsert records:
         ]
 
     sf.bulk.Contact.upsert(data, 'Id', batch_size=10000, use_serial=True)
+
 
 Query records:
 
@@ -371,7 +431,7 @@ Hard deletion:
 
 
 Using Apex
-----------
+--------------------------
 
 You can also use this library to call custom Apex methods:
 
@@ -392,7 +452,7 @@ You can read more about Apex on the `Force.com Apex Code Developer's Guide`_
 .. _Force.com Apex Code Developer's Guide: https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_dev_guide.htm
 
 Additional Features
--------------------
+--------------------------
 
 There are a few helper classes that are used internally and available to you.
 
@@ -434,8 +494,62 @@ The proxy argument is the same as what requests uses, a map of scheme to proxy U
 
 All results are returned as JSON converted OrderedDict to preserve order of keys from REST responses.
 
+Helpful Datetime Resources
+--------------------------
+A list of helpful resources when working with datetime/dates from Salesforce
+
+Convert SFDC Datetime to Datetime or Date object
+.. code-block:: python
+
+    import datetime
+    # Formatting to SFDC datetime
+    formatted_datetime =  datetime.datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z")
+    
+    #Formatting to SFDC date
+    formatted_date = datetime.strptime(x, "%Y-%m-%d")
+    
+Helpful Pandas Resources
+--------------------------
+A list of helpful resources when working with Pandas and simple-salesforce
+
+Generate list for SFDC Query "IN" operations from a Pandas Dataframe
+
+.. code-block:: python
+ 
+ import pandas as pd
+ 
+ df = pd.DataFrame([{'Id':1},{'Id':2},{'Id':3}])
+    def dataframe_to_sfdc_list(df,column):
+      df_list = df[column].unique()
+      df_list = [str(x) for x in df_list]
+      df_list = ','.join("'"+item+"'" for item in df_list)
+      return df_list
+      
+   sf.query(format_soql("SELECT Id, Email FROM Contact WHERE Id IN ({})", dataframe_to_sfdc_list(df,column)))
+   
+Generate Pandas Dataframe from SFDC API Query (ex.query,query_all)
+
+.. code-block:: python
+   
+   import pandas as pd
+   
+   sf.query("SELECT Id, Email FROM Contact")
+   
+   df = pd.DataFrame(data['records']).drop(['attributes'],axis=1)
+      
+Generate Pandas Dataframe from SFDC Bulk API Query (ex.bulk.Account.query)
+
+.. code-block:: python
+   
+   import pandas as pd
+   
+   sf.bulk.Account.query("SELECT Id, Email FROM Contact")   
+   df = pd.DataFrame.from_dict(data,orient='columns').drop('attributes',axis=1)
+      
+
+
 Authors & License
------------------
+--------------------------
 
 This package is released under an open source Apache 2.0 license. Simple-Salesforce was originally written by `Nick Catalano`_ but most newer features and bugfixes come from `community contributors`_. Pull requests submitted to the `GitHub Repo`_ are highly encouraged!
 

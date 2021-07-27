@@ -72,7 +72,6 @@ class SFBulkType:
         self.session = session
         self.headers = headers
 
-
     def _create_job(self, operation, use_serial,
                     external_id_field=None):
         """ Create a bulk job
@@ -102,7 +101,7 @@ class SFBulkType:
 
         result = call_salesforce(url=url, method='POST', session=self.session,
                                  headers=self.headers,
-                                 data=json.dumps(payload))
+                                 data=json.dumps(payload, allow_nan=False))
         return result.json(object_pairs_hook=OrderedDict)
 
     def _close_job(self, job_id):
@@ -115,7 +114,7 @@ class SFBulkType:
 
         result = call_salesforce(url=url, method='POST', session=self.session,
                                  headers=self.headers,
-                                 data=json.dumps(payload))
+                                 data=json.dumps(payload, allow_nan=False))
         return result.json(object_pairs_hook=OrderedDict)
 
     def _get_job(self, job_id):
@@ -135,7 +134,7 @@ class SFBulkType:
         url = "{}{}{}{}".format(self.bulk_url, 'job/', job_id, '/batch')
 
         if operation not in ('query', 'queryAll'):
-            data = json.dumps(data)
+            data = json.dumps(data, allow_nan=False)
 
         result = call_salesforce(url=url, method='POST', session=self.session,
                                  headers=self.headers, data=data)
@@ -211,23 +210,25 @@ class SFBulkType:
             # Checks to prevent batch limit
             if len(data) >= 10000 and batch_size > 10000:
                 batch_size = 10000
-            pool = concurrent.futures.ThreadPoolExecutor()
+            with concurrent.futures.ThreadPoolExecutor() as pool:
 
-            job = self._create_job(operation=operation,
-                                   use_serial=use_serial,
-                                   external_id_field=external_id_field)
-            batches = [
-                self._add_batch(job_id=job['id'], data=i, operation=operation)
-                for i in
-                [data[i * batch_size:(i + 1) * batch_size]
-                 for i in range((len(data) // batch_size + 1))] if i]
+                job = self._create_job(operation=operation,
+                                       use_serial=use_serial,
+                                       external_id_field=external_id_field)
+                batches = [
+                    self._add_batch(job_id=job['id'], data=i,
+                                    operation=operation)
+                    for i in
+                    [data[i * batch_size:(i + 1) * batch_size]
+                     for i in range((len(data) // batch_size + 1))] if i]
 
-            multi_thread_worker = partial(self.worker, operation=operation)
-            list_of_results = pool.map(multi_thread_worker, batches)
+                multi_thread_worker = partial(self.worker, operation=operation)
+                list_of_results = pool.map(multi_thread_worker, batches)
 
-            results = [i for sublist in list_of_results for i in sublist]
+                results = [x for sublist in list_of_results for i in
+                           sublist for x in i]
 
-            self._close_job(job_id=job['id'])
+                self._close_job(job_id=job['id'])
 
         elif operation in ('query', 'queryAll'):
             job = self._create_job(operation=operation,

@@ -1,9 +1,7 @@
 """Core classes and exceptions for Simple-Salesforce"""
 
-
 # has to be defined prior to login import
 DEFAULT_API_VERSION = '42.0'
-
 
 import json
 import logging
@@ -17,10 +15,10 @@ from .bulk import SFBulkHandler
 from .exceptions import SalesforceGeneralError
 from .login import SalesforceLogin
 from .util import date_to_iso8601, exception_handler
+from .metadata import SfdcMetadataApi
 
 # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
-
 
 Usage = namedtuple('Usage', 'used total')
 PerAppUsage = namedtuple('PerAppUsage', 'used total name')
@@ -36,22 +34,24 @@ class Salesforce:
 
     # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
     def __init__(
-        self,
-        username=None,
-        password=None,
-        security_token=None,
-        session_id=None,
-        instance=None,
-        instance_url=None,
-        organizationId=None,
-        version=DEFAULT_API_VERSION,
-        proxies=None,
-        session=None,
-        client_id=None,
-        domain=None,
-        consumer_key=None,
-        privatekey_file=None,
-    ):
+            self,
+            username=None,
+            password=None,
+            security_token=None,
+            session_id=None,
+            instance=None,
+            instance_url=None,
+            organizationId=None,
+            version=DEFAULT_API_VERSION,
+            proxies=None,
+            session=None,
+            client_id=None,
+            domain=None,
+            consumer_key=None,
+            privatekey_file=None,
+            privatekey=None,
+            ):
+
         """Initialize the instance with the given parameters.
 
         Available kwargs
@@ -69,8 +69,13 @@ class Salesforce:
         OAuth 2.0 JWT Bearer Token Authentication:
 
         * consumer_key -- the consumer key generated for the user
+
+        Then either
         * privatekey_file -- the path to the private key file used
                              for signing the JWT token
+        OR
+        * privatekey -- the private key to use
+                         for signing the JWT token
 
         Direct Session and Instance Access:
 
@@ -157,7 +162,7 @@ class Salesforce:
                 domain=self.domain)
 
         elif all(arg is not None for arg in (
-                username, consumer_key, privatekey_file)):
+                username, consumer_key, privatekey_file or privatekey)):
             self.auth_type = "jwt-bearer"
 
             # Pass along the username/password to our login helper
@@ -166,6 +171,7 @@ class Salesforce:
                 username=username,
                 consumer_key=consumer_key,
                 privatekey_file=privatekey_file,
+                privatekey=privatekey,
                 proxies=self.proxies,
                 domain=self.domain)
 
@@ -191,6 +197,10 @@ class Salesforce:
         self.bulk_url = ('https://{instance}/services/async/{version}/'
                          .format(instance=self.sf_instance,
                                  version=self.sf_version))
+        self.metadata_url = ('https://{instance}/services/Soap/m/{version}/'
+                             .format(instance=self.sf_instance,
+                                     version=self.sf_version))
+        self.tooling_url = '{base_url}tooling/'.format(base_url=self.base_url)
 
         self.api_usage = {}
 
@@ -209,6 +219,17 @@ class Salesforce:
             return None
 
         return json_result
+
+    def is_sandbox(self):
+        """After connection returns is the organization in a sandbox"""
+        is_sandbox = None
+        if self.session_id:
+            is_sandbox = self.query_all("SELECT IsSandbox "
+                                        "FROM Organization LIMIT 1")
+            is_sandbox = is_sandbox.get('records', [{'IsSandbox': None}])[
+                0].get(
+                'IsSandbox')
+        return is_sandbox
 
     # SObject Handler
     def __getattr__(self, name):
@@ -244,7 +265,8 @@ class Salesforce:
         """Sets the password of a user
 
         salesforce dev documentation link:
-        https://www.salesforce.com/us/developer/docs/api_rest/Content/dome_sobject_user_password.htm
+        https://www.salesforce.com/us/developer/docs/api_rest/Content
+        /dome_sobject_user_password.htm
 
         Arguments:
 
@@ -257,17 +279,17 @@ class Salesforce:
 
         result = self._call_salesforce('POST', url, data=json.dumps(params))
 
+        if result.status_code == 204:
+            return None
+
         # salesforce return 204 No Content when the request is successful
-        if result.status_code != 200 and result.status_code != 204:
+        if result.status_code != 200:
             raise SalesforceGeneralError(url,
                                          result.status_code,
                                          'User',
                                          result.content)
-        json_result = result.json(object_pairs_hook=OrderedDict)
-        if len(json_result) == 0:
-            return None
+        return result.json(object_pairs_hook=OrderedDict)
 
-        return json_result
 
     # Generic Rest Function
     def restful(self, path, params=None, method='GET', **kwargs):
@@ -449,6 +471,32 @@ class Salesforce:
             'done': True,
         }
 
+    def toolingexecute(self, action, method='GET', data=None, **kwargs):
+        """Makes an HTTP request to an TOOLING REST endpoint
+
+        Arguments:
+
+        * action -- The REST endpoint for the request.
+        * method -- HTTP method for the request (default GET)
+        * data -- A dict of parameters to send in a POST / PUT request
+        * kwargs -- Additional kwargs to pass to `requests.request`
+        """
+        # If data is None, we should send an empty body, not "null", which is
+        # None in json.
+        json_data = json.dumps(data) if data is not None else None
+        result = self._call_salesforce(
+            method,
+            self.tooling_url + action,
+            name="toolingexecute",
+            data=json_data, **kwargs
+        )
+        try:
+            response_content = result.json()
+        # pylint: disable=broad-except
+        except Exception:
+            response_content = result.text
+
+        return response_content
 
     def apexecute(self, action, method='GET', data=None, **kwargs):
         """Makes an HTTP request to an APEX REST endpoint
@@ -466,7 +514,7 @@ class Salesforce:
         result = self._call_salesforce(
             method,
             self.apex_url + action,
-            name="apexexcute",
+            name="apexecute",
             data=json_data, **kwargs
         )
         try:
@@ -528,19 +576,77 @@ class Salesforce:
 
         return result
 
+    # file-based deployment function
+    def deploy(self, zipfile, sandbox, **kwargs):
+
+        """Deploy using the Salesforce Metadata API. Wrapper for
+        SfdcMetaDataApi.deploy(...).
+
+        Arguments:
+
+        * zipfile: a .zip archive to deploy to an org, given as (
+        "path/to/zipfile.zip")
+        * options: salesforce DeployOptions in .json format.
+            (https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta
+            /api_meta/meta_deploy.htm)
+
+        Returns a process id and state for this deployment.
+        """
+        mdapi = SfdcMetadataApi(session=self.session,
+                                session_id=self.session_id,
+                                instance=self.sf_instance,
+                                sandbox=sandbox,
+                                metadata_url=self.metadata_url,
+                                api_version=self.sf_version,
+                                headers=self.headers)
+        asyncId, state = mdapi.deploy(zipfile, **kwargs)
+        result = {'asyncId': asyncId, 'state': state}
+        return result
+
+    # check on a file-based deployment
+    def checkDeployStatus(self, asyncId, sandbox, **kwargs):
+        """Check on the progress of a file-based deployment via Salesforce
+        Metadata API.
+        Wrapper for SfdcMetaDataApi.check_deploy_status(...).
+
+        Arguments:
+
+        * asyncId: deployment async process ID, returned by Salesforce.deploy()
+
+        Returns status of the deployment the asyncId given.
+        """
+        mdapi = SfdcMetadataApi(session=self.session,
+                                session_id=self.session_id,
+                                instance=self.sf_instance,
+                                sandbox=sandbox,
+                                metadata_url=self.metadata_url,
+                                api_version=self.sf_version,
+                                headers=self.headers)
+
+        state, state_detail, deployment_detail, unit_test_detail = \
+            mdapi.check_deploy_status(asyncId, **kwargs)
+        results = {
+            'state': state,
+            'state_detail': state_detail,
+            'deployment_detail': deployment_detail,
+            'unit_test_detail': unit_test_detail
+        }
+
+        return results
+
 
 class SFType:
     """An interface to a specific type of SObject"""
 
     # pylint: disable=too-many-arguments
     def __init__(
-        self,
-        object_name,
-        session_id,
-        sf_instance,
-        sf_version=DEFAULT_API_VERSION,
-        proxies=None,
-        session=None,
+            self,
+            object_name,
+            session_id,
+            sf_instance,
+            sf_version=DEFAULT_API_VERSION,
+            proxies=None,
+            session=None,
     ):
         """Initialize the instance with the given parameters.
 
@@ -747,7 +853,8 @@ class SFType:
 
         Use the SObject Get Deleted resource to get a list of deleted records
         for the specified object.
-        .../deleted/?start=2013-05-05T00:00:00+00:00&end=2013-05-10T00:00:00+00:00
+        .../deleted/?start=2013-05-05T00:00:00+00:00&end=2013-05-10T00:00:00
+        +00:00
 
         * start -- start datetime object
         * end -- end datetime object
@@ -768,7 +875,8 @@ class SFType:
         Use the SObject Get Updated resource to get a list of updated
         (modified or added) records for the specified object.
 
-         .../updated/?start=2014-03-20T00:00:00+00:00&end=2014-03-22T00:00:00+00:00
+         .../updated/?start=2014-03-20T00:00:00+00:00&end=2014-03-22T00:00:00
+         +00:00
 
         * start -- start datetime object
         * end -- end datetime object
