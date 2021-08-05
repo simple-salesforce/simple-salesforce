@@ -144,7 +144,7 @@ class Salesforce:
             if instance_url is not None:
                 self.sf_instance = urlparse(instance_url).hostname
                 port = urlparse(instance_url).port
-                if port != None and port != 443: self.sf_instance += ':' + str(port)
+                if port not in (None, 443): self.sf_instance += ':' + str(port)
             else:
                 self.sf_instance = instance
 
