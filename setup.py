@@ -19,7 +19,7 @@ setup(
     author_email=about['__author_email__'],
     maintainer=about['__maintainer__'],
     maintainer_email=about['__maintainer_email__'],
-    packages=['simple_salesforce', ],
+    packages=['simple_salesforce', 'simple_salesforce.aio'],
     url=about['__url__'],
     license=about['__license__'],
     description=about['__description__'],
@@ -28,11 +28,14 @@ setup(
     package_data={
         'simple_salesforce': ['metadata.wsdl'],
         },
-install_requires = [
-                       'requests>=2.22.0',
-                       'authlib',
-                       'zeep'
-                       ],
+    install_requires = [
+        'requests>=2.22.0',
+        'authlib',
+        'zeep'
+    ],
+    extras_require={
+        "async": ['httpx>=0.20.0,<1.0', 'aiofiles>=0.7.0']
+    },
                    tests_require = [
                                        'nose>=1.3.0',
                                        'pytz>=2014.1.1',

@@ -17,3 +17,4 @@ docs/simple_salesforce*.rst
 docs/modules.rst
 .vscode
 venv
+htmlcov/

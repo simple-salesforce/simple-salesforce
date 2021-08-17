@@ -1,2 +1,5 @@
 pylint
 coverage
+pytest
+pytest-asyncio
+pytest-coverage
