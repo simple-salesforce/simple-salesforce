@@ -534,7 +534,7 @@ class Salesforce:
         Returns a `requests.result` object.
         """
         headers = self.headers.copy()
-        additional_headers = kwargs.pop('headers', dict())
+        additional_headers = kwargs.pop('headers', {})
         headers.update(additional_headers)
 
         result = self.session.request(
@@ -903,8 +903,8 @@ class SFType:
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
         }
-        additional_headers = kwargs.pop('headers', dict())
-        headers.update(additional_headers or dict())
+        additional_headers = kwargs.pop('headers', {})
+        headers.update(additional_headers or {})
         result = self.session.request(method, url, headers=headers, **kwargs)
 
         if result.status_code >= 300:
