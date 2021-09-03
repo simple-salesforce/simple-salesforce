@@ -59,7 +59,7 @@ async def test_custom_domain_success(constants, mock_httpx_client):
     assert len(mock_client.method_calls) == 1
     call = mock_client.method_calls[0]
     assert call[0] == "post"
-    assert call[1][0] == ("https://testdomain.my.salesforce.com/services/Soap/u/42.0")
+    assert call[1][0] == ("https://testdomain.my.salesforce.com/services/Soap/u/52.0")
     assert "SOAPAction" in call[2]["headers"]
     assert call[2]["headers"]["SOAPAction"] == "login"
 

@@ -6,6 +6,8 @@ from unittest import mock
 import httpx
 import pytest
 
+from simple_salesforce.exceptions import SalesforceGeneralError
+
 
 def test_bulk_handler(sf_client, constants):
     """Test that BulkHandler Loads Properly"""
@@ -144,7 +146,7 @@ async def test_upsert(sf_client, mock_httpx_client):
     all_bodies = [body1, body2, body3, body4, body5, body6, body7]
     responses = [httpx.Response(200, content=json.dumps(body)) for body in all_bodies]
     mock_client.request.side_effect = mock.AsyncMock(side_effect=responses)
-    data = [{"id": "ID-1",}, {"id": "ID-2",}]
+    data = [{"id": "ID-1"}, {"id": "ID-2"}]
     result = await sf_client.bulk.Contact.upsert(data, "some-field", wait=0.1)
     assert EXPECTED_RESULT == result
 
@@ -207,9 +209,7 @@ async def test_query(mock_httpx_client, sf_client):
     responses = [httpx.Response(200, content=json.dumps(body)) for body in all_bodies]
     mock_client.request.side_effect = mock.AsyncMock(side_effect=responses)
     data = "SELECT Id,AccountId,Email,FirstName,LastName FROM Contact"
-    result = await sf_client.bulk.Contact.query(
-        data, wait=0.1, lazy_operation=False
-    )
+    result = await sf_client.bulk.Contact.query(data, wait=0.1, lazy_operation=False)
     assert body7[0] in result
     assert body7[1] in result
     assert body8[0] in result
@@ -341,9 +341,7 @@ async def test_query_lazy(mock_httpx_client, sf_client):
     responses = [httpx.Response(200, content=json.dumps(body)) for body in all_bodies]
     mock_client.request.side_effect = mock.AsyncMock(side_effect=responses)
     data = "SELECT Id,AccountId,Email,FirstName,LastName FROM Contact"
-    result = await sf_client.bulk.Contact.query_all(
-        data, wait=0.1, lazy_operation=True
-    )
+    result = await sf_client.bulk.Contact.query_all(data, wait=0.1, lazy_operation=True)
     assert body7[0] in result[0]
     assert body7[1] in result[0]
     assert body8[0] in result[1]
@@ -359,3 +357,45 @@ async def test_query_lazy(mock_httpx_client, sf_client):
     # 'AccountId': 'ID-24', 'Email': 'contact2@example.com',
     # 'FirstName': 'Alice', 'LastName': 'y'}]]
 
+
+@pytest.mark.asyncio
+async def test_query_fail(mock_httpx_client, sf_client):
+    """Test bulk query records failure"""
+    _, mock_client, _ = mock_httpx_client
+    operation = "query"
+    body1 = {
+        "apiVersion": 42.0,
+        "concurrencyMode": "Parallel",
+        "contentType": "JSON",
+        "id": "Job-1",
+        "object": "Contact",
+        "operation": operation,
+        "state": "Open",
+    }
+    body2 = {"id": "Batch-1", "jobId": "Job-1", "state": "Queued"}
+    body3 = {
+        "apiVersion": 42.0,
+        "concurrencyMode": "Parallel",
+        "contentType": "JSON",
+        "id": "Job-1",
+        "object": "Contact",
+        "operation": operation,
+        "state": "Closed",
+    }
+    body4 = {"id": "Batch-1", "jobId": "Job-1", "state": "InProgress"}
+    body5 = {
+        "id": "Batch-1",
+        "jobId": "Job-1",
+        "state": "Failed",
+        "stateMessage": "InvalidBatch : Failed to process query",
+    }
+    all_bodies = [body1, body2, body3, body4, body5]
+    responses = [httpx.Response(200, content=json.dumps(body)) for body in all_bodies]
+    mock_client.request.side_effect = mock.AsyncMock(side_effect=responses)
+
+    data = "SELECT ASDFASfgsds FROM Contact"
+    with pytest.raises(SalesforceGeneralError) as exc:
+        await sf_client.bulk.Contact.query(data, wait=0.1)
+        assert exc.status == body5["state"]
+        assert exc.resource_name == body5["jobId"]
+        assert exc.content == body5["stateMessage"]
