@@ -684,8 +684,8 @@ class TestSalesforce(unittest.TestCase):
                             session=session)
 
         result = client.query_all_iter('SELECT ID FROM Account')
-        self.assertEqual(next(result), OrderedDict([(u'ID', u'1')]))
-        self.assertEqual(next(result), OrderedDict([(u'ID', u'2')]))
+        self.assertEqual(next(result), OrderedDict([('ID', '1')]))
+        self.assertEqual(next(result), OrderedDict([('ID', '2')]))
         with self.assertRaises(StopIteration):
             next(result)
 
