@@ -6,9 +6,8 @@ Heavily Modified from RestForce 1.0.0
 DEFAULT_CLIENT_ID_PREFIX = 'RestForce'
 
 
-import time
 import warnings
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from html import escape
 from json.decoder import JSONDecodeError
 
@@ -33,6 +32,7 @@ def SalesforceLogin(
     domain=None,
     consumer_key=None,
     privatekey_file=None,
+    privatekey=None,
 ):
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
@@ -58,7 +58,9 @@ def SalesforceLogin(
                 'login'.
     * consumer_key -- the consumer key generated for the user
     * privatekey_file -- the path to the private key file used
-                         for signing the JWT token
+                         for signing the JWT token.
+    * privatekey -- the private key to use
+                         for signing the JWT token.
     """
 
     if domain is None:
@@ -152,20 +154,24 @@ def SalesforceLogin(
             client_id=client_id).encode(encoding='UTF-8', errors='strict')
     elif username is not None and \
             consumer_key is not None and \
-            privatekey_file is not None:
+            (privatekey_file is not None or privatekey is not None):
         header = {'alg': 'RS256'}
-        expiration = datetime.utcnow() + timedelta(minutes=3)
+        expiration = datetime.now(timezone.utc) + timedelta(minutes=3)
         payload = {
             'iss': consumer_key,
             'sub': username,
             'aud': 'https://{domain}.salesforce.com'.format(domain=domain),
             'exp': '{exp:.0f}'.format(
-                exp=time.mktime(expiration.timetuple()) +
-                    expiration.microsecond / 1e6
+                exp=expiration.timestamp()
             )
         }
-        with open(privatekey_file, 'rb') as key:
-            assertion = jwt.encode(header, payload, key.read())
+        if privatekey_file is not None:
+            with open(privatekey_file, 'rb') as key_file:
+                key = key_file.read()
+        else:
+            key = privatekey
+
+        assertion = jwt.encode(header, payload, key)
 
         login_token_request_data = {
             'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
@@ -229,10 +235,10 @@ def token_login(token_url, token_data, domain, consumer_key,
 
     try:
         json_response = response.json()
-    except JSONDecodeError:
+    except JSONDecodeError as exc:
         raise SalesforceAuthenticationFailed(
             response.status_code, response.text
-        )
+        ) from exc
 
     if response.status_code != 200:
         except_code = json_response.get('error')

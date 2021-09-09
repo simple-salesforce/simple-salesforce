@@ -74,11 +74,18 @@ def call_salesforce(url, method, session, headers, **kwargs):
     Returns a `requests.result` object.
     """
 
-    additional_headers = kwargs.pop('additional_headers', dict())
-    headers.update(additional_headers or dict())
+    additional_headers = kwargs.pop('additional_headers', {})
+    headers.update(additional_headers or {})
     result = session.request(method, url, headers=headers, **kwargs)
 
     if result.status_code >= 300:
         exception_handler(result)
 
     return result
+
+def list_from_generator(generator_function):
+    """Utility method for constructing a list from a generator function"""
+    ret_val = []
+    for list_results in generator_function:
+        ret_val.extend(list_results)
+    return ret_val

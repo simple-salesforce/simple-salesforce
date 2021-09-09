@@ -93,3 +93,9 @@ ORGANIZATION_LIMITS_RESPONSE = {
     "SingleEmail": {"Max": 15, "Remaining": 15},
     "StreamingApiConcurrentClients": {"Max": 20, "Remaining": 20},
 }
+
+BULK_HEADERS = {
+    'Content-Type': 'application/json',
+    'X-SFDC-Session': "%s" % SESSION_ID,
+    'X-PrettyPrint': '1'
+}

@@ -1,3 +1,41 @@
+v1.11.4
+======
+Changes as of 2021-09-09
+
+Other
+- [#494] Raise exception when bulk query returns a failure status
+- [#503] Fix lint warnings
+- [#497] Support non-standard https port number
+
+v1.11.3
+======
+Bugs
+--------
+- [431] Fix timezone handling
+
+v1.11.2
+======
+Bugs
+--------
+- [469] Fix bulk call results returning nested list
+
+v1.11.1
+======
+Features
+--------
+- [445] Added wrapper for Tooling API
+- [451] Support JWT without file for private key
+
+
+Bugs
+----
+- [454] Fixed typo in metadata file
+- [443] Fix to prevent silent failure by preventing NaN in payload
+
+v1.11.0
+======
+- [375] Added file based metadata deployment
+
 v1.10.1
 ======
 
