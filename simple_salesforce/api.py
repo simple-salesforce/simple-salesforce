@@ -296,7 +296,10 @@ class Salesforce:
 
     # Generic Rest Function
     def restful(self, path, params=None, method='GET', **kwargs):
-        """Allows you to make a direct REST call if you know the path
+        """Allows you to make a direct REST call if you know the path.
+        If `Content-Type: application/json` in response,
+        function will return a JSON-parsed OrderedDict.
+        For all other cases the raw content body is returned, e.g., binary data.
 
         Arguments:
 
@@ -306,16 +309,16 @@ class Salesforce:
         * method: HTTP request method, default GET
         * other arguments supported by requests.request (e.g. json, timeout)
         """
-
-        url = self.base_url + path
+        base_regex = r'\/*services\/data\/v[0-9]{2}.[0-9]{1,}\/'
+        url = self.base_url + re.sub(base_regex, '', path)
         result = self._call_salesforce(method, url, name=path, params=params,
                                        **kwargs)
-
-        json_result = result.json(object_pairs_hook=OrderedDict)
-        if len(json_result) == 0:
-            return None
-
-        return json_result
+        if 'Content-Type' in result.headers and 'application/json' in \
+                result.headers['Content-Type'].split(';'):
+            json_result = result.json(object_pairs_hook=OrderedDict)
+            return None if len(json_result) == 0 else json_result
+        else:
+            return result.content
 
     # Search Functions
     def search(self, search):
