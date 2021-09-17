@@ -693,17 +693,15 @@ class SFType:
         # Make this backwards compatible with any tests that
         # explicitly set the session_id and any other projects that
         # might be creating this object manually?
-        if salesforce:
-            self.session_id = property(partial(getattr, salesforce, 'session_id'))
-        elif session_id:
-            self.session_id = session_id
-        else:
+        
+        if salesforce is None and session_id is None:
             raise RuntimeError('The argument session_id or salesforce must be specified to instanciate SFType.')
 
         self._session_id = session_id
+        self.salesforce = salesforce
         self.name = object_name
         self.session = session or requests.Session()
-        self.salesforce = salesforce
+        
         # don't wipe out original proxies with None
         if not session and proxies is not None:
             self.session.proxies = proxies
@@ -714,6 +712,12 @@ class SFType:
             '/{object_name}/'.format(instance=sf_instance,
                                      object_name=object_name,
                                      sf_version=sf_version))
+
+    @property
+    def session_id(self):
+        if self.salesforce is not None:
+            return self.salesforce.session_id
+        return self._session_id
 
     def metadata(self, headers=None):
         """Returns the result of a GET to `.../{object_name}/` as a dict
