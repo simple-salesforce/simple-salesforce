@@ -152,6 +152,9 @@ class Salesforce:
                     self.sf_instance += ':' + str(port)
             else:
                 self.sf_instance = instance
+            
+            # Only generate the headers wihtout logging in first
+            self._generate_headers()
 
         elif all(arg is not None for arg in (
                 username, password, organizationId)):
@@ -194,12 +197,6 @@ class Salesforce:
         self.auth_site = ('https://{domain}.salesforce.com'
                           .format(domain=self.domain))
 
-        self.headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + self.session_id,
-            'X-PrettyPrint': '1'
-        }
-
         self.base_url = ('https://{instance}/services/data/v{version}/'
                          .format(instance=self.sf_instance,
                                  version=self.sf_version))
@@ -215,11 +212,19 @@ class Salesforce:
 
         self.api_usage = {}
 
+    def _generate_headers(self):
+        self.headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + self.session_id,
+            'X-PrettyPrint': '1'
+        }
+
     def _refresh_session(self):
         if self._salesforce_login_partial is None:
             raise RuntimeError('The simple_salesforce session can not refreshed if a session id has been provided.')
 
         self.session_id, self.sf_instance = self._salesforce_login_partial()
+        self._generate_headers()
 
     def describe(self, **kwargs):
         """Describes all available objects
