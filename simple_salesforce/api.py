@@ -279,7 +279,7 @@ class Salesforce:
                                  self.session)
 
         return SFType(
-            name, self.session_id, self.sf_instance, sf_version=self.sf_version,
+            name, self.sf_instance, self.session_id, sf_version=self.sf_version,
             proxies=self.proxies, session=self.session, salesforce=self)
 
     # User utility methods
