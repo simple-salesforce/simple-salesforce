@@ -7,6 +7,7 @@ import json
 import logging
 import re
 from collections import OrderedDict, namedtuple
+from functools import partial
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -14,8 +15,8 @@ import requests
 from .bulk import SFBulkHandler
 from .exceptions import SalesforceGeneralError
 from .login import SalesforceLogin
-from .util import date_to_iso8601, exception_handler
 from .metadata import SfdcMetadataApi
+from .util import date_to_iso8601, exception_handler
 
 # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
@@ -107,6 +108,7 @@ class Salesforce:
         self.domain = domain
         self.session = session or requests.Session()
         self.proxies = self.session.proxies
+        self._salesforce_login_partial = None
         # override custom session proxies dance
         if proxies is not None:
             if not session:
@@ -124,7 +126,8 @@ class Salesforce:
             self.auth_type = "password"
 
             # Pass along the username/password to our login helper
-            self.session_id, self.sf_instance = SalesforceLogin(
+            self._salesforce_login_partial = partial(
+                SalesforceLogin,
                 session=self.session,
                 username=username,
                 password=password,
@@ -133,6 +136,7 @@ class Salesforce:
                 proxies=self.proxies,
                 client_id=client_id,
                 domain=self.domain)
+            self._refresh_session()
 
         elif all(arg is not None for arg in (
                 session_id, instance or instance_url)):
@@ -154,7 +158,8 @@ class Salesforce:
             self.auth_type = 'ipfilter'
 
             # Pass along the username/password to our login helper
-            self.session_id, self.sf_instance = SalesforceLogin(
+            self._salesforce_login_partial = partial(
+                SalesforceLogin,
                 session=self.session,
                 username=username,
                 password=password,
@@ -163,13 +168,15 @@ class Salesforce:
                 proxies=self.proxies,
                 client_id=client_id,
                 domain=self.domain)
+            self._refresh_session()
 
         elif all(arg is not None for arg in (
                 username, consumer_key, privatekey_file or privatekey)):
             self.auth_type = "jwt-bearer"
 
             # Pass along the username/password to our login helper
-            self.session_id, self.sf_instance = SalesforceLogin(
+            self._salesforce_login_partial = partial(
+                SalesforceLogin,
                 session=self.session,
                 username=username,
                 consumer_key=consumer_key,
@@ -177,6 +184,7 @@ class Salesforce:
                 privatekey=privatekey,
                 proxies=self.proxies,
                 domain=self.domain)
+            self._refresh_session()
 
         else:
             raise TypeError(
@@ -206,6 +214,12 @@ class Salesforce:
         self.tooling_url = '{base_url}tooling/'.format(base_url=self.base_url)
 
         self.api_usage = {}
+
+    def _refresh_session(self):
+        if self._salesforce_login_partial is None:
+            raise RuntimeError('The simple_salesforce session can not refreshed if a session id has been provided.')
+
+        self.session_id, self.sf_instance = self._salesforce_login_partial()
 
     def describe(self, **kwargs):
         """Describes all available objects
@@ -539,6 +553,10 @@ class Salesforce:
 
         result = self.session.request(
             method, url, headers=headers, **kwargs)
+        
+        if self._salesforce_login_partial is not None and result.status_code == 401:
+            self._refresh_session()
+            return self._call_salesforce(method, url, name, **kwargs)
 
         if result.status_code >= 300:
             exception_handler(result, name=name)
