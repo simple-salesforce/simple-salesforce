@@ -703,6 +703,7 @@ class SFType:
         self._session_id = session_id
         self.name = object_name
         self.session = session or requests.Session()
+        self.salesforce = salesforce
         # don't wipe out original proxies with None
         if not session and proxies is not None:
             self.session.proxies = proxies
@@ -941,6 +942,12 @@ class SFType:
         additional_headers = kwargs.pop('headers', {})
         headers.update(additional_headers or {})
         result = self.session.request(method, url, headers=headers, **kwargs)
+        
+        if (self.salesforce 
+            and self.salesforce._salesforce_login_partial is not None
+            and result.status_code == 401):
+            self.salesforce._refresh_session()
+            return self._call_salesforce(method, url, **kwargs)
 
         if result.status_code >= 300:
             exception_handler(result, self.name)
