@@ -280,7 +280,7 @@ class Salesforce:
 
         return SFType(
             name, self.session_id, self.sf_instance, sf_version=self.sf_version,
-            proxies=self.proxies, session=self.session)
+            proxies=self.proxies, session=self.session, salesforce=self)
 
     # User utility methods
     def set_password(self, user, password):
@@ -668,11 +668,12 @@ class SFType:
     def __init__(
             self,
             object_name,
-            session_id,
             sf_instance,
+            session_id=None,
             sf_version=DEFAULT_API_VERSION,
             proxies=None,
             session=None,
+            salesforce=None,
     ):
         """Initialize the instance with the given parameters.
 
@@ -688,7 +689,18 @@ class SFType:
                      enables the use of requests Session features not otherwise
                      exposed by simple_salesforce.
         """
-        self.session_id = session_id
+        
+        # Make this backwards compatible with any tests that
+        # explicitly set the session_id and any other projects that
+        # might be creating this object manually?
+        if salesforce:
+            self.session_id = property(partial(getattr, salesforce, 'session_id'))
+        elif session_id:
+            self.session_id = session_id
+        else:
+            raise RuntimeError('The argument session_id or salesforce must be specified to instanciate SFType.')
+
+        self._session_id = session_id
         self.name = object_name
         self.session = session or requests.Session()
         # don't wipe out original proxies with None
