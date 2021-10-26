@@ -606,7 +606,7 @@ class Salesforce:
 
         Returns a process id and state for this deployment.
         """
-        asyncId, state = self._mdapi(sandbox=sandbox).deploy(zipfile, **kwargs)
+        asyncId, state = self.mdapi(sandbox=sandbox).deploy(zipfile, **kwargs)
         result = {'asyncId': asyncId, 'state': state}
         return result
 
@@ -623,7 +623,7 @@ class Salesforce:
         Returns status of the deployment the asyncId given.
         """
         state, state_detail, deployment_detail, unit_test_detail = \
-            self._mdapi.check_deploy_status(asyncId, **kwargs)
+            self.mdapi.check_deploy_status(asyncId, **kwargs)
         results = {
             'state': state,
             'state_detail': state_detail,
