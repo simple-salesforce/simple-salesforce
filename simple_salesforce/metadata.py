@@ -170,7 +170,7 @@ class SfdcMetadataApi:
         wsdl_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'metadata.wsdl')
         self._client = Client(os.path.join('simple_salesforce', wsdl_path),
                               settings=Settings(strict=False, xsd_ignore_sequence_order=True))
-        self._service = self._client.create_service("{{{" + self._XML_NAMESPACES['mt'] + "}}}MetadataBinding", self.metadata_url)
+        self._service = self._client.create_service("{{" + self._XML_NAMESPACES['mt'] + "}}MetadataBinding", self.metadata_url)
         self._session_header = self._client.get_element('ns0:SessionHeader')(sessionId=self._session_id)
 
     def __getattr__(self, item):
