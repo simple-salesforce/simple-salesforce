@@ -38,9 +38,9 @@ class MetadataType:
         err_string = ""
         for result in response:
             if not result.success:
-                err_string += f"\n{result.fullName}: "
+                err_string += "\n{}: ".format(result.fullName)
                 for error in result.errors:
-                    err_string += f"({error.statusCode}, {error.message}), "
+                    err_string += "({}, {}), ".format(error.statusCode, error.message)
         if err_string:
             raise Exception(err_string)
 
