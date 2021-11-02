@@ -156,13 +156,11 @@ class SfdcMetadataApi:
         }
 
     # pylint: disable=R0913
-    def __init__(self, session, session_id, instance, sandbox, metadata_url,
-                 headers, api_version):
+    def __init__(self, session, session_id, instance, metadata_url, headers, api_version):
         """ Initialize and check session """
         self.session = session
         self._session_id = session_id
         self._instance = instance
-        self._sandbox = sandbox
         self.metadata_url = metadata_url
         self.headers = headers
         self._api_version = api_version
@@ -198,7 +196,7 @@ class SfdcMetadataApi:
 
     # pylint: disable=R0914
     # pylint: disable-msg=C0103
-    def deploy(self, zipfile, **kwargs):
+    def deploy(self, zipfile, sandbox, **kwargs):
         """ Kicks off async deployment, returns deployment id
         :param zipfile:
         :type zipfile:
@@ -235,7 +233,7 @@ class SfdcMetadataApi:
             'singlePackage': singlePackage,
             }
 
-        if not self._sandbox:
+        if not sandbox:
             attributes['allowMissingFiles'] = False
             attributes['rollbackOnError'] = True
 

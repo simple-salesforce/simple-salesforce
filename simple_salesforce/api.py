@@ -207,7 +207,7 @@ class Salesforce:
         self._mdapi = None
 
     @property
-    def mdapi(self, sandbox=False):
+    def mdapi(self):
         if not self._mdapi:
             self._mdapi = SfdcMetadataApi(session=self.session,
                                           session_id=self.session_id,
@@ -606,7 +606,7 @@ class Salesforce:
 
         Returns a process id and state for this deployment.
         """
-        asyncId, state = self.mdapi(sandbox=sandbox).deploy(zipfile, **kwargs)
+        asyncId, state = self.mdapi.deploy(zipfile, sandbox, **kwargs)
         result = {'asyncId': asyncId, 'state': state}
         return result
 
