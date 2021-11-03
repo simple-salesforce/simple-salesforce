@@ -212,7 +212,6 @@ class Salesforce:
             self._mdapi = SfdcMetadataApi(session=self.session,
                                           session_id=self.session_id,
                                           instance=self.sf_instance,
-                                          sandbox=sandbox,
                                           metadata_url=self.metadata_url,
                                           api_version=self.sf_version,
                                           headers=self.headers)
