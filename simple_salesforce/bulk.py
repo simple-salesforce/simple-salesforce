@@ -245,7 +245,7 @@ class SFBulkType:
                                            batch_id=batch['id'])
 
             while batch_status['state'] not in [
-                'Completed', 'Failed', 'Not Processed'
+                'Completed', 'Failed', 'NotProcessed'
                 ]:
                 sleep(wait)
                 batch_status = self._get_batch(job_id=batch['jobId'],
