@@ -207,6 +207,12 @@ class Salesforce:
 
         self.api_usage = {}
 
+        try:
+            self._sobject_names = [x['name'] for x
+                                   in self.describe()['sobjects']]
+        except: # pylint: disable=bare-except
+            self._sobject_names = []
+
     def describe(self, **kwargs):
         """Describes all available objects
 
@@ -233,6 +239,10 @@ class Salesforce:
                 0].get(
                 'IsSandbox')
         return is_sandbox
+
+    # Include SObject names in dir for auto-completion
+    def __dir__(self):
+        return super().__dir__() + self._sobject_names
 
     # SObject Handler
     def __getattr__(self, name):
