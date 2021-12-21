@@ -1,7 +1,7 @@
 """Core classes and exceptions for Simple-Salesforce"""
 
 # has to be defined prior to login import
-DEFAULT_API_VERSION = '42.0'
+DEFAULT_API_VERSION = '53.0'
 
 import json
 import logging
@@ -16,6 +16,7 @@ from .exceptions import SalesforceGeneralError
 from .login import SalesforceLogin
 from .util import date_to_iso8601, exception_handler
 from .metadata import SfdcMetadataApi
+from .tcrm import TableauCRMHandler
 
 # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
@@ -50,7 +51,7 @@ class Salesforce:
             consumer_key=None,
             privatekey_file=None,
             privatekey=None,
-            ):
+    ):
 
         """Initialize the instance with the given parameters.
 
@@ -205,6 +206,8 @@ class Salesforce:
                                      version=self.sf_version))
         self.tooling_url = '{base_url}tooling/'.format(base_url=self.base_url)
 
+        self.wave_url = '{base_url}wave/'.format(base_url=self.base_url)
+
         self.api_usage = {}
 
     def describe(self, **kwargs):
@@ -259,6 +262,10 @@ class Salesforce:
             return SFBulkHandler(self.session_id, self.bulk_url, self.proxies,
                                  self.session)
 
+        if name == 'wave':
+            # Deal with Tableau CRM (Wave Analytics / Einstein Analytics) API functions
+            return TableauCRMHandler(self.headers, self.wave_url, self.proxies, self.session)
+
         return SFType(
             name, self.session_id, self.sf_instance, sf_version=self.sf_version,
             proxies=self.proxies, session=self.session)
@@ -292,7 +299,6 @@ class Salesforce:
                                          'User',
                                          result.content)
         return result.json(object_pairs_hook=OrderedDict)
-
 
     # Generic Rest Function
     def restful(self, path, params=None, method='GET', **kwargs):
