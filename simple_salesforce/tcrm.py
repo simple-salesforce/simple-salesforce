@@ -45,7 +45,8 @@ class TableauCRMHandler:
             'templates',
             'watchlist',
         ]
-        self.available_resources = list(set(self.runnable_resources + self.other_resources))
+        self.available_resources = list(
+            set(self.runnable_resources + self.other_resources))
         self.warning = 'Please double check the documentation at https://developer.salesforce.com/docs/atlas.en-us.bi_dev_guide_rest.meta/bi_dev_guide_rest/bi_rest_overview.htm'
         # don't wipe out original proxies with None
         if not session and proxies is not None:
@@ -77,15 +78,18 @@ class TableauCRMHandler:
         * resource_id -- [Optional] if resource id is specified, it will only query the specified resource
         """
         if resource_name in self.available_resources:
-            url = f"{self.wave_url}{resource_name}/"
+            url = self.wave_url + resource_name + "/"
             if resource_id is not None:
                 url += resource_id
                 # Recipes require pass format=R3 per API documentation
                 if resource_name == 'recipes':
                     url += '?format=R3'
-            result = call_salesforce(url=url, method='GET', session=self.session, headers=self.headers)
+            result = call_salesforce(url=url, method='GET',
+                                     session=self.session, headers=self.headers)
             response = result.json(object_pairs_hook=OrderedDict)
-            return response[resource_name] if resource_name in response.keys() else response
+            if resource_name in response.keys():
+                response = response[resource_name]
+            return response
         else:
             raise Exception("Unknown Resources." + self.warning)
 
@@ -96,29 +100,36 @@ class TableauCRMHandler:
         Arguments:
         * resource_name -- the resource name to trigger the manual run
         * resource_id -- the resource id to trigger to the manual run
-        * is_target_dataflow -- [optional] it will only be used when resource_name is recipe. recipe is triggered using the same api that dataflow requires.
+        * is_target_dataflow -- [optional] it will only be used when
+        resource_name is recipe. recipe is triggered using the same api that dataflow requires.
         Hence, it is required to convert the recipe id to the target dataflow id.
         """
         if resource_name in self.runnable_resources:
             if resource_name == 'dataConnectors':
-                url = f"{self.wave_url}{resource_name}/{resource_id}/ingest"
+                url = self.wave_url + resource_name + "/" + resource_id + "/ingest"
                 payload = {}
-                call_salesforce(url=url, method='POST', session=self.session, headers=self.headers, data=json.dumps(payload, allow_nan=False))
+                call_salesforce(url=url, method='POST', session=self.session,
+                                headers=self.headers,
+                                data=json.dumps(payload, allow_nan=False))
             else:
-                if resource_name == 'recipes' and is_target_dataflow == False:
+                if resource_name == 'recipes' and is_target_dataflow is False:
                     print("Converting recipe id to target dataflow id...")
                     recipe_id = resource_id
-                    try:
-                        resource_id = self.list_resource('recipes', resource_id=recipe_id)['targetDataflowId']
-                    except Exception as e:
-                        raise Exception(f"Cannot covert the recipe id to target dataflow id.\n{self.warning}\n{e}\n")
-                    print(f"Recipe ID {recipe_id} has been converted to dataflow id {resource_id}.")
-                url = f"{self.wave_url}dataflowjobs/"
-                payload = {
-                    'dataflowId': resource_id,
-                    'command': 'start'
-                }
-                call_salesforce(url=url, method='POST', session=self.session, headers=self.headers, data=json.dumps(payload, allow_nan=False))
+                    resource_id = \
+                        self.list_resource('recipes', resource_id=recipe_id)[
+                            'targetDataflowId']
+                    print("Recipe ID " + recipe_id +
+                          "has been converted to dataflow id " + resource_id + ".")
+                    url = self.wave_url + "dataflowjobs/"
+                    payload = {
+                        'dataflowId': resource_id,
+                        'command': 'start'
+                    }
+                    call_salesforce(url=url, method='POST',
+                                    session=self.session,
+                                    headers=self.headers,
+                                    data=json.dumps(payload, allow_nan=False))
             print("Job submitted successfully!")
         else:
-            raise Exception("Resource specified is not runnable." + self.warning)
+            raise Exception(
+                "Resource specified is not runnable." + self.warning)
