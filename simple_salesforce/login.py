@@ -65,8 +65,10 @@ def SalesforceLogin(
 
     if domain is None:
         domain = 'login'
-
-    soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version.lstrip("v")}'
+    
+    sf_version = sf_version.lstrip("v")
+    
+    soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
 
     if client_id:
         client_id = "{prefix}/{app_name}".format(
