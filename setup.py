@@ -27,7 +27,8 @@ setup(
     long_description_content_type='text/x-rst',
     install_requires=[
         'requests>=2.22.0',
-        'authlib'
+        'authlib',
+        'zeep'
     ],
     tests_require=[
         'nose>=1.3.0',
