@@ -8,6 +8,7 @@ import requests
 import responses
 from simple_salesforce import tests
 from simple_salesforce.api import Salesforce
+from simple_salesforce.exceptions import SalesforceGeneralError
 
 
 class TestSFBulkHandler(unittest.TestCase):
@@ -406,6 +407,54 @@ class TestSFBulkType(unittest.TestCase):
                             session=session)
         contact = client.bulk.Contact.query(data)
         self.assertEqual(self.expected_query, contact)
+
+
+    @responses.activate
+    def test_query_fail(self):
+        """Test bulk query records failure"""
+        operation = 'query'
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job$'),
+            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
+            '"contentType": "JSON","id": "Job-1","object": "Contact",'
+            '"operation": "%s","state": "Open"}' % operation,
+            status=http.OK)
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "Queued"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1$'),
+            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
+            '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
+            '"operation" : "%s","state" : "Closed"}' % operation,
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-1$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "InProgress"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-1$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "Failed",'
+            '"stateMessage": "InvalidBatch : Failed to process query"}',
+            status=http.OK
+        )
+
+        data = 'SELECT ASDFASfgsds FROM Contact'
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+        self.assertRaises(SalesforceGeneralError,
+                          client.bulk.Contact.query, data)
 
     @responses.activate
     def test_query_lazy(self):

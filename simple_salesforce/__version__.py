@@ -5,7 +5,7 @@ This file shamelessly taken from the requests library"""
 __title__ = 'simple-salesforce'
 __description__ = 'A basic Salesforce.com REST API client.'
 __url__ = 'https://github.com/simple-salesforce/simple-salesforce'
-__version__ = '1.11.2'
+__version__ = '1.11.4'
 __author__ = 'Nick Catalano'
 __author_email__ = 'nickcatal@gmail.com'
 __license__ = 'Apache 2.0'

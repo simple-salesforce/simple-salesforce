@@ -1,3 +1,23 @@
+v1.11.5
+======
+Changes as of 2022-01-05
+
+
+v1.11.4
+======
+Changes as of 2021-09-09
+
+Other
+- [#494] Raise exception when bulk query returns a failure status
+- [#503] Fix lint warnings
+- [#497] Support non-standard https port number
+
+v1.11.3
+======
+Bugs
+--------
+- [431] Fix timezone handling
+
 v1.11.2
 ======
 Bugs
