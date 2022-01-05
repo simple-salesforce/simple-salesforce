@@ -53,7 +53,7 @@ To login using IP-whitelist Organization ID method, simply use your Salesforce u
     from simple_salesforce import Salesforce
     sf = Salesforce(password='password', username='myemail@example.com', organizationId='OrgId')
 
-To login using the JWT method, use your Salesforce username, consumer key from your app, and private key:
+To login using the JWT method, use your Salesforce username, consumer key from your app, and private key (`How To <https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_auth_jwt_flow.htm#sfdx_dev_auth_jwt_flow>`_):
 
 .. code-block:: python
 
