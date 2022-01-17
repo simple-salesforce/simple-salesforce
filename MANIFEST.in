@@ -1,3 +1,4 @@
 include LICENSE.txt
 include README.rst
 include MANIFEST.in
+include simple_salesforce/metadata.wsdl
