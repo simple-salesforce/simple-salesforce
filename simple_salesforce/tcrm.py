@@ -119,16 +119,16 @@ class TableauCRMHandler:
                         self.list_resource('recipes', resource_id=recipe_id)[
                             'targetDataflowId']
                     print("Recipe ID " + recipe_id +
-                          "has been converted to dataflow id " + resource_id + ".")
-                    url = self.wave_url + "dataflowjobs/"
-                    payload = {
-                        'dataflowId': resource_id,
-                        'command': 'start'
-                    }
-                    call_salesforce(url=url, method='POST',
-                                    session=self.session,
-                                    headers=self.headers,
-                                    data=json.dumps(payload, allow_nan=False))
+                          " has been converted to dataflow id " + resource_id + ".")
+                url = self.wave_url + "dataflowjobs/"
+                payload = {
+                    'dataflowId': resource_id,
+                    'command': 'start'
+                }
+                call_salesforce(url=url, method='POST',
+                                session=self.session,
+                                headers=self.headers,
+                                data=json.dumps(payload, allow_nan=False))
             print("Job submitted successfully!")
         else:
             raise Exception(
