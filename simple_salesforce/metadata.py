@@ -9,6 +9,9 @@ from zeep import Client, Settings
 
 
 class MetadataType:
+    """
+    Salesforce Metadata Type
+    """
     def __init__(self, name, service, zeep_type, session_header):
         """
         Initialize metadata type
