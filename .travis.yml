@@ -15,7 +15,7 @@ jobs:
 env:
   - TOXENV=unit
 before_install:
-  - python -m pip install --upgrade virtualenv
+  - python -m pip install --upgrade pip
 install:
   - pip install -U tox
 script: tox
