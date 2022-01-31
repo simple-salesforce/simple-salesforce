@@ -15,8 +15,7 @@ jobs:
 env:
   - TOXENV=unit
 install:
-  - pip install -U pip
-  - pip install -U tox
+  - pip install -U tox pip
 script: tox
 notifications:
   email: false
