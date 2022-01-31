@@ -118,7 +118,7 @@ class Salesforce:
                 logger.warning(
                     'Proxies must be defined on custom session object, '
                     'ignoring proxies: %s', proxies
-                )
+                    )
 
         # Determine if the user wants to use our username/password auth or pass
         # in their own information
@@ -184,7 +184,7 @@ class Salesforce:
         else:
             raise TypeError(
                 'You must provide login information or an instance and token'
-            )
+                )
 
         self.auth_site = ('https://{domain}.salesforce.com'
                           .format(domain=self.domain))
@@ -193,7 +193,7 @@ class Salesforce:
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
-        }
+            }
 
         self.base_url = ('https://{instance}/services/data/v{version}/'
                          .format(instance=self.sf_instance,
@@ -307,7 +307,6 @@ class Salesforce:
                                          'User',
                                          result.content)
         return self.parse_result_to_json(result)
-
 
     # Generic Rest Function
     def restful(self, path, params=None, method='GET', **kwargs):
@@ -487,7 +486,7 @@ class Salesforce:
             'records': all_records,
             'totalSize': len(all_records),
             'done': True,
-        }
+            }
 
     def toolingexecute(self, action, method='GET', data=None, **kwargs):
         """Makes an HTTP request to an TOOLING REST endpoint
@@ -507,7 +506,7 @@ class Salesforce:
             self.tooling_url + action,
             name="toolingexecute",
             data=json_data, **kwargs
-        )
+            )
         try:
             response_content = result.json()
         # pylint: disable=broad-except
@@ -534,7 +533,7 @@ class Salesforce:
             self.apex_url + action,
             name="apexecute",
             data=json_data, **kwargs
-        )
+            )
         try:
             response_content = result.json()
         # pylint: disable=broad-except
@@ -633,7 +632,7 @@ class Salesforce:
             'state_detail': state_detail,
             'deployment_detail': deployment_detail,
             'unit_test_detail': unit_test_detail
-        }
+            }
         return results
 
     def parse_result_to_json(self, result):
@@ -656,7 +655,7 @@ class SFType:
             proxies=None,
             session=None,
             parse_float=None,
-    ):
+            ):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -711,7 +710,7 @@ class SFType:
         result = self._call_salesforce(
             method='GET', url=urljoin(self.base_url, 'describe'),
             headers=headers
-        )
+            )
         return self.parse_result_to_json(result)
 
     def describe_layout(self, record_id, headers=None):
@@ -728,12 +727,12 @@ class SFType:
         """
         custom_url_part = 'describe/layouts/{record_id}'.format(
             record_id=record_id
-        )
+            )
         result = self._call_salesforce(
             method='GET',
             url=urljoin(self.base_url, custom_url_part),
             headers=headers
-        )
+            )
         return self.parse_result_to_json(result)
 
     def get(self, record_id, headers=None):
@@ -748,7 +747,7 @@ class SFType:
         result = self._call_salesforce(
             method='GET', url=urljoin(self.base_url, record_id),
             headers=headers
-        )
+            )
         return self.parse_result_to_json(result)
 
     def get_by_custom_id(self, custom_id_field, custom_id, headers=None):
@@ -768,11 +767,11 @@ class SFType:
         custom_url = urljoin(
             self.base_url, '{custom_id_field}/{custom_id}'.format(
                 custom_id_field=custom_id_field, custom_id=custom_id
+                )
             )
-        )
         result = self._call_salesforce(
             method='GET', url=custom_url, headers=headers
-        )
+            )
         return self.parse_result_to_json(result)
 
     def create(self, data, headers=None):
@@ -789,7 +788,7 @@ class SFType:
         result = self._call_salesforce(
             method='POST', url=self.base_url,
             data=json.dumps(data), headers=headers
-        )
+            )
         return self.parse_result_to_json(result)
 
     def upsert(self, record_id, data, raw_response=False, headers=None):
@@ -813,7 +812,7 @@ class SFType:
         result = self._call_salesforce(
             method='PATCH', url=urljoin(self.base_url, record_id),
             data=json.dumps(data), headers=headers
-        )
+            )
         return self._raw_response(result, raw_response)
 
     def update(self, record_id, data, raw_response=False, headers=None):
@@ -836,7 +835,7 @@ class SFType:
         result = self._call_salesforce(
             method='PATCH', url=urljoin(self.base_url, record_id),
             data=json.dumps(data), headers=headers
-        )
+            )
         return self._raw_response(result, raw_response)
 
     def delete(self, record_id, raw_response=False, headers=None):
@@ -857,7 +856,7 @@ class SFType:
         result = self._call_salesforce(
             method='DELETE', url=urljoin(self.base_url, record_id),
             headers=headers
-        )
+            )
         return self._raw_response(result, raw_response)
 
     def deleted(self, start, end, headers=None):
@@ -876,8 +875,8 @@ class SFType:
         url = urljoin(
             self.base_url, 'deleted/?start={start}&end={end}'.format(
                 start=date_to_iso8601(start), end=date_to_iso8601(end)
+                )
             )
-        )
         result = self._call_salesforce(method='GET', url=url, headers=headers)
         return self.parse_result_to_json(result)
 
@@ -898,8 +897,8 @@ class SFType:
         url = urljoin(
             self.base_url, 'updated/?start={start}&end={end}'.format(
                 start=date_to_iso8601(start), end=date_to_iso8601(end)
+                )
             )
-        )
         result = self._call_salesforce(method='GET', url=url, headers=headers)
         return self.parse_result_to_json(result)
 
@@ -912,7 +911,7 @@ class SFType:
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
-        }
+            }
         additional_headers = kwargs.pop('headers', {})
         headers.update(additional_headers or {})
         result = self.session.request(method, url, headers=headers, **kwargs)
@@ -942,26 +941,34 @@ class SFType:
         """"Parse json from a Response object"""
         return result.json(object_pairs_hook=OrderedDict,
                            parse_float=self._parse_float)
-      
-    def upload_base64(self, file_path, base64_field='Body', data={}, headers=None, **kwargs):
+
+    def upload_base64(self, file_path, base64_field='Body', headers=None,
+                      **kwargs):
+        data = {}
         with open(file_path, "rb") as f:
             body = base64.b64encode(f.read()).decode('utf-8')
         data[base64_field] = body
-        result = self._call_salesforce(method='POST', url=self.base_url, headers=headers, json=data, **kwargs)
+        result = self._call_salesforce(method='POST', url=self.base_url,
+                                       headers=headers, json=data, **kwargs)
 
         return result
 
-    def update_base64(self, record_id, file_path, base64_field='Body', data={}, headers=None, raw_response=False,
+    def update_base64(self, record_id, file_path, base64_field='Body',
+                      headers=None, raw_response=False,
                       **kwargs):
+        data = {}
         with open(file_path, "rb") as f:
             body = base64.b64encode(f.read()).decode('utf-8')
         data[base64_field] = body
-        result = self._call_salesforce(method='PATCH', url=urljoin(self.base_url, record_id), json=data,
+        result = self._call_salesforce(method='PATCH',
+                                       url=urljoin(self.base_url, record_id),
+                                       json=data,
                                        headers=headers, **kwargs)
 
         return self._raw_response(result, raw_response)
 
-    def get_base64(self, record_id, base64_field='Body', data=None, headers=None, **kwargs):
+    def get_base64(self, record_id, base64_field='Body', data=None,
+                   headers=None, **kwargs):
         """Returns binary stream of base64 object at specific path.
 
         Arguments:
@@ -970,7 +977,8 @@ class SFType:
             Example: sobjects/Attachment/ABC123/Body
                      sobjects/ContentVersion/ABC123/VersionData
         """
-        result = self._call_salesforce(method='GET', url=urljoin(self.base_url, f"{record_id}/{base64_field}"),
+        result = self._call_salesforce(method='GET', url=urljoin(self.base_url,
+                                                                 f"{record_id}/{base64_field}"),
                                        data=data,
                                        headers=headers, **kwargs)
 
