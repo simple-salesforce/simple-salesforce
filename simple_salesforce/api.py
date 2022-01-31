@@ -977,8 +977,9 @@ class SFType:
             Example: sobjects/Attachment/ABC123/Body
                      sobjects/ContentVersion/ABC123/VersionData
         """
-        result = self._call_salesforce(method='GET', url=urljoin(self.base_url,
-                                                                 f"{record_id}/{base64_field}"),
+        result = self._call_salesforce(method='GET', url=urljoin(
+            self.base_url, '{record_id}/{base64_field}'.format(
+                record_id=record_id, base64_field=base64_field)),
                                        data=data,
                                        headers=headers, **kwargs)
 
