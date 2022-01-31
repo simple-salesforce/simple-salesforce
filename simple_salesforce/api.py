@@ -213,6 +213,7 @@ class Salesforce:
 
     @property
     def mdapi(self):
+        """Utility to interact with metadata api functionality"""
         if not self._mdapi:
             self._mdapi = SfdcMetadataApi(session=self.session,
                                           session_id=self.session_id,
@@ -944,6 +945,7 @@ class SFType:
 
     def upload_base64(self, file_path, base64_field='Body', headers=None,
                       **kwargs):
+        """Upload base64 encoded file to Salesforce"""
         data = {}
         with open(file_path, "rb") as f:
             body = base64.b64encode(f.read()).decode('utf-8')
@@ -956,6 +958,7 @@ class SFType:
     def update_base64(self, record_id, file_path, base64_field='Body',
                       headers=None, raw_response=False,
                       **kwargs):
+        """Updated base64 image from file to Salesforce"""
         data = {}
         with open(file_path, "rb") as f:
             body = base64.b64encode(f.read()).decode('utf-8')
