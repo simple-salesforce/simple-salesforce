@@ -14,8 +14,10 @@ jobs:
       env: TOXENV=static
 env:
   - TOXENV=unit
+before_install:
+  - python -m pip install --upgrade virtualenv
 install:
-  - pip install tox
+  - pip install -U tox
 script: tox
 notifications:
   email: false
