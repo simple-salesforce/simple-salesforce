@@ -6,7 +6,6 @@ python:
   - "3.6"
   - "3.7"
   - "3.8"
-  - "pypy3"
 jobs:
   fast_finish: true
   include:
@@ -18,7 +17,6 @@ before_install:
   - python -m pip install --upgrade virtualenv
 install:
   - pip install -U tox
-  - pip install cryptography==3.4.6
 script: tox
 notifications:
   email: false
