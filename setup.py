@@ -27,12 +27,14 @@ setup(
     long_description_content_type='text/x-rst',
     install_requires=[
         'requests>=2.22.0',
-        'authlib'
+        'authlib',
+        'zeep'
     ],
     tests_require=[
         'nose>=1.3.0',
         'pytz>=2014.1.1',
         'responses>=0.5.1',
+        'cryptography<3.4',
     ],
     test_suite='nose.collector',
     keywords=about['__keywords__'],

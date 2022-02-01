@@ -3,6 +3,7 @@
 import http.client as http
 import re
 import unittest
+import decimal
 from collections import OrderedDict
 from datetime import datetime
 from unittest.mock import patch
@@ -438,6 +439,42 @@ class TestSFType(unittest.TestCase):
             start=datetime.now(), end=datetime.now())
 
         self.assertEqual(result, {})
+
+    @responses.activate
+    def test_get_parse_float_as_float(self):
+        """Ensure custom headers are used for get requests"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/Case/444$'),
+            body='{"currency": 42.0}',
+            status=http.OK
+        )
+
+        sf_type = _create_sf_type()
+        result = sf_type.get(record_id='444')
+        self.assertIsInstance(result['currency'], float)
+        self.assertEqual(result, {"currency": 42.0})
+
+    @responses.activate
+    def test_get_parse_float_as_decimal(self):
+        """Ensure custom headers are used for get requests"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/Case/444$'),
+            body='{"currency": 42.0}',
+            status=http.OK
+        )
+
+        sf_type = SFType(
+            object_name='Case',
+            session_id='5',
+            sf_instance='my.salesforce.com',
+            session=requests.Session(),
+            parse_float=decimal.Decimal
+        )
+        result = sf_type.get(record_id='444')
+        self.assertIsInstance(result['currency'], decimal.Decimal)
+        self.assertEqual(result, {"currency": decimal.Decimal("42.0")})
 
 
 class TestSalesforce(unittest.TestCase):
@@ -1060,3 +1097,53 @@ class TestSalesforce(unittest.TestCase):
             'total_count': '0', 'failed_count': '0', 'completed_count': '0',
             'errors': []
             })
+
+    @responses.activate
+    def test_query_parse_float_to_decimal(self):
+        """Test querying generates float as Decimal values"""
+        responses.add(
+            responses.GET,
+            re.compile(
+                r'^https://.*/query/\?q=SELECT\+currency\+FROM\+Account$'
+            ),
+            body='{"currency": 1.0}',
+            status=http.OK,
+        )
+        session = requests.Session()
+        client = Salesforce(
+            session_id=tests.SESSION_ID,
+            instance_url=tests.SERVER_URL,
+            session=session,
+            parse_float=decimal.Decimal,
+        )
+
+        result = client.query('SELECT currency FROM Account')
+        self.assertIsInstance(result["currency"], decimal.Decimal)
+        self.assertNotIsInstance(result["currency"], float)
+        self.assertEqual(result, {"currency": decimal.Decimal(1.0)})
+        self.assertEqual(result, {"currency": 1.0})
+        self.assertNotEqual(result, {"currency": "1.0"})
+
+    @responses.activate
+    def test_query_more_parse_float_to_decimal(self):
+        """Test querying generates float as Decimal values"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/query/next-records-id$'),
+            body='{"currency": 1.0}',
+            status=http.OK,
+        )
+        session = requests.Session()
+        client = Salesforce(
+            session_id=tests.SESSION_ID,
+            instance_url=tests.SERVER_URL,
+            session=session,
+            parse_float=decimal.Decimal,
+        )
+
+        result = client.query_more('next-records-id', identifier_is_url=False)
+        self.assertIsInstance(result["currency"], decimal.Decimal)
+        self.assertNotIsInstance(result["currency"], float)
+        self.assertEqual(result, {"currency": decimal.Decimal(1.0)})
+        self.assertEqual(result, {"currency": 1.0})
+        self.assertNotEqual(result, {"currency": "1.0"})

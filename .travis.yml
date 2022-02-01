@@ -6,7 +6,6 @@ python:
   - "3.6"
   - "3.7"
   - "3.8"
-  - "pypy3"
 jobs:
   fast_finish: true
   include:
@@ -14,8 +13,10 @@ jobs:
       env: TOXENV=static
 env:
   - TOXENV=unit
+before_install:
+  - python -m pip install --upgrade virtualenv
 install:
-  - pip install tox
+  - pip install -U tox
 script: tox
 notifications:
   email: false
