@@ -18,6 +18,7 @@ before_install:
   - python -m pip install --upgrade virtualenv
 install:
   - pip install -U tox
+  - pip install cryptography==3.4.6
 script: tox
 notifications:
   email: false
