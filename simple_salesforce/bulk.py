@@ -7,6 +7,8 @@ import concurrent.futures
 from functools import partial
 
 import requests
+import json_stream
+import json_stream.requests
 
 from .util import call_salesforce, list_from_generator
 from .exceptions import SalesforceGeneralError
@@ -50,6 +52,15 @@ class SFBulkHandler:
     def __getattr__(self, name):
         return SFBulkType(object_name=name, bulk_url=self.bulk_url,
                           headers=self.headers, session=self.session)
+
+
+class SFBulkStreamMethod:
+    """
+    The json-stream library is pretty slow.  So STREAM_AS_TEXT should be used for situations where it is not
+    necessary to parse the results, for example, when the results are going to be written directly to a file.
+    """
+    STREAM_AS_JSON = "STREAM_AS_JSON"
+    STREAM_AS_TEXT = "STREAM_AS_TEXT"
 
 
 class SFBulkType:
@@ -151,7 +162,7 @@ class SFBulkType:
                                  headers=self.headers)
         return result.json(object_pairs_hook=OrderedDict)
 
-    def _get_batch_results(self, job_id, batch_id, operation):
+    def _get_batch_results(self, job_id, batch_id, operation, stream_results=None):
         """ retrieve a set of results from a completed job """
 
         url = "{}{}{}{}{}{}".format(self.bulk_url, 'job/', job_id, '/batch/',
@@ -163,12 +174,25 @@ class SFBulkType:
         if operation in ('query', 'queryAll'):
             for batch_result in result.json():
                 url_query_results = "{}{}{}".format(url, '/', batch_result)
-                batch_query_result = call_salesforce(url=url_query_results,
-                                                     method='GET',
-                                                     session=self.session,
-                                                     headers=self.headers
-                                                     ).json()
-                yield batch_query_result
+                if stream_results is None:
+                    batch_query_result = call_salesforce(url=url_query_results,
+                                                         method='GET',
+                                                         session=self.session,
+                                                         headers=self.headers
+                                                         ).json()
+                    yield batch_query_result
+                else:
+                    _intermediate_result = call_salesforce(url=url_query_results,
+                                                           method='GET',
+                                                           session=self.session,
+                                                           headers=self.headers,
+                                                           stream=True)
+                    if stream_results == SFBulkStreamMethod.STREAM_AS_JSON:
+                        for record in json_stream.requests.load(_intermediate_result).persistent():
+                            yield OrderedDict(record)
+                    elif stream_results == SFBulkStreamMethod.STREAM_AS_TEXT:
+                        for record in _intermediate_result.iter_lines():
+                            yield record
         else:
             yield result.json()
 
@@ -195,7 +219,7 @@ class SFBulkType:
 
     # pylint: disable=R0913
     def _bulk_operation(self, operation, data, use_serial=False,
-                        external_id_field=None, batch_size=10000, wait=5):
+                        external_id_field=None, batch_size=10000, wait=5, stream_results=None):
         """ String together helper functions to create a complete
         end-to-end bulk API request
         Arguments:
@@ -205,6 +229,8 @@ class SFBulkType:
         * external_id_field -- unique identifier field for upsert operations
         * wait -- seconds to sleep between checking batch status
         * batch_size -- number of records to assign for each batch in the job
+        * stream_results -- Can be set to a SFBulkStreamMethod value to stream back results as either plain-text (fast)
+            or json (slow).
         """
 
         if operation not in ('query', 'queryAll'):
@@ -258,7 +284,8 @@ class SFBulkType:
                                              batch_status['stateMessage'])
             results = self._get_batch_results(job_id=batch['jobId'],
                                               batch_id=batch['id'],
-                                              operation=operation)
+                                              operation=operation,
+                                              stream_results=stream_results)
         return results
 
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
@@ -300,19 +327,20 @@ class SFBulkType:
                                        batch_size=batch_size)
         return results
 
-    def query(self, data, lazy_operation=False):
+    def query(self, data, lazy_operation=False, stream_results=None):
         """ bulk query """
-        results = self._bulk_operation(operation='query', data=data)
+        results = self._bulk_operation(operation='query', data=data, stream_results=stream_results)
 
-        if lazy_operation:
+        if lazy_operation or stream_results:
             return results
 
         return list_from_generator(results)
 
-    def query_all(self, data, lazy_operation=False):
+    def query_all(self, data, lazy_operation=False, stream_results=None):
         """ bulk queryAll """
-        results = self._bulk_operation(operation='queryAll', data=data)
+        results = self._bulk_operation(operation='queryAll', data=data, stream_results=stream_results)
 
-        if lazy_operation:
+        if lazy_operation or stream_results:
             return results
+
         return list_from_generator(results)

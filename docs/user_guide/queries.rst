@@ -67,3 +67,23 @@ Search and Quick Search return ``None`` if there are no records, otherwise they 
 More details about syntax is available on the `Salesforce Query Language Documentation Developer Website`_
 
 .. _Salesforce Query Language Documentation Developer Website: http://www.salesforce.com/us/developer/docs/soql_sosl/index.htm
+
+Query results from the bulk API can be streamed to reduce memory usage.  This is useful when dealing with extremely large result sets.
+
+.. code-block:: python
+    from simple_salesforce.bulk import SFBulkStreamMethod
+
+    results = sf.bulk.Contact.query("SELECT Id,AccountId,Email,FirstName,LastName FROM Contact LIMIT 1000000",
+                                    stream_results=SFBulkStreamMethod.STREAM_AS_JSON)
+    for record in results:
+        process(record)
+
+Parsing streamed results from the bulk API can be extremely slow, since the json-stream library is not very fast.  For high throughput use cases, the STREAM_AS_TEXT flag can be passed.
+
+.. code-block:: python
+    from simple_salesforce.bulk import SFBulkStreamMethod
+
+    results = sf.bulk.Contact.query("SELECT Id,AccountId,Email,FirstName,LastName FROM Contact LIMIT 1000000",
+                                    stream_results=SFBulkStreamMethod.STREAM_AS_TEXT)
+    for line in results:
+        process(line)

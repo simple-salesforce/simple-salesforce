@@ -28,7 +28,8 @@ setup(
     install_requires=[
         'requests>=2.22.0',
         'authlib',
-        'zeep'
+        'zeep',
+        'json-stream>=1.3.0'
     ],
     tests_require=[
         'nose>=1.3.0',

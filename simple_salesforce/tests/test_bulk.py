@@ -8,6 +8,7 @@ import requests
 import responses
 from simple_salesforce import tests
 from simple_salesforce.api import Salesforce
+from simple_salesforce.bulk import SFBulkStreamMethod
 from simple_salesforce.exceptions import SalesforceGeneralError
 
 
@@ -62,6 +63,13 @@ class TestSFBulkType(unittest.TestCase):
              "Email": "contact2@example.com",
              "FirstName": "Alice", "LastName": "y"}
         ]
+        self.expected_query_as_text = b'[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13","Email": ' \
+                                      b'"contact1@example.com","FirstName": "Bob","LastName": "x"},' \
+                                      b'{"Id": "001xx000003DHP1AAO","AccountId": "ID-24","Email": ' \
+                                      b'"contact2@example.com","FirstName": "Alice","LastName": "y"}][{"Id": ' \
+                                      b'"001xx000003DHP0AAO", "AccountId": "ID-13","Email": "contact1@example.com",' \
+                                      b'"FirstName": "Bob","LastName": "x"},{"Id": "001xx000003DHP1AAO","AccountId": ' \
+                                      b'"ID-24","Email": "contact2@example.com","FirstName": "Alice","LastName": "y"}]'
 
     def test_bulk_type(self):
         """Test bulk type creation"""
@@ -612,3 +620,86 @@ class TestSFBulkType(unittest.TestCase):
                             session=session)
         contact = client.bulk.Contact.query_all(data)
         self.assertEqual(self.expected_query, contact)
+
+    @responses.activate
+    def test_query_all_streaming(self):
+        """Test bulk queryAll records"""
+        operation = 'queryAll'
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job$'),
+            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
+            '"contentType": "JSON","id": "Job-1","object": "Contact",'
+            '"operation": "%s","state": "Open"}' % operation,
+            status=http.OK)
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "Queued"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1$'),
+            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
+            '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
+            '"operation" : "%s","state" : "Closed"}' % operation,
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-1$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "InProgress"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-1$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "Completed"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(
+                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result$'),
+            body='["752x000000000F1","752x000000000F2"]',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r"""^https://[^/job].*/job/Job-1/batch/Batch-1/result
+            /752x000000000F1$""", re.X),
+            body='[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13",'
+            '"Email": "contact1@example.com","FirstName": "Bob",'
+            '"LastName": "x"},{"Id": "001xx000003DHP1AAO",'
+            '"AccountId": "ID-24","Email": "contact2@example.com",'
+            '"FirstName": "Alice","LastName": "y"}]',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(
+                r"""^https://[^/job].*/job/Job-1/batch/Batch-1/result
+                /752x000000000F2$""", re.X),
+            body='[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13",'
+            '"Email": "contact1@example.com","FirstName": "Bob",'
+            '"LastName": "x"},{"Id": "001xx000003DHP1AAO",'
+            '"AccountId": "ID-24","Email": "contact2@example.com",'
+            '"FirstName": "Alice","LastName": "y"}]',
+            status=http.OK
+        )
+
+        data = 'SELECT Id,AccountId,Email,FirstName,LastName FROM Contact'
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+        contact = []
+        for record in client.bulk.Contact.query_all(data, stream_results=SFBulkStreamMethod.STREAM_AS_JSON):
+            contact.append(record)
+        self.assertEqual(self.expected_query, contact)
+
+        contact_text = b''
+        for record in client.bulk.Contact.query_all(data, stream_results=SFBulkStreamMethod.STREAM_AS_TEXT):
+            contact_text += record
+        self.assertEqual(self.expected_query_as_text, contact_text)
