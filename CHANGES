@@ -1,5 +1,13 @@
 v1.11.5
 ======
+Hotfix missing wsdl file
+
+Bugs
+--------
+- Issue #533 Fix missing metadata.wsdl file
+
+v1.11.5
+======
 Changes as of 2022-01-05
 
 Bugs
