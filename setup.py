@@ -27,7 +27,7 @@ setup(
     long_description_content_type='text/x-rst',
     package_data={
         'simple_salesforce': ['metadata.wsdl'],
-        }
+        },
 install_requires = [
                        'requests>=2.22.0',
                        'authlib',
