@@ -12,7 +12,7 @@ from html import escape
 from json.decoder import JSONDecodeError
 
 import requests
-from authlib.jose import jwt
+import jwt
 
 from .api import DEFAULT_API_VERSION
 from .exceptions import SalesforceAuthenticationFailed
@@ -155,7 +155,6 @@ def SalesforceLogin(
     elif username is not None and \
             consumer_key is not None and \
             (privatekey_file is not None or privatekey is not None):
-        header = {'alg': 'RS256'}
         expiration = datetime.now(timezone.utc) + timedelta(minutes=3)
         payload = {
             'iss': consumer_key,
@@ -170,8 +169,7 @@ def SalesforceLogin(
                 key = key_file.read()
         else:
             key = privatekey
-
-        assertion = jwt.encode(header, payload, key)
+        assertion = jwt.encode(payload, key, algorithm='RS256')
 
         login_token_request_data = {
             'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
