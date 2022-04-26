@@ -195,29 +195,40 @@ class SFBulkType:
 
     def _add_autosized_batches(self, operation, data, job):
         """
-        Auto create batches that respect number of records or max file size limits for bulk api
-        """
+        Auto-create batches that respect bulk api V1 limits.
 
+        bulk v1 api has following limits
+        number of records <= 10000
+        AND
+        max file size <= 10MB
+
+        TODO: In future when simple-salesforce supports bulk api V2
+        we should detect api version and set max file size accordingly. V2
+        increases file size limit to 150MB
+        """
         file_limit = 1024 * 1024 * 10 # 10MB in bytes
         rec_limit = 10000
 
         batches = []
-        breaks = []
+        last_break = 0
         nrecs, outsize = 0, 0
         for i, rec in enumerate(data):
-            recsize = len(json.dumps(rec, default=str).encode()) + 1  # + 1 for ,
+            recsize = len(json.dumps(rec, default=str).encode()) + 2
             if (outsize + recsize + 2) > file_limit or nrecs > rec_limit:
-                breaks.append(i)
-                outsize, nrecs = 0, 0
-
-        for l, u in zip([0] + breaks, breaks + [len(data)]):
-            # l < u handles the case where data has length 0 or
-            # a break happens at the end of data
-            if l < u:
                 batches.append(
                     self._add_batch(
                         job_id=job['id'],
-                        data=data[l:u],
+                        data=data[last_break:i],
+                        operation=operation
+                    )
+                )
+                last_break = i
+                outsize, nrecs = 0, 0
+        if last_break < len(data):
+            batches.append(
+                    self._add_batch(
+                        job_id=job['id'],
+                        data=data[last_break:len(data)],
                         operation=operation
                     )
                 )
