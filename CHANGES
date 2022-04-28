@@ -1,3 +1,22 @@
+v1.11.5
+======
+Changes as of 2022-01-05
+
+Bugs
+--------
+- [#518] Fix hanging batch results in bulk api
+
+Features
+--------
+- [#475] Added support for all metadata api operations
+- [#485] Added base64 function to support upload, update, and get
+
+Other
+--------
+- [#495] Add parse_float to allow parsing of floats to decimal.Decimal
+- [#512] Updated README information for JWT Token
+
+
 v1.11.4
 ======
 Changes as of 2021-09-09
