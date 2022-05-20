@@ -52,6 +52,7 @@ class Salesforce:
             privatekey_file=None,
             privatekey=None,
             parse_float=None,
+            object_pairs_hook=OrderedDict
             ):
 
         """Initialize the instance with the given parameters.
@@ -99,6 +100,11 @@ class Salesforce:
                      exposed by simple_salesforce.
         * parse_float -- Function to parse float values with. Is passed along to
                          https://docs.python.org/3/library/json.html#json.load
+        * object_pairs_hook -- Function that will be called with the result of 
+                               any object literal decoded with an ordered list
+                               of pairs. To use python 'dict' change it to None.
+                               Is passed along to
+                        https://docs.python.org/3/library/json.html#json.load
         """
 
         if domain is None:
@@ -209,6 +215,7 @@ class Salesforce:
         self.tooling_url = '{base_url}tooling/'.format(base_url=self.base_url)
         self.api_usage = {}
         self._parse_float = parse_float
+        self._object_pairs_hook = object_pairs_hook
         self._mdapi = None
 
     @property
@@ -639,7 +646,7 @@ class Salesforce:
 
     def parse_result_to_json(self, result):
         """"Parse json from a Response object"""
-        return result.json(object_pairs_hook=OrderedDict,
+        return result.json(object_pairs_hook=self._object_pairs_hook,
                            parse_float=self._parse_float)
 
 
@@ -941,7 +948,7 @@ class SFType:
 
     def parse_result_to_json(self, result):
         """"Parse json from a Response object"""
-        return result.json(object_pairs_hook=OrderedDict,
+        return result.json(object_pairs_hook=self._dict,
                            parse_float=self._parse_float)
 
     def upload_base64(self, file_path, base64_field='Body', headers=None,
