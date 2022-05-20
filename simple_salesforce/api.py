@@ -32,6 +32,7 @@ class Salesforce:
     for easy use of the Salesforce REST API.
     """
     _parse_float = None
+    _object_pairs_hook = OrderedDict
 
     # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
     def __init__(
@@ -653,6 +654,7 @@ class Salesforce:
 class SFType:
     """An interface to a specific type of SObject"""
     _parse_float = None
+    _object_pairs_hook = OrderedDict
 
     # pylint: disable=too-many-arguments
     def __init__(
