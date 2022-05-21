@@ -8,9 +8,7 @@ import logging
 import re
 from collections import OrderedDict, namedtuple
 from urllib.parse import urljoin, urlparse
-
 import requests
-
 from .bulk import SFBulkHandler
 from .exceptions import SalesforceGeneralError
 from .login import SalesforceLogin
@@ -101,11 +99,8 @@ class Salesforce:
                      exposed by simple_salesforce.
         * parse_float -- Function to parse float values with. Is passed along to
                          https://docs.python.org/3/library/json.html#json.load
-        * object_pairs_hook -- Function that will be called with the result of 
-                               any object literal decoded with an ordered list
-                               of pairs. To use python 'dict' change it to None.
-                               Is passed along to
-                        https://docs.python.org/3/library/json.html#json.load
+        * object_pairs_hook -- Function to parse ordered list of pairs in json.
+                               To use python 'dict' change it to None or dict.
         """
 
         if domain is None:
@@ -683,11 +678,8 @@ class SFType:
                      exposed by simple_salesforce.
         * parse_float -- Function to parse float values with. Is passed along to
                          https://docs.python.org/3/library/json.html#json.load
-        * object_pairs_hook -- Function that will be called with the result of 
-                               any object literal decoded with an ordered list
-                               of pairs. To use python 'dict' change it to None.
-                               Is passed along to
-                        https://docs.python.org/3/library/json.html#json.load
+        * object_pairs_hook -- Function to parse ordered list of pairs in json.
+                               To use python 'dict' change it to None or dict.
         """
         self.session_id = session_id
         self.name = object_name
