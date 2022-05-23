@@ -1147,3 +1147,50 @@ class TestSalesforce(unittest.TestCase):
         self.assertEqual(result, {"currency": decimal.Decimal(1.0)})
         self.assertEqual(result, {"currency": 1.0})
         self.assertNotEqual(result, {"currency": "1.0"})
+
+    @responses.activate
+    def test_query_parse_json_to_OrderedDict(self):
+        """Test querying generates output as OrderedDict by default"""
+        responses.add(
+            responses.GET,
+            re.compile(
+                r'^https://.*/query/\?q=SELECT\+country,code\+FROM\+Account$'
+            ),
+            body='{"US": "USD", "India": "INR"}',
+            status=http.OK,
+        )
+        session = requests.Session()
+        client = Salesforce(
+            session_id=tests.SESSION_ID,
+            instance_url=tests.SERVER_URL,
+            session=session,
+        )
+
+        result = client.query('SELECT country, code FROM Account')
+        self.assertIsInstance(result, OrderedDict)
+        self.assertEqual(result, OrderedDict({"US": "USD", "India": "INR"}))
+        self.assertNotEqual(result, OrderedDict({"India": "INR", "US": "USD"}))
+
+    @responses.activate
+    def test_query_parse_json_to_Dict(self):
+        """Test querying generates float as Decimal values"""
+        responses.add(
+            responses.GET,
+            re.compile(
+                r'^https://.*/query/\?q=SELECT\+country,code\+FROM\+Account$'
+            ),
+            body='{"US": "USD", "India": "INR"}',
+            status=http.OK,
+        )
+        session = requests.Session()
+        client = Salesforce(
+            session_id=tests.SESSION_ID,
+            instance_url=tests.SERVER_URL,
+            session=session,
+            object_pairs_hook=None,
+        )
+
+        result = client.query('SELECT country, code FROM Account')
+        self.assertNotIsInstance(result, OrderedDict)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result, {"India": "INR", "US": "USD"})
