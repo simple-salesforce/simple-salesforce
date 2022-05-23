@@ -1149,7 +1149,7 @@ class TestSalesforce(unittest.TestCase):
         self.assertNotEqual(result, {"currency": "1.0"})
 
     @responses.activate
-    def test_query_parse_json_to_OrderedDict(self):
+    def test_query_parse_json_to_ordered_dict(self):
         """Test querying generates output as OrderedDict by default"""
         responses.add(
             responses.GET,
@@ -1171,7 +1171,7 @@ class TestSalesforce(unittest.TestCase):
         self.assertEqual(result, OrderedDict({"currency": 1.0}))
 
     @responses.activate
-    def test_query_parse_json_to_Dict(self):
+    def test_query_parse_json_to_dict(self):
         """Test querying generates json as Dict"""
         responses.add(
             responses.GET,
