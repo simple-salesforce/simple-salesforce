@@ -1154,9 +1154,9 @@ class TestSalesforce(unittest.TestCase):
         responses.add(
             responses.GET,
             re.compile(
-                r'^https://.*/query/\?q=SELECT\+country,code\+FROM\+Account$'
+                r'^https://.*/query/\?q=SELECT\+currency\+FROM\+Account$'
             ),
-            body='{"US": "USD", "India": "INR"}',
+            body='{"currency": 1.0}',
             status=http.OK,
         )
         session = requests.Session()
@@ -1168,18 +1168,17 @@ class TestSalesforce(unittest.TestCase):
 
         result = client.query('SELECT country, code FROM Account')
         self.assertIsInstance(result, OrderedDict)
-        self.assertEqual(result, OrderedDict({"US": "USD", "India": "INR"}))
-        self.assertNotEqual(result, OrderedDict({"India": "INR", "US": "USD"}))
+        self.assertEqual(result, OrderedDict({"currency": 1.0}))
 
     @responses.activate
     def test_query_parse_json_to_Dict(self):
-        """Test querying generates float as Decimal values"""
+        """Test querying generates json as Dict"""
         responses.add(
             responses.GET,
             re.compile(
-                r'^https://.*/query/\?q=SELECT\+country,code\+FROM\+Account$'
+                r'^https://.*/query/\?q=SELECT\+currency\+FROM\+Account$'
             ),
-            body='{"US": "USD", "India": "INR"}',
+            body='{"currency": 1.0}',
             status=http.OK,
         )
         session = requests.Session()
@@ -1193,4 +1192,4 @@ class TestSalesforce(unittest.TestCase):
         result = client.query('SELECT country, code FROM Account')
         self.assertNotIsInstance(result, OrderedDict)
         self.assertIsInstance(result, dict)
-        self.assertEqual(result, {"India": "INR", "US": "USD"})
+        self.assertEqual(result, {"currency": 1.0})
