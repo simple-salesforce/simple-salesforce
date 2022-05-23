@@ -1166,7 +1166,7 @@ class TestSalesforce(unittest.TestCase):
             session=session,
         )
 
-        result = client.query('SELECT country, code FROM Account')
+        result = client.query('SELECT currency FROM Account')
         self.assertIsInstance(result, OrderedDict)
         self.assertEqual(result, OrderedDict({"currency": 1.0}))
 
@@ -1189,7 +1189,7 @@ class TestSalesforce(unittest.TestCase):
             object_pairs_hook=None,
         )
 
-        result = client.query('SELECT country, code FROM Account')
+        result = client.query('SELECT currency FROM Account')
         self.assertNotIsInstance(result, OrderedDict)
         self.assertIsInstance(result, dict)
         self.assertEqual(result, {"currency": 1.0})
