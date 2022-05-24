@@ -328,7 +328,7 @@ class Salesforce:
         url = self.base_url + path
         result = self._call_salesforce(method, url, name=path, params=params,
                                        **kwargs)
- 
+
         json_result = self.parse_result_to_json(result)
         if len(json_result) == 0:
             return None
