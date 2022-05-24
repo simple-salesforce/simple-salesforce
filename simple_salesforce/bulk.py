@@ -223,7 +223,9 @@ class SFBulkType:
                     [data[i * batch_size:(i + 1) * batch_size]
                      for i in range((len(data) // batch_size + 1))] if i]
 
-                multi_thread_worker = partial(self.worker, operation=operation)
+                multi_thread_worker = partial(self.worker,
+                                              operation=operation,
+                                              wait=wait)
                 list_of_results = pool.map(multi_thread_worker, batches)
 
                 results = [x for sublist in list_of_results for i in
