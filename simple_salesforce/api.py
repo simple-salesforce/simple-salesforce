@@ -8,9 +8,7 @@ import logging
 import re
 from collections import OrderedDict, namedtuple
 from urllib.parse import urljoin, urlparse
-
 import requests
-
 from .bulk import SFBulkHandler
 from .exceptions import SalesforceGeneralError
 from .login import SalesforceLogin
@@ -32,6 +30,7 @@ class Salesforce:
     for easy use of the Salesforce REST API.
     """
     _parse_float = None
+    _object_pairs_hook = OrderedDict
 
     # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
     def __init__(
@@ -52,6 +51,7 @@ class Salesforce:
             privatekey_file=None,
             privatekey=None,
             parse_float=None,
+            object_pairs_hook=OrderedDict,
             ):
 
         """Initialize the instance with the given parameters.
@@ -99,6 +99,8 @@ class Salesforce:
                      exposed by simple_salesforce.
         * parse_float -- Function to parse float values with. Is passed along to
                          https://docs.python.org/3/library/json.html#json.load
+        * object_pairs_hook -- Function to parse ordered list of pairs in json.
+                               To use python 'dict' change it to None or dict.
         """
 
         if domain is None:
@@ -209,6 +211,7 @@ class Salesforce:
         self.tooling_url = '{base_url}tooling/'.format(base_url=self.base_url)
         self.api_usage = {}
         self._parse_float = parse_float
+        self._object_pairs_hook = object_pairs_hook
         self._mdapi = None
 
     @property
@@ -639,13 +642,14 @@ class Salesforce:
 
     def parse_result_to_json(self, result):
         """"Parse json from a Response object"""
-        return result.json(object_pairs_hook=OrderedDict,
+        return result.json(object_pairs_hook=self._object_pairs_hook,
                            parse_float=self._parse_float)
 
 
 class SFType:
     """An interface to a specific type of SObject"""
     _parse_float = None
+    _object_pairs_hook = OrderedDict
 
     # pylint: disable=too-many-arguments
     def __init__(
@@ -657,6 +661,7 @@ class SFType:
             proxies=None,
             session=None,
             parse_float=None,
+            object_pairs_hook=OrderedDict,
             ):
         """Initialize the instance with the given parameters.
 
@@ -673,6 +678,8 @@ class SFType:
                      exposed by simple_salesforce.
         * parse_float -- Function to parse float values with. Is passed along to
                          https://docs.python.org/3/library/json.html#json.load
+        * object_pairs_hook -- Function to parse ordered list of pairs in json.
+                               To use python 'dict' change it to None or dict.
         """
         self.session_id = session_id
         self.name = object_name
@@ -689,6 +696,7 @@ class SFType:
                                      sf_version=sf_version))
 
         self._parse_float = parse_float
+        self._object_pairs_hook = object_pairs_hook
 
     def metadata(self, headers=None):
         """Returns the result of a GET to `.../{object_name}/` as a dict
@@ -941,7 +949,7 @@ class SFType:
 
     def parse_result_to_json(self, result):
         """"Parse json from a Response object"""
-        return result.json(object_pairs_hook=OrderedDict,
+        return result.json(object_pairs_hook=self._object_pairs_hook,
                            parse_float=self._parse_float)
 
     def upload_base64(self, file_path, base64_field='Body', headers=None,
