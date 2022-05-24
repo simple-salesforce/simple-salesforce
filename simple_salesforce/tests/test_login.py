@@ -11,9 +11,71 @@ from urllib.parse import urlparse
 import requests
 import responses
 from simple_salesforce import tests
+from simple_salesforce.api import Salesforce
 from simple_salesforce.exceptions import SalesforceAuthenticationFailed
 from simple_salesforce.login import SalesforceLogin
 
+
+class TestCreateInstance(unittest.TestCase):
+    """
+    Test for the Salesforce SF Instance
+    These tests are mainly concerned with the the values passed in to the SF Class
+    when instantiated. We want to make sure that an appropiate exception is raised if
+    if incorrect login parameters are provided. 
+    """
+
+    # For these tests, we can patch the login methods uses for each one
+    # We are not concerened with the login response, but what happens
+    # when different parameters are provided for login, both valid and invalid 
+
+    # Adding these tests will make sure 
+
+    @patch('simple_salesforce.login.soap_login')
+    def test_username_password_token(self, mock_login):
+        "Valid user, pass, and token for soap login. Domain is optional."
+
+        mock_login.return_value = ("1234", "https://na15.salesforce.com")
+        
+        # Should not raise an exception
+        Salesforce(username="user", password="pass", security_token="token")
+
+    @patch('simple_salesforce.login.soap_login')
+    def test_username_password_missing_token(self, mock_login):
+        "Valid user, pass with missing token for soap login"
+
+        mock_login.return_value = ("1234", "https://na15.salesforce.com")
+        
+        # Should raise a value error since the all 3 username, password, and token are required
+        self.assertRaises(ValueError,  Salesforce, username="user", password="pass", security_token="token")
+
+    @patch('simple_salesforce.login.soap_login')
+    def test_username_password_invalid_token(self, mock_login):
+        "Valid user, pass with invalid token as int for soap login"
+
+        mock_login.return_value = ("1234", "https://na15.salesforce.com")
+        
+        # Should raise a value error since the all 3 username, password, and token are required
+        # and all should be string values 
+        self.assertRaises(ValueError,  Salesforce, username="user", password="pass", security_token="token")
+
+
+    @patch('simple_salesforce.login.token_login')
+    def test_username_consumerkey_privatekey(self, mock_login):
+        "Valid user, consumer key and private key"
+
+        mock_login.return_value = ("1234", "https://na15.salesforce.com")
+
+        # Should pass and not raise exception since all parameters are provided in correct format 
+        Salesforce(username="user", consumer_key="12ab34c", privatekey="34cd12")
+
+
+    def test_empty(self):
+        "No login parameters provided"
+
+        # Should raise exception for no paramaters provided
+        self.assertRaises(TypeError, Salesforce())  
+
+    
 
 class TestSalesforceLogin(unittest.TestCase):
     """Tests for the SalesforceLogin function"""
