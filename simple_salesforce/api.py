@@ -157,7 +157,7 @@ class Salesforce:
                     self.sf_instance += ':' + str(port)
             else:
                 self.sf_instance = instance
-            
+
             # Only generate the headers wihtout logging in first
             self._generate_headers()
 
@@ -246,8 +246,8 @@ class Salesforce:
 
     def _refresh_session(self):
         if self._salesforce_login_partial is None:
-            raise RuntimeError('The simple_salesforce session can not refreshed if a session id has been provided.')
-
+            raise RuntimeError(
+                'The simple_salesforce session can not refreshed if a session id has been provided.')
         self.session_id, self.sf_instance = self._salesforce_login_partial()
         self._generate_headers()
 
@@ -583,8 +583,9 @@ class Salesforce:
 
         result = self.session.request(
             method, url, headers=headers, **kwargs)
-        
-        if self._salesforce_login_partial is not None and result.status_code == 401:
+
+        if self._salesforce_login_partial is not None \
+                and result.status_code == 401:
             self._refresh_session()
             return self._call_salesforce(method, url, name, **kwargs)
 
@@ -711,19 +712,20 @@ class SFType:
         * object_pairs_hook -- Function to parse ordered list of pairs in json.
                                To use python 'dict' change it to None or dict.
         """
-        
+
         # Make this backwards compatible with any tests that
         # explicitly set the session_id and any other projects that
         # might be creating this object manually?
-        
+
         if salesforce is None and session_id is None:
-            raise RuntimeError('The argument session_id or salesforce must be specified to instanciate SFType.')
+            raise RuntimeError(
+                'The argument session_id or salesforce must be specified to instanciate SFType.')
 
         self._session_id = session_id
         self.salesforce = salesforce
         self.name = object_name
         self.session = session or requests.Session()
-        
+
         # don't wipe out original proxies with None
         if not session and proxies is not None:
             self.session.proxies = proxies
@@ -972,7 +974,7 @@ class SFType:
         additional_headers = kwargs.pop('headers', {})
         headers.update(additional_headers or {})
         result = self.session.request(method, url, headers=headers, **kwargs)
-        
+
         if (self.salesforce 
             and self.salesforce._salesforce_login_partial is not None
             and result.status_code == 401):
