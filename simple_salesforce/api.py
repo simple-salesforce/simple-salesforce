@@ -26,7 +26,6 @@ PerAppUsage = namedtuple('PerAppUsage', 'used total name')
 # pylint: disable=too-many-instance-attributes
 class Salesforce:
     """Salesforce Instance
-
     An instance of Salesforce is a handy way to wrap a Salesforce session
     for easy use of the Salesforce REST API.
     """
@@ -56,11 +55,8 @@ class Salesforce:
             ):
 
         """Initialize the instance with the given parameters.
-
         Available kwargs
-
         Password Authentication:
-
         * username -- the Salesforce username to use for authentication
         * password -- the password for the username
         * security_token -- the security token for the username
@@ -70,7 +66,6 @@ class Salesforce:
                     'login'.
 
         OAuth 2.0 JWT Bearer Token Authentication:
-
         * consumer_key -- the consumer key generated for the user
 
         Then either
@@ -238,6 +233,7 @@ class Salesforce:
         return self._mdapi
 
     def _generate_headers(self):
+        """Utility to generate headers when refreshing the session"""
         self.headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
@@ -245,17 +241,18 @@ class Salesforce:
         }
 
     def _refresh_session(self):
+        """Utility to refresh the token when _salesforce_login_partial is called"""
         if self._salesforce_login_partial is None:
             raise RuntimeError(
-                'The simple_salesforce session can not refreshed if a session id has been provided.')
+                'The simple_salesforce session can not refreshed if a '
+                'session id has been provided.'
+            )
         self.session_id, self.sf_instance = self._salesforce_login_partial()
         self._generate_headers()
 
     def describe(self, **kwargs):
         """Describes all available objects
-
         Arguments:
-
         * keyword arguments supported by requests.request (e.g. json, timeout)
         """
         url = self.base_url + "sobjects"
@@ -282,14 +279,11 @@ class Salesforce:
     def __getattr__(self, name):
         """Returns an `SFType` instance for the given Salesforce object type
         (given in `name`).
-
         The magic part of the SalesforceAPI, this function translates
         calls such as `salesforce_api_instance.Lead.metadata()` into fully
         constituted `SFType` instances to make a nice Python API wrapper
         for the REST API.
-
         Arguments:
-
         * name -- the name of a Salesforce object type, e.g. Lead or Contact
         """
 
@@ -310,13 +304,10 @@ class Salesforce:
     # User utility methods
     def set_password(self, user, password):
         """Sets the password of a user
-
         salesforce dev documentation link:
         https://www.salesforce.com/us/developer/docs/api_rest/Content
         /dome_sobject_user_password.htm
-
         Arguments:
-
         * user: the userID of the user to set
         * password: the new password
         """
@@ -342,7 +333,6 @@ class Salesforce:
         """Allows you to make a direct REST call if you know the path
 
         Arguments:
-
         * path: The path of the request
             Example: sobjects/User/ABC123/password'
         * params: dict of parameters to pass to the path
@@ -364,9 +354,7 @@ class Salesforce:
     def search(self, search):
         """Returns the result of a Salesforce search as a dict decoded from
         the Salesforce response JSON payload.
-
         Arguments:
-
         * search -- the fully formatted SOSL search string, e.g.
                     `FIND {Waldo}`
         """
@@ -385,9 +373,7 @@ class Salesforce:
     def quick_search(self, search):
         """Returns the result of a Salesforce search as a dict decoded from
         the Salesforce response JSON payload.
-
         Arguments:
-
         * search -- the non-SOSL search string, e.g. `Waldo`. This search
                     string will be wrapped to read `FIND {Waldo}` before being
                     sent to Salesforce
@@ -411,9 +397,7 @@ class Salesforce:
     def query(self, query, include_deleted=False, **kwargs):
         """Return the result of a Salesforce SOQL query as a dict decoded from
         the Salesforce response JSON payload.
-
         Arguments:
-
         * query -- the SOQL query to send to Salesforce, e.g.
                    SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
         * include_deleted -- True if deleted records should be included
@@ -432,9 +416,7 @@ class Salesforce:
         """Retrieves more results from a query that returned more results
         than the batch maximum. Returns a dict decoded from the Salesforce
         response JSON payload.
-
         Arguments:
-
         * next_records_identifier -- either the Id of the next Salesforce
                                      object in the result, or a URL to the
                                      next record in the result.
@@ -464,17 +446,13 @@ class Salesforce:
         """This is a lazy alternative to `query_all` - it does not construct
         the whole result set into one container, but returns objects from each
         page it retrieves from the API.
-
         Since `query_all` has always been eagerly executed, we reimplemented it
         using `query_all_iter`, only materializing the returned iterator to
         maintain backwards compatibility.
-
         The one big difference from `query_all` (apart from being lazy) is that
         we don't return a dictionary with `totalSize` and `done` here,
         we only return the records in an iterator.
-
         Arguments
-
         * query -- the SOQL query to send to Salesforce, e.g.
                    SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
         * include_deleted -- True if the query should include deleted records.
@@ -496,14 +474,11 @@ class Salesforce:
         """Returns the full set of results for the `query`. This is a
         convenience
         wrapper around `query(...)` and `query_more(...)`.
-
         The returned dict is the decoded JSON payload from the final call to
         Salesforce, but with the `totalSize` field representing the full
         number of results retrieved and the `records` list representing the
         full list of records retrieved.
-
         Arguments
-
         * query -- the SOQL query to send to Salesforce, e.g.
                    SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
         * include_deleted -- True if the query should include deleted records.
@@ -520,9 +495,7 @@ class Salesforce:
 
     def toolingexecute(self, action, method='GET', data=None, **kwargs):
         """Makes an HTTP request to an TOOLING REST endpoint
-
         Arguments:
-
         * action -- The REST endpoint for the request.
         * method -- HTTP method for the request (default GET)
         * data -- A dict of parameters to send in a POST / PUT request
@@ -547,9 +520,7 @@ class Salesforce:
 
     def apexecute(self, action, method='GET', data=None, **kwargs):
         """Makes an HTTP request to an APEX REST endpoint
-
         Arguments:
-
         * action -- The REST endpoint for the request.
         * method -- HTTP method for the request (default GET)
         * data -- A dict of parameters to send in a POST / PUT request
@@ -574,7 +545,6 @@ class Salesforce:
 
     def _call_salesforce(self, method, url, name="", **kwargs):
         """Utility method for performing HTTP call to Salesforce.
-
         Returns a `requests.result` object.
         """
         headers = self.headers.copy()
@@ -601,9 +571,7 @@ class Salesforce:
     @staticmethod
     def parse_api_usage(sforce_limit_info):
         """parse API usage and limits out of the Sforce-Limit-Info header
-
         Arguments:
-
         * sforce_limit_info: The value of response header 'Sforce-Limit-Info'
             Example 1: 'api-usage=18/5000'
             Example 2: 'api-usage=25/5000;
@@ -630,12 +598,9 @@ class Salesforce:
 
     # file-based deployment function
     def deploy(self, zipfile, sandbox, **kwargs):
-
         """Deploy using the Salesforce Metadata API. Wrapper for
         SfdcMetaDataApi.deploy(...).
-
         Arguments:
-
         * zipfile: a .zip archive to deploy to an org, given as (
         "path/to/zipfile.zip")
         * options: salesforce DeployOptions in .json format.
@@ -653,11 +618,8 @@ class Salesforce:
         """Check on the progress of a file-based deployment via Salesforce
         Metadata API.
         Wrapper for SfdcMetaDataApi.check_deploy_status(...).
-
         Arguments:
-
         * asyncId: deployment async process ID, returned by Salesforce.deploy()
-
         Returns status of the deployment the asyncId given.
         """
         state, state_detail, deployment_detail, unit_test_detail = \
@@ -695,9 +657,7 @@ class SFType:
             object_pairs_hook=OrderedDict,
             ):
         """Initialize the instance with the given parameters.
-
         Arguments:
-
         * object_name -- the name of the type of SObject this represents,
                          e.g. `Lead` or `Contact`
         * session_id -- the session ID for authenticating to Salesforce
@@ -719,7 +679,9 @@ class SFType:
 
         if salesforce is None and session_id is None:
             raise RuntimeError(
-                'The argument session_id or salesforce must be specified to instanciate SFType.')
+                'The argument session_id or salesforce must be specified to '
+                'instanciate SFType.'
+            )
 
         self._session_id = session_id
         self.salesforce = salesforce
@@ -750,9 +712,7 @@ class SFType:
     def metadata(self, headers=None):
         """Returns the result of a GET to `.../{object_name}/` as a dict
         decoded from the JSON payload returned by Salesforce.
-
         Arguments:
-
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce('GET', self.base_url, headers=headers)
@@ -761,9 +721,7 @@ class SFType:
     def describe(self, headers=None):
         """Returns the result of a GET to `.../{object_name}/describe` as a
         dict decoded from the JSON payload returned by Salesforce.
-
         Arguments:
-
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
@@ -774,13 +732,10 @@ class SFType:
 
     def describe_layout(self, record_id, headers=None):
         """Returns the layout of the object
-
         Returns the result of a GET to
         `.../{object_name}/describe/layouts/<recordid>` as a dict decoded from
         the JSON payload returned by Salesforce.
-
         Arguments:
-
         * record_id -- the Id of the SObject to get
         * headers -- a dict with additional request headers.
         """
@@ -797,9 +752,7 @@ class SFType:
     def get(self, record_id, headers=None):
         """Returns the result of a GET to `.../{object_name}/{record_id}` as a
         dict decoded from the JSON payload returned by Salesforce.
-
         Arguments:
-
         * record_id -- the Id of the SObject to get
         * headers -- a dict with additional request headers.
         """
@@ -811,13 +764,10 @@ class SFType:
 
     def get_by_custom_id(self, custom_id_field, custom_id, headers=None):
         """Return an ``SFType`` by custom ID
-
         Returns the result of a GET to
         `.../{object_name}/{custom_id_field}/{custom_id}` as a dict decoded
         from the JSON payload returned by Salesforce.
-
         Arguments:
-
         * custom_id_field -- the API name of a custom field that was defined
                              as an External ID
         * custom_id - the External ID value of the SObject to get
@@ -835,11 +785,8 @@ class SFType:
 
     def create(self, data, headers=None):
         """Creates a new SObject using a POST to `.../{object_name}/`.
-
         Returns a dict decoded from the JSON payload returned by Salesforce.
-
         Arguments:
-
         * data -- a dict of the data to create the SObject from. It will be
                   JSON-encoded before being transmitted.
         * headers -- a dict with additional request headers.
@@ -853,13 +800,10 @@ class SFType:
     def upsert(self, record_id, data, raw_response=False, headers=None):
         """Creates or updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
-
         If `raw_response` is false (the default), returns the status code
         returned by Salesforce. Otherwise, return the `requests.Response`
         object.
-
         Arguments:
-
         * record_id -- an identifier for the SObject as described in the
                        Salesforce documentation
         * data -- a dict of the data to create or update the SObject from. It
@@ -877,13 +821,10 @@ class SFType:
     def update(self, record_id, data, raw_response=False, headers=None):
         """Updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
-
         If `raw_response` is false (the default), returns the status code
         returned by Salesforce. Otherwise, return the `requests.Response`
         object.
-
         Arguments:
-
         * record_id -- the Id of the SObject to update
         * data -- a dict of the data to update the SObject from. It will be
                   JSON-encoded before being transmitted.
@@ -900,13 +841,10 @@ class SFType:
     def delete(self, record_id, raw_response=False, headers=None):
         """Deletes an SObject using a DELETE to
         `.../{object_name}/{record_id}`.
-
         If `raw_response` is false (the default), returns the status code
         returned by Salesforce. Otherwise, return the `requests.Response`
         object.
-
         Arguments:
-
         * record_id -- the Id of the SObject to delete
         * raw_response -- a boolean indicating whether to return the response
                           directly, instead of the status code.
@@ -921,12 +859,10 @@ class SFType:
     def deleted(self, start, end, headers=None):
         # pylint: disable=line-too-long
         """Gets a list of deleted records
-
         Use the SObject Get Deleted resource to get a list of deleted records
         for the specified object.
         .../deleted/?start=2013-05-05T00:00:00+00:00&end=2013-05-10T00:00:00
         +00:00
-
         * start -- start datetime object
         * end -- end datetime object
         * headers -- a dict with additional request headers.
@@ -942,13 +878,10 @@ class SFType:
     def updated(self, start, end, headers=None):
         # pylint: disable=line-too-long
         """Gets a list of updated records
-
         Use the SObject Get Updated resource to get a list of updated
         (modified or added) records for the specified object.
-
          .../updated/?start=2014-03-20T00:00:00+00:00&end=2014-03-22T00:00:00
          +00:00
-
         * start -- start datetime object
         * end -- end datetime object
         * headers -- a dict with additional request headers.
@@ -970,7 +903,7 @@ class SFType:
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
-            }
+        }
         additional_headers = kwargs.pop('headers', {})
         headers.update(additional_headers or {})
         result = self.session.request(method, url, headers=headers, **kwargs)
