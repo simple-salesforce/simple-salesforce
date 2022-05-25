@@ -702,6 +702,7 @@ class SFType:
 
     @property
     def session_id(self):
+        """Helper to return the session id"""
         if self.salesforce is not None:
             return self.salesforce.session_id
         return self._session_id
