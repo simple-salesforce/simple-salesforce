@@ -241,7 +241,7 @@ class Salesforce:
         }
 
     def _refresh_session(self):
-        """Utility to refresh the token when _salesforce_login_partial is called"""
+        """Utility to refresh the session when expired"""
         if self._salesforce_login_partial is None:
             raise RuntimeError(
                 'The simple_salesforce session can not refreshed if a '
@@ -687,6 +687,8 @@ class SFType:
         self.salesforce = salesforce
         self.name = object_name
         self.session = session or requests.Session()
+        self._parse_float = parse_float
+        self._object_pairs_hook = object_pairs_hook
 
         # don't wipe out original proxies with None
         if not session and proxies is not None:
@@ -698,7 +700,6 @@ class SFType:
             '/{object_name}/'.format(instance=sf_instance,
                                      object_name=object_name,
                                      sf_version=sf_version))
-        self._parse_float = parse_float
 
     @property
     def session_id(self):
@@ -706,9 +707,6 @@ class SFType:
         if self.salesforce is not None:
             return self.salesforce.session_id
         return self._session_id
-
-        self._parse_float = parse_float
-        self._object_pairs_hook = object_pairs_hook
 
     def metadata(self, headers=None):
         """Returns the result of a GET to `.../{object_name}/` as a dict
@@ -911,7 +909,7 @@ class SFType:
 
         if (self.salesforce 
             and self.salesforce._salesforce_login_partial is not None
-            and result.status_code == 401):
+                and result.status_code == 401):
             self.salesforce._refresh_session()
             return self._call_salesforce(method, url, **kwargs)
 
