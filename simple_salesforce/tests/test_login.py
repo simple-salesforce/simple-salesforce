@@ -46,7 +46,7 @@ class TestCreateInstance(unittest.TestCase):
         mock_login.return_value = ("1234", "https://na15.salesforce.com")
         
         # Should raise a value error since the all 3 username, password, and token are required
-        self.assertRaises(ValueError,  Salesforce, username="user", password="pass", security_token="token")
+        self.assertRaises(ValueError,  Salesforce, username="user", password="pass")
 
     @patch('simple_salesforce.login.soap_login')
     def test_username_password_invalid_token(self, mock_login):
@@ -56,7 +56,7 @@ class TestCreateInstance(unittest.TestCase):
         
         # Should raise a value error since the all 3 username, password, and token are required
         # and all should be string values 
-        self.assertRaises(ValueError,  Salesforce, username="user", password="pass", security_token="token")
+        self.assertRaises(ValueError,  Salesforce, username="user", password="pass", security_token=123)
 
 
     @patch('simple_salesforce.login.token_login')
@@ -66,14 +66,17 @@ class TestCreateInstance(unittest.TestCase):
         mock_login.return_value = ("1234", "https://na15.salesforce.com")
 
         # Should pass and not raise exception since all parameters are provided in correct format 
-        Salesforce(username="user", consumer_key="12ab34c", privatekey="34cd12")
+        Salesforce(username="user", consumer_key="16ed2757debf646833e8ce6c1fb9594841b167f659b8163c820ea0522924d6ba", privatekey="feae1c8ed273bff90e581e9aca3008e8024ba4cd4605c222c8b658cdb2a9dcbb")
 
 
     def test_empty(self):
         "No login parameters provided"
 
-        # Should raise exception for no paramaters provided
-        self.assertRaises(TypeError, Salesforce())  
+        try:
+            # Should raise exception for no paramaters provided
+            self.assertRaises(ValueError, Salesforce()) 
+        except ValueError:
+            pass
 
     
 

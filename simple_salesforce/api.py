@@ -122,7 +122,7 @@ class Salesforce:
 
         # Determine if the user wants to use our username/password auth or pass
         # in their own information
-        if all(arg is not None for arg in (
+        if all(arg is not None and type(arg) is str for arg in (
                 username, password, security_token)):
             self.auth_type = "password"
 
@@ -137,7 +137,7 @@ class Salesforce:
                 client_id=client_id,
                 domain=self.domain)
 
-        elif all(arg is not None for arg in (
+        elif all(arg is not None and type(arg) is str for arg in (
                 session_id, instance or instance_url)):
             self.auth_type = "direct"
             self.session_id = session_id
@@ -152,7 +152,7 @@ class Salesforce:
             else:
                 self.sf_instance = instance
 
-        elif all(arg is not None for arg in (
+        elif all(arg is not None and type(arg) is str for arg in (
                 username, password, organizationId)):
             self.auth_type = 'ipfilter'
 
@@ -182,7 +182,7 @@ class Salesforce:
                 domain=self.domain)
 
         else:
-            raise TypeError(
+            raise ValueError(
                 'You must provide login information or an instance and token'
                 )
 
