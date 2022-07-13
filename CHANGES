@@ -1,3 +1,14 @@
+v1.12.0
+======
+Drop support for Python 3.5
+
+Features
+--------
+- [#507] Added automatic session refresh
+- [#546] Added dynamic sized batches to respect bulk api limits
+- [#548] Added optional dict flag for results returned in queries
+- [#550] Added support for OAuth2 endpoints
+
 v1.11.5
 ======
 Hotfix missing wsdl file

@@ -600,6 +600,8 @@ class TestSalesforce(unittest.TestCase):
         client.session = requests.Session()
         client.headers = {}
         client.base_url = 'https://localhost'
+        # pylint: disable=W0212
+        client._salesforce_login_partial = None
         client.query('q')
 
         self.assertDictEqual(client.api_usage, {'api-usage': Usage(18, 5000)})
@@ -620,7 +622,9 @@ class TestSalesforce(unittest.TestCase):
         client = Salesforce.__new__(Salesforce)
         client.session = requests.Session()
         client.headers = {}
+        # pylint: disable=W0212
         client.base_url = 'https://localhost'
+        client._salesforce_login_partial = None
         client.query('q')
 
         self.assertDictEqual(client.api_usage,
@@ -1147,3 +1151,95 @@ class TestSalesforce(unittest.TestCase):
         self.assertEqual(result, {"currency": decimal.Decimal(1.0)})
         self.assertEqual(result, {"currency": 1.0})
         self.assertNotEqual(result, {"currency": "1.0"})
+
+    @responses.activate
+    def test_oauth2_with_json_result(self):
+        """Test oauth2 endpoint returns json result"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/services/oauth2/userinfo$'),
+            body='{"user_id": "005xxxxxxxxxxxx", "name": "Test", "active": true}',
+            status=http.OK,
+            content_type='application/json')
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        result = client.oauth2('userinfo')
+        self.assertEqual(
+            result,
+            OrderedDict([
+                ('user_id', '005xxxxxxxxxxxx'),
+                ('name', 'Test'),
+                ('active', True)])
+        )
+
+    @responses.activate
+    def test_oauth2_without_json_result(self):
+        """Test oauth2 endpoint returns no result"""
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://.*/services/oauth2/revoke\?token=.+$$'),
+            body='{}',
+            status=http.OK,
+            content_type='')
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        params = {
+            'token': tests.SESSION_ID
+        }
+        result = client.oauth2('revoke', params, method='POST')
+        self.assertEqual(
+            result,
+            None
+        )
+
+    @responses.activate
+    def test_query_parse_json_to_ordered_dict(self):
+        """Test querying generates output as OrderedDict by default"""
+        responses.add(
+            responses.GET,
+            re.compile(
+                r'^https://.*/query/\?q=SELECT\+currency\+FROM\+Account$'
+            ),
+            body='{"currency": 1.0}',
+            status=http.OK,
+        )
+        session = requests.Session()
+        client = Salesforce(
+            session_id=tests.SESSION_ID,
+            instance_url=tests.SERVER_URL,
+            session=session,
+        )
+
+        result = client.query('SELECT currency FROM Account')
+        self.assertIsInstance(result, OrderedDict)
+        self.assertEqual(result, OrderedDict({"currency": 1.0}))
+
+    @responses.activate
+    def test_query_parse_json_to_dict(self):
+        """Test querying generates json as Dict"""
+        responses.add(
+            responses.GET,
+            re.compile(
+                r'^https://.*/query/\?q=SELECT\+currency\+FROM\+Account$'
+            ),
+            body='{"currency": 1.0}',
+            status=http.OK,
+        )
+        session = requests.Session()
+        client = Salesforce(
+            session_id=tests.SESSION_ID,
+            instance_url=tests.SERVER_URL,
+            session=session,
+            object_pairs_hook=None,
+        )
+
+        result = client.query('SELECT currency FROM Account')
+        self.assertNotIsInstance(result, OrderedDict)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result, {"currency": 1.0})

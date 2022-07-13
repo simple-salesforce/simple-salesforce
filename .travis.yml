@@ -2,7 +2,6 @@ os: linux
 dist: bionic
 language: python
 python:
-  - "3.5"
   - "3.6"
   - "3.7"
   - "3.8"
@@ -17,6 +16,7 @@ before_install:
   - python -m pip install --upgrade virtualenv
 install:
   - pip install -U tox
+  - pip install --force-reinstall setuptools==59.5.0
 script: tox
 notifications:
   email: false
