@@ -906,8 +906,8 @@ class SFType:
         additional_headers = kwargs.pop('headers', {})
         headers.update(additional_headers or {})
         result = self.session.request(method, url, headers=headers, **kwargs)
-
-        if (self.salesforce 
+        # pylint: disable=W0212
+        if (self.salesforce
             and self.salesforce._salesforce_login_partial is not None
                 and result.status_code == 401):
             self.salesforce._refresh_session()
