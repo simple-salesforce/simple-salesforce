@@ -1153,6 +1153,52 @@ class TestSalesforce(unittest.TestCase):
         self.assertNotEqual(result, {"currency": "1.0"})
 
     @responses.activate
+    def test_oauth2_with_json_result(self):
+        """Test oauth2 endpoint returns json result"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/services/oauth2/userinfo$'),
+            body='{"user_id": "005xxxxxxxxxxxx", "name": "Test", "active": true}',
+            status=http.OK,
+            content_type='application/json')
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        result = client.oauth2('userinfo')
+        self.assertEqual(
+            result,
+            OrderedDict([
+                ('user_id', '005xxxxxxxxxxxx'),
+                ('name', 'Test'),
+                ('active', True)])
+        )
+
+    @responses.activate
+    def test_oauth2_without_json_result(self):
+        """Test oauth2 endpoint returns no result"""
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://.*/services/oauth2/revoke\?token=.+$$'),
+            body='{}',
+            status=http.OK,
+            content_type='')
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        params = {
+            'token': tests.SESSION_ID
+        }
+        result = client.oauth2('revoke', params, method='POST')
+        self.assertEqual(
+            result,
+            None
+        )
+
+    @responses.activate
     def test_query_parse_json_to_ordered_dict(self):
         """Test querying generates output as OrderedDict by default"""
         responses.add(

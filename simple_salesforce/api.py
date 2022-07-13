@@ -215,6 +215,8 @@ class Salesforce:
                              .format(instance=self.sf_instance,
                                      version=self.sf_version))
         self.tooling_url = '{base_url}tooling/'.format(base_url=self.base_url)
+        self.oauth2_url = ('https://{instance}/services/oauth2/'
+                           .format(instance=self.sf_instance))
         self.api_usage = {}
         self._parse_float = parse_float
         self._object_pairs_hook = object_pairs_hook
@@ -349,6 +351,31 @@ class Salesforce:
             return None
 
         return json_result
+
+    # OAuth Endpoints Function
+    def oauth2(self, path, params=None, method='GET'):
+        """Allows you to make a request to OAuth endpoints if you know the path
+
+        Arguments:
+
+        * path: The path of the request
+            Example: /services/oauth2/token'
+        * params: dict of parameters to pass to the path
+        * method: HTTP request method, default GET
+        * other arguments supported by requests.request (e.g. json, timeout)
+        """
+        url = self.oauth2_url + path
+        result = self._call_salesforce(method, url, name=path, params=params)
+
+        content_type = result.headers.get('Content-Type')
+        if content_type is not None and 'json' in content_type:
+            json_result = self.parse_result_to_json(result)
+            if len(json_result) == 0:
+                return None
+            else:
+                return json_result
+        else:
+            return None
 
     # Search Functions
     def search(self, search):
