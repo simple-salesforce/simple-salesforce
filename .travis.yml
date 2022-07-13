@@ -5,6 +5,8 @@ python:
   - "3.6"
   - "3.7"
   - "3.8"
+  - "3.9"
+  - "3.10"
 jobs:
   fast_finish: true
   include:
@@ -16,6 +18,7 @@ before_install:
   - python -m pip install --upgrade virtualenv
 install:
   - pip install -U tox
+  - pip install -U setuptools
 script: tox
 notifications:
   email: false
