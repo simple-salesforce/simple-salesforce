@@ -600,6 +600,7 @@ class TestSalesforce(unittest.TestCase):
         client.session = requests.Session()
         client.headers = {}
         client.base_url = 'https://localhost'
+        # pylint: disable=W0212
         client._salesforce_login_partial = None
         client.query('q')
 
@@ -621,6 +622,7 @@ class TestSalesforce(unittest.TestCase):
         client = Salesforce.__new__(Salesforce)
         client.session = requests.Session()
         client.headers = {}
+        # pylint: disable=W0212
         client.base_url = 'https://localhost'
         client._salesforce_login_partial = None
         client.query('q')
