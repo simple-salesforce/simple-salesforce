@@ -1,3 +1,7 @@
+v1.11.5
+======
+Fix pylint errors and build errors on Travis-CI
+
 v1.12.0
 ======
 Drop support for Python 3.5
