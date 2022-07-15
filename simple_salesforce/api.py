@@ -372,7 +372,7 @@ class Salesforce:
             if content_type is not None \
                and 'json' in content_type else None
 
-         return None if json_result and len(json_result) == 0 else json_result
+        return None if json_result and len(json_result) == 0 else json_result
 
     # Search Functions
     def search(self, search):
