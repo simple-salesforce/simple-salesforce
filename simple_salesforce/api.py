@@ -368,12 +368,11 @@ class Salesforce:
         result = self._call_salesforce(method, url, name=path, params=params)
 
         content_type = result.headers.get('Content-Type')
-        json_result = self.parse_result_to_json(result) if content_type is not None and 'json' in content_type else None
-        
-        if json_result and len(json_result) == 0:
-            return None
-        else:
-            return json_result
+        json_result = self.parse_result_to_json(result) \
+            if content_type is not None \
+               and 'json' in content_type else None
+
+         return None if json_result and len(json_result) == 0 else json_result
 
     # Search Functions
     def search(self, search):
