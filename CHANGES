@@ -1,4 +1,4 @@
-v1.11.5
+v1.12.1
 ======
 Fix pylint errors and build errors on Travis-CI
 
