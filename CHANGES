@@ -1,3 +1,11 @@
+v1.12.1
+======
+Fix pylint errors and build errors on Travis-CI
+
+Bugs
+--------
+- Issue #557 - SFType arguments were re-arranged from v1.11.5 causing failure for some users explicitly calling SFType and using default arguement position
+
 v1.12.0
 ======
 Drop support for Python 3.5

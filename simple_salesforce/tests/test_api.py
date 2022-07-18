@@ -1158,7 +1158,9 @@ class TestSalesforce(unittest.TestCase):
         responses.add(
             responses.GET,
             re.compile(r'^https://.*/services/oauth2/userinfo$'),
-            body='{"user_id": "005xxxxxxxxxxxx", "name": "Test", "active": true}',
+            body='{"user_id": "005xxxxxxxxxxxx",' \
+                        '"name": "Test", ' \
+                        '"active": true}',
             status=http.OK,
             content_type='application/json')
         session = requests.Session()

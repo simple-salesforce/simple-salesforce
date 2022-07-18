@@ -300,7 +300,7 @@ class Salesforce:
                                  self.session)
 
         return SFType(
-            name, self.sf_instance, self.session_id, sf_version=self.sf_version,
+            name, self.session_id, self.sf_instance, sf_version=self.sf_version,
             proxies=self.proxies, session=self.session, salesforce=self)
 
     # User utility methods
@@ -368,14 +368,11 @@ class Salesforce:
         result = self._call_salesforce(method, url, name=path, params=params)
 
         content_type = result.headers.get('Content-Type')
-        if content_type is not None and 'json' in content_type:
-            json_result = self.parse_result_to_json(result)
-            if len(json_result) == 0:
-                return None
-            else:
-                return json_result
-        else:
-            return None
+        json_result = self.parse_result_to_json(result) \
+            if content_type is not None \
+               and 'json' in content_type else None
+
+        return None if json_result and len(json_result) == 0 else json_result
 
     # Search Functions
     def search(self, search):
@@ -674,8 +671,8 @@ class SFType:
     def __init__(
             self,
             object_name,
+            session_id,
             sf_instance,
-            session_id=None,
             sf_version=DEFAULT_API_VERSION,
             proxies=None,
             session=None,
