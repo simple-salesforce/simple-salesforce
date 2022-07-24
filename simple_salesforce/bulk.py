@@ -396,7 +396,7 @@ class SFBulkType:
         """
         results = self._bulk_operation(use_serial=use_serial,
                                        operation='hardDelete', data=data,
-                                       batch_size=batch_size)
+                                       batch_size=batch_size, wait=wait)
         return results
 
     def query(self, data, lazy_operation=False, wait=5):
