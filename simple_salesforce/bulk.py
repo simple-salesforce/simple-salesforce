@@ -335,7 +335,7 @@ class SFBulkType:
         return results
 
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
-    def delete(self, data, batch_size=10000, use_serial=False):
+    def delete(self, data, batch_size=10000, use_serial=False, wait=5):
         """ soft delete records
 
         Data is batched by 10,000 records by default. To pick a lower size
@@ -344,11 +344,11 @@ class SFBulkType:
         """
         results = self._bulk_operation(use_serial=use_serial,
                                        operation='delete', data=data,
-                                       batch_size=batch_size)
+                                       batch_size=batch_size, wait=wait)
         return results
 
     def insert(self, data, batch_size=10000,
-               use_serial=False):
+               use_serial=False, wait=5):
         """ insert records
 
         Data is batched by 10,000 records by default. To pick a lower size
@@ -357,11 +357,11 @@ class SFBulkType:
         """
         results = self._bulk_operation(use_serial=use_serial,
                                        operation='insert', data=data,
-                                       batch_size=batch_size)
+                                       batch_size=batch_size, wait=wait)
         return results
 
     def upsert(self, data, external_id_field, batch_size=10000,
-               use_serial=False):
+               use_serial=False, wait=5):
         """ upsert records based on a unique identifier
 
         Data is batched by 10,000 records by default. To pick a lower size
@@ -371,10 +371,11 @@ class SFBulkType:
         results = self._bulk_operation(use_serial=use_serial,
                                        operation='upsert',
                                        external_id_field=external_id_field,
-                                       data=data, batch_size=batch_size)
+                                       data=data, batch_size=batch_size,
+                                       wait=wait)
         return results
 
-    def update(self, data, batch_size=10000, use_serial=False):
+    def update(self, data, batch_size=10000, use_serial=False, wait=5):
         """ update records
 
         Data is batched by 10,000 records by default. To pick a lower size
@@ -383,10 +384,10 @@ class SFBulkType:
         """
         results = self._bulk_operation(use_serial=use_serial,
                                        operation='update', data=data,
-                                       batch_size=batch_size)
+                                       batch_size=batch_size, wait=wait)
         return results
 
-    def hard_delete(self, data, batch_size=10000, use_serial=False):
+    def hard_delete(self, data, batch_size=10000, use_serial=False, wait=5):
         """ hard delete records
 
         Data is batched by 10,000 records by default. To pick a lower size
@@ -398,18 +399,18 @@ class SFBulkType:
                                        batch_size=batch_size)
         return results
 
-    def query(self, data, lazy_operation=False):
+    def query(self, data, lazy_operation=False, wait=5):
         """ bulk query """
-        results = self._bulk_operation(operation='query', data=data)
+        results = self._bulk_operation(operation='query', data=data, wait=wait)
 
         if lazy_operation:
             return results
 
         return list_from_generator(results)
 
-    def query_all(self, data, lazy_operation=False):
+    def query_all(self, data, lazy_operation=False, wait=5):
         """ bulk queryAll """
-        results = self._bulk_operation(operation='queryAll', data=data)
+        results = self._bulk_operation(operation='queryAll', data=data, wait=wait)
 
         if lazy_operation:
             return results
