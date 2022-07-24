@@ -410,7 +410,7 @@ class SFBulkType:
 
     def query_all(self, data, lazy_operation=False, wait=5):
         """ bulk queryAll """
-        results = self._bulk_operation(operation='queryAll', data=data, 
+        results = self._bulk_operation(operation='queryAll', data=data,
             wait=wait)
 
         if lazy_operation:
