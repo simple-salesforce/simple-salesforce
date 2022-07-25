@@ -81,4 +81,5 @@ def call_salesforce(url, method, session, headers, **kwargs):
     if result.status_code >= 300:
         exception_handler(result)
 
+    print(header)
     return result
