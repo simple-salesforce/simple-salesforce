@@ -1,5 +1,4 @@
 """Version details for simple-salesforce
-
 This file shamelessly taken from the requests library"""
 
 __title__ = 'simple-salesforce'
