@@ -193,7 +193,7 @@ class SFBulkType:
         result = batch_results
         return result
 
-    def _add_autosized_batches(self, operation, data, job):
+    def _add_autosized_batches(self, data, operation, job):
         """
         Auto-create batches that respect bulk api V1 limits.
 
@@ -219,41 +219,29 @@ class SFBulkType:
         * Maximum number of characters in a record: 400,000
         * Maximum number of characters in a field: 131,072
         """
-        file_limit = 1024 * 1024 * 10 # 10MB in bytes
+        file_limit = 1024 * 1024 * 10  # 10MB in bytes
         rec_limit = 10000
         char_limit = 10000000
 
         batches = []
         last_break = 0
-        nrecs, outsize, outchars = 0, 0, 0
+        nrecs, recsize = 0, 0
         for i, rec in enumerate(data):
             # 2 is added to account for the enclosing `[]`
             # and the separator `, ` between records.
-            recsize = len(json.dumps(rec, default=str)) + 2
-            recchars = len(str(rec)) + 2
+            recsize += len(json.dumps(rec, default=str)) + 2
+            nrecs += len(rec)
             if any([
-                outsize + recsize > file_limit,
-                outchars + recchars > char_limit,
-                nrecs > rec_limit
-            ]):
-                batches.append(
-                    self._add_batch(
-                        job_id=job['id'],
-                        data=data[last_break:i],
-                        operation=operation
-                    )
-                )
+                recsize >= file_limit,
+                recsize >= char_limit,
+                nrecs >= rec_limit,
+                i >= len(data) - 1
+                ]):
+                batches.append(data[last_break:i])
                 last_break = i
-                nrecs, outsize, outchars = 0, 0, 0
-        if last_break < len(data):
-            batches.append(
-                self._add_batch(
-                    job_id=job['id'],
-                    data=data[last_break:len(data)],
-                    operation=operation
-                )
-            )
-        return batches
+                nrecs, recsize = 0, 0
+        return [self._add_batch(job_id=job, data=i,
+                                operation=operation) for i in batches]
 
     # pylint: disable=R0913
     def _bulk_operation(self, operation, data, use_serial=False,
@@ -285,7 +273,9 @@ class SFBulkType:
                                        use_serial=use_serial,
                                        external_id_field=external_id_field)
                 if batch_size == 'auto':
-                    batches = self._add_autosized_batches(operation, data, job)
+                    batches = self._add_autosized_batches(job=job['id'],
+                                                          data=data,
+                                                          operation=operation)
                 else:
                     batches = [
                         self._add_batch(job_id=job['id'], data=i,
