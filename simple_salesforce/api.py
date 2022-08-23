@@ -9,7 +9,9 @@ import re
 from collections import OrderedDict, namedtuple
 from functools import partial
 from urllib.parse import urljoin, urlparse
+
 import requests
+
 from .bulk import SFBulkHandler
 from .exceptions import SalesforceGeneralError
 from .login import SalesforceLogin
@@ -260,7 +262,7 @@ class Salesforce:
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
-        }
+            }
 
     def _refresh_session(self):
         """Utility to refresh the session when expired"""
@@ -268,7 +270,7 @@ class Salesforce:
             raise RuntimeError(
                 'The simple_salesforce session can not refreshed if a '
                 'session id has been provided.'
-            )
+                )
         self.session_id, self.sf_instance = self._salesforce_login_partial()
         self._generate_headers()
 
@@ -725,7 +727,7 @@ class SFType:
             raise RuntimeError(
                 'The argument session_id or salesforce must be specified to '
                 'instanciate SFType.'
-            )
+                )
 
         self._session_id = session_id
         self.salesforce = salesforce
@@ -946,13 +948,13 @@ class SFType:
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
-        }
+            }
         additional_headers = kwargs.pop('headers', {})
         headers.update(additional_headers or {})
         result = self.session.request(method, url, headers=headers, **kwargs)
         # pylint: disable=W0212
         if (self.salesforce
-            and self.salesforce._salesforce_login_partial is not None
+                and self.salesforce._salesforce_login_partial is not None
                 and result.status_code == 401):
             self.salesforce._refresh_session()
             return self._call_salesforce(method, url, **kwargs)
