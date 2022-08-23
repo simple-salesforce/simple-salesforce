@@ -48,6 +48,7 @@ class Salesforce:
             client_id=None,
             domain=None,
             consumer_key=None,
+            consumer_secret=None,
             privatekey_file=None,
             privatekey=None,
             parse_float=None,
@@ -64,6 +65,10 @@ class Salesforce:
                     common domains, such as 'login' or 'test', or
                     Salesforce My domain. If not used, will default to
                     'login'.
+                    
+        OAuth 2.0 Connected App Token Authentication:
+        * consumer_key -- the consumer key generated for the user
+        * consumer_secret -- the consumer secret generated for the user
 
         OAuth 2.0 JWT Bearer Token Authentication:
         * consumer_key -- the consumer key generated for the user
@@ -170,6 +175,21 @@ class Salesforce:
                 sf_version=self.sf_version,
                 proxies=self.proxies,
                 client_id=client_id,
+                domain=self.domain)
+            self._refresh_session()
+
+        elif all(arg is not None for arg in (
+                username, consumer_key, consumer_secret)):
+            self.auth_type = "password"
+
+            # Pass along the username/password to our login helper
+            self._salesforce_login_partial = partial(
+                SalesforceLogin,
+                session=self.session,
+                username=username,
+                consumer_key=consumer_key,
+                consumer_secret=consumer_secret,
+                proxies=self.proxies,
                 domain=self.domain)
             self._refresh_session()
 
