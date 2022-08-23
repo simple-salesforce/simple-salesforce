@@ -230,7 +230,7 @@ class SFBulkType:
             # 2 is added to account for the enclosing `[]`
             # and the separator `, ` between records.
             recsize = len(json.dumps(rec, default=str)) + 2
-            recchars = str(rec) + 2
+            recchars = len(str(rec)) + 2
             if any([
                 outsize + recsize > file_limit,
                 outchars + recchars > char_limit,
