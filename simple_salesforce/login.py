@@ -56,9 +56,8 @@ def SalesforceLogin(
                 common domains, such as 'login' or 'test', or
                 Salesforce My domain. If not used, will default to
                 'login'.
-    * consumer_key -- the consumer key generated for the user/connected app
-    * consumer_secret -- the consumer secret generated for the user/connected 
-    app
+    * consumer_key -- the consumer key generated for the user/app
+    * consumer_secret -- the consumer secret generated for the user/app
     * privatekey_file -- the path to the private key file used
                          for signing the JWT token.
     * privatekey -- the private key to use
