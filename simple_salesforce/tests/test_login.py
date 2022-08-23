@@ -38,10 +38,10 @@ class TestSalesforceLogin(unittest.TestCase):
             url_regex,
             body=response_body,
             status=http.OK
-        )
+            )
         session_state = {
             'used': False,
-        }
+            }
 
         # pylint: disable=missing-docstring,unused-argument
         def on_response(*args, **kwargs):
@@ -50,12 +50,12 @@ class TestSalesforceLogin(unittest.TestCase):
         session = requests.Session()
         session.hooks = {
             'response': on_response,
-        }
+            }
         session_id, instance = SalesforceLogin(
             session=session,
             username='foo@bar.com',
             **salesforce_login_kwargs
-        )
+            )
         self.assertTrue(session_state['used'])
         self.assertEqual(session_id, tests.SESSION_ID)
         self.assertEqual(instance, urlparse(tests.SERVER_URL).netloc)
@@ -73,7 +73,7 @@ class TestSalesforceLogin(unittest.TestCase):
             'password': 'password',
             'security_token': 'token',
             'domain': 'testdomain.my'
-        }
+            }
         self._test_login_success(
             re.compile(r'^https://testdomain.my.salesforce.com/.*$'),
             login_args)
@@ -86,10 +86,10 @@ class TestSalesforceLogin(unittest.TestCase):
             re.compile(r'^https://.*$'),
             body=tests.LOGIN_RESPONSE_SUCCESS,
             status=http.OK
-        )
+            )
         session_state = {
             'used': False,
-        }
+            }
 
         # pylint: disable=missing-docstring,unused-argument
         def on_response(*args, **kwargs):
@@ -98,7 +98,7 @@ class TestSalesforceLogin(unittest.TestCase):
         session = requests.Session()
         session.hooks = {
             'response': on_response,
-        }
+            }
         session_id, instance = SalesforceLogin(
             session=session,
             username='foo@bar.com',
@@ -113,7 +113,12 @@ class TestSalesforceLogin(unittest.TestCase):
         return_mock = Mock()
         return_mock.status_code = 500
         # pylint: disable=line-too-long
-        return_mock.content = '<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sf="urn:fault.partner.soap.sforce.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soapenv:Body><soapenv:Fault><faultcode>INVALID_LOGIN</faultcode><faultstring>INVALID_LOGIN: Invalid username, password, security token; or user locked out.</faultstring><detail><sf:LoginFault xsi:type="sf:LoginFault"><sf:exceptionCode>INVALID_LOGIN</sf:exceptionCode><sf:exceptionMessage>Invalid username, password, security token; or user locked out.</sf:exceptionMessage></sf:LoginFault></detail></soapenv:Fault></soapenv:Body></soapenv:Envelope>'
+        return_mock.content = '<?xml version="1.0" ' \
+                              'encoding="UTF-8"?><soapenv:Envelope ' \
+                              'xmlns:soapenv="http://schemas.xmlsoap.org/soap' \
+                              '/envelope/" ' \
+                              'xmlns:sf="urn:fault.partner.soap.sforce.com" ' \
+                              'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soapenv:Body><soapenv:Fault><faultcode>INVALID_LOGIN</faultcode><faultstring>INVALID_LOGIN: Invalid username, password, security token; or user locked out.</faultstring><detail><sf:LoginFault xsi:type="sf:LoginFault"><sf:exceptionCode>INVALID_LOGIN</sf:exceptionCode><sf:exceptionMessage>Invalid username, password, security token; or user locked out.</sf:exceptionMessage></sf:LoginFault></detail></soapenv:Fault></soapenv:Body></soapenv:Envelope>'
         self.mockrequest.post.return_value = return_mock
 
         with self.assertRaises(SalesforceAuthenticationFailed):
@@ -122,7 +127,7 @@ class TestSalesforceLogin(unittest.TestCase):
                 password='password',
                 security_token='token',
                 domain='test'
-            )
+                )
         self.assertTrue(self.mockrequest.post.called)
 
     @responses.activate
@@ -132,7 +137,7 @@ class TestSalesforceLogin(unittest.TestCase):
         login_args = {
             'consumer_key': '12345.abcde',
             'privatekey_file': pkey_file
-        }
+            }
         self._test_login_success(
             re.compile(r'^https://login.salesforce.com/.*$'), login_args,
             response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
@@ -147,7 +152,7 @@ class TestSalesforceLogin(unittest.TestCase):
         login_args = {
             'consumer_key': '12345.abcde',
             'privatekey': key
-        }
+            }
         self._test_login_success(
             re.compile(r'^https://login.salesforce.com/.*$'), login_args,
             response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
@@ -162,7 +167,7 @@ class TestSalesforceLogin(unittest.TestCase):
         login_args = {
             'consumer_key': '12345.abcde',
             'privatekey': key_bytes
-        }
+            }
         self._test_login_success(
             re.compile(r'^https://login.salesforce.com/.*$'), login_args,
             response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
@@ -172,7 +177,9 @@ class TestSalesforceLogin(unittest.TestCase):
         return_mock = Mock()
         return_mock.status_code = 400
         # pylint: disable=line-too-long
-        return_mock.content = '{"error": "invalid_client_id", "error_description": "client identifier invalid"}'
+        return_mock.content = '{"error": "invalid_client_id", ' \
+                              '"error_description": "client identifier ' \
+                              'invalid"}'
         self.mockrequest.post.return_value = return_mock
 
         with self.assertRaises(SalesforceAuthenticationFailed):
@@ -181,8 +188,8 @@ class TestSalesforceLogin(unittest.TestCase):
                 consumer_key='12345.abcde',
                 privatekey_file=os.path.join(
                     os.path.dirname(__file__), 'sample-key.pem'
+                    )
                 )
-            )
         self.assertTrue(self.mockrequest.post.called)
 
     @responses.activate
@@ -192,12 +199,13 @@ class TestSalesforceLogin(unittest.TestCase):
             responses.POST,
             re.compile(r'^https://login.*$'),
             # pylint: disable=line-too-long
-            body='{"error": "invalid_grant", "error_description": "user hasn\'t approved this consumer"}',
+            body='{"error": "invalid_grant", "error_description": "user '
+                 'hasn\'t approved this consumer"}',
             status=400
-        )
+            )
         session_state = {
             'used': False,
-        }
+            }
 
         # pylint: disable=missing-docstring,unused-argument
         def on_response(*args, **kwargs):
@@ -206,7 +214,7 @@ class TestSalesforceLogin(unittest.TestCase):
         session = requests.Session()
         session.hooks = {
             'response': on_response,
-        }
+            }
         with warnings.catch_warnings(record=True) as warning:
             with self.assertRaises(SalesforceAuthenticationFailed):
                 # pylint: disable=unused-variable
@@ -216,9 +224,38 @@ class TestSalesforceLogin(unittest.TestCase):
                     consumer_key='12345.abcde',
                     privatekey_file=os.path.join(
                         os.path.dirname(__file__), 'sample-key.pem'
+                        )
                     )
-                )
             assert len(warning) >= 1
             assert issubclass(warning[-1].category, UserWarning)
             assert str(warning[-1].message) == tests.TOKEN_WARNING
         self.assertTrue(session_state['used'])
+
+    @responses.activate
+    def test_connected_app_login_success(self):
+        """Test a successful connected app login with a key file"""
+        login_args = {
+            'consumer_key': '12345.abcde',
+            'consumer_secret': '12345.abcde'
+            }
+        self._test_login_success(
+            re.compile(r'^https://login.salesforce.com/.*$'), login_args,
+            response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
+
+    def test_connected_app_login_failure(self):
+        """Test a failed connected app login"""
+        return_mock = Mock()
+        return_mock.status_code = 400
+        # pylint: disable=line-too-long
+        return_mock.content = '{"error": "invalid_client_id", ' \
+                              '"error_description": "client identifier ' \
+                              'invalid"}'
+        self.mockrequest.post.return_value = return_mock
+
+        with self.assertRaises(SalesforceAuthenticationFailed):
+            SalesforceLogin(
+                username='myemail@example.com.sandbox',
+                consumer_key='12345.abcde',
+                consumer_secret='12345.abcde'
+                )
+        self.assertTrue(self.mockrequest.post.called)
