@@ -1,8 +1,10 @@
 """Async Class to work with Salesforce Metadata API """
 from base64 import b64encode, b64decode
+import os
 from xml.etree import ElementTree as ET
 
 import aiofiles
+from zeep import AsyncClient, Settings
 
 from simple_salesforce.messages import (
     DEPLOY_MSG,
@@ -11,6 +13,191 @@ from simple_salesforce.messages import (
     RETRIEVE_MSG,
 )
 from .aio_util import call_salesforce
+
+
+class AsyncMetadataType:
+    """
+    Salesforce Metadata Type (using Async Zeep client)
+    """
+    def __init__(self, name, service, zeep_type, session_header):
+        """
+        Initialize metadata type
+
+        :param name: Name of metadata type
+        :type name: str
+        :param service: Zeep service
+        :type service: zeep.proxy.ServiceProxy
+        :param zeep_type: Zeep type object
+        :type zeep_type: zeep.xsd.ComplexType or zeep.xsd.AnySimpleType
+        :param session_header: Session Id header for Metadata API calls
+        """
+        self._name = name
+        self._service = service
+        self._zeep_type = zeep_type
+        self._session_header = session_header
+
+    @staticmethod
+    def _handle_api_response(response):
+        """
+        Parses SaveResult and DeleteResult objects to identify if there was
+        an error, and raises exception accordingly
+
+        :param response: List of zeep.objects.SaveResult or
+        zeep.objects.DeleteResult objects
+        :type response: list
+        :raises Exception: If any Result object contains one or more error
+        messages
+        """
+        err_string = ""
+        for result in response:
+            if not result.success:
+                err_string += "\n{}: ".format(result.fullName)
+                for error in result.errors:
+                    err_string += "({}, {}), ".format(error.statusCode,
+                                                      error.message)
+        if err_string:
+            raise Exception(err_string)
+
+    async def __call__(self, *args, **kwargs):
+        """
+        Creates a new object of this metadata type
+
+        :param args: Parameters to pass to zeep.xsd.AnySimpleType
+        :param kwargs: Parameters to pass to zeep.xsd.ComplexType
+        :returns: An object of type self._name
+        """
+        return await self._zeep_type(*args, **kwargs)
+
+    async def create(self, metadata):
+        """
+        Performs a createMetadata call
+
+        :param metadata: Array of one or more metadata components.
+                         Limit: 10. (For CustomMetadata and CustomApplication
+                         only, the limit is 200.)
+                         You must submit arrays of only one type of
+                         component. For example, you can submit an
+                         array of 10 custom objects or 10 profiles, but not a
+                         mix of both types.
+        :type metadata: list
+        """
+        response = await self._service.createMetadata(
+            metadata,
+            _soapheaders=[self._session_header]
+        )
+        self._handle_api_response(response)
+
+    async def read(self, full_names):
+        """
+        Performs a readMetadata call
+
+        :param full_names: Array of full names of the components to read.
+                           Limit: 10. (For CustomMetadata and
+                           CustomApplication only, the limit is 200.)
+                           You must submit arrays of only one type of
+                           component. For example, you can submit an array
+                           of 10 custom objects or 10 profiles, but not a mix
+                           of both types.
+        :type full_names: list
+        :returns: A list of metadata components
+        :rtype: list
+        """
+        response = await self._service.readMetadata(
+            self._name,
+            full_names,
+            _soapheaders=[self._session_header]
+        )
+        if len(response) == 1:
+            return response[0]
+        return response
+
+    async def update(self, metadata):
+        """
+        Performs an updateMetadata call. All required fields must be passed
+        for each component
+
+        :param metadata: Array of one or more metadata components.
+                         Limit: 10. (For CustomMetadata and CustomApplication
+                         only, the limit is 200.)
+                         You must submit arrays of only one type of
+                         component. For example, you can submit an
+                         array of 10 custom objects or 10 profiles, but not a
+                         mix of both types.
+        :type metadata: list
+        """
+        response = await self._service.updateMetadata(
+            metadata,
+            _soapheaders=[self._session_header]
+        )
+        self._handle_api_response(response)
+
+    async def upsert(self, metadata):
+        """
+        Performs an upsertMetadata call. All required fields must be passed
+        for each component
+
+        :param metadata: Array of one or more metadata components.
+                         Limit: 10. (For CustomMetadata and CustomApplication
+                         only, the limit is 200.)
+                         You must submit arrays of only one type of
+                         component. For example, you can submit an
+                         array of 10 custom objects or 10 profiles, but not a
+                         mix of both types.
+        :type metadata: list
+        """
+        response = await self._service.updateMetadata(
+            metadata,
+            _soapheaders=[self._session_header]
+        )
+        self._handle_api_response(response)
+
+    async def delete(self, full_names):
+        """
+        Performs a deleteMetadata call
+
+        :param full_names: Array of full names of the components to delete.
+                           Limit: 10. (For CustomMetadata and
+                           CustomApplication only, the limit is 200.)
+                           You must submit arrays of only one type of
+                           component. For example, you can submit an array
+                           of 10 custom objects or 10 profiles, but not a mix
+                           of both types.
+        :type full_names: list
+        """
+        response = await self._service.deleteMetadata(
+            self._name,
+            full_names,
+            _soapheaders=[self._session_header]
+        )
+        self._handle_api_response(response)
+
+    async def rename(self, old_full_name, new_full_name):
+        """
+        Performs a renameMetadata call
+
+        :param old_full_name: The current component full name.
+        :type old_full_name: str
+        :param new_full_name: The new component full name.
+        :type new_full_name: str
+        """
+        result = await self._service.renameMetadata(
+            self._name,
+            old_full_name,
+            new_full_name,
+            _soapheaders=[self._session_header]
+        )
+        self._handle_api_response([result])
+
+    async def describe(self):
+        """
+        Performs a describeValueType call
+
+        :returns: DescribeValueTypeResult
+        """
+        return await self._service.describeValueType(
+            "{{http://soap.sforce.com/2006/04/metadata}}{}".format(self._name),
+            _soapheaders=[self._session_header])
+
 
 
 class AsyncSfdcMetadataApi:
@@ -24,21 +211,77 @@ class AsyncSfdcMetadataApi:
 
     # pylint: disable=R0913
     def __init__(
-        self, session, session_id, instance, sandbox, metadata_url, headers, api_version
+        self, session, session_id, instance, metadata_url, headers, api_version
     ):
         """ Initialize and check session """
         self.session = session
         self._session_id = session_id
         self._instance = instance
-        self._sandbox = sandbox
         self.metadata_url = metadata_url
         self.headers = headers
         self._api_version = api_version
         self._deploy_zip = None
 
+        wsdl_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            'metadata.wsdl'
+        )
+        self._client = AsyncClient(
+            os.path.join('simple_salesforce', wsdl_path),
+            settings=Settings(strict=False,
+            xsd_ignore_sequence_order=True)
+        )
+        self._service = None
+        self._session_header = None
+
+    async def start_session(self):
+        if self._service is None:
+            self._service = await self._client.create_service(
+                "{http://soap.sforce.com/2006/04/metadata}MetadataBinding",
+                self.metadata_url)
+        if self._session_header is None:
+            self._session_header = await self._client.get_element('ns0:SessionHeader')(
+                sessionId=self._session_id)
+
+    def __getattr__(self, item):
+        if self._service is None:
+            raise ValueError("AsyncMetadataType must be called after `start_session()`")
+        return AsyncMetadataType(
+            item,
+            self._service,
+            self._client.get_type('ns0:' + item),
+            self._session_header
+        )
+
+    async def describe_metadata(self):
+        """
+        Performs a describeMetadata call
+
+        :returns: An object of zeep.objects.DescribeMetadataResult
+        """
+        await self.start_session()
+        return self._service.describeMetadata(self._api_version, _soapheaders=[
+            self._session_header])
+
+    async def list_metadata(self, queries):
+        """
+        Performs a listMetadata call
+
+        :param queries: A list of zeep.objects.ListMetadataQuery that specify
+        which components you are interested in.
+                        Limit: 3
+        :type queries: list
+        :returns: List of zeep.objects.FileProperties objects
+        :rtype: list
+        """
+        await self.start_session()
+        return self._service.listMetadata(queries, self._api_version,
+                                          _soapheaders=[self._session_header])
+
+
     # pylint: disable=R0914
     # pylint: disable-msg=C0103
-    async def deploy(self, zipfile, **kwargs):
+    async def deploy(self, zipfile, sandbox, **kwargs):
         """ Kicks off async deployment, returns deployment id
         :param zipfile:
         :type zipfile:
@@ -75,7 +318,7 @@ class AsyncSfdcMetadataApi:
             "singlePackage": singlePackage,
         }
 
-        if not self._sandbox:
+        if not sandbox:
             attributes["allowMissingFiles"] = False
             attributes["rollbackOnError"] = True
 
@@ -279,7 +522,7 @@ class AsyncSfdcMetadataApi:
         """ Downloads Apex logs for unit tests executed during specified
         deployment """
         result = await self._retrieve_deploy_result(async_process_id)
-        print("Results: %s" % ET.tostring(result, encoding="us-ascii", method="xml"))
+        print("response: %s" % ET.tostring(result, encoding="us-ascii", method="xml"))
 
     async def retrieve(self, async_process_id, **kwargs):
         """ Submits retrieve request """
@@ -327,7 +570,7 @@ class AsyncSfdcMetadataApi:
             data=request,
         )
 
-        # Parse results to get async Id and status
+        # Parse response to get async Id and status
         async_process_id = (
             ET.fromstring(res.text)
             .find(

@@ -3,10 +3,13 @@
 """Tests for api.py"""
 from collections import OrderedDict
 from datetime import datetime
+import decimal
 import json
 from unittest import mock
 
 import aiofiles
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
 import httpx
 import pytest
 
@@ -22,6 +25,156 @@ from simple_salesforce.util import date_to_iso8601
 
 DEFAULT_URL = "https://my.salesforce.com/services/data/v52.0/sobjects/{}"
 CASE_URL = DEFAULT_URL.format("Case")
+
+
+# # # # # # # # # # # # # # # # # # # # # #
+#
+# build_async_salesforce_client (Login/Builder)
+#
+# # # # # # # # # # # # # # # # # # # # # #
+@pytest.mark.asyncio
+async def test_build_fail(constants, mock_httpx_client):
+    """
+    Test the builder function and pass a custom session
+    """
+    _, mock_client, inner = mock_httpx_client
+    happy_result = httpx.Response(200, content=constants["LOGIN_RESPONSE_SUCCESS"])
+    inner(happy_result)
+    mock_client.custom_session_attrib = "X-1-2-3"
+
+    with pytest.raises(TypeError):
+        await build_async_salesforce_client(
+            session=mock_client,
+            username="foo@bar.com",
+            password="password",
+        )
+
+
+@pytest.mark.asyncio
+async def test_build_async_with_session_success(constants, mock_httpx_client):
+    """
+    Test the builder function and pass a custom session
+    """
+    _, mock_client, inner = mock_httpx_client
+    happy_result = httpx.Response(200, content=constants["LOGIN_RESPONSE_SUCCESS"])
+    inner(happy_result)
+    mock_client.custom_session_attrib = "X-1-2-3"
+
+    client = await build_async_salesforce_client(
+        session=mock_client,
+        username="foo@bar.com",
+        password="password",
+        security_token="token",
+    )
+    assert isinstance(client, AsyncSalesforce)
+    assert constants["SESSION_ID"] == client.session_id
+    assert mock_client == client.session
+    assert client.session.custom_session_attrib == "X-1-2-3"
+    assert client.auth_type == "password"
+
+    assert len(mock_client.method_calls) == 1
+    call = mock_client.method_calls[0]
+    assert call[0] == "post"
+    assert call[1][0].startswith("https://login.salesforce.com/services/Soap/u/")
+    assert "SOAPAction" in call[2]["headers"]
+    assert call[2]["headers"]["SOAPAction"] == "login"
+
+
+@pytest.mark.asyncio
+async def test_build_async_with_org_id(constants, mock_httpx_client):
+    """
+    Test the builder function and pass a custom session
+    """
+    _, mock_client, inner = mock_httpx_client
+    happy_result = httpx.Response(200, content=constants["LOGIN_RESPONSE_SUCCESS"])
+    inner(happy_result)
+    mock_client.custom_session_attrib = "X-1-2-3"
+
+    client = await build_async_salesforce_client(
+        session=mock_client,
+        username="foo@bar.com",
+        password="password",
+        organizationId="super-cool-org",
+    )
+    assert isinstance(client, AsyncSalesforce)
+    assert constants["SESSION_ID"] == client.session_id
+    assert mock_client == client.session
+    assert client.session.custom_session_attrib == "X-1-2-3"
+    assert client.auth_type == "ipfilter"
+
+    assert len(mock_client.method_calls) == 1
+    call = mock_client.method_calls[0]
+    assert call[0] == "post"
+    assert call[1][0].startswith("https://login.salesforce.com/services/Soap/u/")
+    assert "SOAPAction" in call[2]["headers"]
+    assert call[2]["headers"]["SOAPAction"] == "login"
+
+
+@pytest.mark.asyncio
+async def test_build_async_with_direct(constants, mock_httpx_client):
+    """
+    Test the builder function and pass a custom session
+    """
+    _, mock_client, inner = mock_httpx_client
+    happy_result = httpx.Response(200, content=constants["LOGIN_RESPONSE_SUCCESS"])
+    inner(happy_result)
+    mock_client.custom_session_attrib = "X-1-2-3"
+
+    client = await build_async_salesforce_client(
+        session=mock_client,
+        session_id="X-1-2-3",
+        instance_url="https://test.salesforce.com",
+    )
+    assert isinstance(client, AsyncSalesforce)
+    assert "X-1-2-3" == client.session_id
+    assert mock_client == client.session
+    assert client.session.custom_session_attrib == "X-1-2-3"
+    assert client.auth_type == "direct"
+    # Should not have issued an auth call
+    assert len(mock_client.method_calls) == 0
+
+
+@pytest.mark.asyncio
+async def test_build_async_with_jwt(constants, mock_httpx_client):
+    """
+    Test the builder function and pass a custom session
+    """
+    _, mock_client, inner = mock_httpx_client
+    content = {
+        "access_token": "this is a token",
+        "instance_url": "http://bla"
+    }
+    happy_result = httpx.Response(200, content=json.dumps(content))
+    inner(happy_result)
+    mock_client.custom_session_attrib = "jwt-bearer"
+
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048
+    )
+    unencrypted_pem_private_key = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption()
+    )
+
+    client = await build_async_salesforce_client(
+        session=mock_client,
+        username="foo@bar.com",
+        consumer_key="fake-consumer-key",
+        privatekey=unencrypted_pem_private_key
+    )
+    assert isinstance(client, AsyncSalesforce)
+    assert "this is a token" == client.session_id
+    assert mock_client == client.session
+    assert client.auth_type == "jwt-bearer"
+    assert client.session.custom_session_attrib == "jwt-bearer"
+
+    assert len(mock_client.method_calls) == 1
+    call = mock_client.method_calls[0]
+    assert call[0] == "post"
+    assert call[1][0].startswith("https://login.salesforce.com/services/oauth2/token")
+
 
 # # # # # # # # # # # # # # # # # # # # # #
 #
@@ -385,39 +538,88 @@ async def test_updated_with_request_headers(with_headers, mock_httpx_client):
         assert "Sforce-Auto-Assign" not in call[2]["headers"]
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("float_parser", (None, decimal.Decimal))
+async def test_get_parse_float(float_parser, mock_httpx_client):
+    """Ensure parse_float is used when None"""
+    _, _, inner = mock_httpx_client
+    happy_result = httpx.Response(200, content=b'{"currency": 42.0}')
+    inner(happy_result)
+
+    sf_type = _create_sf_type()
+    sf_type._parse_float = float_parser
+    result = await sf_type.get(record_id='444')
+    if float_parser is None:
+        assert isinstance(result['currency'], float)
+        assert result == {"currency": 42.0}
+    elif float_parser is decimal.Decimal:
+        assert isinstance(result['currency'], decimal.Decimal)
+        assert result == {"currency": decimal.Decimal("42.0")}
+
+
+@pytest.fixture
+def fake_file(tmp_path):
+    fl = tmp_path / "hello.txt"
+    fl.write_text("hello")
+    return str(tmp_path / "hello.txt")
+
+
+@pytest.mark.asyncio
+async def test_upload_base64(fake_file, mock_httpx_client):
+    """
+    Upload file as base64
+    """
+    _, mock_client, inner = mock_httpx_client
+    happy_result = httpx.Response(200, content=b"{}")
+    inner(happy_result)
+    sf_type = _create_sf_type()
+    result = await sf_type.upload_base64(fake_file)
+    assert result == happy_result
+    assert len(mock_client.method_calls) == 1
+    call = mock_client.method_calls[0]
+    assert call[1][0] == "POST"
+    assert call[1][1] == sf_type.base_url
+
+
+@pytest.mark.asyncio
+async def test_update_base64(fake_file, mock_httpx_client):
+    """
+    Update base64 file
+    """
+    _, mock_client, inner = mock_httpx_client
+    happy_result = httpx.Response(200, content=b"{}")
+    inner(happy_result)
+    sf_type = _create_sf_type()
+    result = await sf_type.update_base64("a1", fake_file)
+    assert result == 200
+    assert len(mock_client.method_calls) == 1
+    call = mock_client.method_calls[0]
+    assert call[1][0] == "PATCH"
+    assert call[1][1] == f"{sf_type.base_url}a1"
+
+
+@pytest.mark.asyncio
+async def test_get_base64(mock_httpx_client):
+    """
+    Get base64 file
+    """
+    _, mock_client, inner = mock_httpx_client
+    happy_result = httpx.Response(200, content=b"hello")
+    inner(happy_result)
+    sf_type = _create_sf_type()
+    result = await sf_type.get_base64("a1")
+    assert result == b"hello"
+    assert len(mock_client.method_calls) == 1
+    call = mock_client.method_calls[0]
+    assert call[1][0] == "GET"
+    assert call[1][1] == f"{sf_type.base_url}a1/Body"
+
+
 # # # # # # # # # # # # # # # # # # # # # #
 #
 # AsyncSalesforce Tests
 #
 # # # # # # # # # # # # # # # # # # # # # #
-
-
-@pytest.mark.asyncio
-async def test_build_async_with_session_success(constants, mock_httpx_client):
-    """
-    Test the builder function and pass a custom session
-    """
-    _, mock_client, inner = mock_httpx_client
-    happy_result = httpx.Response(200, content=constants["LOGIN_RESPONSE_SUCCESS"])
-    inner(happy_result)
-    mock_client.custom_session_attrib = "X-1-2-3"
-
-    client = await build_async_salesforce_client(
-        session=mock_client,
-        username="foo@bar.com",
-        password="password",
-        security_token="token",
-    )
-    assert isinstance(client, AsyncSalesforce)
-    assert constants["SESSION_ID"] == client.session_id
-    assert mock_client == client.session
-    assert client.session.custom_session_attrib == "X-1-2-3"
-    assert len(mock_client.method_calls) == 1
-    call = mock_client.method_calls[0]
-    assert call[0] == "post"
-    assert call[1][0].startswith("https://login.salesforce.com/services/Soap/u/")
-    assert "SOAPAction" in call[2]["headers"]
-    assert call[2]["headers"]["SOAPAction"] == "login"
 
 
 def test_client_custom_version():
@@ -429,6 +631,34 @@ def test_client_custom_version():
     assert client.base_url.split("/")[-2] == "v%s" % expected_version
 
 
+@pytest.mark.asyncio
+async def test_async_retry_expired_session_deco(
+    mock_httpx_client, sf_client,
+):
+    """Test that when SalesforceExpiredSession is thrown, it retries"""
+    _, mock_client, _ = mock_httpx_client
+    body1 = {"auth": "failed"}
+    body2 = {"records": [{"ID": "1"}], "done": True, "totalSize": 1}
+    responses = [
+        httpx.Response(401, request=mock_client.request, content=json.dumps(body1)),
+        httpx.Response(200, content=json.dumps(body2)),
+    ]
+    mock_client.request.side_effect = mock.AsyncMock(side_effect=responses)
+    expected = {
+        "totalSize": 1,
+        "records": [OrderedDict([("ID", "1")])],
+        "done": True,
+    }
+
+    # This should eagerly pull all results from all pages
+    result = await sf_client.query_all("SELECT ID FROM Account")
+    assert result == expected
+    assert len(mock_client.method_calls) == 3
+    # Check that session got closed before last call
+    method_name = mock_client.method_calls[1][0]
+    assert method_name == "aclose"
+
+
 def test_custom_session_to_sftype(constants):
     """
     Check session gets passed to AsyncSFType
@@ -438,6 +668,45 @@ def test_custom_session_to_sftype(constants):
     client = AsyncSalesforce(session=mock_sesh, session_id=constants["SESSION_ID"],)
     assert client.session == client.Contact.session == mock_sesh
     assert client.Contact.session.custom_session_attrib == "X-1-2-3"
+
+
+
+@pytest.mark.asyncio
+async def test_async_retry_expired_session_deco_sf_type(
+    mock_httpx_client, sf_client,
+):
+    """Test that when SalesforceExpiredSession is thrown, AsyncSFType retries"""
+    _, mock_client, _ = mock_httpx_client
+    body1 = {"auth": "failed"}
+    body2 = {"records": [{"ID": "1"}], "done": True, "totalSize": 1}
+    responses = [
+        httpx.Response(401, request=mock_client.request, content=json.dumps(body1)),
+        httpx.Response(200, content=json.dumps(body2)),
+    ]
+    mock_client.request.side_effect = mock.AsyncMock(side_effect=responses)
+    expected = {
+        "totalSize": 1,
+        "records": [OrderedDict([("ID", "1")])],
+        "done": True,
+    }
+    sf_type = _create_sf_type()
+    sf_type.salesforce = sf_client
+    headers = None
+
+    result = await sf_type.get(record_id="444", headers=headers)
+    assert result == expected
+
+    assert len(mock_client.method_calls) == 3
+    call1, call3 = mock_client.method_calls[0], mock_client.method_calls[2]
+    assert call1[1][0] == "GET"
+    assert call3[1][0] == "GET"
+    assert call1[1][1] == f"{CASE_URL}/444"
+    assert call3[1][1] ==  f"{CASE_URL}/444"
+
+    # Check that session got closed before last call
+    method_name = mock_client.method_calls[1][0]
+    assert method_name == "aclose"
+
 
 
 # pylint: disable=protected-access
@@ -517,6 +786,32 @@ async def test_query(
     assert call[2]["params"] == {"q": "SELECT ID FROM Account"}
 
 
+
+@pytest.mark.asyncio
+async def test_search(
+    mock_httpx_client, sf_client,
+):
+    """Test querying generates the expected request"""
+    _, mock_client, inner = mock_httpx_client
+    happy_result = httpx.Response(200, content="{}")
+    inner(happy_result)
+    await sf_client.search("FIND {Joe Smith}")
+    assert len(mock_client.method_calls) == 1
+    call = mock_client.method_calls[0]
+    assert call[1][0] == "GET"
+    assert call[1][1] == "https://localhost/search/"
+    assert call[2]["headers"] == {}
+    assert call[2]["params"] == {"q": "FIND {Joe Smith}"}
+    # Try the same with `quick_search`
+    await sf_client.quick_search("Joe Smith")
+    assert len(mock_client.method_calls) == 2
+    call = mock_client.method_calls[-1]
+    assert call[1][0] == "GET"
+    assert call[1][1] == "https://localhost/search/"
+    assert call[2]["headers"] == {}
+    assert call[2]["params"] == {"q": "FIND {Joe Smith}"}
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "include_deleted,expected_url",
@@ -571,6 +866,43 @@ async def test_query_all_iter(
 
     assert collection == expected
     assert len(mock_client.method_calls) == 2
+
+
+@pytest.mark.asyncio
+async def test_is_sandbox(
+    mock_httpx_client, sf_client,
+):
+    """Test that client can parse sandbox results."""
+    _, mock_client, inner = mock_httpx_client
+    body1 = {
+        "records": [{"IsSandbox": True}],
+        "done": True,
+        "totalSize": 1,
+    }
+    happy_result = httpx.Response(200, content=json.dumps(body1))
+    inner(happy_result)
+
+    result = await sf_client.is_sandbox()
+    assert result is True
+    assert len(mock_client.method_calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_describe(
+    mock_httpx_client, sf_client,
+):
+    """Test describe call."""
+    _, mock_client, inner = mock_httpx_client
+    happy_result = httpx.Response(200, content="[{}]")
+    inner(happy_result)
+
+    result = await sf_client.describe()
+    assert result
+    assert len(mock_client.method_calls) == 1
+    call = mock_client.method_calls[0]
+    assert call[1][0] == "GET"
+    assert call[1][1] == f"{sf_client.base_url}sobjects"
+    assert call[2]["headers"] == {}
 
 
 @pytest.mark.asyncio
@@ -949,3 +1281,75 @@ async def test_check_status_in_progress(
     call = mock_client.method_calls[0]
     assert call[1][0] == "POST"
     assert call[1][1] == f"{sf_client.metadata_url}deployRequest/abdcefg"
+
+@pytest.mark.asyncio
+async def test_restful(
+    mock_httpx_client, sf_client,
+):
+    """Test that client can parse sandbox results."""
+    _, mock_client, inner = mock_httpx_client
+    body1 = {
+        "records": [{"IsSandbox": True}],
+        "done": True,
+        "totalSize": 1,
+    }
+    happy_result = httpx.Response(200, content=json.dumps(body1))
+    inner(happy_result)
+
+    result = await sf_client.restful("/sobjects/User/ABC123/password", params={"hey": "now"})
+    assert result == body1
+    assert len(mock_client.method_calls) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("content_type", ("application/json", ""))
+async def test_oauth2_with_or_without_json_result(
+    content_type, mock_httpx_client, sf_client,
+):
+    """Test that client can parse sandbox results."""
+    _, mock_client, inner = mock_httpx_client
+    body1 = {
+        "records": [{"IsSandbox": True}],
+        "done": True,
+        "totalSize": 1,
+    }
+    happy_result = httpx.Response(
+        200, headers={"Content-Type": content_type}, content=json.dumps(body1)
+    )
+    inner(happy_result)
+
+    result = await sf_client.oauth2("/services/oauth2/token", params={"hey": "now"})
+    if not content_type:
+        assert result is None
+    else:
+        assert result == body1
+    assert len(mock_client.method_calls) == 1
+
+
+# # Parsing Results Tests # #
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("float_parser", (None, decimal.Decimal))
+@pytest.mark.parametrize("object_pairs_hook", (None, OrderedDict))
+async def test_json_parsing_stratgies(
+    float_parser, object_pairs_hook, mock_httpx_client, sf_client,
+):
+    """Test parsing float strategies"""
+    _, _, inner = mock_httpx_client
+    sf_client._parse_float = float_parser
+    sf_client._object_pairs_hook = object_pairs_hook
+    happy_result = httpx.Response(200, content=b'{"currency": 1.0}')
+    inner(happy_result)
+    result = await sf_client.query("SELECT ID FROM Account")
+    if object_pairs_hook is None:
+        assert isinstance(result, dict)
+    else:
+        assert isinstance(result, object_pairs_hook)
+
+    if float_parser is None:
+        assert isinstance(result['currency'], float)
+        assert result == {"currency": 1.0}
+    elif float_parser is decimal.Decimal:
+        assert isinstance(result['currency'], decimal.Decimal)
+        assert result == {"currency": decimal.Decimal("1.0")}

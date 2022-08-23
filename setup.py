@@ -31,11 +31,10 @@ setup(
     install_requires = [
         'requests>=2.22.0',
         'authlib',
-        'zeep'
+        'zeep',
+        'httpx>=0.20.0,<1.0',
+        'aiofiles>=0.7.0'
     ],
-    extras_require={
-        "async": ['httpx>=0.20.0,<1.0', 'aiofiles>=0.7.0']
-    },
                    tests_require = [
                                        'nose>=1.3.0',
                                        'pytz>=2014.1.1',

@@ -1,5 +1,6 @@
 pylint
 coverage
+cryptography
 pytest
 pytest-asyncio
 pytest-coverage

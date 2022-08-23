@@ -1,15 +1,20 @@
 """Async classes and exceptions for Simple-Salesforce API"""
+import aiofiles
+import asyncio
+import base64
+from collections import OrderedDict
+from functools import partial, wraps
 import json
 import logging
 import re
-from collections import OrderedDict
-from typing import Optional
+import time
+from typing import Any, Awaitable, Callable, Dict, Optional, Tuple
 from urllib.parse import urljoin, urlparse
 
 import httpx
 
 from simple_salesforce.api import DEFAULT_API_VERSION, PerAppUsage, Usage
-from simple_salesforce.exceptions import SalesforceGeneralError
+from simple_salesforce.exceptions import SalesforceExpiredSession, SalesforceGeneralError
 from simple_salesforce.util import date_to_iso8601, exception_handler
 from .bulk import AsyncSFBulkHandler
 from .login import AsyncSalesforceLogin
@@ -17,6 +22,8 @@ from .metadata import AsyncSfdcMetadataApi
 
 # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
+# (seconds) JWT-authorized SF client must refresh every 3 minutes
+CLIENT_REFRESH_LIFESPAN = 170
 
 
 async def build_async_salesforce_client(
@@ -35,6 +42,10 @@ async def build_async_salesforce_client(
     consumer_key: Optional[str] = None,
     privatekey_file=None,
     privatekey=None,
+    parse_float=None,
+    object_pairs_hook=OrderedDict,
+    request_timeout_seconds: Optional[int] = None,
+    client_lifespan_seconds: int = CLIENT_REFRESH_LIFESPAN
 ):
     """
     Reasons for this builder function:
@@ -49,9 +60,7 @@ async def build_async_salesforce_client(
     `Salesforce` client class.
 
     Available kwargs
-
     Password Authentication:
-
     * username -- the Salesforce username to use for authentication
     * password -- the password for the username
     * security_token -- the security token for the username
@@ -61,7 +70,6 @@ async def build_async_salesforce_client(
                 'login'.
 
     OAuth 2.0 JWT Bearer Token Authentication:
-
     * consumer_key -- the consumer key generated for the user
 
     Then either
@@ -89,6 +97,14 @@ async def build_async_salesforce_client(
     * session -- Custom httpx session (AsyncClient), created in calling code.
                  This enables the use of httpx AsyncClient features not
                  otherwise exposed by simple_salesforce.
+    * parse_float -- Function to parse float values with. Is passed along to
+                     https://docs.python.org/3/library/json.html#json.load
+    * object_pairs_hook -- Function to parse ordered list of pairs in json.
+                           To use python 'dict' change it to None or dict.
+    * request_timeout_seconds -- Optional request-timeout setting in seconds
+                                 (for each request; for more timeout options, use `session`).
+    * client_lifespan_seconds -- Lifespan for Salesforce client
+                                 (Salesforce docs say sessions expire in 3 minutes).
     """
     if domain is None:
         domain = "login"
@@ -100,16 +116,22 @@ async def build_async_salesforce_client(
         "proxies": proxies,
         "session": session,
         "domain": domain,
+        "parse_float": parse_float,
+        "object_pairs_hook": object_pairs_hook,
+        "request_timeout_seconds": request_timeout_seconds,
+        "client_lifespan_seconds": client_lifespan_seconds
     }
 
     # Determine if the user wants to use our username/password auth or pass
     # in their own information
+    login_refresh = None
     if all(arg is not None for arg in (username, password, security_token)):
         instance_kwargs["auth_type"] = "password"
 
         # Pass along the username/password to our login helper
-        session_id, sf_instance = await AsyncSalesforceLogin(
-            session=session,
+        login_refresh = partial(
+            AsyncSalesforceLogin,
+            session=None,
             username=username,
             password=password,
             security_token=security_token,
@@ -118,9 +140,6 @@ async def build_async_salesforce_client(
             client_id=client_id,
             domain=domain,
         )
-        instance_kwargs["session_id"] = session_id
-        instance_kwargs["sf_instance"] = sf_instance
-
     elif all(arg is not None for arg in (session_id, instance or instance_url)):
         instance_kwargs["auth_type"] = "direct"
         instance_kwargs["session_id"] = session_id
@@ -138,10 +157,9 @@ async def build_async_salesforce_client(
 
     elif all(arg is not None for arg in (username, password, organizationId)):
         instance_kwargs["auth_type"] = "ipfilter"
-
-        # Pass along the username/password to our login helper
-        session_id, sf_instance = await AsyncSalesforceLogin(
-            session=session,
+        login_refresh = partial(
+            AsyncSalesforceLogin,
+            session=None,
             username=username,
             password=password,
             organizationId=organizationId,
@@ -150,9 +168,6 @@ async def build_async_salesforce_client(
             client_id=client_id,
             domain=domain,
         )
-        instance_kwargs["session_id"] = session_id
-        instance_kwargs["sf_instance"] = sf_instance
-
     elif all(
         arg is not None
         for arg in (username, consumer_key, privatekey_file or privatekey)
@@ -160,8 +175,9 @@ async def build_async_salesforce_client(
         instance_kwargs["auth_type"] = "jwt-bearer"
 
         # Pass along the username/password to our login helper
-        session_id, sf_instance = await AsyncSalesforceLogin(
-            session=session,
+        login_refresh = partial(
+            AsyncSalesforceLogin,
+            session=None,
             username=username,
             consumer_key=consumer_key,
             privatekey_file=privatekey_file,
@@ -169,11 +185,14 @@ async def build_async_salesforce_client(
             proxies=proxies,
             domain=domain,
         )
-        instance_kwargs["session_id"] = session_id
-        instance_kwargs["sf_instance"] = sf_instance
-
     else:
         raise TypeError("You must provide login information or an instance and token")
+
+    if login_refresh is not None:
+        session_id, sf_instance = await login_refresh()
+        instance_kwargs["session_id"] = session_id
+        instance_kwargs["sf_instance"] = sf_instance
+        instance_kwargs["login_refresh"] = login_refresh
     return AsyncSalesforce(**instance_kwargs)
 
 
@@ -181,7 +200,6 @@ class SessionMixin:
     """
     This mixin offers a convenient way to use a shared session object.
     """
-
     async def close_session(self):
         """
         Offer users a method to _close_ a session.
@@ -216,6 +234,41 @@ class SessionMixin:
             self._session = httpx.AsyncClient()
         return self._session
 
+    def parse_result_to_json(self, response: httpx.Response) -> Any:
+        """"Parse json from a Response object"""
+        return response.json(
+            object_pairs_hook=self._object_pairs_hook,
+            parse_float=self._parse_float
+        )
+
+def async_retry_expired_session(async_fn):
+    """Decorator for AsyncSalesforce methods with retries for expired session"""
+    if not asyncio.iscoroutinefunction(async_fn):
+        raise ValueError(
+            (
+                "async_retry_expired_session can only decorate async "
+                "functions. {}".format(async_fn.__name__)
+            )
+        )
+
+    @wraps(async_fn)
+    async def inner(client: "AsyncSalesforce", *args, **kwargs):
+        if client.session_refresh_required and client.can_refresh:
+            await client.close_session()
+            await client.refresh_session()
+
+        try:
+            return await async_fn(client, *args, **kwargs)
+        except SalesforceExpiredSession:
+            if not client.can_refresh:
+                # No automatic refresh
+                raise
+            await client.close_session()
+            await client.refresh_session()
+            return await async_fn(client, *args, **kwargs)
+
+    return inner
+
 
 # pylint: disable=too-many-instance-attributes
 class AsyncSalesforce(SessionMixin):
@@ -224,6 +277,8 @@ class AsyncSalesforce(SessionMixin):
     An instance of AsyncSalesforce is a handy way to wrap a Salesforce session
     for easy use of the Salesforce REST API. All http network calls are async.
     """
+    _parse_float = None
+    _object_pairs_hook = OrderedDict
 
     # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
     def __init__(
@@ -235,6 +290,11 @@ class AsyncSalesforce(SessionMixin):
         auth_type: Optional[str] = None,
         session_id: Optional[str] = None,
         sf_instance: Optional[str] = None,
+        parse_float=None,
+        object_pairs_hook=OrderedDict,
+        request_timeout_seconds: Optional[int] = None,
+        client_lifespan_seconds: int = CLIENT_REFRESH_LIFESPAN,
+        login_refresh: Optional[Callable[[], Awaitable[Tuple[str, str]]]] = None
     ):
 
         """Initialize the instance with the given parameters.
@@ -251,6 +311,17 @@ class AsyncSalesforce(SessionMixin):
         * session -- Custom httpx session (AsyncClient), created in calling code.
                     This enables the use of httpx AsyncClient features not
                     otherwise exposed by simple_salesforce.
+        * parse_float -- Function to parse float values with. Is passed along to
+                         https://docs.python.org/3/library/json.html#json.load
+        * object_pairs_hook -- Function to parse ordered list of pairs in json.
+                               To use python 'dict' change it to None or dict.
+        * request_timeout_seconds -- Optional request-timeout setting in seconds
+                                     (for each request; for more timeout options, use `session`).
+        * client_lifespan_seconds -- Lifespan (in seconds) for Salesforce client.
+                                     Pass `None` to disable automatic refresh.
+                                     (Salesforce docs say sessions expire in 3 minutes).
+        * login_refresh -- A function can be supplied to *run* logins (refreshes) in the future.
+                           It must return a tuple of `(session_id, sf_instance_name)`
         """
         # Determine if the user passed in the optional version and/or
         # domain kwargs
@@ -261,9 +332,14 @@ class AsyncSalesforce(SessionMixin):
         self.domain = domain or ""
         self._session = session
         self._proxies = proxies
+        self.request_timeout_seconds = request_timeout_seconds
+        self.client_refresh_interval = client_lifespan_seconds
+        self.login_refresh = login_refresh
+        self.session_last_refresh = time.time()
+
         # override custom session proxies dance
-        if not self._session and proxies is not None:
-            self._session = httpx.AsyncClient(proxies=proxies)
+        if not self._session and proxies is not None and self.login_refresh is None:
+            self._session = httpx.AsyncClient(proxies=proxies, timeout=self.request_timeout_seconds)
         elif proxies and self._session:
             logger.warning(
                 "Proxies must be defined on custom session object, "
@@ -272,12 +348,7 @@ class AsyncSalesforce(SessionMixin):
             )
 
         self.auth_site = "https://{domain}.salesforce.com".format(domain=self.domain)
-
-        self.headers = {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer {}".format(self.session_id or ""),
-            "X-PrettyPrint": "1",
-        }
+        self.headers = self._generate_headers()
 
         self.base_url = "https://{instance}/services/data/v{version}/".format(
             instance=self.sf_instance, version=self.sf_version
@@ -291,9 +362,60 @@ class AsyncSalesforce(SessionMixin):
         self.metadata_url = "https://{instance}/services/Soap/m/{version}/".format(
             instance=self.sf_instance, version=self.sf_version
         )
+        self.oauth2_url = ('https://{instance}/services/oauth2/'
+                           .format(instance=self.sf_instance))
         self.tooling_url = "{base_url}tooling/".format(base_url=self.base_url)
 
         self.api_usage = {}
+        self._parse_float = parse_float
+        self._object_pairs_hook = object_pairs_hook
+        self._mdapi = None
+
+    @property
+    def mdapi(self):
+        """Utility to interact with metadata api functionality"""
+        if not self._mdapi:
+            self._mdapi = AsyncSfdcMetadataApi(
+                session=self.session,
+                session_id=self.session_id,
+                instance=self.sf_instance,
+                metadata_url=self.metadata_url,
+                api_version=self.sf_version,
+                headers=self.headers
+            )
+        return self._mdapi
+
+    def _generate_headers(self) -> Dict[str, str]:
+        """Utility to generate headers when refreshing the session"""
+        self.headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {}".format(self.session_id or ""),
+            "X-PrettyPrint": "1",
+        }
+        return self.headers
+
+    async def refresh_session(self):
+        """Utility to refresh the session when expired"""
+        if self.login_refresh is None:
+            raise RuntimeError(
+                'The simple_salesforce session can not refreshed if a '
+                'session id has been provided.'
+            )
+        self.session_id, self.sf_instance = await self.login_refresh()
+        self._generate_headers()
+        self.session_last_refresh = time.time()
+
+    @property
+    def can_refresh(self):
+        return self.login_refresh is not None
+
+    @property
+    def session_refresh_required(self):
+        if self.client_last_init is None or self.client_refresh_interval is None:
+            return False
+        now = time.time()
+        time_elapsed = now - self.session_last_refresh
+        return time_elapsed >= self.client_refresh_interval
 
     async def describe(self, **kwargs):
         """Describes all available objects
@@ -305,17 +427,19 @@ class AsyncSalesforce(SessionMixin):
         url = self.base_url + "sobjects"
         result = await self._call_salesforce("GET", url, name="describe", **kwargs)
 
-        json_result = result.json(object_pairs_hook=OrderedDict)
+        json_result = self.parse_result_to_json(result)
         if len(json_result) == 0:
             return None
 
         return json_result
 
-    def is_sandbox(self):
+    async def is_sandbox(self):
         """After connection returns is the organization in a sandbox"""
         is_sandbox = None
         if self.session_id:
-            is_sandbox = self.query_all("SELECT IsSandbox " "FROM Organization LIMIT 1")
+            is_sandbox = await self.query_all(
+                "SELECT IsSandbox FROM Organization LIMIT 1"
+            )
             is_sandbox = is_sandbox.get("records", [{"IsSandbox": None}])[0].get(
                 "IsSandbox"
             )
@@ -354,6 +478,7 @@ class AsyncSalesforce(SessionMixin):
             sf_version=self.sf_version,
             proxies=self._proxies,
             session=self._session,
+            salesforce=self
         )
 
     # User utility methods
@@ -383,7 +508,7 @@ class AsyncSalesforce(SessionMixin):
             raise SalesforceGeneralError(
                 url, result.status_code, "User", result.content
             )
-        return result.json(object_pairs_hook=OrderedDict)
+        return self.parse_result_to_json(result)
 
     # Generic Rest Function
     async def restful(self, path, params=None, method="GET", **kwargs):
@@ -402,12 +527,36 @@ class AsyncSalesforce(SessionMixin):
         result = await self._call_salesforce(
             method, url, name=path, params=params, **kwargs
         )
+        json_result = self.parse_result_to_json(result)
 
-        json_result = result.json(object_pairs_hook=OrderedDict)
         if len(json_result) == 0:
             return None
 
         return json_result
+
+    # OAuth Endpoints Function
+    async def oauth2(self, path, params=None, method='GET'):
+        """Allows you to make a request to OAuth endpoints if you know the path
+
+        Arguments:
+
+        * path: The path of the request
+            Example: /services/oauth2/token'
+        * params: dict of parameters to pass to the path
+        * method: HTTP request method, default GET
+        * other arguments supported by requests.request (e.g. json, timeout)
+        """
+        url = self.oauth2_url + path
+        result = await self._call_salesforce(
+            method, url, name=path, params=params
+        )
+
+        content_type = result.headers.get('Content-Type')
+        json_result = self.parse_result_to_json(result) \
+            if content_type is not None \
+               and 'json' in content_type else None
+
+        return None if json_result and len(json_result) == 0 else json_result
 
     # Search Functions
     async def search(self, search):
@@ -425,12 +574,13 @@ class AsyncSalesforce(SessionMixin):
         params = {"q": search}
         result = await self._call_salesforce("GET", url, name="search", params=params)
 
-        json_result = result.json(object_pairs_hook=OrderedDict)
+        json_result = self.parse_result_to_json(result)
         if len(json_result) == 0:
             return None
 
         return json_result
 
+    @async_retry_expired_session
     async def quick_search(self, search):
         """Returns the result of a Salesforce search as a dict decoded from
         the Salesforce response JSON payload.
@@ -453,8 +603,7 @@ class AsyncSalesforce(SessionMixin):
 
         if result.status_code != 200:
             exception_handler(result)
-
-        return result.json(object_pairs_hook=OrderedDict)
+        return self.parse_result_to_json(result)
 
     # Query Handler
     async def query(self, query, include_deleted=False, **kwargs):
@@ -473,8 +622,7 @@ class AsyncSalesforce(SessionMixin):
         result = await self._call_salesforce(
             "GET", url, name="query", params=params, **kwargs
         )
-
-        return result.json(object_pairs_hook=OrderedDict)
+        return self.parse_result_to_json(result)
 
     async def query_more(
         self,
@@ -513,7 +661,7 @@ class AsyncSalesforce(SessionMixin):
             )
         result = await self._call_salesforce("GET", url, name="query_more", **kwargs)
 
-        return result.json(object_pairs_hook=OrderedDict)
+        return self.parse_result_to_json(result)
 
     async def query_all_iter(self, query, include_deleted=False, **kwargs):
         """This is an async-generator, lazy alternative to `query_all`:
@@ -542,11 +690,12 @@ class AsyncSalesforce(SessionMixin):
             # fetch next batch if we're not done else break out of loop
             if not result["done"]:
                 result = await self.query_more(
-                    result["nextRecordsUrl"], identifier_is_url=True
+                    result["nextRecordsUrl"], identifier_is_url=True, **kwargs
                 )
             else:
                 return
 
+    @async_retry_expired_session
     async def query_all(self, query, include_deleted=False, **kwargs):
         """Returns the full set of results for the `query`.
         This is a convenience wrapper around `query(...)` and
@@ -626,6 +775,7 @@ class AsyncSalesforce(SessionMixin):
 
         return response_content
 
+    @async_retry_expired_session
     async def _call_salesforce(self, method, url, name="", **kwargs):
         """Utility method for performing HTTP call to Salesforce.
 
@@ -690,21 +840,13 @@ class AsyncSalesforce(SessionMixin):
 
         Returns a process id and state for this deployment.
         """
-        mdapi = AsyncSfdcMetadataApi(
-            session=self.session,
-            session_id=self.session_id,
-            instance=self.sf_instance,
-            sandbox=sandbox,
-            metadata_url=self.metadata_url,
-            api_version=self.sf_version,
-            headers=self.headers,
-        )
-        asyncId, state = await mdapi.deploy(zipfile, **kwargs)
+        asyncId, state = await self.mdapi.deploy(zipfile, sandbox, **kwargs)
         result = {"asyncId": asyncId, "state": state}
         return result
 
     # check on a file-based deployment
-    async def checkDeployStatus(self, asyncId, sandbox, **kwargs):
+    @async_retry_expired_session
+    async def checkDeployStatus(self, asyncId, **kwargs):
         """Check on the progress of a file-based deployment via Salesforce
         Metadata API.
         Wrapper for SfdcMetaDataApi.check_deploy_status(...).
@@ -715,21 +857,12 @@ class AsyncSalesforce(SessionMixin):
 
         Returns status of the deployment the asyncId given.
         """
-        mdapi = AsyncSfdcMetadataApi(
-            session=self.session,
-            session_id=self.session_id,
-            instance=self.sf_instance,
-            sandbox=sandbox,
-            metadata_url=self.metadata_url,
-            api_version=self.sf_version,
-            headers=self.headers,
-        )
         (
             state,
             state_detail,
             deployment_detail,
             unit_test_detail,
-        ) = await mdapi.check_deploy_status(asyncId, **kwargs)
+        ) = await self.mdapi.check_deploy_status(asyncId, **kwargs)
         results = {
             "state": state,
             "state_detail": state_detail,
@@ -741,6 +874,9 @@ class AsyncSalesforce(SessionMixin):
 
 class AsyncSFType(SessionMixin):
     """An interface to a specific type of SObject"""
+    _parse_float = None
+    _object_pairs_hook = OrderedDict
+
 
     # pylint: disable=too-many-arguments
     def __init__(
@@ -751,6 +887,9 @@ class AsyncSFType(SessionMixin):
         sf_version=DEFAULT_API_VERSION,
         proxies=None,
         session=None,
+        salesforce: Optional[AsyncSalesforce] = None,
+        parse_float=None,
+        object_pairs_hook=OrderedDict,
     ):
         """Initialize the instance with the given parameters.
 
@@ -766,10 +905,19 @@ class AsyncSFType(SessionMixin):
                      enables the use of requests Session features not otherwise
                      exposed by simple_salesforce.
         """
-        self.session_id = session_id
+        if salesforce is None and session_id is None:
+            raise RuntimeError(
+                'The argument session_id or salesforce must be specified to '
+                'instanciate SFType.'
+            )
+
+        self._session_id = session_id
+        self.salesforce = salesforce
         self.name = object_name
         self._session = session
         self._proxies = proxies
+        self._parse_float = parse_float
+        self._object_pairs_hook = object_pairs_hook
         # don't wipe out original proxies with None
         if not self._session and proxies is not None:
             self._session = httpx.AsyncClient(proxies=proxies)
@@ -788,6 +936,45 @@ class AsyncSFType(SessionMixin):
             )
         )
 
+    @property
+    def can_refresh(self):
+        if self.salesforce:
+            return self.salesforce.can_refresh
+        return False
+
+    @property
+    def client_refresh_interval(self):
+        """Pass-through to `AsyncSalesforce` if present"""
+        if not self.salesforce:
+            return None
+        return self.salesforce.client_refresh_interval
+
+    @property
+    def session_refresh_required(self):
+        """Pass-through to `AsyncSalesforce` if present"""
+        if not self.salesforce:
+            return None
+        return self.salesforce.session_refresh_required
+
+    async def close_session(self):
+        """Pass-through to `AsyncSalesforce` if present"""
+        if not self.salesforce:
+            return None
+        return await self.salesforce.close_session()
+
+    async def refresh_session(self):
+        """Pass-through to `AsyncSalesforce` if present"""
+        if not self.salesforce:
+            return None
+        return await self.salesforce.refresh_session()
+
+    @property
+    def session_id(self):
+        """Helper to return the session id"""
+        if self.salesforce is not None:
+            return self.salesforce.session_id
+        return self._session_id
+
     async def metadata(self, headers=None):
         """Returns the result of a GET to `.../{object_name}/` as a dict
         decoded from the JSON payload returned by Salesforce.
@@ -797,7 +984,7 @@ class AsyncSFType(SessionMixin):
         * headers -- a dict with additional request headers.
         """
         result = await self._call_salesforce("GET", self.base_url, headers=headers)
-        return result.json(object_pairs_hook=OrderedDict)
+        return self.parse_result_to_json(result)
 
     async def describe(self, headers=None):
         """Returns the result of a GET to `.../{object_name}/describe` as a
@@ -810,7 +997,7 @@ class AsyncSFType(SessionMixin):
         result = await self._call_salesforce(
             method="GET", url=urljoin(self.base_url, "describe"), headers=headers
         )
-        return result.json(object_pairs_hook=OrderedDict)
+        return self.parse_result_to_json(result)
 
     async def describe_layout(self, record_id, headers=None):
         """Returns the layout of the object
@@ -828,7 +1015,7 @@ class AsyncSFType(SessionMixin):
         result = await self._call_salesforce(
             method="GET", url=urljoin(self.base_url, custom_url_part), headers=headers
         )
-        return result.json(object_pairs_hook=OrderedDict)
+        return self.parse_result_to_json(result)
 
     async def get(self, record_id, headers=None):
         """Returns the result of a GET to `.../{object_name}/{record_id}` as a
@@ -842,7 +1029,7 @@ class AsyncSFType(SessionMixin):
         result = await self._call_salesforce(
             method="GET", url=urljoin(self.base_url, record_id), headers=headers
         )
-        return result.json(object_pairs_hook=OrderedDict)
+        return self.parse_result_to_json(result)
 
     async def get_by_custom_id(self, custom_id_field, custom_id, headers=None):
         """Return an ``AsyncSFType`` by custom ID
@@ -867,7 +1054,7 @@ class AsyncSFType(SessionMixin):
         result = await self._call_salesforce(
             method="GET", url=custom_url, headers=headers
         )
-        return result.json(object_pairs_hook=OrderedDict)
+        return self.parse_result_to_json(result)
 
     async def create(self, data, headers=None):
         """Creates a new SObject using a POST to `.../{object_name}/`.
@@ -883,7 +1070,7 @@ class AsyncSFType(SessionMixin):
         result = await self._call_salesforce(
             method="POST", url=self.base_url, data=json.dumps(data), headers=headers
         )
-        return result.json(object_pairs_hook=OrderedDict)
+        return self.parse_result_to_json(result)
 
     async def upsert(self, record_id, data, raw_response=False, headers=None):
         """Creates or updates an SObject using a PATCH to
@@ -976,7 +1163,7 @@ class AsyncSFType(SessionMixin):
             ),
         )
         result = await self._call_salesforce(method="GET", url=url, headers=headers)
-        return result.json(object_pairs_hook=OrderedDict)
+        return self.parse_result_to_json(result)
 
     async def updated(self, start, end, headers=None):
         # pylint: disable=line-too-long
@@ -999,8 +1186,9 @@ class AsyncSFType(SessionMixin):
             ),
         )
         result = await self._call_salesforce(method="GET", url=url, headers=headers)
-        return result.json(object_pairs_hook=OrderedDict)
+        return self.parse_result_to_json(result)
 
+    @async_retry_expired_session
     async def _call_salesforce(self, method, url, **kwargs):
         """Utility method for performing HTTP call to Salesforce.
 
@@ -1034,3 +1222,62 @@ class AsyncSFType(SessionMixin):
             return response.status_code
 
         return response
+
+    async def upload_base64(self, file_path, base64_field='Body', headers=None,
+                      **kwargs):
+        """Upload base64 encoded file to Salesforce"""
+        data = {}
+        async with aiofiles.open(file_path, "rb") as fl:
+            content = await fl.read()
+            body = base64.b64encode(content).decode('utf-8')
+        data[base64_field] = body
+        result = await self._call_salesforce(
+            method='POST',
+            url=self.base_url,
+            headers=headers,
+            json=data,
+            **kwargs
+        )
+
+        return result
+
+    async def update_base64(self, record_id, file_path, base64_field='Body',
+                      headers=None, raw_response=False,
+                      **kwargs):
+        """Updated base64 image from file to Salesforce"""
+        data = {}
+        async with aiofiles.open(file_path, "rb") as fl:
+            content = await fl.read()
+            body = base64.b64encode(content).decode('utf-8')
+        data[base64_field] = body
+        result = await self._call_salesforce(
+            method='PATCH',
+            url=urljoin(self.base_url, record_id),
+            json=data,
+            headers=headers,
+            **kwargs
+        )
+
+        return self._raw_response(result, raw_response)
+
+    async def get_base64(self, record_id, base64_field='Body', data=None,
+                   headers=None, **kwargs):
+        """Returns binary stream of base64 object at specific path.
+
+        Arguments:
+
+        * path: The path of the request
+            Example: sobjects/Attachment/ABC123/Body
+                     sobjects/ContentVersion/ABC123/VersionData
+        """
+        result = await self._call_salesforce(
+            method='GET',
+            url=urljoin(
+                self.base_url, '{record_id}/{base64_field}'.format(
+                    record_id=record_id, base64_field=base64_field)),
+            data=data,
+            headers=headers,
+            **kwargs
+        )
+
+        return result.content
