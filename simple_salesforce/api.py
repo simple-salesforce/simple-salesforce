@@ -34,7 +34,7 @@ class Salesforce:
     _parse_float = None
     _object_pairs_hook = OrderedDict
 
-    # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
+    # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
     def __init__(
             self,
             username=None,
@@ -67,7 +67,7 @@ class Salesforce:
                     common domains, such as 'login' or 'test', or
                     Salesforce My domain. If not used, will default to
                     'login'.
-                    
+
         OAuth 2.0 Connected App Token Authentication:
         * consumer_key -- the consumer key generated for the user
         * consumer_secret -- the consumer secret generated for the user
