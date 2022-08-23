@@ -172,25 +172,30 @@ class SFBulkType:
         else:
             yield result.json()
 
-    def worker(self, batch, operation, wait=5):
+    def worker(self, batch, operation, wait=5, bypass_results=False):
         """ Gets batches from concurrent worker threads.
         self._bulk_operation passes batch jobs.
         The worker function checks each batch job waiting for it complete
         and appends the results.
         """
-
-        batch_status = self._get_batch(job_id=batch['jobId'],
-                                       batch_id=batch['id'])['state']
-
-        while batch_status not in ['Completed', 'Failed', 'NotProcessed']:
-            sleep(wait)
+        if not bypass_results:
             batch_status = self._get_batch(job_id=batch['jobId'],
                                            batch_id=batch['id'])['state']
 
-        batch_results = self._get_batch_results(job_id=batch['jobId'],
-                                                batch_id=batch['id'],
-                                                operation=operation)
-        result = batch_results
+            while batch_status not in ['Completed', 'Failed', 'NotProcessed']:
+                sleep(wait)
+                batch_status = self._get_batch(job_id=batch['jobId'],
+                                               batch_id=batch['id'])['state']
+
+            batch_results = self._get_batch_results(job_id=batch['jobId'],
+                                                    batch_id=batch['id'],
+                                                    operation=operation)
+            result = batch_results
+        else:
+            result = [{
+                          'bypass_results': bypass_results,
+                          'job_id': batch['jobId']
+                          }]
         return result
 
     def _add_autosized_batches(self, data, operation, job):
@@ -237,6 +242,7 @@ class SFBulkType:
                 nrecs >= rec_limit,
                 i >= len(data) - 1
                 ]):
+                i = 1 if len(data) == 1 else i
                 batches.append(data[last_break:i])
                 last_break = i
                 nrecs, recsize = 0, 0
@@ -245,7 +251,8 @@ class SFBulkType:
 
     # pylint: disable=R0913
     def _bulk_operation(self, operation, data, use_serial=False,
-                        external_id_field=None, batch_size=10000, wait=5):
+                        external_id_field=None, batch_size=10000, wait=5,
+                        bypass_results=False):
         """ String together helper functions to create a complete
         end-to-end bulk API request
         Arguments:
@@ -286,11 +293,14 @@ class SFBulkType:
 
                 multi_thread_worker = partial(self.worker,
                                               operation=operation,
-                                              wait=wait)
+                                              wait=wait,
+                                              bypass_results=bypass_results)
                 list_of_results = pool.map(multi_thread_worker, batches)
 
                 results = [x for sublist in list_of_results for i in
-                           sublist for x in i]
+                           sublist for x in i] if not bypass_results else \
+                    [{k: v} for sublist in list_of_results for i in
+                     sublist for k, v in i.items()]
 
                 self._close_job(job_id=job['id'])
 
@@ -325,7 +335,8 @@ class SFBulkType:
         return results
 
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
-    def delete(self, data, batch_size=10000, use_serial=False, wait=5):
+    def delete(self, data, batch_size=10000, use_serial=False,
+               bypass_results=False):
         """ soft delete records
 
         Data is batched by 10,000 records by default. To pick a lower size
@@ -334,11 +345,12 @@ class SFBulkType:
         """
         results = self._bulk_operation(use_serial=use_serial,
                                        operation='delete', data=data,
-                                       batch_size=batch_size, wait=wait)
+                                       batch_size=batch_size,
+                                       bypass_results=bypass_results)
         return results
 
     def insert(self, data, batch_size=10000,
-               use_serial=False, wait=5):
+               use_serial=False, bypass_results=False):
         """ insert records
 
         Data is batched by 10,000 records by default. To pick a lower size
@@ -347,11 +359,12 @@ class SFBulkType:
         """
         results = self._bulk_operation(use_serial=use_serial,
                                        operation='insert', data=data,
-                                       batch_size=batch_size, wait=wait)
+                                       batch_size=batch_size,
+                                       bypass_results=False)
         return results
 
     def upsert(self, data, external_id_field, batch_size=10000,
-               use_serial=False, wait=5):
+               use_serial=False, bypass_results=False):
         """ upsert records based on a unique identifier
 
         Data is batched by 10,000 records by default. To pick a lower size
@@ -362,10 +375,11 @@ class SFBulkType:
                                        operation='upsert',
                                        external_id_field=external_id_field,
                                        data=data, batch_size=batch_size,
-                                       wait=wait)
+                                       bypass_results=bypass_results)
         return results
 
-    def update(self, data, batch_size=10000, use_serial=False, wait=5):
+    def update(self, data, batch_size=10000, use_serial=False,
+               bypass_results=False):
         """ update records
 
         Data is batched by 10,000 records by default. To pick a lower size
@@ -374,10 +388,12 @@ class SFBulkType:
         """
         results = self._bulk_operation(use_serial=use_serial,
                                        operation='update', data=data,
-                                       batch_size=batch_size, wait=wait)
+                                       batch_size=batch_size,
+                                       bypass_results=bypass_results)
         return results
 
-    def hard_delete(self, data, batch_size=10000, use_serial=False, wait=5):
+    def hard_delete(self, data, batch_size=10000, use_serial=False,
+                    bypass_results=False):
         """ hard delete records
 
         Data is batched by 10,000 records by default. To pick a lower size
@@ -386,7 +402,8 @@ class SFBulkType:
         """
         results = self._bulk_operation(use_serial=use_serial,
                                        operation='hardDelete', data=data,
-                                       batch_size=batch_size, wait=wait)
+                                       batch_size=batch_size,
+                                       bypass_results=bypass_results)
         return results
 
     def query(self, data, lazy_operation=False, wait=5):
