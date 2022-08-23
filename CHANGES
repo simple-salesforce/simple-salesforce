@@ -1,5 +1,9 @@
 v1.12.2
 ======
+Features
+--------
+- Add support for OAuth connected app & update default_client_id_prefix to 'simple_salesforce'
+
 Other
 --------
 - [#563] Remove leftover reference to Python 3.5 support
