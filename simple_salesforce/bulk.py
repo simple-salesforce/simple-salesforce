@@ -278,7 +278,7 @@ class SFBulkType:
             # Checks if data is present
             if not data:
                 raise ValueError(f'data should not be empty for {operation}')
-                
+
             # Checks to prevent batch limit
             if batch_size != 'auto':
                 batch_size = min(batch_size, len(data), 10000)
