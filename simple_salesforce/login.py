@@ -3,7 +3,7 @@
 Heavily Modified from RestForce 1.0.0
 """
 
-DEFAULT_CLIENT_ID_PREFIX = 'RestForce'
+DEFAULT_CLIENT_ID_PREFIX = 'simple-salesforce'
 
 
 import warnings
@@ -31,6 +31,7 @@ def SalesforceLogin(
     client_id=None,
     domain=None,
     consumer_key=None,
+    consumer_secret=None,
     privatekey_file=None,
     privatekey=None,
 ):
@@ -56,7 +57,8 @@ def SalesforceLogin(
                 common domains, such as 'login' or 'test', or
                 Salesforce My domain. If not used, will default to
                 'login'.
-    * consumer_key -- the consumer key generated for the user
+    * consumer_key -- the consumer key generated for the user/connected app
+    * consumer_secret -- the consumer secret generated for the user/connected app
     * privatekey_file -- the path to the private key file used
                          for signing the JWT token.
     * privatekey -- the private key to use
@@ -106,6 +108,28 @@ def SalesforceLogin(
         </env:Envelope>""".format(
             username=username, password=password, token=security_token,
             client_id=client_id)
+
+    elif username is not None and \
+            consumer_key is not None and \
+            consumer_secret is not None:
+        header = {'Content-Type' : 'application/json'}
+        payload = {
+            'grant_type': 'password',
+            'client_id': consumer_key,
+            'client_secret' : consumer_secret,
+            'username': username,
+            'password' : password
+        }
+
+        login_token_request_data = {
+            'grant_type': 'password'
+        }
+
+        return token_login(
+            'https://{domain}.salesforce.com/services/oauth2/token'.format(
+                domain=domain),
+            payload, domain, consumer_key,
+            None, proxies, session)
 
     # Check if IP Filtering is used in conjunction with organizationId
     elif organizationId is not None:
