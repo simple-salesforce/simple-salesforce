@@ -360,7 +360,7 @@ class SFBulkType:
         results = self._bulk_operation(use_serial=use_serial,
                                        operation='insert', data=data,
                                        batch_size=batch_size,
-                                       bypass_results=False)
+                                       bypass_results=bypass_results)
         return results
 
     def upsert(self, data, external_id_field, batch_size=10000,
