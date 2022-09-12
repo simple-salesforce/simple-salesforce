@@ -9,7 +9,7 @@ Simple Salesforce
    :target: http://simple-salesforce.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.5, 3.6, 3.7 and 3.8. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
+Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.6, 3.7 and 3.8. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
 
 =============
 
@@ -37,7 +37,7 @@ If you have the full URL of your instance (perhaps including the schema, as is i
     from simple_salesforce import Salesforce
     sf = Salesforce(instance_url='https://na1.salesforce.com', session_id='')
 
-There are also three means of authentication, one that uses username, password and security token; one that uses IP filtering, username, password  and organizationId; and the other that uses a private key to sign a JWT.
+There are also four means of authentication, one that uses username, password and security token; one that uses IP filtering, username, password  and organizationId, one that uses a private key to sign a JWT, and one for connected apps that uses username, password, consumer key, and consumer secret;
 
 To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password):
 
@@ -59,6 +59,14 @@ To login using the JWT method, use your Salesforce username, consumer key from y
 
     from simple_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com', consumer_key='XYZ', privatekey_file='filename.key')
+    
+To login using a connected app, simply include the Salesforce method and pass in your Salesforce username, password, consumer_key and consumer_secret (the consumer key and consumer secret are provided when you setup your connected app):
+
+.. code-block:: python
+
+    from simple_salesforce import Salesforce
+    sf = Salesforce(username='myemail@example.com', password='password', consumer_key='consumer_key', consumer_secret='consumer_secret')
+
 
 If you'd like to enter a sandbox, simply add ``domain='test'`` to your ``Salesforce()`` call.
 
@@ -78,7 +86,7 @@ If you'd like to keep track where your API calls are coming from, simply add ``c
     from simple_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com.sandbox', password='password', security_token='token', client_id='My App', domain='test')
 
-If you view the API calls in your Salesforce instance by Client Id it will be prefixed with ``RestForce/``, for example ``RestForce/My App``.
+If you view the API calls in your Salesforce instance by Client Id it will be prefixed with ``simple-salesforce/``, for example ``simple-salesforce/My App``.
 
 When instantiating a `Salesforce` object, it's also possible to include an
 instance of `requests.Session`. This is to allow for specialized
@@ -163,11 +171,11 @@ Queries
 
 It's also possible to write select queries in Salesforce Object Query Language (SOQL) and search queries in Salesforce Object Search Language (SOSL).
 
-SOQL queries are done via:
+All SOQL queries are supported and parent/child relationships can be queried using the standard format (Parent__r.FieldName). SOQL queries are done via:
 
 .. code-block:: python
 
-    sf.query("SELECT Id, Email FROM Contact WHERE LastName = 'Jones'")
+    sf.query("SELECT Id, Email, ParentAccount.Name FROM Contact WHERE LastName = 'Jones'")
 
 If, due to an especially large result, Salesforce adds a ``nextRecordsUrl`` to your query result, such as ``"nextRecordsUrl" : "/services/data/v26.0/query/01gD0000002HU6KIAW-2000"``, you can pull the additional results with either the ID or the full URL (if using the full URL, you must pass 'True' as your second argument)
 
@@ -434,6 +442,17 @@ Update existing records:
         ]
 
     sf.bulk.Contact.update(data,batch_size=10000,use_serial=True)
+    
+ Update existing records and update lookup fields from an external id field:
+
+.. code-block:: python
+
+    data = [
+          {'Id': '0000000000AAAAA', 'Custom_Object__r': {'Email__c':'examplenew@example.com'}},
+          {'Id': '0000000000BBBBB', 'Custom_Object__r': {'Email__c': 'testnew@test.com'}}
+        ]
+
+    sf.bulk.Contact.update(data,batch_size=10000,use_serial=True)
 
 Upsert records:
 
@@ -616,6 +635,25 @@ Generate Pandas Dataframe from SFDC API Query (ex.query,query_all)
    sf.query("SELECT Id, Email FROM Contact")
    
    df = pd.DataFrame(data['records']).drop(['attributes'],axis=1)
+   
+Generate Pandas Dataframe from SFDC API Query (ex.query,query_all) and append related fields from query to data frame
+
+.. code-block:: python
+   
+   import pandas as pd
+   
+   def sf_api_query(data):
+    df = pd.DataFrame(data['records']).drop('attributes', axis=1)
+    listColumns = list(df.columns)
+    for col in listColumns:
+        if any (isinstance (df[col].values[i], dict) for i in range(0, len(df[col].values))):
+            df = pd.concat([df.drop(columns=[col]),df[col].apply(pd.Series).drop('attributes',axis=1).add_prefix(col+'.')],axis=1)
+            new_columns = np.setdiff1d(df.columns, listColumns)
+            for i in new_columns:
+                listColumns.append(i)
+    return df
+   
+   df = sf_api_query(sf.query("SELECT Id, Email,ParentAccount.Name FROM Contact"))
       
 Generate Pandas Dataframe from SFDC Bulk API Query (ex.bulk.Account.query)
 

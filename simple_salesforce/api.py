@@ -9,7 +9,9 @@ import re
 from collections import OrderedDict, namedtuple
 from functools import partial
 from urllib.parse import urljoin, urlparse
+
 import requests
+
 from .bulk import SFBulkHandler
 from .exceptions import SalesforceGeneralError
 from .login import SalesforceLogin
@@ -32,7 +34,7 @@ class Salesforce:
     _parse_float = None
     _object_pairs_hook = OrderedDict
 
-    # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
+    # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
     def __init__(
             self,
             username=None,
@@ -48,6 +50,7 @@ class Salesforce:
             client_id=None,
             domain=None,
             consumer_key=None,
+            consumer_secret=None,
             privatekey_file=None,
             privatekey=None,
             parse_float=None,
@@ -64,6 +67,10 @@ class Salesforce:
                     common domains, such as 'login' or 'test', or
                     Salesforce My domain. If not used, will default to
                     'login'.
+
+        OAuth 2.0 Connected App Token Authentication:
+        * consumer_key -- the consumer key generated for the user
+        * consumer_secret -- the consumer secret generated for the user
 
         OAuth 2.0 JWT Bearer Token Authentication:
         * consumer_key -- the consumer key generated for the user
@@ -174,6 +181,21 @@ class Salesforce:
             self._refresh_session()
 
         elif all(arg is not None for arg in (
+                username, consumer_key, consumer_secret)):
+            self.auth_type = "password"
+
+            # Pass along the username/password to our login helper
+            self._salesforce_login_partial = partial(
+                SalesforceLogin,
+                session=self.session,
+                username=username,
+                consumer_key=consumer_key,
+                consumer_secret=consumer_secret,
+                proxies=self.proxies,
+                domain=self.domain)
+            self._refresh_session()
+
+        elif all(arg is not None for arg in (
                 username, consumer_key, privatekey_file or privatekey)):
             self.auth_type = "jwt-bearer"
 
@@ -240,7 +262,7 @@ class Salesforce:
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
-        }
+            }
 
     def _refresh_session(self):
         """Utility to refresh the session when expired"""
@@ -248,7 +270,7 @@ class Salesforce:
             raise RuntimeError(
                 'The simple_salesforce session can not refreshed if a '
                 'session id has been provided.'
-            )
+                )
         self.session_id, self.sf_instance = self._salesforce_login_partial()
         self._generate_headers()
 
@@ -705,7 +727,7 @@ class SFType:
             raise RuntimeError(
                 'The argument session_id or salesforce must be specified to '
                 'instanciate SFType.'
-            )
+                )
 
         self._session_id = session_id
         self.salesforce = salesforce
@@ -926,13 +948,13 @@ class SFType:
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
-        }
+            }
         additional_headers = kwargs.pop('headers', {})
         headers.update(additional_headers or {})
         result = self.session.request(method, url, headers=headers, **kwargs)
         # pylint: disable=W0212
         if (self.salesforce
-            and self.salesforce._salesforce_login_partial is not None
+                and self.salesforce._salesforce_login_partial is not None
                 and result.status_code == 401):
             self.salesforce._refresh_session()
             return self._call_salesforce(method, url, **kwargs)
