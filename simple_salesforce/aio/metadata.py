@@ -211,16 +211,16 @@ class AsyncSfdcMetadataApi:
 
     # pylint: disable=R0913
     def __init__(
-        self, session, session_id, instance, metadata_url, headers, api_version
+        self, session_id, instance, metadata_url, headers, api_version, session_factory=None
     ):
         """ Initialize and check session """
-        self.session = session
         self._session_id = session_id
         self._instance = instance
         self.metadata_url = metadata_url
         self.headers = headers
         self._api_version = api_version
         self._deploy_zip = None
+        self.session_factory = session_factory
 
         wsdl_path = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -338,7 +338,7 @@ class AsyncSfdcMetadataApi:
         result = await call_salesforce(
             url=self.metadata_url + "deployRequest",
             method="POST",
-            session=self.session,
+            session_factory=self.session_factory,
             headers=self.headers,
             additional_headers=headers,
             data=request,
@@ -406,7 +406,7 @@ class AsyncSfdcMetadataApi:
         res = await call_salesforce(
             url=self.metadata_url + "deployRequest/" + async_process_id,
             method="POST",
-            session=self.session,
+            session_factory=self.session_factory,
             headers=self.headers,
             additional_headers=headers,
             data=mt_request,
@@ -564,7 +564,7 @@ class AsyncSfdcMetadataApi:
         res = await call_salesforce(
             url=self.metadata_url + "deployRequest/" + async_process_id,
             method="POST",
-            session=self.session,
+            session_factory=self.session_factory,
             headers=self.headers,
             additional_headers=headers,
             data=request,
@@ -603,7 +603,7 @@ class AsyncSfdcMetadataApi:
         res = await call_salesforce(
             url=self.metadata_url + "deployRequest/" + async_process_id,
             method="POST",
-            session=self.session,
+            session_factory=self.session_factory,
             headers=self.headers,
             additional_headers=headers,
             data=mt_request,

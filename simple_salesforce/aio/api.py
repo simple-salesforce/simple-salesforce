@@ -7,9 +7,9 @@ from functools import partial, wraps
 import json
 import logging
 import re
-import time
 from typing import Any, Awaitable, Callable, Dict, Optional, Tuple
 from urllib.parse import urljoin, urlparse
+import warnings
 
 import httpx
 
@@ -19,11 +19,11 @@ from simple_salesforce.util import date_to_iso8601, exception_handler
 from .bulk import AsyncSFBulkHandler
 from .login import AsyncSalesforceLogin
 from .metadata import AsyncSfdcMetadataApi
+from .aio_util import create_session_factory
+
 
 # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
-# (seconds) JWT-authorized SF client must refresh every 3 minutes
-CLIENT_REFRESH_LIFESPAN = 170
 
 
 async def build_async_salesforce_client(
@@ -36,7 +36,6 @@ async def build_async_salesforce_client(
     organizationId=None,
     version: str = DEFAULT_API_VERSION,
     proxies=None,
-    session: Optional[httpx.AsyncClient] = None,
     client_id: Optional[str] = None,
     domain: Optional[str] = None,
     consumer_key: Optional[str] = None,
@@ -45,7 +44,6 @@ async def build_async_salesforce_client(
     parse_float=None,
     object_pairs_hook=OrderedDict,
     request_timeout_seconds: Optional[int] = None,
-    client_lifespan_seconds: int = CLIENT_REFRESH_LIFESPAN
 ):
     """
     Reasons for this builder function:
@@ -94,32 +92,25 @@ async def build_async_salesforce_client(
     * version -- the version of the Salesforce API to use, for example
                     `29.0`
     * proxies -- the optional map of scheme to proxy server (note: httpx style!)
-    * session -- Custom httpx session (AsyncClient), created in calling code.
-                 This enables the use of httpx AsyncClient features not
-                 otherwise exposed by simple_salesforce.
     * parse_float -- Function to parse float values with. Is passed along to
                      https://docs.python.org/3/library/json.html#json.load
     * object_pairs_hook -- Function to parse ordered list of pairs in json.
                            To use python 'dict' change it to None or dict.
-    * request_timeout_seconds -- Optional request-timeout setting in seconds
-                                 (for each request; for more timeout options, use `session`).
-    * client_lifespan_seconds -- Lifespan for Salesforce client
-                                 (Salesforce docs say sessions expire in 3 minutes).
+    * request_timeout_seconds -- Optional request-timeout setting in seconds.
     """
+    session_factory = create_session_factory(proxies, timeout=request_timeout_seconds)
+
     if domain is None:
         domain = "login"
-    if session is None:
-        session = httpx.AsyncClient(proxies=proxies)
 
     instance_kwargs = {
         "version": version,
         "proxies": proxies,
-        "session": session,
         "domain": domain,
         "parse_float": parse_float,
         "object_pairs_hook": object_pairs_hook,
         "request_timeout_seconds": request_timeout_seconds,
-        "client_lifespan_seconds": client_lifespan_seconds
+        "session_factory": session_factory
     }
 
     # Determine if the user wants to use our username/password auth or pass
@@ -131,7 +122,7 @@ async def build_async_salesforce_client(
         # Pass along the username/password to our login helper
         login_refresh = partial(
             AsyncSalesforceLogin,
-            session=None,
+            session_factory=session_factory,
             username=username,
             password=password,
             security_token=security_token,
@@ -159,7 +150,7 @@ async def build_async_salesforce_client(
         instance_kwargs["auth_type"] = "ipfilter"
         login_refresh = partial(
             AsyncSalesforceLogin,
-            session=None,
+            session_factory=session_factory,
             username=username,
             password=password,
             organizationId=organizationId,
@@ -177,7 +168,7 @@ async def build_async_salesforce_client(
         # Pass along the username/password to our login helper
         login_refresh = partial(
             AsyncSalesforceLogin,
-            session=None,
+            session_factory=session_factory,
             username=username,
             consumer_key=consumer_key,
             privatekey_file=privatekey_file,
@@ -196,51 +187,6 @@ async def build_async_salesforce_client(
     return AsyncSalesforce(**instance_kwargs)
 
 
-class SessionMixin:
-    """
-    This mixin offers a convenient way to use a shared session object.
-    """
-    async def close_session(self):
-        """
-        Offer users a method to _close_ a session.
-        """
-        if (
-            getattr(self, "_session")
-            and self._session
-            and hasattr(self._session, "aclose")
-        ):
-            await self._session.aclose()
-            self._session = None
-
-    @property
-    def session(self):
-        """
-        Ensures that an AsyncClient is stashed on the object
-        in order to reuse connections.
-
-        Users are responsible for closing connections.
-        """
-        if self._proxies and self._session:
-            logger.warning(
-                "Proxies must be defined on custom session object, "
-                "ignoring proxies: %s",
-                self._proxies,
-            )
-        if self._session:
-            return self._session
-        if self._proxies:
-            self._session = httpx.AsyncClient(proxies=self._proxies)
-        else:
-            self._session = httpx.AsyncClient()
-        return self._session
-
-    def parse_result_to_json(self, response: httpx.Response) -> Any:
-        """"Parse json from a Response object"""
-        return response.json(
-            object_pairs_hook=self._object_pairs_hook,
-            parse_float=self._parse_float
-        )
-
 def async_retry_expired_session(async_fn):
     """Decorator for AsyncSalesforce methods with retries for expired session"""
     if not asyncio.iscoroutinefunction(async_fn):
@@ -252,18 +198,13 @@ def async_retry_expired_session(async_fn):
         )
 
     @wraps(async_fn)
-    async def inner(client: "AsyncSalesforce", *args, **kwargs):
-        if client.session_refresh_required and client.can_refresh:
-            await client.close_session()
-            await client.refresh_session()
-
+    async def inner(client, *args, **kwargs):
         try:
             return await async_fn(client, *args, **kwargs)
         except SalesforceExpiredSession:
             if not client.can_refresh:
                 # No automatic refresh
                 raise
-            await client.close_session()
             await client.refresh_session()
             return await async_fn(client, *args, **kwargs)
 
@@ -271,7 +212,7 @@ def async_retry_expired_session(async_fn):
 
 
 # pylint: disable=too-many-instance-attributes
-class AsyncSalesforce(SessionMixin):
+class AsyncSalesforce:
     """Salesforce Instance
 
     An instance of AsyncSalesforce is a handy way to wrap a Salesforce session
@@ -285,7 +226,7 @@ class AsyncSalesforce(SessionMixin):
         self,
         version=DEFAULT_API_VERSION,
         proxies=None,
-        session: Optional[httpx.AsyncClient] = None,
+        session_factory: Optional[Callable[[], httpx.AsyncClient]] = None,
         domain: Optional[str] = None,
         auth_type: Optional[str] = None,
         session_id: Optional[str] = None,
@@ -293,10 +234,8 @@ class AsyncSalesforce(SessionMixin):
         parse_float=None,
         object_pairs_hook=OrderedDict,
         request_timeout_seconds: Optional[int] = None,
-        client_lifespan_seconds: int = CLIENT_REFRESH_LIFESPAN,
         login_refresh: Optional[Callable[[], Awaitable[Tuple[str, str]]]] = None
     ):
-
         """Initialize the instance with the given parameters.
 
         Universal Kwargs:
@@ -308,7 +247,7 @@ class AsyncSalesforce(SessionMixin):
         * version -- the version of the Salesforce API to use, for example
                      `29.0`
         * proxies -- the optional map of scheme to proxy server (httpx style)
-        * session -- Custom httpx session (AsyncClient), created in calling code.
+        * session_factory -- Method for generating a new httpx session (AsyncClient).
                     This enables the use of httpx AsyncClient features not
                     otherwise exposed by simple_salesforce.
         * parse_float -- Function to parse float values with. Is passed along to
@@ -317,9 +256,6 @@ class AsyncSalesforce(SessionMixin):
                                To use python 'dict' change it to None or dict.
         * request_timeout_seconds -- Optional request-timeout setting in seconds
                                      (for each request; for more timeout options, use `session`).
-        * client_lifespan_seconds -- Lifespan (in seconds) for Salesforce client.
-                                     Pass `None` to disable automatic refresh.
-                                     (Salesforce docs say sessions expire in 3 minutes).
         * login_refresh -- A function can be supplied to *run* logins (refreshes) in the future.
                            It must return a tuple of `(session_id, sf_instance_name)`
         """
@@ -330,22 +266,14 @@ class AsyncSalesforce(SessionMixin):
         self.sf_instance = sf_instance
         self.sf_version = version
         self.domain = domain or ""
-        self._session = session
+        self.session_factory = session_factory
         self._proxies = proxies
         self.request_timeout_seconds = request_timeout_seconds
-        self.client_refresh_interval = client_lifespan_seconds
         self.login_refresh = login_refresh
-        self.session_last_refresh = time.time()
 
         # override custom session proxies dance
-        if not self._session and proxies is not None and self.login_refresh is None:
-            self._session = httpx.AsyncClient(proxies=proxies, timeout=self.request_timeout_seconds)
-        elif proxies and self._session:
-            logger.warning(
-                "Proxies must be defined on custom session object, "
-                "ignoring proxies: %s",
-                proxies,
-            )
+        if not self.session_factory:
+            self.session_factory = create_session_factory(self._proxies, timeout=self.request_timeout_seconds)
 
         self.auth_site = "https://{domain}.salesforce.com".format(domain=self.domain)
         self.headers = self._generate_headers()
@@ -376,7 +304,7 @@ class AsyncSalesforce(SessionMixin):
         """Utility to interact with metadata api functionality"""
         if not self._mdapi:
             self._mdapi = AsyncSfdcMetadataApi(
-                session=self.session,
+                session_factory=self.session_factory,
                 session_id=self.session_id,
                 instance=self.sf_instance,
                 metadata_url=self.metadata_url,
@@ -394,7 +322,7 @@ class AsyncSalesforce(SessionMixin):
         }
         return self.headers
 
-    async def refresh_session(self):
+    async def refresh_session(self) -> str:
         """Utility to refresh the session when expired"""
         if self.login_refresh is None:
             raise RuntimeError(
@@ -403,19 +331,11 @@ class AsyncSalesforce(SessionMixin):
             )
         self.session_id, self.sf_instance = await self.login_refresh()
         self._generate_headers()
-        self.session_last_refresh = time.time()
+        return self.session_id
 
     @property
     def can_refresh(self):
         return self.login_refresh is not None
-
-    @property
-    def session_refresh_required(self):
-        if self.client_last_init is None or self.client_refresh_interval is None:
-            return False
-        now = time.time()
-        time_elapsed = now - self.session_last_refresh
-        return time_elapsed >= self.client_refresh_interval
 
     async def describe(self, **kwargs):
         """Describes all available objects
@@ -468,7 +388,7 @@ class AsyncSalesforce(SessionMixin):
         if name == "bulk":
             # Deal with bulk API functions
             return AsyncSFBulkHandler(
-                self.session_id, self.bulk_url, self._proxies, self._session
+                self.session_id, self.bulk_url, self._proxies, session_factory=self.session_factory
             )
 
         return AsyncSFType(
@@ -477,8 +397,8 @@ class AsyncSalesforce(SessionMixin):
             self.sf_instance,
             sf_version=self.sf_version,
             proxies=self._proxies,
-            session=self._session,
-            salesforce=self
+            salesforce=self,
+            session_factory=self.session_factory,
         )
 
     # User utility methods
@@ -784,7 +704,8 @@ class AsyncSalesforce(SessionMixin):
         headers = self.headers.copy()
         additional_headers = kwargs.pop("headers", dict())
         headers.update(additional_headers)
-        result = await self.session.request(method, url, headers=headers, **kwargs)
+        async with self.session_factory() as client:
+            result = await client.request(method, url, headers=headers, **kwargs)
 
         if result.status_code >= 300:
             exception_handler(result, name=name)
@@ -871,8 +792,15 @@ class AsyncSalesforce(SessionMixin):
         }
         return results
 
+    def parse_result_to_json(self, response: httpx.Response) -> Any:
+        """"Parse json from a Response object"""
+        return response.json(
+            object_pairs_hook=self._object_pairs_hook,
+            parse_float=self._parse_float
+        )
 
-class AsyncSFType(SessionMixin):
+
+class AsyncSFType:
     """An interface to a specific type of SObject"""
     _parse_float = None
     _object_pairs_hook = OrderedDict
@@ -887,9 +815,11 @@ class AsyncSFType(SessionMixin):
         sf_version=DEFAULT_API_VERSION,
         proxies=None,
         session=None,
+        session_factory: Optional[Callable[[], httpx.AsyncClient]] = None,
         salesforce: Optional[AsyncSalesforce] = None,
         parse_float=None,
         object_pairs_hook=OrderedDict,
+        request_timeout_seconds: Optional[int] = None,
     ):
         """Initialize the instance with the given parameters.
 
@@ -901,9 +831,14 @@ class AsyncSFType(SessionMixin):
         * sf_instance -- the domain of the instance of Salesforce to use
         * sf_version -- the version of the Salesforce API to use
         * proxies -- the optional map of scheme to proxy server
-        * session -- Custom requests session, created in calling code. This
-                     enables the use of requests Session features not otherwise
+        * session -- DEPRECATED. Custom requests session, created in calling code.
+                     This enables the use of requests Session features not otherwise
                      exposed by simple_salesforce.
+        * session_factory -- Method for generating a new httpx session (AsyncClient).
+                    This enables the use of httpx AsyncClient features not
+                    otherwise exposed by simple_salesforce.
+        * request_timeout_seconds -- Optional request-timeout setting in seconds
+                                     (for each request; for more timeout options, use `session`).
         """
         if salesforce is None and session_id is None:
             raise RuntimeError(
@@ -914,21 +849,27 @@ class AsyncSFType(SessionMixin):
         self._session_id = session_id
         self.salesforce = salesforce
         self.name = object_name
-        self._session = session
+        self.session_factory = session_factory
         self._proxies = proxies
         self._parse_float = parse_float
         self._object_pairs_hook = object_pairs_hook
-        # don't wipe out original proxies with None
-        if not self._session and proxies is not None:
-            self._session = httpx.AsyncClient(proxies=proxies)
-        elif proxies and self._session:
+        self.request_timeout_seconds = request_timeout_seconds
+
+        if session is not None:
+            warnings.warn("The session keyword argument for async clients is deprecated")
+        if proxies and session:
             logger.warning(
                 "Proxies must be defined on custom session object, "
                 "ignoring proxies: %s",
                 proxies,
             )
-        self.api_usage = {}
+        # override custom session proxies dance
+        if not self.session_factory and self.salesforce and self.salesforce.session_factory:
+            self.session_factory = self.salesforce.session_factory
+        elif not self.session_factory:
+            self.session_factory = create_session_factory(proxies=self._proxies, timeout=self.request_timeout_seconds)
 
+        self.api_usage = {}
         self.base_url = (
             "https://{instance}/services/data/v{sf_version}/sobjects"
             "/{object_name}/".format(
@@ -942,31 +883,12 @@ class AsyncSFType(SessionMixin):
             return self.salesforce.can_refresh
         return False
 
-    @property
-    def client_refresh_interval(self):
-        """Pass-through to `AsyncSalesforce` if present"""
-        if not self.salesforce:
-            return None
-        return self.salesforce.client_refresh_interval
-
-    @property
-    def session_refresh_required(self):
-        """Pass-through to `AsyncSalesforce` if present"""
-        if not self.salesforce:
-            return None
-        return self.salesforce.session_refresh_required
-
-    async def close_session(self):
-        """Pass-through to `AsyncSalesforce` if present"""
-        if not self.salesforce:
-            return None
-        return await self.salesforce.close_session()
-
     async def refresh_session(self):
         """Pass-through to `AsyncSalesforce` if present"""
         if not self.salesforce:
             return None
-        return await self.salesforce.refresh_session()
+        self._session_id = await self.salesforce.refresh_session()
+        return self.session_id
 
     @property
     def session_id(self):
@@ -1201,7 +1123,8 @@ class AsyncSFType(SessionMixin):
         }
         additional_headers = kwargs.pop("headers", dict())
         headers.update(additional_headers or dict())
-        result = await self.session.request(method, url, headers=headers, **kwargs)
+        async with self.session_factory() as client:
+            result = await client.request(method, url, headers=headers, **kwargs)
 
         if result.status_code >= 300:
             exception_handler(result, self.name)
@@ -1222,6 +1145,13 @@ class AsyncSFType(SessionMixin):
             return response.status_code
 
         return response
+
+    def parse_result_to_json(self, response: httpx.Response) -> Any:
+        """"Parse json from a Response object"""
+        return response.json(
+            object_pairs_hook=self._object_pairs_hook,
+            parse_float=self._parse_float
+        )
 
     async def upload_base64(self, file_path, base64_field='Body', headers=None,
                       **kwargs):

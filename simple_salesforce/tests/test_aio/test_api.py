@@ -44,7 +44,6 @@ async def test_build_fail(constants, mock_httpx_client):
 
     with pytest.raises(TypeError):
         await build_async_salesforce_client(
-            session=mock_client,
             username="foo@bar.com",
             password="password",
         )
@@ -61,15 +60,12 @@ async def test_build_async_with_session_success(constants, mock_httpx_client):
     mock_client.custom_session_attrib = "X-1-2-3"
 
     client = await build_async_salesforce_client(
-        session=mock_client,
         username="foo@bar.com",
         password="password",
         security_token="token",
     )
     assert isinstance(client, AsyncSalesforce)
     assert constants["SESSION_ID"] == client.session_id
-    assert mock_client == client.session
-    assert client.session.custom_session_attrib == "X-1-2-3"
     assert client.auth_type == "password"
 
     assert len(mock_client.method_calls) == 1
@@ -91,15 +87,12 @@ async def test_build_async_with_org_id(constants, mock_httpx_client):
     mock_client.custom_session_attrib = "X-1-2-3"
 
     client = await build_async_salesforce_client(
-        session=mock_client,
         username="foo@bar.com",
         password="password",
         organizationId="super-cool-org",
     )
     assert isinstance(client, AsyncSalesforce)
     assert constants["SESSION_ID"] == client.session_id
-    assert mock_client == client.session
-    assert client.session.custom_session_attrib == "X-1-2-3"
     assert client.auth_type == "ipfilter"
 
     assert len(mock_client.method_calls) == 1
@@ -121,14 +114,11 @@ async def test_build_async_with_direct(constants, mock_httpx_client):
     mock_client.custom_session_attrib = "X-1-2-3"
 
     client = await build_async_salesforce_client(
-        session=mock_client,
         session_id="X-1-2-3",
         instance_url="https://test.salesforce.com",
     )
     assert isinstance(client, AsyncSalesforce)
     assert "X-1-2-3" == client.session_id
-    assert mock_client == client.session
-    assert client.session.custom_session_attrib == "X-1-2-3"
     assert client.auth_type == "direct"
     # Should not have issued an auth call
     assert len(mock_client.method_calls) == 0
@@ -159,16 +149,13 @@ async def test_build_async_with_jwt(constants, mock_httpx_client):
     )
 
     client = await build_async_salesforce_client(
-        session=mock_client,
         username="foo@bar.com",
         consumer_key="fake-consumer-key",
         privatekey=unencrypted_pem_private_key
     )
     assert isinstance(client, AsyncSalesforce)
     assert "this is a token" == client.session_id
-    assert mock_client == client.session
     assert client.auth_type == "jwt-bearer"
-    assert client.session.custom_session_attrib == "jwt-bearer"
 
     assert len(mock_client.method_calls) == 1
     call = mock_client.method_calls[0]
@@ -191,7 +178,6 @@ def _create_sf_type(
         object_name=object_name,
         session_id=session_id,
         sf_instance=sf_instance,
-        session=httpx.AsyncClient(),
     )
 
 
@@ -627,7 +613,7 @@ def test_client_custom_version():
     Check custom version appears in URL
     """
     expected_version = "4.2"
-    client = AsyncSalesforce(session=mock.AsyncMock(), version=expected_version)
+    client = AsyncSalesforce(version=expected_version)
     assert client.base_url.split("/")[-2] == "v%s" % expected_version
 
 
@@ -653,22 +639,9 @@ async def test_async_retry_expired_session_deco(
     # This should eagerly pull all results from all pages
     result = await sf_client.query_all("SELECT ID FROM Account")
     assert result == expected
-    assert len(mock_client.method_calls) == 3
-    # Check that session got closed before last call
-    method_name = mock_client.method_calls[1][0]
-    assert method_name == "aclose"
-
-
-def test_custom_session_to_sftype(constants):
-    """
-    Check session gets passed to AsyncSFType
-    """
-    mock_sesh = mock.AsyncMock()
-    mock_sesh.custom_session_attrib = "X-1-2-3"
-    client = AsyncSalesforce(session=mock_sesh, session_id=constants["SESSION_ID"],)
-    assert client.session == client.Contact.session == mock_sesh
-    assert client.Contact.session.custom_session_attrib == "X-1-2-3"
-
+    assert len(mock_client.method_calls) == 2
+    # Check that login_refresh was called once
+    assert sf_client.login_refresh.call_count == 1
 
 
 @pytest.mark.asyncio
@@ -696,16 +669,15 @@ async def test_async_retry_expired_session_deco_sf_type(
     result = await sf_type.get(record_id="444", headers=headers)
     assert result == expected
 
-    assert len(mock_client.method_calls) == 3
-    call1, call3 = mock_client.method_calls[0], mock_client.method_calls[2]
-    assert call1[1][0] == "GET"
-    assert call3[1][0] == "GET"
-    assert call1[1][1] == f"{CASE_URL}/444"
-    assert call3[1][1] ==  f"{CASE_URL}/444"
+    assert len(mock_client.method_calls) == 2
+    # Check that login_refresh was called once
+    assert sf_client.login_refresh.call_count == 1
 
-    # Check that session got closed before last call
-    method_name = mock_client.method_calls[1][0]
-    assert method_name == "aclose"
+    call1, call2 = mock_client.method_calls
+    assert call1[1][0] == "GET"
+    assert call2[1][0] == "GET"
+    assert call1[1][1] == f"{CASE_URL}/444"
+    assert call2[1][1] ==  f"{CASE_URL}/444"
 
 
 
@@ -717,17 +689,7 @@ def test_proxies_inherited_by_default(constants):
     client = AsyncSalesforce(
         session_id=constants["SESSION_ID"], proxies=constants["PROXIES"]
     )
-    # proxies arg should be ignored in this case.
-    # no_proxies_client = AsyncSalesforce(
-    #     session=httpx.AsyncClient(),
-    #     session_id=constants["SESSION_ID"],
-    #     proxies=constants["PROXIES"]
-    # )
-    # with monkeypatch for httpx in place, this is a mock object
-    # assert client.session._mounts
-    # assert client.session._mounts == client.Contact.session._mounts
     assert client._proxies == client.Contact._proxies == constants["PROXIES"]
-    # assert not no_proxies_client.session._mounts
 
 
 @pytest.mark.asyncio

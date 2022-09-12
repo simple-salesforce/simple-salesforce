@@ -6,11 +6,9 @@ import json
 import logging
 from typing import Union
 
-import httpx
-
 from simple_salesforce.exceptions import SalesforceGeneralError
 from simple_salesforce.util import list_from_generator
-from .aio_util import call_salesforce
+from .aio_util import call_salesforce, create_session_factory
 
 
 # pylint: disable=invalid-name
@@ -27,7 +25,7 @@ class AsyncSFBulkHandler:
     to allow the above syntax
     """
 
-    def __init__(self, session_id, bulk_url, proxies=None, session=None):
+    def __init__(self, session_id, bulk_url, proxies=None, session_factory=None):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -35,22 +33,16 @@ class AsyncSFBulkHandler:
         * session_id -- the session ID for authenticating to Salesforce
         * bulk_url -- API endpoint set in Salesforce instance
         * proxies -- the optional map of scheme to proxy server
-        * session -- Custom requests session, created in calling code. This
-                     enables the use of requests Session features not otherwise
-                     exposed by simple_salesforce.
+        * session_factory -- Function to return a custom httpx session (AsyncClient).
+                             This enables the use of httpx Session features not otherwise
+                             exposed by simple_salesforce.
         """
         self.session_id = session_id
-        self._session = session
+        self.session_factory = session_factory
         self.bulk_url = bulk_url
         # don't wipe out original proxies with None
-        if not self._session and proxies is not None:
-            self._session = httpx.AsyncClient(proxies=proxies)
-        elif proxies and self._session:
-            logger.warning(
-                "Proxies must be defined on custom session object, "
-                "ignoring proxies: %s",
-                proxies,
-            )
+        if not self.session_factory:
+            self.session_factory = create_session_factory(proxies=proxies)
 
         # Define these headers separate from Salesforce class,
         # as bulk uses a slightly different format
@@ -65,14 +57,14 @@ class AsyncSFBulkHandler:
             object_name=name,
             bulk_url=self.bulk_url,
             headers=self.headers,
-            session=self._session,
+            session_factory=self.session_factory,
         )
 
 
 class AsyncSFBulkType:
     """ Interface to Bulk/Async API functions"""
 
-    def __init__(self, object_name, bulk_url, headers, session):
+    def __init__(self, object_name, bulk_url, headers, session_factory):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -81,23 +73,14 @@ class AsyncSFBulkType:
                          e.g. `Lead` or `Contact`
         * bulk_url -- API endpoint set in Salesforce instance
         * headers -- bulk API headers
-        * session -- Custom httpx session (AsyncClient) created in calling code.
-                    This enables the use of httpx AsyncClient features not
-                    otherwise exposed by simple_salesforce.
+        * session_factory -- Function to return a custom httpx session (AsyncClient).
+                             This enables the use of httpx Session features not otherwise
+                             exposed by simple_salesforce.
         """
         self.object_name = object_name
         self.bulk_url = bulk_url
-        self._session = session
+        self.session_factory = session_factory
         self.headers = headers
-
-    @property
-    def session(self):
-        """
-        Returns an AsyncClient which can be used as an async context manager
-        """
-        if self._session:
-            return self._session
-        return httpx.AsyncClient()
 
     async def _create_job(self, operation, use_serial, external_id_field=None):
         """ Create a bulk job
@@ -128,7 +111,7 @@ class AsyncSFBulkType:
         result = await call_salesforce(
             url=url,
             method="POST",
-            session=self.session,
+            session_factory=self.session_factory,
             headers=self.headers,
             data=json.dumps(payload, allow_nan=False),
         )
@@ -143,7 +126,7 @@ class AsyncSFBulkType:
         result = await call_salesforce(
             url=url,
             method="POST",
-            session=self.session,
+            session_factory=self.session_factory,
             headers=self.headers,
             data=json.dumps(payload, allow_nan=False),
         )
@@ -154,7 +137,7 @@ class AsyncSFBulkType:
         url = "{}{}{}".format(self.bulk_url, "job/", job_id)
 
         result = await call_salesforce(
-            url=url, method="GET", session=self.session, headers=self.headers
+            url=url, method="GET", session_factory=self.session_factory, headers=self.headers
         )
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -172,7 +155,7 @@ class AsyncSFBulkType:
         result = await call_salesforce(
             url=url,
             method="POST",
-            session=self.session,
+            session_factory=self.session_factory,
             headers=self.headers,
             data=data,
         )
@@ -184,7 +167,7 @@ class AsyncSFBulkType:
         url = "{}{}{}{}{}".format(self.bulk_url, "job/", job_id, "/batch/", batch_id)
 
         result = await call_salesforce(
-            url=url, method="GET", session=self.session, headers=self.headers
+            url=url, method="GET", session_factory=self.session_factory, headers=self.headers
         )
         return result.json(object_pairs_hook=OrderedDict)
 
@@ -196,7 +179,7 @@ class AsyncSFBulkType:
         )
 
         result = await call_salesforce(
-            url=url, method="GET", session=self.session, headers=self.headers
+            url=url, method="GET", session_factory=self.session_factory, headers=self.headers
         )
 
         if operation in ("query", "queryAll"):
@@ -205,7 +188,7 @@ class AsyncSFBulkType:
                 batch_query_result = await call_salesforce(
                     url=url_query_results,
                     method="GET",
-                    session=self.session,
+                    session_factory=self.session_factory,
                     headers=self.headers,
                 )
                 yield batch_query_result.json()
