@@ -182,8 +182,12 @@ def mock_httpx_client(monkeypatch):
 def sf_client(constants, mock_httpx_client):
     """Simple fixture for crafting the client used below"""
     client = AsyncSalesforce(
-        session_id=constants["SESSION_ID"], proxies=constants["PROXIES"]
+        session_factory=lambda: mock_httpx_client[1],
+        session_id=constants["SESSION_ID"],
+        proxies=constants["PROXIES"]
     )
+
+    client.login_refresh = mock.AsyncMock(return_value=(constants["SESSION_ID"], "test"))
     client.headers = {}
     client.base_url = "https://localhost/"
     client.metadata_url = "https://localhost/metadata/"

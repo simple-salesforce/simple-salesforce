@@ -27,6 +27,7 @@ async def AsyncSalesforceLogin(
     sf_version=DEFAULT_API_VERSION,
     proxies=None,
     session=None,
+    session_factory=None,
     client_id=None,
     domain=None,
     consumer_key=None,
@@ -47,9 +48,12 @@ async def AsyncSalesforceLogin(
     * sf_version -- the version of the Salesforce API to use, for example
                     "27.0"
     * proxies -- the optional map of scheme to proxy server (note: httpx style!)
-    * session -- Custom httpx session (AsyncClient), created in calling code. This
-                 enables the use of httpx AsyncClient features not otherwise
-                 exposed by simple_salesforce.
+    * session -- DEPRECATED. Custom httpx session (AsyncClient), created in calling code.
+                 This enables the use of httpx AsyncClient features not otherwise
+                 exposed by simple_salesforce. Pass `session_factory` instead.
+    * session_factory -- Function to return a custom httpx session (AsyncClient).
+                         This enables the use of httpx Session features not otherwise
+                         exposed by simple_salesforce.
     * client_id -- the ID of this client
     * domain -- The domain to using for connecting to Salesforce. Use
                 common domains, such as 'login' or 'test', or
@@ -61,6 +65,8 @@ async def AsyncSalesforceLogin(
     * privatekey -- the private key to use
                          for signing the JWT token.
     """
+    if session is not None:
+        warnings.warn("The session keyword argument for async clients is deprecated")
 
     if domain is None:
         domain = "login"
@@ -192,7 +198,7 @@ async def AsyncSalesforceLogin(
             consumer_key,
             None,
             proxies,
-            session,
+            session_factory=session_factory,
         )
     else:
         except_code = "INVALID AUTH"
@@ -209,22 +215,25 @@ async def AsyncSalesforceLogin(
     }
 
     return await soap_login(
-        soap_url, login_soap_request_body, login_soap_request_headers, proxies, session
+        soap_url,
+        login_soap_request_body,
+        login_soap_request_headers,
+        proxies,
+        session_factory=session_factory,
     )
 
 
-async def soap_login(soap_url, request_body, headers, proxies, session=None):
+async def soap_login(soap_url, request_body, headers, proxies, session_factory=None):
     """Process SOAP specific login workflow."""
-    if session:
-        client = session
-    elif proxies and not session:
+    if session_factory:
+        client = session_factory()
+    elif proxies and not session_factory:
         client = httpx.AsyncClient(proxies=proxies)
     else:
         client = httpx.AsyncClient()
 
-    response = await client.post(soap_url, data=request_body, headers=headers)
-    if not session:
-        await client.aclose()
+    async with client as session:
+        response = await session.post(soap_url, data=request_body, headers=headers)
 
     if response.status_code != 200:
         except_code = getUniqueElementValueFromXmlString(
@@ -249,19 +258,18 @@ async def soap_login(soap_url, request_body, headers, proxies, session=None):
 
 
 async def token_login(
-    token_url, token_data, domain, consumer_key, headers, proxies, session=None
+    token_url, token_data, domain, consumer_key, headers, proxies, session_factory=None
 ):
     """Process OAuth 2.0 JWT Bearer Token Flow."""
-    if session:
-        client = session
-    elif proxies and not session:
+    if session_factory:
+        client = session_factory()
+    elif proxies and not session_factory:
         client = httpx.AsyncClient(proxies=proxies)
     else:
         client = httpx.AsyncClient()
 
-    response = await client.post(token_url, data=token_data, headers=headers)
-    if not session:
-        await client.aclose()
+    async with client as session:
+        response = await session.post(token_url, data=token_data, headers=headers)
 
     try:
         json_response = response.json()
