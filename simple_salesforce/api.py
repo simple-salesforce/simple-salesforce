@@ -189,6 +189,7 @@ class Salesforce:
                 SalesforceLogin,
                 session=self.session,
                 username=username,
+                password=password,
                 consumer_key=consumer_key,
                 consumer_secret=consumer_secret,
                 proxies=self.proxies,
