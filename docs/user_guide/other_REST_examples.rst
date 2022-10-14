@@ -25,15 +25,15 @@ In addition to built in functions that allow integrations with the Salesforce Ap
 
 .. code-block:: python
 
-    body = {"requests": [{
-                'contextId': r['OpportunityID']
-                , 'nextApproverIds': [r['Assign_To__c']]
-                , 'actionType': 'Submit'
-                , 'comments': 'Automated re-assignment to AE ownership.'
-                , 'contextActorId': '00550000007kJz3AAE'
-                , 'processDefinitionNameOrId': '04a50000000XZR9'
-                , 'skipEntryCriteria': 'true'
-            }]}
+    body = {"requests" : [{
+            "actionType": "Submit",
+            "contextId": "001D000000I8mIm",
+            "nextApproverIds": ["005D00000015rY9"],
+            "comments":"this is a test",
+            "contextActorId": "005D00000015rZy",
+            "processDefinitionNameOrId" : "PTO_Request_Process",
+            "skipEntryCriteria": "true"}]
+            }
 
 3. Generate the endpoint url and request headers dynamically using your specific SalesForceLogin instance and session id from above:
 
