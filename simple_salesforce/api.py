@@ -55,6 +55,7 @@ class Salesforce:
             privatekey=None,
             parse_float=None,
             object_pairs_hook=OrderedDict,
+            custom_login=None,
             ):
 
         """Initialize the instance with the given parameters.
@@ -92,6 +93,10 @@ class Salesforce:
         OR
         * instance_url -- Full URL of your instance i.e.
           `https://na1.salesforce.com
+
+        Custom login:
+
+        * custom_login -- Callable returning tuple with session_id and instance
 
         Universal Kwargs:
         * version -- the version of the Salesforce API to use, for example
@@ -210,6 +215,12 @@ class Salesforce:
                 privatekey=privatekey,
                 proxies=self.proxies,
                 domain=self.domain)
+            self._refresh_session()
+        elif custom_login:
+            self.auth_type = "custom"
+
+            # Use custom login method to generate session id and instance url
+            self._salesforce_login_partial = custom_login
             self._refresh_session()
 
         else:
