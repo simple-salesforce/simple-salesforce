@@ -603,8 +603,10 @@ class Salesforce:
 
         if self._salesforce_login_partial is not None \
                 and result.status_code == 401:
-            self._refresh_session()
-            return self._call_salesforce(method, url, name, **kwargs)
+            error_details = json.loads(result.text.lstrip('[').rstrip(']'))
+            if error_details['errorCode'] == 'INVALID_SESSION_ID':
+                self._refresh_session()
+                return self._call_salesforce(method, url, name, **kwargs)
 
         if result.status_code >= 300:
             exception_handler(result, name=name)
@@ -957,8 +959,10 @@ class SFType:
         if (self.salesforce
                 and self.salesforce._salesforce_login_partial is not None
                 and result.status_code == 401):
-            self.salesforce._refresh_session()
-            return self._call_salesforce(method, url, **kwargs)
+            error_details = json.loads(result.text.lstrip('[').rstrip(']'))
+            if error_details['errorCode'] == 'INVALID_SESSION_ID':
+                self.salesforce._refresh_session()
+                return self._call_salesforce(method, url, **kwargs)
 
         if result.status_code >= 300:
             exception_handler(result, self.name)
