@@ -74,17 +74,10 @@ def SalesforceLogin(
         )
         raise ValueError(error_msg)
 
-    soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
-
     if client_id:
-        client_id = "{prefix}/{app_name}".format(
-            prefix=DEFAULT_CLIENT_ID_PREFIX,
-            app_name=client_id)
+        client_id = f'{DEFAULT_CLIENT_ID_PREFIX}/{client_id}'
     else:
         client_id = DEFAULT_CLIENT_ID_PREFIX
-
-    soap_url = soap_url.format(domain=domain,
-                               sf_version=sf_version)
 
     # pylint: disable=E0012,deprecated-method
     username = escape(username) if username else None
@@ -93,27 +86,25 @@ def SalesforceLogin(
     # Check if token authentication is used
     if security_token is not None:
         # Security Token Soap request body
-        login_soap_request_body = """<?xml version="1.0" encoding="utf-8" ?>
-        <env:Envelope
-                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"
-                xmlns:urn="urn:partner.soap.sforce.com">
-            <env:Header>
-                <urn:CallOptions>
-                    <urn:client>{client_id}</urn:client>
-                    <urn:defaultNamespace>sf</urn:defaultNamespace>
-                </urn:CallOptions>
-            </env:Header>
-            <env:Body>
-                <n1:login xmlns:n1="urn:partner.soap.sforce.com">
-                    <n1:username>{username}</n1:username>
-                    <n1:password>{password}{token}</n1:password>
-                </n1:login>
-            </env:Body>
-        </env:Envelope>""".format(
-            username=username, password=password, token=security_token,
-            client_id=client_id)
+        login_soap_request_body = f"""<?xml version="1.0" encoding="utf-8" ?>
+<env:Envelope
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:urn="urn:partner.soap.sforce.com">
+    <env:Header>
+        <urn:CallOptions>
+            <urn:client>{client_id}</urn:client>
+            <urn:defaultNamespace>sf</urn:defaultNamespace>
+        </urn:CallOptions>
+    </env:Header>
+    <env:Body>
+        <n1:login xmlns:n1="urn:partner.soap.sforce.com">
+            <n1:username>{username}</n1:username>
+            <n1:password>{password}{security_token}</n1:password>
+        </n1:login>
+    </env:Body>
+</env:Envelope>"""
 
     elif username is not None and \
             password is not None and \
@@ -132,56 +123,52 @@ def SalesforceLogin(
             }
 
         return token_login(
-            'https://{domain}.salesforce.com/services/oauth2/token'.format(
-                domain=domain),
+            f'https://{domain}.salesforce.com/services/oauth2/token',
             payload, domain, consumer_key,
             None, proxies, session)
 
     # Check if IP Filtering is used in conjunction with organizationId
     elif organizationId is not None:
         # IP Filtering Login Soap request body
-        login_soap_request_body = """<?xml version="1.0" encoding="utf-8" ?>
-        <soapenv:Envelope
-                xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-                xmlns:urn="urn:partner.soap.sforce.com">
-            <soapenv:Header>
-                <urn:CallOptions>
-                    <urn:client>{client_id}</urn:client>
-                    <urn:defaultNamespace>sf</urn:defaultNamespace>
-                </urn:CallOptions>
-                <urn:LoginScopeHeader>
-                    <urn:organizationId>{organizationId}</urn:organizationId>
-                </urn:LoginScopeHeader>
-            </soapenv:Header>
-            <soapenv:Body>
-                <urn:login>
-                    <urn:username>{username}</urn:username>
-                    <urn:password>{password}</urn:password>
-                </urn:login>
-            </soapenv:Body>
-        </soapenv:Envelope>""".format(
-            username=username, password=password, organizationId=organizationId,
-            client_id=client_id)
+        login_soap_request_body = f"""<?xml version="1.0" encoding="utf-8" ?>
+<soapenv:Envelope
+        xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:urn="urn:partner.soap.sforce.com">
+    <soapenv:Header>
+        <urn:CallOptions>
+            <urn:client>{client_id}</urn:client>
+            <urn:defaultNamespace>sf</urn:defaultNamespace>
+        </urn:CallOptions>
+        <urn:LoginScopeHeader>
+            <urn:organizationId>{organizationId}</urn:organizationId>
+        </urn:LoginScopeHeader>
+    </soapenv:Header>
+    <soapenv:Body>
+        <urn:login>
+            <urn:username>{username}</urn:username>
+            <urn:password>{password}</urn:password>
+        </urn:login>
+    </soapenv:Body>
+</soapenv:Envelope>"""
     elif username is not None and password is not None:
         # IP Filtering for non self-service users
-        login_soap_request_body = """<?xml version="1.0" encoding="utf-8" ?>
-        <soapenv:Envelope
-                xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-                xmlns:urn="urn:partner.soap.sforce.com">
-            <soapenv:Header>
-                <urn:CallOptions>
-                    <urn:client>{client_id}</urn:client>
-                    <urn:defaultNamespace>sf</urn:defaultNamespace>
-                </urn:CallOptions>
-            </soapenv:Header>
-            <soapenv:Body>
-                <urn:login>
-                    <urn:username>{username}</urn:username>
-                    <urn:password>{password}</urn:password>
-                </urn:login>
-            </soapenv:Body>
-        </soapenv:Envelope>""".format(
-            username=username, password=password, client_id=client_id)
+        login_soap_request_body = f"""<?xml version="1.0" encoding="utf-8" ?>
+<soapenv:Envelope
+        xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:urn="urn:partner.soap.sforce.com">
+    <soapenv:Header>
+        <urn:CallOptions>
+            <urn:client>{client_id}</urn:client>
+            <urn:defaultNamespace>sf</urn:defaultNamespace>
+        </urn:CallOptions>
+    </soapenv:Header>
+    <soapenv:Body>
+        <urn:login>
+            <urn:username>{username}</urn:username>
+            <urn:password>{password}</urn:password>
+        </urn:login>
+    </soapenv:Body>
+</soapenv:Envelope>"""
     elif username is not None and \
             consumer_key is not None and \
             (privatekey_file is not None or privatekey is not None):
@@ -189,10 +176,8 @@ def SalesforceLogin(
         payload = {
             'iss': consumer_key,
             'sub': username,
-            'aud': 'https://{domain}.salesforce.com'.format(domain=domain),
-            'exp': '{exp:.0f}'.format(
-                exp=expiration.timestamp()
-                )
+            'aud': f'https://{domain}.salesforce.com',
+            'exp': f'{expiration.timestamp():.0f}'
             }
         if privatekey_file is not None:
             with open(privatekey_file, 'rb') as key_file:
@@ -207,8 +192,7 @@ def SalesforceLogin(
             }
 
         return token_login(
-            'https://{domain}.salesforce.com/services/oauth2/token'.format(
-                domain=domain),
+            f'https://{domain}.salesforce.com/services/oauth2/token',
             login_token_request_data, domain, consumer_key,
             None, proxies, session)
     else:
@@ -219,6 +203,7 @@ def SalesforceLogin(
         )
         raise SalesforceAuthenticationFailed(except_code, except_msg)
 
+    soap_url = f'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
     login_soap_request_headers = {
         'content-type': 'text/xml',
         'charset': 'UTF-8',
@@ -272,19 +257,16 @@ def token_login(token_url, token_data, domain, consumer_key,
         except_code = json_response.get('error')
         except_msg = json_response.get('error_description')
         if except_msg == "user hasn't approved this consumer":
-            auth_url = 'https://{domain}.salesforce.com/services/oauth2/' \
+            auth_url = f'https://{domain}.salesforce.com/services/oauth2/' \
                        'authorize?response_type=code&client_id=' \
-                       '{consumer_key}&redirect_uri=<approved URI>'.format(
-                domain=domain,
-                consumer_key=consumer_key
-                )
-            warnings.warn("""
+                       f'{consumer_key}&redirect_uri=<approved URI>'
+            warnings.warn(f"""
     If your connected app policy is set to "All users may
     self-authorize", you may need to authorize this
     application first. Browse to
-    %s
+    {auth_url}
     in order to Allow Access. Check first to ensure you have a valid
-    <approved URI>.""" % auth_url)
+    <approved URI>.""")
         raise SalesforceAuthenticationFailed(except_code, except_msg)
 
     access_token = json_response.get('access_token')

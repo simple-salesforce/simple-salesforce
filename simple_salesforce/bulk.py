@@ -98,7 +98,7 @@ class SFBulkType:
         if operation == 'upsert':
             payload['externalIdFieldName'] = external_id_field
 
-        url = "{}{}".format(self.bulk_url, 'job')
+        url = f'{self.bulk_url}job'
 
         result = call_salesforce(url=url, method='POST', session=self.session,
                                  headers=self.headers,
@@ -111,7 +111,7 @@ class SFBulkType:
             'state': 'Closed'
             }
 
-        url = "{}{}{}".format(self.bulk_url, 'job/', job_id)
+        url = f'{self.bulk_url}job/{job_id}'
 
         result = call_salesforce(url=url, method='POST', session=self.session,
                                  headers=self.headers,
@@ -120,7 +120,7 @@ class SFBulkType:
 
     def _get_job(self, job_id):
         """ Get an existing job to check the status """
-        url = "{}{}{}".format(self.bulk_url, 'job/', job_id)
+        url = f'{self.bulk_url}job/{job_id}'
 
         result = call_salesforce(url=url, method='GET', session=self.session,
                                  headers=self.headers)
@@ -132,7 +132,7 @@ class SFBulkType:
         implementations involving multiple batches
         """
 
-        url = "{}{}{}{}".format(self.bulk_url, 'job/', job_id, '/batch')
+        url = f'{self.bulk_url}job/{job_id}/batch'
 
         if operation not in ('query', 'queryAll'):
             data = json.dumps(data, allow_nan=False)
@@ -144,8 +144,7 @@ class SFBulkType:
     def _get_batch(self, job_id, batch_id):
         """ Get an existing batch to check the status """
 
-        url = "{}{}{}{}{}".format(self.bulk_url, 'job/',
-                                  job_id, '/batch/', batch_id)
+        url = f'{self.bulk_url}job/{job_id}/batch/{batch_id}'
 
         result = call_salesforce(url=url, method='GET', session=self.session,
                                  headers=self.headers)
@@ -154,15 +153,14 @@ class SFBulkType:
     def _get_batch_results(self, job_id, batch_id, operation):
         """ retrieve a set of results from a completed job """
 
-        url = "{}{}{}{}{}{}".format(self.bulk_url, 'job/', job_id, '/batch/',
-                                    batch_id, '/result')
+        url = f'{self.bulk_url}job/{job_id}/batch/{batch_id}/result'
 
         result = call_salesforce(url=url, method='GET', session=self.session,
                                  headers=self.headers)
 
         if operation in ('query', 'queryAll'):
             for batch_result in result.json():
-                url_query_results = "{}{}{}".format(url, '/', batch_result)
+                url_query_results = f'{url}/{batch_result}'
                 batch_query_result = call_salesforce(url=url_query_results,
                                                      method='GET',
                                                      session=self.session,

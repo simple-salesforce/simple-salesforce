@@ -44,10 +44,9 @@ class MetadataType:
         err_string = ""
         for result in response:
             if not result.success:
-                err_string += "\n{}: ".format(result.fullName)
+                err_string += f'\n{result.fullName}: '
                 for error in result.errors:
-                    err_string += "({}, {}), ".format(error.statusCode,
-                                                      error.message)
+                    err_string += f'({error.statusCode}, {error.message}), '
         if err_string:
             raise Exception(err_string)
 
@@ -176,7 +175,7 @@ class MetadataType:
         :returns: DescribeValueTypeResult
         """
         return self._service.describeValueType(
-            "{{http://soap.sforce.com/2006/04/metadata}}{}".format(self._name),
+            f'{{http://soap.sforce.com/2006/04/metadata}}{self._name}',
             _soapheaders=[self._session_header])
 
 
@@ -283,14 +282,14 @@ class SfdcMetadataApi:
             attributes['rollbackOnError'] = True
 
         if testLevel:
-            test_level = "<met:testLevel>%s</met:testLevel>" % testLevel
+            test_level = f'<met:testLevel>{testLevel}</met:testLevel>'
             attributes['testLevel'] = test_level
 
         tests_tag = ''
         if tests and \
                 str(testLevel).lower() == 'runspecifiedtests':
             for test in tests:
-                tests_tag += '<met:runTests>%s</met:runTests>\n' % test
+                tests_tag += f'<met:runTests>{test}</met:runTests>\n'
             attributes['tests'] = tests_tag
 
         request = DEPLOY_MSG.format(**attributes)
@@ -368,7 +367,7 @@ class SfdcMetadataApi:
             'soapenv:Body/mt:checkDeployStatusResponse/mt:result',
             self._XML_NAMESPACES)
         if result is None:
-            raise Exception("Result node could not be found: %s" % res.text)
+            raise Exception(f"Result node could not be found: {res.text}")
 
         return result
 
@@ -456,8 +455,8 @@ class SfdcMetadataApi:
         """ Downloads Apex logs for unit tests executed during specified
         deployment """
         result = self._retrieve_deploy_result(async_process_id)
-        print("response: %s" % ET.tostring(result, encoding="us-ascii",
-                                           method="xml"))
+        print("response:", ET.tostring(result, encoding="us-ascii",
+                                       method="xml"))
 
     def retrieve(self, async_process_id, **kwargs):
         """ Submits retrieve request """
@@ -475,10 +474,8 @@ class SfdcMetadataApi:
                     members = kwargs.get('unpackaged')[metadata_type]
                     unpackaged += '<types>'
                     for member in members:
-                        unpackaged += '<members>{member}</members>'.format(
-                            member=member)
-                    unpackaged += '<name>{metadata_type}</name></types>'.format(
-                        metadata_type=metadata_type)
+                        unpackaged += f'<members>{member}</members>'
+                    unpackaged += f'<name>{metadata_type}</name></types>'
                 else:
                     raise TypeError('unpackaged metadata types must be a dict')
 
@@ -538,7 +535,7 @@ class SfdcMetadataApi:
             'soapenv:Body/mt:checkRetrieveStatusResponse/mt:result',
             self._XML_NAMESPACES)
         if result is None:
-            raise Exception("Result node could not be found: %s" % res.text)
+            raise Exception(f"Result node could not be found: {res.text}")
 
         return result
 
