@@ -225,13 +225,13 @@ class Salesforce:
             'X-PrettyPrint': '1'
             }
 
-        self.base_url = f'https://{self.sf_instance}' \
-                        f'/services/data/v{self.sf_version}/'
+        self.base_url = (
+            f'https://{self.sf_instance}/services/data/v{self.sf_version}/')
         self.apex_url = f'https://{self.sf_instance}/services/apexrest/'
-        self.bulk_url = f'https://{self.sf_instance}' \
-                        f'/services/async/{self.sf_version}/'
-        self.metadata_url = f'https://{self.sf_instance}' \
-                            f'/services/Soap/m/{self.sf_version}/'
+        self.bulk_url = (
+            f'https://{self.sf_instance}/services/async/{self.sf_version}/')
+        self.metadata_url = (
+            f'https://{self.sf_instance}/services/Soap/m/{self.sf_version}/')
         self.tooling_url = f'{self.base_url}tooling/'
         self.oauth2_url = f'https://{self.sf_instance}/services/oauth2/'
         self.api_usage = {}
@@ -734,8 +734,9 @@ class SFType:
             self.session.proxies = proxies
         self.api_usage = {}
 
-        self.base_url = f'https://{sf_instance}' \
-                        f'/services/data/v{sf_version}/sobjects/{object_name}/'
+        self.base_url = (
+            f'https://{sf_instance}/services/data/v{sf_version}/sobjects'
+            f'/{object_name}/')
 
     @property
     def session_id(self):
