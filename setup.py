@@ -1,16 +1,14 @@
 """Simple-Salesforce Package Setup"""
 
-import os
-import sys
 import textwrap
+from pathlib import Path
 
 from setuptools import setup
 
-here = os.path.abspath(os.path.dirname(__file__))
+here = Path(__file__).parent
 
 about = {}
-with open(os.path.join(here, 'simple_salesforce', '__version__.py'), 'r') as f:
-    exec(f.read(), about)
+exec((here / 'simple_salesforce' / '__version__.py').read_text(), about)
 
 setup(
     name=about['__title__'],
@@ -23,7 +21,7 @@ setup(
     url=about['__url__'],
     license=about['__license__'],
     description=about['__description__'],
-    long_description=textwrap.dedent(open('README.rst', 'r').read()),
+    long_description=textwrap.dedent((here / 'README.rst').read_text()),
     long_description_content_type='text/x-rst',
     package_data={
         'simple_salesforce': ['metadata.wsdl'],

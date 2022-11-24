@@ -1,6 +1,6 @@
 """ Class to work with Salesforce Metadata API """
-import os
 from base64 import b64encode, b64decode
+from pathlib import Path
 from xml.etree import ElementTree as ET
 from .util import call_salesforce
 from .messages import DEPLOY_MSG, CHECK_DEPLOY_STATUS_MSG, \
@@ -200,9 +200,8 @@ class SfdcMetadataApi:
         self.headers = headers
         self._api_version = api_version
         self._deploy_zip = None
-        wsdl_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                 'metadata.wsdl')
-        self._client = Client(os.path.join('simple_salesforce', wsdl_path),
+        wsdl_path = Path(__file__).parent / 'metadata.wsdl'
+        self._client = Client(wsdl_path.absolute().as_uri(),
                               settings=Settings(strict=False,
                                                 xsd_ignore_sequence_order=True))
         self._service = self._client.create_service(
@@ -322,16 +321,11 @@ class SfdcMetadataApi:
         :rtype:
         """
         if hasattr(zipfile, 'read'):
-            file = zipfile
-            file.seek(0)
-            should_close = False
+            zipfile.seek(0)
+            raw = zipfile.read()
         else:
-            file = open(zipfile, 'rb')
-            should_close = True
-        raw = file.read()
-        if should_close:
-            file.close()
-        return b64encode(raw).decode("utf-8")
+            raw = Path(zipfile).read_bytes()
+        return b64encode(raw).decode()
 
     def _retrieve_deploy_result(self, async_process_id, **kwargs):
         """ Retrieves status for specified deployment id

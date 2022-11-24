@@ -8,6 +8,7 @@ import logging
 import re
 from collections import OrderedDict, namedtuple
 from functools import partial
+from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -993,8 +994,7 @@ class SFType:
                       **kwargs):
         """Upload base64 encoded file to Salesforce"""
         data = {}
-        with open(file_path, "rb") as f:
-            body = base64.b64encode(f.read()).decode('utf-8')
+        body = base64.b64encode(Path(file_path).read_bytes()).decode()
         data[base64_field] = body
         result = self._call_salesforce(method='POST', url=self.base_url,
                                        headers=headers, json=data, **kwargs)
@@ -1006,8 +1006,7 @@ class SFType:
                       **kwargs):
         """Updated base64 image from file to Salesforce"""
         data = {}
-        with open(file_path, "rb") as f:
-            body = base64.b64encode(f.read()).decode('utf-8')
+        body = base64.b64encode(Path(file_path).read_bytes()).decode()
         data[base64_field] = body
         result = self._call_salesforce(method='PATCH',
                                        url=urljoin(self.base_url, record_id),

@@ -9,6 +9,7 @@ import warnings
 from datetime import datetime, timedelta, timezone
 from html import escape
 from json.decoder import JSONDecodeError
+from pathlib import Path
 
 import requests
 import jwt
@@ -195,8 +196,7 @@ def SalesforceLogin(
                 )
             }
         if privatekey_file is not None:
-            with open(privatekey_file, 'rb') as key_file:
-                key = key_file.read()
+            key = Path(privatekey_file).read_bytes()
         else:
             key = privatekey
         assertion = jwt.encode(payload, key, algorithm='RS256')
