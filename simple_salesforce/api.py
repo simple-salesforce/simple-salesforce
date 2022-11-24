@@ -603,7 +603,7 @@ class Salesforce:
 
         if self._salesforce_login_partial is not None \
                 and result.status_code == 401:
-            error_details = json.loads(result.text.lstrip('[').rstrip(']'))
+            error_details = result.json()[0]
             if error_details['errorCode'] == 'INVALID_SESSION_ID':
                 self._refresh_session()
                 return self._call_salesforce(method, url, name, **kwargs)
@@ -959,7 +959,7 @@ class SFType:
         if (self.salesforce
                 and self.salesforce._salesforce_login_partial is not None
                 and result.status_code == 401):
-            error_details = json.loads(result.text.lstrip('[').rstrip(']'))
+            error_details = result.json()[0]
             if error_details['errorCode'] == 'INVALID_SESSION_ID':
                 self.salesforce._refresh_session()
                 return self._call_salesforce(method, url, **kwargs)
