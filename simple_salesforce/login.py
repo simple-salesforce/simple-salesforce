@@ -69,8 +69,8 @@ def SalesforceLogin(
 
     if sf_version.startswith("v"):
         error_msg = (
-            "Invalid sf_version specified ({version}). Version should not "
-            "contain a leading 'v'".format(version=sf_version)
+            f"Invalid sf_version specified ({sf_version}). Version should not "
+            "contain a leading 'v'"
         )
         raise ValueError(error_msg)
 
