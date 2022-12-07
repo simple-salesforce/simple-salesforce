@@ -66,14 +66,14 @@ def SalesforceLogin(
 
     if domain is None:
         domain = 'login'
-    
+
     if sf_version.startswith("v"):
         error_msg = (
             "Invalid sf_version specified ({version}). Version should not "
             "contain a leading 'v'".format(version=sf_version)
         )
         raise ValueError(error_msg)
-    
+
     soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
 
     if client_id:
@@ -116,9 +116,9 @@ def SalesforceLogin(
             client_id=client_id)
 
     elif username is not None and \
+            password is not None and \
             consumer_key is not None and \
             consumer_secret is not None:
-        header = {'Content-Type': 'application/json'}
         payload = {
             'grant_type': 'password',
             'client_id': consumer_key,
