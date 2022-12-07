@@ -270,6 +270,10 @@ class SFBulkType:
             raise ValueError('batch size should be auto or an integer')
 
         if operation not in ('query', 'queryAll'):
+            # Checks if data is present
+            if not data:
+                raise ValueError(f'data should not be empty for {operation}')
+
             # Checks to prevent batch limit
             if batch_size != 'auto':
                 batch_size = min(batch_size, len(data), 10000)
