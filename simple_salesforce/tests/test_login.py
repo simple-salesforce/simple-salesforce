@@ -235,6 +235,7 @@ class TestSalesforceLogin(unittest.TestCase):
     def test_connected_app_login_success(self):
         """Test a successful connected app login with a key file"""
         login_args = {
+            'password': 'password',
             'consumer_key': '12345.abcde',
             'consumer_secret': '12345.abcde'
             }
@@ -255,6 +256,7 @@ class TestSalesforceLogin(unittest.TestCase):
         with self.assertRaises(SalesforceAuthenticationFailed):
             SalesforceLogin(
                 username='myemail@example.com.sandbox',
+                password='password',
                 consumer_key='12345.abcde',
                 consumer_secret='12345.abcde'
                 )
