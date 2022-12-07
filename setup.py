@@ -39,7 +39,7 @@ install_requires = [
                                        'responses>=0.5.1',
                                        'cryptography<3.4',
                                        ],
-                                   test_suite = 'tests',
+                                   test_suite = 'simple_salesforce.tests',
                                                 keywords = about[
                                                                '__keywords__'],
                                                            classifiers = [
