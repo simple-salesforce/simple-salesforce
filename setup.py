@@ -30,7 +30,7 @@ setup(
         },
 install_requires = [
                        'requests>=2.22.0',
-                       'authlib',
+                       'pyjwt',
                        'zeep'
                        ],
                    tests_require = [
