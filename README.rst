@@ -9,7 +9,7 @@ Simple Salesforce
    :target: http://simple-salesforce.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.6, 3.7 and 3.8. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
+Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.6, 3.7 3.8, 3.9, 3.10, and 3.11. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
 
 =============
 
