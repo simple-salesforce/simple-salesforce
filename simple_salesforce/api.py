@@ -181,7 +181,7 @@ class Salesforce:
             self._refresh_session()
 
         elif all(arg is not None for arg in (
-                username, consumer_key, consumer_secret)):
+                username, password, consumer_key, consumer_secret)):
             self.auth_type = "password"
 
             # Pass along the username/password to our login helper
