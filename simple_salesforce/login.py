@@ -66,7 +66,14 @@ def SalesforceLogin(
 
     if domain is None:
         domain = 'login'
-
+    
+    if sf_version.startswith("v"):
+        error_msg = (
+            "Invalid sf_version specified ({version}). Version should not "
+            "contain a leading 'v'".format(version=sf_version)
+        )
+        raise ValueError(error_msg)
+    
     soap_url = 'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
 
     if client_id:
