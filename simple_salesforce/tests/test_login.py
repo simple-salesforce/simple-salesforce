@@ -255,6 +255,7 @@ class TestSalesforceLogin(unittest.TestCase):
         with self.assertRaises(SalesforceAuthenticationFailed):
             SalesforceLogin(
                 username='myemail@example.com.sandbox',
+                password='password',
                 consumer_key='12345.abcde',
                 consumer_secret='12345.abcde'
                 )
