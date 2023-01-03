@@ -537,8 +537,8 @@ class Salesforce:
         sfdc_instance = re.sub(r"\.salesforce\.com$", "", self.sf_instance)
         sfdc_session = SfdcSession(instance=sfdc_instance, session_id=self.session_id)
         mdapi = SfdcMetadataApi(sfdc_session)
-        state, state_detail, deployment_detail, unit_test_detail = mdapi.check_deploy_status(asyncId)
-        return state, state_detail, deployment_detail, unit_test_detail
+        state, state_detail, deployment_detail, unit_test_detail, error_message = mdapi.check_deploy_status(asyncId)
+        return state, state_detail, deployment_detail, unit_test_detail, error_message
 
 
 class SFType:
