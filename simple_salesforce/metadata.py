@@ -155,8 +155,11 @@ class SfdcMetadataApi:
             "completed_count": result.find("mt:numberTestsCompleted", self._XML_NAMESPACES).text,
             "errors": unit_test_errors,
         }
+        error_message = result.find("mt:errorMessage", self._XML_NAMESPACES)
+        if error_message is not None:
+            error_message = error_message.text
 
-        return state, state_detail, deployment_detail, unit_test_detail
+        return state, state_detail, deployment_detail, unit_test_detail, error_message
 
     def download_unit_test_logs(self, async_process_id):
         """ Downloads Apex logs for unit tests executed during specified deployment """
