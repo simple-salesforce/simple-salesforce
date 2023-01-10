@@ -7,7 +7,7 @@ DEFAULT_CLIENT_ID_PREFIX = 'simple-salesforce'
 
 import warnings
 from datetime import datetime, timedelta, timezone
-from html import escape
+from html import escape, unescape
 from json.decoder import JSONDecodeError
 
 import requests
@@ -116,8 +116,8 @@ def SalesforceLogin(
             'grant_type': 'password',
             'client_id': consumer_key,
             'client_secret': consumer_secret,
-            'username': username,
-            'password': password
+            'username': unescape(username),
+            'password': unescape(password) if password else None
             }
 
         login_token_request_data = {
