@@ -534,7 +534,7 @@ class TestSalesforce(unittest.TestCase):
             version=expected_version)
 
         self.assertEqual(
-            client.base_url.split('/')[-2], 'v%s' % expected_version)
+            client.base_url.split('/')[-2], f'v{expected_version}')
 
     def test_shared_session_to_sftype(self):
         """Test Salesforce and SFType instances share default `Session`"""

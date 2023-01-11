@@ -89,7 +89,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job$'),
             body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
             '"contentType": "JSON","id": "Job-1","object": "Contact",'
-            '"operation": "%s","state": "Open"}' % operation,
+            f'"operation": "{operation}","state": "Open"}}',
             status=http.OK)
         responses.add(
             responses.POST,
@@ -102,7 +102,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job/Job-1$'),
             body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
             '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
-            '"operation" : "%s","state" : "Closed"}' % operation,
+            f'"operation" : "{operation}","state" : "Closed"}}',
             status=http.OK
         )
         responses.add(
@@ -147,7 +147,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job$'),
             body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
             '"contentType": "JSON","id": "Job-1","object": "Contact",'
-            '"operation": "%s","state": "Open"}' % operation,
+            f'"operation": "{operation}","state": "Open"}}',
             status=http.OK)
         responses.add(
             responses.POST,
@@ -160,7 +160,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job/Job-1$'),
             body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
             '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
-            '"operation" : "%s","state" : "Closed"}' % operation,
+            f'"operation" : "{operation}","state" : "Closed"}}',
             status=http.OK
         )
         responses.add(
@@ -212,7 +212,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job$'),
             body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
             '"contentType": "JSON","id": "Job-1","object": "Contact",'
-            '"operation": "%s","state": "Open"}' % operation,
+            f'"operation": "{operation}","state": "Open"}}',
             status=http.OK)
         responses.add(
             responses.POST,
@@ -225,7 +225,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job/Job-1$'),
             body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
             '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
-            '"operation" : "%s","state" : "Closed"}' % operation,
+            f'"operation" : "{operation}","state" : "Closed"}}',
             status=http.OK
         )
         responses.add(
@@ -279,7 +279,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job$'),
             body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
             '"contentType": "JSON","id": "Job-1","object": "Contact",'
-            '"operation": "%s","state": "Open"}' % operation,
+            f'"operation": "{operation}","state": "Open"}}',
             status=http.OK)
         responses.add(
             responses.POST,
@@ -292,7 +292,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job/Job-1$'),
             body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
             '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
-            '"operation" : "%s","state" : "Closed"}' % operation,
+            f'"operation" : "{operation}","state" : "Closed"}}',
             status=http.OK
         )
         responses.add(
@@ -346,7 +346,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job$'),
             body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
             '"contentType": "JSON","id": "Job-1","object": "Contact",'
-            '"operation": "%s","state": "Open"}' % operation,
+            f'"operation": "{operation}","state": "Open"}}',
             status=http.OK)
         responses.add(
             responses.POST,
@@ -359,7 +359,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job/Job-1$'),
             body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
             '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
-            '"operation" : "%s","state" : "Closed"}' % operation,
+            f'"operation" : "{operation}","state" : "Closed"}}',
             status=http.OK
         )
         responses.add(
@@ -424,7 +424,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job$'),
             body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
             '"contentType": "JSON","id": "Job-1","object": "Contact",'
-            '"operation": "%s","state": "Open"}' % operation,
+            f'"operation": "{operation}","state": "Open"}}',
             status=http.OK)
         responses.add(
             responses.POST,
@@ -437,7 +437,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job/Job-1$'),
             body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
             '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
-            '"operation" : "%s","state" : "Closed"}' % operation,
+            f'"operation" : "{operation}","state" : "Closed"}}',
             status=http.OK
         )
         responses.add(
@@ -471,7 +471,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job$'),
             body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
             '"contentType": "JSON","id": "Job-1","object": "Contact",'
-            '"operation": "%s","state": "Open"}' % operation,
+            f'"operation": "{operation}","state": "Open"}}',
             status=http.OK)
         responses.add(
             responses.POST,
@@ -484,7 +484,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job/Job-1$'),
             body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
             '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
-            '"operation" : "%s","state" : "Closed"}' % operation,
+            f'"operation" : "{operation}","state" : "Closed"}}',
             status=http.OK
         )
         responses.add(
@@ -552,7 +552,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job$'),
             body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
             '"contentType": "JSON","id": "Job-1","object": "Contact",'
-            '"operation": "%s","state": "Open"}' % operation,
+            f'"operation": "{operation}","state": "Open"}}',
             status=http.OK)
         responses.add(
             responses.POST,
@@ -565,7 +565,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job/Job-1$'),
             body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
             '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
-            '"operation" : "%s","state" : "Closed"}' % operation,
+            f'"operation" : "{operation}","state" : "Closed"}}',
             status=http.OK
         )
         responses.add(
@@ -635,14 +635,14 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job$'),
             body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
             '"contentType": "JSON","id": "Job-1","object": "Contact",'
-            '"operation": "%s","state": "Open"}' % operation,
+            f'"operation": "{operation}","state": "Open"}}',
             status=http.OK)
         responses.add(
             responses.POST,
             re.compile(r'^https://[^/job].*/job/Job-1$'),
             body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
             '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
-            '"operation" : "%s","state" : "Closed"}' % operation,
+            f'"operation" : "{operation}","state" : "Closed"}}',
             status=http.OK
         )
         data = [{

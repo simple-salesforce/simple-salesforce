@@ -85,6 +85,7 @@ class SalesforceResourceNotFound(SalesforceError):
         return self.message.format(name=self.resource_name,
                                    content=self.content)
 
+
 class SalesforceAuthenticationFailed(SalesforceError):
     """
     Thrown to indicate that authentication with Salesforce failed.
@@ -98,7 +99,7 @@ class SalesforceAuthenticationFailed(SalesforceError):
         self.message = message
 
     def __str__(self):
-        return '{code}: {message}'.format(code=self.code, message=self.message)
+        return f'{self.code}: {self.message}'
 
 
 class SalesforceGeneralError(SalesforceError):
