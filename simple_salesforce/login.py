@@ -7,7 +7,7 @@ DEFAULT_CLIENT_ID_PREFIX = 'simple-salesforce'
 
 import warnings
 from datetime import datetime, timedelta, timezone
-from html import escape
+from html import escape, unescape
 from json.decoder import JSONDecodeError
 
 import requests
@@ -114,8 +114,8 @@ def SalesforceLogin(
             'grant_type': 'password',
             'client_id': consumer_key,
             'client_secret': consumer_secret,
-            'username': username,
-            'password': password
+            'username': unescape(username),
+            'password': unescape(password) if password else None
             }
 
         login_token_request_data = {
@@ -124,6 +124,28 @@ def SalesforceLogin(
 
         return token_login(
             f'https://{domain}.salesforce.com/services/oauth2/token',
+            payload, domain, consumer_key,
+            None, proxies, session)
+
+    elif username is not None and \
+            consumer_key is not None and \
+            consumer_secret is not None:
+        header = {'Content-Type': 'application/json'}
+        payload = {
+            'grant_type': 'password',
+            'client_id': consumer_key,
+            'client_secret': consumer_secret,
+            'username': unescape(username),
+            'password': unescape(password) if password else None
+            }
+
+        login_token_request_data = {
+            'grant_type': 'password'
+            }
+
+        return token_login(
+            'https://{domain}.salesforce.com/services/oauth2/token'.format(
+                domain=domain),
             payload, domain, consumer_key,
             None, proxies, session)
 

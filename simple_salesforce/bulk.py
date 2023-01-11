@@ -245,6 +245,7 @@ class SFBulkType:
             record_count += 1
         if last_break < len(data) - 1:
             batches.append(data[last_break:])
+
         return [self._add_batch(job_id=job, data=i,
                                 operation=operation) for i in batches]
 
