@@ -156,7 +156,7 @@ class Salesforce:
                 self.sf_instance = urlparse(instance_url).hostname
                 port = urlparse(instance_url).port
                 if port not in (None, 443):
-                    self.sf_instance += ':' + str(port)
+                    self.sf_instance += f':{port}'
             else:
                 self.sf_instance = instance
 
@@ -181,7 +181,7 @@ class Salesforce:
             self._refresh_session()
 
         elif all(arg is not None for arg in (
-                username, consumer_key, consumer_secret)):
+                username, password, consumer_key, consumer_secret)):
             self.auth_type = "password"
 
             # Pass along the username/password to our login helper
@@ -217,8 +217,7 @@ class Salesforce:
                 'You must provide login information or an instance and token'
                 )
 
-        self.auth_site = ('https://{domain}.salesforce.com'
-                          .format(domain=self.domain))
+        self.auth_site = f'https://{self.domain}.salesforce.com'
 
         self.headers = {
             'Content-Type': 'application/json',
@@ -226,20 +225,15 @@ class Salesforce:
             'X-PrettyPrint': '1'
             }
 
-        self.base_url = ('https://{instance}/services/data/v{version}/'
-                         .format(instance=self.sf_instance,
-                                 version=self.sf_version))
-        self.apex_url = ('https://{instance}/services/apexrest/'
-                         .format(instance=self.sf_instance))
-        self.bulk_url = ('https://{instance}/services/async/{version}/'
-                         .format(instance=self.sf_instance,
-                                 version=self.sf_version))
-        self.metadata_url = ('https://{instance}/services/Soap/m/{version}/'
-                             .format(instance=self.sf_instance,
-                                     version=self.sf_version))
-        self.tooling_url = '{base_url}tooling/'.format(base_url=self.base_url)
-        self.oauth2_url = ('https://{instance}/services/oauth2/'
-                           .format(instance=self.sf_instance))
+        self.base_url = (
+            f'https://{self.sf_instance}/services/data/v{self.sf_version}/')
+        self.apex_url = f'https://{self.sf_instance}/services/apexrest/'
+        self.bulk_url = (
+            f'https://{self.sf_instance}/services/async/{self.sf_version}/')
+        self.metadata_url = (
+            f'https://{self.sf_instance}/services/Soap/m/{self.sf_version}/')
+        self.tooling_url = f'{self.base_url}tooling/'
+        self.oauth2_url = f'https://{self.sf_instance}/services/oauth2/'
         self.api_usage = {}
         self._parse_float = parse_float
         self._object_pairs_hook = object_pairs_hook
@@ -337,7 +331,7 @@ class Salesforce:
         * password: the new password
         """
 
-        url = self.base_url + 'sobjects/User/%s/password' % user
+        url = f'{self.base_url}sobjects/User/{user}/password'
         params = {'NewPassword': password}
 
         result = self._call_salesforce('POST', url, data=json.dumps(params))
@@ -425,7 +419,7 @@ class Salesforce:
                     string will be wrapped to read `FIND {Waldo}` before being
                     sent to Salesforce
         """
-        search_string = 'FIND {{{search_string}}}'.format(search_string=search)
+        search_string = f'FIND {{{search}}}'
         return self.search(search_string)
 
     def limits(self, **kwargs):
@@ -477,14 +471,10 @@ class Salesforce:
         """
         if identifier_is_url:
             # Don't use `self.base_url` here because the full URI is provided
-            url = ('https://{instance}{next_record_url}'
-                   .format(instance=self.sf_instance,
-                           next_record_url=next_records_identifier))
+            url = f'https://{self.sf_instance}{next_records_identifier}'
         else:
             endpoint = 'queryAll' if include_deleted else 'query'
-            url = self.base_url + '{query_endpoint}/{next_record_id}'
-            url = url.format(query_endpoint=endpoint,
-                             next_record_id=next_records_identifier)
+            url = f'{self.base_url}{endpoint}/{next_records_identifier}'
         result = self._call_salesforce('GET', url, name='query_more', **kwargs)
 
         return self.parse_result_to_json(result)
@@ -603,8 +593,10 @@ class Salesforce:
 
         if self._salesforce_login_partial is not None \
                 and result.status_code == 401:
-            self._refresh_session()
-            return self._call_salesforce(method, url, name, **kwargs)
+            error_details = result.json()[0]
+            if error_details['errorCode'] == 'INVALID_SESSION_ID':
+                self._refresh_session()
+                return self._call_salesforce(method, url, name, **kwargs)
 
         if result.status_code >= 300:
             exception_handler(result, name=name)
@@ -743,10 +735,8 @@ class SFType:
         self.api_usage = {}
 
         self.base_url = (
-            'https://{instance}/services/data/v{sf_version}/sobjects'
-            '/{object_name}/'.format(instance=sf_instance,
-                                     object_name=object_name,
-                                     sf_version=sf_version))
+            f'https://{sf_instance}/services/data/v{sf_version}/sobjects'
+            f'/{object_name}/')
 
     @property
     def session_id(self):
@@ -785,9 +775,7 @@ class SFType:
         * record_id -- the Id of the SObject to get
         * headers -- a dict with additional request headers.
         """
-        custom_url_part = 'describe/layouts/{record_id}'.format(
-            record_id=record_id
-            )
+        custom_url_part = f'describe/layouts/{record_id}'
         result = self._call_salesforce(
             method='GET',
             url=urljoin(self.base_url, custom_url_part),
@@ -819,11 +807,7 @@ class SFType:
         * custom_id - the External ID value of the SObject to get
         * headers -- a dict with additional request headers.
         """
-        custom_url = urljoin(
-            self.base_url, '{custom_id_field}/{custom_id}'.format(
-                custom_id_field=custom_id_field, custom_id=custom_id
-                )
-            )
+        custom_url = urljoin(self.base_url, f'{custom_id_field}/{custom_id}')
         result = self._call_salesforce(
             method='GET', url=custom_url, headers=headers
             )
@@ -914,9 +898,8 @@ class SFType:
         * headers -- a dict with additional request headers.
         """
         url = urljoin(
-            self.base_url, 'deleted/?start={start}&end={end}'.format(
-                start=date_to_iso8601(start), end=date_to_iso8601(end)
-                )
+            self.base_url,
+            f'deleted/?start={date_to_iso8601(start)}&end={date_to_iso8601(end)}'
             )
         result = self._call_salesforce(method='GET', url=url, headers=headers)
         return self.parse_result_to_json(result)
@@ -933,9 +916,8 @@ class SFType:
         * headers -- a dict with additional request headers.
         """
         url = urljoin(
-            self.base_url, 'updated/?start={start}&end={end}'.format(
-                start=date_to_iso8601(start), end=date_to_iso8601(end)
-                )
+            self.base_url,
+            f'updated/?start={date_to_iso8601(start)}&end={date_to_iso8601(end)}'
             )
         result = self._call_salesforce(method='GET', url=url, headers=headers)
         return self.parse_result_to_json(result)
@@ -957,8 +939,10 @@ class SFType:
         if (self.salesforce
                 and self.salesforce._salesforce_login_partial is not None
                 and result.status_code == 401):
-            self.salesforce._refresh_session()
-            return self._call_salesforce(method, url, **kwargs)
+            error_details = result.json()[0]
+            if error_details['errorCode'] == 'INVALID_SESSION_ID':
+                self.salesforce._refresh_session()
+                return self._call_salesforce(method, url, **kwargs)
 
         if result.status_code >= 300:
             exception_handler(result, self.name)
@@ -1023,8 +1007,7 @@ class SFType:
                      sobjects/ContentVersion/ABC123/VersionData
         """
         result = self._call_salesforce(method='GET', url=urljoin(
-            self.base_url, '{record_id}/{base64_field}'.format(
-                record_id=record_id, base64_field=base64_field)),
+            self.base_url, f'{record_id}/{base64_field}'),
                                        data=data,
                                        headers=headers, **kwargs)
 
