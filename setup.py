@@ -30,16 +30,16 @@ setup(
         },
 install_requires = [
                        'requests>=2.22.0',
-                       'authlib',
+                       'pyjwt',
                        'zeep'
                        ],
                    tests_require = [
-                                       'nose>=1.3.0',
+                                       'pytest',
                                        'pytz>=2014.1.1',
                                        'responses>=0.5.1',
                                        'cryptography<3.4',
                                        ],
-                                   test_suite = 'nose.collector',
+                                   test_suite = 'simple_salesforce.tests',
                                                 keywords = about[
                                                                '__keywords__'],
                                                            classifiers = [
@@ -52,6 +52,9 @@ install_requires = [
     'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: Implementation :: PyPy'
     ]
 )
