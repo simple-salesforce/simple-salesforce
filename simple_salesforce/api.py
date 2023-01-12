@@ -498,8 +498,7 @@ class Salesforce:
 
         result = self.query(query, include_deleted=include_deleted, **kwargs)
         while True:
-            for record in result['records']:
-                yield record
+            yield from result['records']
             # fetch next batch if we're not done else break out of loop
             if not result['done']:
                 result = self.query_more(result['nextRecordsUrl'],

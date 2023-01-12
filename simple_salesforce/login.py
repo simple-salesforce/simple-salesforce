@@ -111,21 +111,16 @@ def SalesforceLogin(
             password is not None and \
             consumer_key is not None and \
             consumer_secret is not None:
-        payload = {
+        token_data = {
             'grant_type': 'password',
             'client_id': consumer_key,
             'client_secret': consumer_secret,
             'username': unescape(username),
             'password': unescape(password) if password else None
             }
-
-        login_token_request_data = {
-            'grant_type': 'password'
-            }
-
         return token_login(
             f'https://{domain}.salesforce.com/services/oauth2/token',
-            payload, domain, consumer_key,
+            token_data, domain, consumer_key,
             None, proxies, session)
 
     elif username is not None and \
@@ -208,14 +203,14 @@ def SalesforceLogin(
             key = privatekey
         assertion = jwt.encode(payload, key, algorithm='RS256')
 
-        login_token_request_data = {
+        token_data = {
             'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
             'assertion': assertion
             }
 
         return token_login(
             f'https://{domain}.salesforce.com/services/oauth2/token',
-            login_token_request_data, domain, consumer_key,
+            token_data, domain, consumer_key,
             None, proxies, session)
     else:
         except_code = 'INVALID AUTH'

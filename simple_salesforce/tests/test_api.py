@@ -1214,7 +1214,7 @@ class TestSalesforce(unittest.TestCase):
         """Test oauth2 endpoint returns no result"""
         responses.add(
             responses.POST,
-            re.compile(r'^https://.*/services/oauth2/revoke\?token=.+$$'),
+            re.compile(r'^https://.*/services/oauth2/revoke\?token=.+$'),
             body='{}',
             status=http.OK,
             content_type='')
