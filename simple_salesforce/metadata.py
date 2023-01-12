@@ -131,7 +131,7 @@ class MetadataType:
                          mix of both types.
         :type metadata: list
         """
-        response = self._service.updateMetadata(metadata, _soapheaders=[
+        response = self._service.upsertMetadata(metadata, _soapheaders=[
             self._session_header])
         self._handle_api_response(response)
 
