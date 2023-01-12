@@ -98,7 +98,7 @@ class SFBulkType:
         if operation == 'upsert':
             payload['externalIdFieldName'] = external_id_field
 
-        url = "{}{}".format(self.bulk_url, 'job')
+        url = f'{self.bulk_url}job'
 
         result = call_salesforce(url=url, method='POST', session=self.session,
                                  headers=self.headers,
@@ -111,7 +111,7 @@ class SFBulkType:
             'state': 'Closed'
             }
 
-        url = "{}{}{}".format(self.bulk_url, 'job/', job_id)
+        url = f'{self.bulk_url}job/{job_id}'
 
         result = call_salesforce(url=url, method='POST', session=self.session,
                                  headers=self.headers,
@@ -120,7 +120,7 @@ class SFBulkType:
 
     def _get_job(self, job_id):
         """ Get an existing job to check the status """
-        url = "{}{}{}".format(self.bulk_url, 'job/', job_id)
+        url = f'{self.bulk_url}job/{job_id}'
 
         result = call_salesforce(url=url, method='GET', session=self.session,
                                  headers=self.headers)
@@ -132,7 +132,7 @@ class SFBulkType:
         implementations involving multiple batches
         """
 
-        url = "{}{}{}{}".format(self.bulk_url, 'job/', job_id, '/batch')
+        url = f'{self.bulk_url}job/{job_id}/batch'
 
         if operation not in ('query', 'queryAll'):
             data = json.dumps(data, allow_nan=False)
@@ -144,8 +144,7 @@ class SFBulkType:
     def _get_batch(self, job_id, batch_id):
         """ Get an existing batch to check the status """
 
-        url = "{}{}{}{}{}".format(self.bulk_url, 'job/',
-                                  job_id, '/batch/', batch_id)
+        url = f'{self.bulk_url}job/{job_id}/batch/{batch_id}'
 
         result = call_salesforce(url=url, method='GET', session=self.session,
                                  headers=self.headers)
@@ -154,15 +153,14 @@ class SFBulkType:
     def _get_batch_results(self, job_id, batch_id, operation):
         """ retrieve a set of results from a completed job """
 
-        url = "{}{}{}{}{}{}".format(self.bulk_url, 'job/', job_id, '/batch/',
-                                    batch_id, '/result')
+        url = f'{self.bulk_url}job/{job_id}/batch/{batch_id}/result'
 
         result = call_salesforce(url=url, method='GET', session=self.session,
                                  headers=self.headers)
 
         if operation in ('query', 'queryAll'):
             for batch_result in result.json():
-                url_query_results = "{}{}{}".format(url, '/', batch_result)
+                url_query_results = f'{url}/{batch_result}'
                 batch_query_result = call_salesforce(url=url_query_results,
                                                      method='GET',
                                                      session=self.session,
@@ -209,10 +207,12 @@ class SFBulkType:
         AND
         number_of_character_limit <= 10000000
 
-        testing for number of characters ensures that file size limit is
-        respected.
+        Documentation on limits can be found at:
+        https://developer.salesforce.com/docs/atlas.en-us.salesforce_app_limits_cheatsheet.meta/salesforce_app_limits_cheatsheet/salesforce_app_limits_platform_bulkapi.htm#ingest_jobs
 
-        this is due to json serialization of multibyte characters.
+        Our JSON serialization uses the default `ensure_ascii=True`, so the
+        character and byte lengths will be the same. Therefore we only need
+        to adhere to a single length limit of 10,000,000 characters.
 
         TODO: In future when simple-salesforce supports bulk api V2
         we should detect api version and set max file size accordingly. V2
@@ -224,28 +224,28 @@ class SFBulkType:
         * Maximum number of characters in a record: 400,000
         * Maximum number of characters in a field: 131,072
         """
-        file_limit = 1024 * 1024 * 10  # 10MB in bytes
-        rec_limit = 10000
-        char_limit = 10000000
+        record_limit = 10_000
+        char_limit = 10_000_000
 
         batches = []
         last_break = 0
-        nrecs, recsize = 0, 0
-        for i, rec in enumerate(data):
-            # 2 is added to account for the enclosing `[]`
-            # and the separator `, ` between records.
-            recsize += len(json.dumps(rec, default=str)) + 2
-            nrecs += len(rec)
+        record_count, char_count = 0, 0
+        for i, record in enumerate(data):
+            # 2 is added to account for the enclosing `[]` for the first record
+            # and the separator `, ` between records for subsequent records.
+            additional_chars = len(json.dumps(record, default=str)) + 2
             if any([
-                recsize >= file_limit,
-                recsize >= char_limit,
-                nrecs >= rec_limit,
-                i >= len(data) - 1
-                ]):
-                i = 1 if len(data) == 1 else i
+                char_count + additional_chars > char_limit,
+                record_count == record_limit
+            ]):
                 batches.append(data[last_break:i])
                 last_break = i
-                nrecs, recsize = 0, 0
+                record_count, char_count = 0, 0
+            char_count += additional_chars
+            record_count += 1
+        if last_break < len(data) - 1:
+            batches.append(data[last_break:])
+
         return [self._add_batch(job_id=job, data=i,
                                 operation=operation) for i in batches]
 
@@ -293,7 +293,7 @@ class SFBulkType:
                                         operation=operation)
                         for i in
                         [data[i * batch_size:(i + 1) * batch_size]
-                        for i in range((len(data) // batch_size + 1))] if i]
+                        for i in range(len(data) // batch_size + 1)] if i]
 
                 multi_thread_worker = partial(self.worker,
                                               operation=operation,

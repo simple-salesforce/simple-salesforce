@@ -1,6 +1,6 @@
 """ Class to work with Salesforce Metadata API """
-import os
 from base64 import b64encode, b64decode
+from pathlib import Path
 from xml.etree import ElementTree as ET
 from .util import call_salesforce
 from .messages import DEPLOY_MSG, CHECK_DEPLOY_STATUS_MSG, \
@@ -44,10 +44,9 @@ class MetadataType:
         err_string = ""
         for result in response:
             if not result.success:
-                err_string += "\n{}: ".format(result.fullName)
+                err_string += f'\n{result.fullName}: '
                 for error in result.errors:
-                    err_string += "({}, {}), ".format(error.statusCode,
-                                                      error.message)
+                    err_string += f'({error.statusCode}, {error.message}), '
         if err_string:
             raise Exception(err_string)
 
@@ -132,7 +131,7 @@ class MetadataType:
                          mix of both types.
         :type metadata: list
         """
-        response = self._service.updateMetadata(metadata, _soapheaders=[
+        response = self._service.upsertMetadata(metadata, _soapheaders=[
             self._session_header])
         self._handle_api_response(response)
 
@@ -176,7 +175,7 @@ class MetadataType:
         :returns: DescribeValueTypeResult
         """
         return self._service.describeValueType(
-            "{{http://soap.sforce.com/2006/04/metadata}}{}".format(self._name),
+            f'{{http://soap.sforce.com/2006/04/metadata}}{self._name}',
             _soapheaders=[self._session_header])
 
 
@@ -200,9 +199,8 @@ class SfdcMetadataApi:
         self.headers = headers
         self._api_version = api_version
         self._deploy_zip = None
-        wsdl_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                 'metadata.wsdl')
-        self._client = Client(os.path.join('simple_salesforce', wsdl_path),
+        wsdl_path = Path(__file__).parent / 'metadata.wsdl'
+        self._client = Client(wsdl_path.absolute().as_uri(),
                               settings=Settings(strict=False,
                                                 xsd_ignore_sequence_order=True))
         self._service = self._client.create_service(
@@ -283,14 +281,14 @@ class SfdcMetadataApi:
             attributes['rollbackOnError'] = True
 
         if testLevel:
-            test_level = "<met:testLevel>%s</met:testLevel>" % testLevel
+            test_level = f'<met:testLevel>{testLevel}</met:testLevel>'
             attributes['testLevel'] = test_level
 
         tests_tag = ''
         if tests and \
                 str(testLevel).lower() == 'runspecifiedtests':
             for test in tests:
-                tests_tag += '<met:runTests>%s</met:runTests>\n' % test
+                tests_tag += f'<met:runTests>{test}</met:runTests>\n'
             attributes['tests'] = tests_tag
 
         request = DEPLOY_MSG.format(**attributes)
@@ -322,16 +320,11 @@ class SfdcMetadataApi:
         :rtype:
         """
         if hasattr(zipfile, 'read'):
-            file = zipfile
-            file.seek(0)
-            should_close = False
+            zipfile.seek(0)
+            raw = zipfile.read()
         else:
-            file = open(zipfile, 'rb')
-            should_close = True
-        raw = file.read()
-        if should_close:
-            file.close()
-        return b64encode(raw).decode("utf-8")
+            raw = Path(zipfile).read_bytes()
+        return b64encode(raw).decode()
 
     def _retrieve_deploy_result(self, async_process_id, **kwargs):
         """ Retrieves status for specified deployment id
@@ -368,7 +361,7 @@ class SfdcMetadataApi:
             'soapenv:Body/mt:checkDeployStatusResponse/mt:result',
             self._XML_NAMESPACES)
         if result is None:
-            raise Exception("Result node could not be found: %s" % res.text)
+            raise Exception(f"Result node could not be found: {res.text}")
 
         return result
 
@@ -456,8 +449,8 @@ class SfdcMetadataApi:
         """ Downloads Apex logs for unit tests executed during specified
         deployment """
         result = self._retrieve_deploy_result(async_process_id)
-        print("response: %s" % ET.tostring(result, encoding="us-ascii",
-                                           method="xml"))
+        print("response:", ET.tostring(result, encoding="us-ascii",
+                                       method="xml"))
 
     def retrieve(self, async_process_id, **kwargs):
         """ Submits retrieve request """
@@ -475,10 +468,8 @@ class SfdcMetadataApi:
                     members = kwargs.get('unpackaged')[metadata_type]
                     unpackaged += '<types>'
                     for member in members:
-                        unpackaged += '<members>{member}</members>'.format(
-                            member=member)
-                    unpackaged += '<name>{metadata_type}</name></types>'.format(
-                        metadata_type=metadata_type)
+                        unpackaged += f'<members>{member}</members>'
+                    unpackaged += f'<name>{metadata_type}</name></types>'
                 else:
                     raise TypeError('unpackaged metadata types must be a dict')
 
@@ -538,7 +529,7 @@ class SfdcMetadataApi:
             'soapenv:Body/mt:checkRetrieveStatusResponse/mt:result',
             self._XML_NAMESPACES)
         if result is None:
-            raise Exception("Result node could not be found: %s" % res.text)
+            raise Exception(f"Result node could not be found: {res.text}")
 
         return result
 

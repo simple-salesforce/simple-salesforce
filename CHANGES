@@ -1,3 +1,17 @@
+v1.12.3
+======
+Bug Fixes
+--------
+- [#594] Fix infinite refresh session issue
+- [#603] Fix upsert metadata
+- [#604] Fix escaped username and password in connected app
+
+Other
+--------
+- [#585] Additional documentation (README) on using package with Process Approvals rest API
+- [#597] Use f-strings
+- [#599] Use replace os.path with pathlib
+
 v1.12.2
 ======
 Features

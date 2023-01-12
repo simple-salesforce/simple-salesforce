@@ -1,10 +1,10 @@
 """Tests for login.py"""
 
 import http.client as http
-import os
 import re
 import unittest
 import warnings
+from pathlib import Path
 from unittest.mock import Mock, patch
 from urllib.parse import urlparse
 
@@ -133,10 +133,10 @@ class TestSalesforceLogin(unittest.TestCase):
     @responses.activate
     def test_token_login_success_with_key_file(self):
         """Test a successful JWT Token login with a key file"""
-        pkey_file = os.path.join(os.path.dirname(__file__), 'sample-key.pem')
+        pkey_path = Path(__file__).parent / 'sample-key.pem'
         login_args = {
             'consumer_key': '12345.abcde',
-            'privatekey_file': pkey_file
+            'privatekey_file': str(pkey_path)
             }
         self._test_login_success(
             re.compile(r'^https://login.salesforce.com/.*$'), login_args,
@@ -145,9 +145,8 @@ class TestSalesforceLogin(unittest.TestCase):
     @responses.activate
     def test_token_login_success_with_key(self):
         """Test a successful JWT Token login with a key from a string"""
-        pkey_file = os.path.join(os.path.dirname(__file__), 'sample-key.pem')
-        with open(pkey_file, 'rb') as key_file:
-            key = key_file.read().decode("utf-8")
+        pkey_path = Path(__file__).parent / 'sample-key.pem'
+        key = pkey_path.read_bytes().decode()
 
         login_args = {
             'consumer_key': '12345.abcde',
@@ -160,9 +159,8 @@ class TestSalesforceLogin(unittest.TestCase):
     @responses.activate
     def test_token_login_success_with_key_bytes(self):
         """Test a successful JWT Token login with key bytes"""
-        pkey_file = os.path.join(os.path.dirname(__file__), 'sample-key.pem')
-        with open(pkey_file, 'rb') as key:
-            key_bytes = key.read()
+        pkey_path = Path(__file__).parent / 'sample-key.pem'
+        key_bytes = pkey_path.read_bytes()
 
         login_args = {
             'consumer_key': '12345.abcde',
@@ -186,9 +184,7 @@ class TestSalesforceLogin(unittest.TestCase):
             SalesforceLogin(
                 username='myemail@example.com.sandbox',
                 consumer_key='12345.abcde',
-                privatekey_file=os.path.join(
-                    os.path.dirname(__file__), 'sample-key.pem'
-                    )
+                privatekey_file=str(Path(__file__).parent / 'sample-key.pem')
                 )
         self.assertTrue(self.mockrequest.post.called)
 
@@ -222,8 +218,8 @@ class TestSalesforceLogin(unittest.TestCase):
                     session=session,
                     username='foo@bar.com',
                     consumer_key='12345.abcde',
-                    privatekey_file=os.path.join(
-                        os.path.dirname(__file__), 'sample-key.pem'
+                    privatekey_file=str(
+                        Path(__file__).parent / 'sample-key.pem'
                         )
                     )
             assert len(warning) >= 1
@@ -235,7 +231,7 @@ class TestSalesforceLogin(unittest.TestCase):
     def test_connected_app_login_success(self):
         """Test a successful connected app login with a key file"""
         login_args = {
-            'password':'password',
+            'password': 'password',
             'consumer_key': '12345.abcde',
             'consumer_secret': '12345.abcde'
             }
@@ -256,6 +252,7 @@ class TestSalesforceLogin(unittest.TestCase):
         with self.assertRaises(SalesforceAuthenticationFailed):
             SalesforceLogin(
                 username='myemail@example.com.sandbox',
+                password='password',
                 consumer_key='12345.abcde',
                 consumer_secret='12345.abcde'
                 )
