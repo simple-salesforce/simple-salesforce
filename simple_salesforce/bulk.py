@@ -293,7 +293,7 @@ class SFBulkType:
                                         operation=operation)
                         for i in
                         [data[i * batch_size:(i + 1) * batch_size]
-                        for i in range((len(data) // batch_size + 1))] if i]
+                        for i in range(len(data) // batch_size + 1)] if i]
 
                 multi_thread_worker = partial(self.worker,
                                               operation=operation,
