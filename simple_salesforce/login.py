@@ -123,28 +123,6 @@ def SalesforceLogin(
             token_data, domain, consumer_key,
             None, proxies, session)
 
-    elif username is not None and \
-            consumer_key is not None and \
-            consumer_secret is not None:
-        header = {'Content-Type': 'application/json'}
-        payload = {
-            'grant_type': 'password',
-            'client_id': consumer_key,
-            'client_secret': consumer_secret,
-            'username': username,
-            'password': password
-            }
-
-        login_token_request_data = {
-            'grant_type': 'password'
-            }
-
-        return token_login(
-            'https://{domain}.salesforce.com/services/oauth2/token'.format(
-                domain=domain),
-            payload, domain, consumer_key,
-            None, proxies, session)
-
     # Check if IP Filtering is used in conjunction with organizationId
     elif organizationId is not None:
         # IP Filtering Login Soap request body
