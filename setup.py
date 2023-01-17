@@ -28,9 +28,9 @@ setup(
         },
 install_requires = [
                        'requests>=2.22.0',
-                       'pyjwt',
+                       'cryptography',
                        'zeep',
-                       'cryptography'
+                       'pyjwt[crypto]'
                        ],
                    tests_require = [
                                        'pytest',
