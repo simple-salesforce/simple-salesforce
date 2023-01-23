@@ -171,7 +171,7 @@ def SalesforceLogin(
         expiration = datetime.now(timezone.utc) + timedelta(minutes=3)
         payload = {
             'iss': consumer_key,
-            'sub': username,
+            'sub': unescape(username),
             'aud': f'https://{domain}.salesforce.com',
             'exp': f'{expiration.timestamp():.0f}'
             }
