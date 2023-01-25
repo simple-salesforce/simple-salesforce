@@ -665,6 +665,13 @@ Generate Pandas Dataframe from SFDC Bulk API Query (ex.bulk.Account.query)
    df = pd.DataFrame.from_dict(data,orient='columns').drop('attributes',axis=1)
       
 
+YouTube Tutorial
+--------------------------
+Here is a helpful  `YouTube tutorial`_  which shows how you can manage records in bulk using a jupyter notebook, simple-salesforce and pandas. 
+
+This can be a effective way to manage records, and perform simple operations like reassigning accounts, deleting test records, inserting new records, etc...
+
+.. _YouTube tutorial: https://youtu.be/nPQFUgsk6Oo?t=282
 
 Authors & License
 --------------------------
