@@ -678,7 +678,7 @@ class Salesforce:
         csvStringIO = StringIO(csvString)
         df = pd.read_csv (csvStringIO)
         # returns a dict like {index -> {column -> value}}
-        return df.to_json(orient = 'index') 
+        return df.to_json(orient = 'index')
 
     def parse_result_to_json(self, result):
         """"Parse json from a Response object"""
@@ -689,7 +689,7 @@ class Salesforce:
             return json.loads(self.csv_to_json(result.content.decode("utf-8")),
                             object_pairs_hook=self._object_pairs_hook,
                             parse_float=self._parse_float)
-        
+
         return result.json(object_pairs_hook=self._object_pairs_hook,
                            parse_float=self._parse_float)
 
