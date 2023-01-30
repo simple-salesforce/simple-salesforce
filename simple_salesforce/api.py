@@ -683,7 +683,7 @@ class Salesforce:
 
     def parse_result_to_json(self, result):
         """"Parse json from a Response object"""
-        
+
         if 'Content-Type' in result.headers and 'text/csv' in \
                 result.headers['Content-Type'].split(';'):
             return json.loads(self.csv_to_json(result.content.decode("utf-8")),
