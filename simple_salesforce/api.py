@@ -10,8 +10,10 @@ from collections import OrderedDict, namedtuple
 from functools import partial
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
+from io import StringIO
 
 import requests
+import pandas as pd
 
 from .bulk import SFBulkHandler
 from .exceptions import SalesforceGeneralError
@@ -671,9 +673,23 @@ class Salesforce:
             }
         return results
 
+    def csv_to_json (self, csvString):
+        """"Converts a CSV string into json format using Pandas"""
+        csvStringIO = StringIO(csvString)
+        df = pd.read_csv (csvStringIO)
+        return df.to_json(orient = 'index') # dict like {index -> {column -> value}}
+
     def parse_result_to_json(self, result):
         """"Parse json from a Response object"""
-        return result.json(object_pairs_hook=self._object_pairs_hook,
+
+        #resources like sobjects/EventLogFile/[id]/LogFile are not in json format so they need to be converted from base64 first
+        if 'Content-Type' in result.headers and 'text/csv' in \
+                result.headers['Content-Type'].split(';'):
+            return json.loads(self.csv_to_json(result.content.decode("utf-8")),
+                            object_pairs_hook=self._object_pairs_hook, 
+                            parse_float=self._parse_float)
+        else:
+            return result.json(object_pairs_hook=self._object_pairs_hook,
                            parse_float=self._parse_float)
 
 
