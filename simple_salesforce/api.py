@@ -11,7 +11,6 @@ from collections import OrderedDict, namedtuple
 from functools import partial
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
-from io import StringIO
 
 import requests
 
