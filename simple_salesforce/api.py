@@ -4,6 +4,7 @@
 DEFAULT_API_VERSION = '52.0'
 import base64
 import json
+import csv
 import logging
 import re
 from collections import OrderedDict, namedtuple
@@ -13,7 +14,6 @@ from urllib.parse import urljoin, urlparse
 from io import StringIO
 
 import requests
-import pandas as pd
 
 from .bulk import SFBulkHandler
 from .exceptions import SalesforceGeneralError
@@ -673,17 +673,18 @@ class Salesforce:
             }
         return results
 
-    def csv_to_json (self, csvString):
-        """"Converts a CSV string into json format using Pandas"""
-        csvStringIO = StringIO(csvString)
-        df = pd.read_csv (csvStringIO)
-        # returns a dict like {index -> {column -> value}}
-        return df.to_json(orient = 'index')
+    def csv_to_json(self, csv_string):
+        """"Converts a CSV string into json format"""
+        json_list = {}
+        reader = csv.DictReader(csv_string.splitlines())
+        for i, row in enumerate(reader):
+            json_list[i]=row
+
+        return json.dumps(json_list)
 
     def parse_result_to_json(self, result):
         """"Parse json from a Response object"""
-        # resources like sobjects/EventLogFile/[id]/LogFile \
-        # are not in json format so they need to be converted from base64 first
+        
         if 'Content-Type' in result.headers and 'text/csv' in \
                 result.headers['Content-Type'].split(';'):
             return json.loads(self.csv_to_json(result.content.decode("utf-8")),

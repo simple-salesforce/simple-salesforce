@@ -30,8 +30,7 @@ install_requires = [
                        'requests>=2.22.0',
                        'cryptography',
                        'zeep',
-                       'pyjwt',
-                       'pandas'
+                       'pyjwt'
                        ],
                    tests_require = [
                                        'pytest',
