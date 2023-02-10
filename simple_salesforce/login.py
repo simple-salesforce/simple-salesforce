@@ -7,7 +7,7 @@ DEFAULT_CLIENT_ID_PREFIX = 'simple-salesforce'
 
 import warnings
 from datetime import datetime, timedelta, timezone
-from html import escape, unescape
+from html import escape
 from json.decoder import JSONDecodeError
 from pathlib import Path
 
@@ -80,9 +80,49 @@ def SalesforceLogin(
     else:
         client_id = DEFAULT_CLIENT_ID_PREFIX
 
+    if username is not None and \
+            password is not None and \
+            consumer_key is not None and \
+            consumer_secret is not None:
+        token_data = {
+            'grant_type': 'password',
+            'client_id': consumer_key,
+            'client_secret': consumer_secret,
+            'username': username,
+            'password': password
+            }
+        return token_login(
+            f'https://{domain}.salesforce.com/services/oauth2/token',
+            token_data, domain, consumer_key,
+            None, proxies, session)
+
     # pylint: disable=E0012,deprecated-method
     username = escape(username) if username else None
     password = escape(password) if password else None
+
+    if username is not None and \
+            consumer_key is not None and \
+            (privatekey_file is not None or privatekey is not None):
+        expiration = datetime.now(timezone.utc) + timedelta(minutes=3)
+        payload = {
+            'iss': consumer_key,
+            'sub': username,
+            'aud': f'https://{domain}.salesforce.com',
+            'exp': f'{expiration.timestamp():.0f}'
+            }
+        if privatekey_file is not None:
+            key = Path(privatekey_file).read_bytes()
+        else:
+            key = privatekey
+        assertion = jwt.encode(payload, key, algorithm='RS256')
+        token_data = {
+            'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            'assertion': assertion
+            }
+        return token_login(
+            f'https://{domain}.salesforce.com/services/oauth2/token',
+            token_data, domain, consumer_key,
+            None, proxies, session)
 
     # Check if token authentication is used
     if security_token is not None:
@@ -106,22 +146,6 @@ def SalesforceLogin(
         </n1:login>
     </env:Body>
 </env:Envelope>"""
-
-    elif username is not None and \
-            password is not None and \
-            consumer_key is not None and \
-            consumer_secret is not None:
-        token_data = {
-            'grant_type': 'password',
-            'client_id': consumer_key,
-            'client_secret': consumer_secret,
-            'username': unescape(username),
-            'password': unescape(password) if password else None
-            }
-        return token_login(
-            f'https://{domain}.salesforce.com/services/oauth2/token',
-            token_data, domain, consumer_key,
-            None, proxies, session)
 
     # Check if IP Filtering is used in conjunction with organizationId
     elif organizationId is not None:
@@ -165,31 +189,7 @@ def SalesforceLogin(
         </urn:login>
     </soapenv:Body>
 </soapenv:Envelope>"""
-    elif username is not None and \
-            consumer_key is not None and \
-            (privatekey_file is not None or privatekey is not None):
-        expiration = datetime.now(timezone.utc) + timedelta(minutes=3)
-        payload = {
-            'iss': consumer_key,
-            'sub': username,
-            'aud': f'https://{domain}.salesforce.com',
-            'exp': f'{expiration.timestamp():.0f}'
-            }
-        if privatekey_file is not None:
-            key = Path(privatekey_file).read_bytes()
-        else:
-            key = privatekey
-        assertion = jwt.encode(payload, key, algorithm='RS256')
 
-        token_data = {
-            'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-            'assertion': assertion
-            }
-
-        return token_login(
-            f'https://{domain}.salesforce.com/services/oauth2/token',
-            token_data, domain, consumer_key,
-            None, proxies, session)
     else:
         except_code = 'INVALID AUTH'
         except_msg = (
