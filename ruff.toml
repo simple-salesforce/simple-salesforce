@@ -4,7 +4,7 @@ ignore = ["E402", "E501", "RET504"]
 
 src = ["simple_salesforce"]
 
-target-version = "py37"
+target-version = "py38"
 
 [per-file-ignores]
 "simple_salesforce/tests/*" = ["B", "DTZ", "S"]
