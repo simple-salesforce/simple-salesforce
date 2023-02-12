@@ -1,4 +1,5 @@
 """ Class to work with Salesforce Metadata API """
+import logging
 from base64 import b64encode, b64decode
 from pathlib import Path
 from xml.etree import ElementTree as ET
@@ -6,6 +7,9 @@ from .util import call_salesforce
 from .messages import DEPLOY_MSG, CHECK_DEPLOY_STATUS_MSG, \
     CHECK_RETRIEVE_STATUS_MSG, RETRIEVE_MSG
 from zeep import Client, Settings
+
+# pylint: disable=invalid-name
+logger = logging.getLogger(__name__)
 
 
 class MetadataType:
@@ -449,8 +453,8 @@ class SfdcMetadataApi:
         """ Downloads Apex logs for unit tests executed during specified
         deployment """
         result = self._retrieve_deploy_result(async_process_id)
-        print("response:", ET.tostring(result, encoding="us-ascii",
-                                       method="xml"))
+        logger.debug("response: %s",
+                     ET.tostring(result, encoding="us-ascii", method="xml"))
 
     def retrieve(self, async_process_id, **kwargs):
         """ Submits retrieve request """

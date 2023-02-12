@@ -1,0 +1,10 @@
+select = ["A", "B", "C4", "DTZ", "E", "F", "G", "PGH", "PIE", "PTH", "RET", "RSE", "RUF", "S", "SIM", "T20", "TID", "UP", "W"]
+
+ignore = ["E402", "E501", "RET504"]
+
+src = ["simple_salesforce"]
+
+target-version = "py38"
+
+[per-file-ignores]
+"simple_salesforce/tests/*" = ["B", "DTZ", "S"]

@@ -84,14 +84,10 @@ class SFBulkType:
         * external_id_field -- unique identifier field for upsert operations
         """
 
-        if use_serial:
-            use_serial = 1
-        else:
-            use_serial = 0
         payload = {
             'operation': operation,
             'object': self.object_name,
-            'concurrencyMode': use_serial,
+            'concurrencyMode': 1 if use_serial else 0,
             'contentType': 'JSON'
             }
 

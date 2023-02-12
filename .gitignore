@@ -6,6 +6,7 @@ dist/
 *.eggs
 .idea
 .coverage
+.ruff_cache/
 .tox/
 tags
 .env/
