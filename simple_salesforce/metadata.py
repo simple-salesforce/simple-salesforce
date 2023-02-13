@@ -452,8 +452,8 @@ class SfdcMetadataApi:
         print("response:", ET.tostring(result, encoding="us-ascii",
                                        method="xml"))
 
-    def retrieve(self, async_process_id, **kwargs):
-        """ Submits retrieve request """
+    def retrieve(self, **kwargs):
+        """Submits retrieve request """
         # Compose unpackaged XML
         client = kwargs.get('client', 'simple_salesforce_metahelper')
         single_package = kwargs.get('single_package', True)
@@ -486,7 +486,7 @@ class SfdcMetadataApi:
         headers = {'Content-type': 'text/xml', 'SOAPAction': 'retrieve'}
 
         res = call_salesforce(
-            url=self.metadata_url + 'deployRequest/' + async_process_id,
+            url=self.metadata_url,
             method='POST',
             session=self.session,
             headers=self.headers,
