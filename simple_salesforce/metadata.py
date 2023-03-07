@@ -373,6 +373,34 @@ class SfdcMetadataApi:
         except ValueError:
             return 0
 
+    def retrieve_deployment_logs(self, async_process_id, **kwargs):
+        """
+        Retrieves logs back from salesforce for a deployment async ID
+        :param async_process_id:
+        """
+        client = kwargs.get('client', 'simple_salesforce_metahelper')
+
+        attributes = {
+            'client': client,
+            'sessionId': self._session_id,
+            'asyncProcessId': async_process_id,
+            'includeDetails': 'true'
+            }
+        mt_request = CHECK_DEPLOY_STATUS_MSG.format(**attributes)
+        headers = {
+            'Content-type': 'text/xml', 'SOAPAction': 'checkDeployStatus'
+            }
+
+        res = call_salesforce(
+            url=self.metadata_url + 'deployRequest/' + async_process_id,
+            method='POST',
+            session=self.session,
+            headers=self.headers,
+            additional_headers=headers,
+            data=mt_request)
+
+        return res.text
+
     def check_deploy_status(self, async_process_id, **kwargs):
         """
         Checks whether deployment succeeded

@@ -244,12 +244,14 @@ class Salesforce:
     def mdapi(self):
         """Utility to interact with metadata api functionality"""
         if not self._mdapi:
-            self._mdapi = SfdcMetadataApi(session=self.session,
-                                          session_id=self.session_id,
-                                          instance=self.sf_instance,
-                                          metadata_url=self.metadata_url,
-                                          api_version=self.sf_version,
-                                          headers=self.headers)
+            self._mdapi = SfdcMetadataApi(
+                session=self.session,
+                session_id=self.session_id,
+                instance=self.sf_instance,
+                metadata_url=self.metadata_url,
+                api_version=self.sf_version,
+                headers=self.headers
+            )
         return self._mdapi
 
     def _generate_headers(self):
