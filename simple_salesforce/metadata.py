@@ -264,7 +264,7 @@ class SfdcMetadataApi:
             'client': client,
             'checkOnly': checkOnly,
             'sessionId': self._session_id,
-            'ZipFile': zipfile,
+            'ZipFile': self._read_deploy_zip(zipfile),
             'testLevel': testLevel,
             'tests': tests,
             'ignoreWarnings': ignoreWarnings,
