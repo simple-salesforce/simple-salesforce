@@ -443,7 +443,7 @@ Update existing records:
 
     sf.bulk.Contact.update(data,batch_size=10000,use_serial=True)
     
- Update existing records and update lookup fields from an external id field:
+Update existing records and update lookup fields from an external id field:
 
 .. code-block:: python
 
