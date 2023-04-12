@@ -2,7 +2,7 @@
 
 
 # has to be defined prior to login import
-DEFAULT_API_VERSION = "42.0"
+DEFAULT_API_VERSION = "57.0"
 
 
 import json
