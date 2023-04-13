@@ -150,6 +150,17 @@ class SFBulkType:
                                  headers=self.headers)
         return result.json(object_pairs_hook=OrderedDict)
 
+    def _get_batches(self, job_id):
+        """ Get all batches for a job to check the status """
+
+        url = f'{self.bulk_url}job/{job_id}/batch'
+
+        result = call_salesforce(url=url, method='GET', session=self.session,
+                                 headers=self.headers)
+        batches = [batch for batch in result.json()["batchInfo"]]
+        print(f"Total Batches Created: {len(batches)}")
+        return batches
+
     def _get_batch_results(self, job_id, batch_id, operation):
         """ retrieve a set of results from a completed job """
 
@@ -161,12 +172,14 @@ class SFBulkType:
 
         if operation in ('query', 'queryAll'):
             for batch_result in result.json():
+                print(f"Retrieving batch results: {batch_id}/{batch_result}")
                 url_query_results = "{}{}{}".format(url, '/', batch_result)
                 batch_query_result = call_salesforce(url=url_query_results,
                                                      method='GET',
                                                      session=self.session,
                                                      headers=self.headers
                                                      ).json()
+                print(f"Retrieved batch results: {batch_id}/{batch_result}")
                 yield batch_query_result
         else:
             yield result.json()
@@ -181,11 +194,12 @@ class SFBulkType:
         batch_status = self._get_batch(job_id=batch['jobId'],
                                        batch_id=batch['id'])['state']
 
-        while batch_status not in ['Completed', 'Failed', 'Not Processed']:
+        while batch_status not in ['Completed', 'Failed', 'Not Processed', 'NotProcessed']:
             sleep(wait)
             batch_status = self._get_batch(job_id=batch['jobId'],
                                            batch_id=batch['id'])['state']
 
+        print(f"{batch['id']}: {batch_status}")
         batch_results = self._get_batch_results(job_id=batch['jobId'],
                                                 batch_id=batch['id'],
                                                 operation=operation)
@@ -234,6 +248,7 @@ class SFBulkType:
             job = self._create_job(operation=operation,
                                    use_serial=use_serial,
                                    external_id_field=external_id_field)
+            print(f"Salesforce job id: {job['id']}")
 
             batch = self._add_batch(job_id=job['id'], data=data,
                                     operation=operation)
@@ -308,3 +323,62 @@ class SFBulkType:
         if lazy_operation:
             return results
         return list_from_generator(results)
+
+    def query_with_chunking(self, data, wait=5, additional_headers={}):
+        """ bulk query """
+        if additional_headers == {}:
+            self.headers.update({'Sforce-Enable-PKChunking': 'true; chunkSize=250000'})
+        else:
+            self.headers.update(additional_headers)
+        results = self._bulk_query_chunking(operation='query',data=data, wait=wait)
+
+        return results
+
+    def _bulk_query_chunking(self, operation, data, use_serial=False, external_id_field=None, wait=5):
+        """ String together helper functions to create a complete
+        end-to-end bulk API request
+        Arguments:
+        * operation -- Bulk operation to be performed by job
+        * data -- list of dict to be passed as a batch
+        * use_serial -- Process batches in serial mode
+        * external_id_field -- unique identifier field for upsert operations
+        * wait -- seconds to sleep between checking batch status
+        * batch_size -- number of records to assign for each batch in the job
+        """
+
+        if operation != 'query':
+            raise ValueError("Only query operation is supported for chunking.")
+
+        elif operation == 'query':
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=14) as pool:
+                print("Creating salesforce job.")
+                job = self._create_job(operation=operation,
+                                       use_serial=use_serial,
+                                       external_id_field=external_id_field)
+                print("Creating salesforce batch.")
+                batch = self._add_batch(job_id=job['id'], data=data,
+                                        operation=operation)
+
+                if "Sforce-Enable-PKChunking" in self.headers:
+                    print(f"Validating that original batch ({batch['id']}) is finished executing.")
+                    batch_status = self._get_batch(job_id=batch['jobId'], batch_id=batch['id'])
+
+                    while batch_status['state'] not in ['Completed', 'Failed', 'NotProcessed']:
+                        sleep(wait)
+                        batch_status = self._get_batch(job_id=batch['jobId'], batch_id=batch['id'])
+                        print(f"Checking status of original batch: {batch_status['state']}")
+
+                batches = self._get_batches(job_id=job['id'])
+
+                multi_thread_worker = partial(self.worker,
+                                              operation=operation,
+                                              wait=wait)
+                list_of_results = pool.map(multi_thread_worker, batches)
+
+                print("Closing the job.")
+                self._close_job(job_id=job['id'])
+
+                for sublist_of_results in list_of_results:
+                    for result in sublist_of_results:
+                        yield result
