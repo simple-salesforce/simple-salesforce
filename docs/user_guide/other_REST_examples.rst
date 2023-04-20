@@ -5,7 +5,7 @@ In addition to built in functions that allow integrations with the Salesforce Ap
 
 .. _SFDC Submit documentation: https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/dome_process_approvals_submit.htm
 
-1. Import any dependant packages to your script. For this example we use Simple Salesforce, Requests and the built in JSON package:
+1. Import any dependent packages to your script. For this example we use Simple Salesforce, Requests and the built in JSON package:
 
 .. code-block:: python
 
