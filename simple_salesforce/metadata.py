@@ -396,10 +396,8 @@ class SfdcMetadataApi:
             result.find('mt:numberComponentErrors', self._XML_NAMESPACES).text)
         if state == 'Failed' or failed_count > 0:
             # Deployment failures
-            failures = result.findall('mt:details/mt:componentFailures',
-                                      self._XML_NAMESPACES)
-            for failure in failures:
-                deployment_errors.append({
+            deployment_errors = [
+                {
                     'type': failure.find('mt:componentType',
                                          self._XML_NAMESPACES).text,
                     'file': failure.find('mt:fileName',
@@ -408,13 +406,13 @@ class SfdcMetadataApi:
                                            self._XML_NAMESPACES).text,
                     'message': failure.find('mt:problem',
                                             self._XML_NAMESPACES).text
-                    })
+                }
+                for failure in result.findall('mt:details/mt:componentFailures',
+                                              self._XML_NAMESPACES)
+            ]
             # Unit test failures
-            failures = result.findall(
-                'mt:details/mt:runTestResult/mt:failures',
-                self._XML_NAMESPACES)
-            for failure in failures:
-                unit_test_errors.append({
+            unit_test_errors = [
+                {
                     'class': failure.find('mt:name', self._XML_NAMESPACES).text,
                     'method': failure.find('mt:methodName',
                                            self._XML_NAMESPACES).text,
@@ -422,7 +420,11 @@ class SfdcMetadataApi:
                                             self._XML_NAMESPACES).text,
                     'stack_trace': failure.find('mt:stackTrace',
                                                 self._XML_NAMESPACES).text
-                    })
+                }
+                for failure in result.findall(
+                    'mt:details/mt:runTestResult/mt:failures',
+                    self._XML_NAMESPACES)
+            ]
 
         deployment_detail = {
             'total_count': result.find('mt:numberComponentsTotal',
@@ -543,14 +545,14 @@ class SfdcMetadataApi:
             error_message = error_message.text
 
         # Check if there are any messages
-        messages = []
-        message_list = result.findall('mt:details/mt:messages',
-                                      self._XML_NAMESPACES)
-        for message in message_list:
-            messages.append({
+        messages = [
+            {
                 'file': message.find('mt:fileName', self._XML_NAMESPACES).text,
                 'message': message.find('mt:problem', self._XML_NAMESPACES).text
-                })
+            }
+            for message in result.findall('mt:details/mt:messages',
+                                          self._XML_NAMESPACES)
+        ]
 
         # Retrieve base64 encoded ZIP file
         zipfile_base64 = result.find('mt:zipFile', self._XML_NAMESPACES).text
@@ -568,13 +570,13 @@ class SfdcMetadataApi:
             error_message = error_message.text
 
         # Check if there are any messages
-        messages = []
-        message_list = result.findall('mt:details/mt:messages',
-                                      self._XML_NAMESPACES)
-        for message in message_list:
-            messages.append({
+        messages = [
+            {
                 'file': message.find('mt:fileName', self._XML_NAMESPACES).text,
                 'message': message.find('mt:problem', self._XML_NAMESPACES).text
-                })
+            }
+            for message in result.findall('mt:details/mt:messages',
+                                          self._XML_NAMESPACES)
+        ]
 
         return state, error_message, messages
