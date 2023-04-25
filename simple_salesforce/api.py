@@ -320,7 +320,7 @@ class Salesforce:
             # Deal with bulk API functions
             return SFBulkHandler(self.session_id, self.bulk_url, self.proxies,
                                  self.session)
-        elif name == 'bulk2':
+        if name == 'bulk2':
             return SFBulk2Handler(self.session_id, self.bulk2_url, self.proxies,
                                   self.session)
 

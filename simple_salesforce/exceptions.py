@@ -114,7 +114,7 @@ class SalesforceGeneralError(SalesforceError):
 
 
 class SalesforceOperationError(Exception):
-    pass
+    """Base error for Bulk API 2.0 operations"""
 
 
 class SalesforceBulkV2LoadError(SalesforceOperationError):
