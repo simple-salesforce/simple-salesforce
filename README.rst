@@ -529,6 +529,93 @@ Hard deletion:
     sf.bulk.Contact.hard_delete(data,batch_size=10000,use_serial=True)
 
 
+Using Bulk 2.0
+--------------------------
+
+You can use this library to access Bulk 2.0 API functions.
+
+Create new records:
+
+.. code-block:: text
+
+    "Custom_Id__c","AccountId","Email","FirstName","LastName"
+    "CustomID1","ID-13","contact1@example.com","Bob","x"
+    "CustomID2","ID-24","contact2@example.com","Alice","y"
+    ...
+
+.. code-block:: python
+
+    sf.bulk2.Contact.insert("./sample.csv", batch_size=10000)
+
+
+Create new records concurrently:
+
+.. code-block:: python
+
+    sf.bulk2.Contact.insert("./sample.csv", batch_size=10000, concurrency=10)
+
+
+Update existing records:
+
+.. code-block:: text
+
+    "Custom_Id__c","AccountId","Email","FirstName","LastName"
+    "CustomID1","ID-13","contact1@example.com","Bob","X"
+    "CustomID2","ID-24","contact2@example.com","Alice","Y"
+    ...
+
+.. code-block:: python
+
+    sf.bulk2.Contact.update("./sample.csv")
+
+
+Upsert records:
+
+.. code-block:: text
+
+    "Custom_Id__c","LastName"
+    "CustomID1","X"
+    "CustomID2","Y"
+    ...
+
+.. code-block:: python
+
+    sf.bulk2.Contact.upsert("./sample.csv", 'Custom_Id__c')
+
+
+Query records:
+
+.. code-block:: python
+
+    query = 'SELECT Id, Name FROM Account LIMIT 100000'
+
+    results = sf.bulk2.Account.query(query, max_records=50000)
+    for ret in results:
+        records = ret["records"]
+
+
+Delete records (soft deletion):
+
+.. code-block:: text
+
+    "Id"
+    "0000000000AAAAA"
+    "0000000000BBBBB"
+    ...
+
+
+.. code-block:: python
+
+    sf.bulk2.Contact.delete("./sample.csv")
+
+
+Hard deletion:
+
+.. code-block:: python
+
+    sf.bulk2.Contact.hard_delete("./sample.csv")
+
+
 Using Apex
 --------------------------
 
