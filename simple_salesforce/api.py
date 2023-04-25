@@ -368,7 +368,7 @@ class Salesforce:
         result = self.parse_result_to_json(result) if as_json else result.text
         if not result:
             return
-        return result
+        return result if as_json else {'response_text': result}
 
     # OAuth Endpoints Function
     def oauth2(self, path, params=None, method='GET'):
