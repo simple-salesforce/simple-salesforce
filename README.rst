@@ -341,7 +341,7 @@ Then you can use this to deploy that zipfile:
    asyncId = result.get('asyncId')
    state = result.get('state')
 
-Both deploy and checkDeployStatus take keyword arguements. The single package arguement is not currently available to be set for deployments. More details on the deploy options can be found at https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_deploy.htm
+Both deploy and checkDeployStatus take keyword arguments. The single package argument is not currently available to be set for deployments. More details on the deploy options can be found at https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_deploy.htm
 
 You can check on the progress of the deploy which returns a dictionary with status, state_detail, deployment_detail, unit_test_detail:
 
@@ -419,7 +419,7 @@ To retrieve a list of top level description of instance metadata, user:
 Using Bulk
 --------------------------
 
-You can use this library to access Bulk API functions. The data element can be a list of records of any size and by default batch sizes are 10,000 records and run in parrallel concurrency mode. To set the batch size for insert, upsert, delete, hard_delete, and update use the batch_size argument. To set the concurrency mode for the salesforce job the use_serial argument can be set to use_serial=True.
+You can use this library to access Bulk API functions. The data element can be a list of records of any size and by default batch sizes are 10,000 records and run in parallel concurrency mode. To set the batch size for insert, upsert, delete, hard_delete, and update use the batch_size argument. To set the concurrency mode for the salesforce job the use_serial argument can be set to use_serial=True.
 
 Create new records:
 
@@ -443,7 +443,7 @@ Update existing records:
 
     sf.bulk.Contact.update(data,batch_size=10000,use_serial=True)
     
- Update existing records and update lookup fields from an external id field:
+Update existing records and update lookup fields from an external id field:
 
 .. code-block:: python
 
@@ -665,6 +665,13 @@ Generate Pandas Dataframe from SFDC Bulk API Query (ex.bulk.Account.query)
    df = pd.DataFrame.from_dict(data,orient='columns').drop('attributes',axis=1)
       
 
+YouTube Tutorial
+--------------------------
+Here is a helpful  `YouTube tutorial`_  which shows how you can manage records in bulk using a jupyter notebook, simple-salesforce and pandas. 
+
+This can be a effective way to manage records, and perform simple operations like reassigning accounts, deleting test records, inserting new records, etc...
+
+.. _YouTube tutorial: https://youtu.be/nPQFUgsk6Oo?t=282
 
 Authors & License
 --------------------------
