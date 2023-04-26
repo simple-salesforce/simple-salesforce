@@ -6,17 +6,23 @@ import json
 import os
 import re
 import sys
+import tempfile
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import closing
 from functools import partial
 from time import sleep
 from typing import Dict, Tuple, Union, Generator
 
+import math
+import pendulum
 import requests
+from pendulum import DateTime
 
 from .exceptions import (
     SalesforceBulkV2ExtractError,
     SalesforceBulkV2LoadError,
+    SalesforceOperationError,
 )
 from .util import call_salesforce
 
@@ -180,6 +186,9 @@ class _Bulk2Client:
     JSON_CONTENT_TYPE = "application/json"
     CSV_CONTENT_TYPE = "text/csv"
 
+    DEFAULT_WAIT_TIMEOUT_SECONDS = 86400  # 24-hour bulk job running time
+    MAX_CHECK_INTERVAL_SECONDS = 2.0
+
     def __init__(self, object_name, bulk2_url, headers, session):
         """
         Arguments:
@@ -268,6 +277,36 @@ class _Bulk2Client:
         )
         return result.json(object_pairs_hook=OrderedDict)
 
+    def wait_for_job(self, job_id, is_query: bool, wait=0.5):
+        """Wait for job completion or timeout"""
+        expiration_time: DateTime = pendulum.now().add(
+            seconds=self.DEFAULT_WAIT_TIMEOUT_SECONDS
+        )
+        job_status = JobState.in_progress if is_query else JobState.open
+        delay_timeout = 0.0
+        delay_cnt = 0
+        sleep(wait)
+        while pendulum.now() < expiration_time:
+            job_info = self.get_job(job_id, is_query)
+            job_status = job_info["state"]
+            if job_status in [
+                JobState.job_complete,
+                JobState.aborted,
+                JobState.failed,
+            ]:
+                if job_status != JobState.job_complete:
+                    error_message = job_info.get("errorMessage") or job_info
+                    raise SalesforceOperationError(
+                        f"Job failure. Response content: {error_message}"
+                    )
+                return job_status  # JobComplete
+
+            if delay_timeout < self.MAX_CHECK_INTERVAL_SECONDS:
+                delay_timeout = wait + math.exp(delay_cnt) / 1000.0
+                delay_cnt += 1
+            sleep(delay_timeout)
+        raise SalesforceOperationError(f"Job timeout. Job status: {job_status}")
+
     def abort_job(self, job_id, is_query: bool):
         """Abort query/ingest job"""
         return self._set_job_state(job_id, is_query, JobState.aborted)
@@ -308,18 +347,33 @@ class _Bulk2Client:
         )
         return result.json(object_pairs_hook=OrderedDict)
 
-    def get_query_results(self, job_id, locator: str = "", max_records=10000):
+    def filter_null_bytes(self, b: Union[str, bytes]):
+        """
+        https://github.com/airbytehq/airbyte/issues/8300
+        """
+        if isinstance(b, str):
+            return b.replace("\x00", "")
+        elif isinstance(b, bytes):
+            return b.replace(b"\x00", b"")
+        raise TypeError("Expected str or bytes")
+
+    def get_query_results(
+        self, job_id, locator: str = "", max_records=MAX_EXTRACT_SIZE
+    ):
         """Get results for a query job"""
         url = self._construct_request_url(job_id, True) + "/results"
-        url += "?maxRecords=" + str(max_records)
+        params = {"maxRecords": max_records}
         if locator and locator != "null":
-            url += "&locator=" + locator
-
+            params["locator"] = locator
         headers = self._get_headers(
             self.JSON_CONTENT_TYPE, self.CSV_CONTENT_TYPE
         )
         result = call_salesforce(
-            url=url, method="GET", session=self.session, headers=headers
+            url=url,
+            method="GET",
+            session=self.session,
+            headers=headers,
+            params=params,
         )
         locator = result.headers.get("Sforce-Locator", "")
         if locator == "null":
@@ -328,8 +382,59 @@ class _Bulk2Client:
         return {
             "locator": locator,
             "number_of_records": number_of_records,
-            "records": result.text,
+            "records": self.filter_null_bytes(result.text),
         }
+
+    def download_job_data(
+        self,
+        path,
+        job_id,
+        locator: str = "",
+        max_records=MAX_EXTRACT_SIZE,
+        chunk_size=1024,
+    ):
+        """Get results for a query job"""
+        if not os.path.exists(path):
+            raise SalesforceBulkV2LoadError(f"Path does not exist: {path}")
+
+        url = self._construct_request_url(job_id, True) + "/results"
+        params = {"maxRecords": max_records}
+        if locator and locator != "null":
+            params["locator"] = locator
+        headers = self._get_headers(
+            self.JSON_CONTENT_TYPE, self.CSV_CONTENT_TYPE
+        )
+        with closing(
+            call_salesforce(
+                url=url,
+                method="GET",
+                session=self.session,
+                headers=headers,
+                params=params,
+                stream=True,
+            )
+        ) as result, tempfile.NamedTemporaryFile(
+            "wb", encoding="utf-8", dir=path, suffix=".csv"
+        ) as bos:
+            locator = result.headers.get("Sforce-Locator", "")
+            if locator == "null":
+                locator = ""
+            number_of_records = int(
+                result.headers.get("Sforce-NumberOfRecords")
+            )
+            for chunk in result.iter_content(chunk_size=chunk_size):
+                bos.write(self.filter_null_bytes(chunk))
+            # check the file exists
+            if os.path.isfile(bos.name):
+                return {
+                    "locator": locator,
+                    "number_of_records": number_of_records,
+                    "file": bos.name,
+                }
+            else:
+                raise SalesforceBulkV2LoadError(
+                    f"The IO/Error occured while verifying binary data. File {bos.name} doesn't exist, url: {url}, "
+                )
 
     def upload_job_data(self, job_id, data: str, content_url=None):
         """Upload job data"""
@@ -423,15 +528,9 @@ class SFBulk2Type:
         try:
             if res["state"] == JobState.open:
                 self._client.upload_job_data(job_id, data)
-                res = self._client.close_job(job_id)
-                while res["state"] != JobState.job_complete:
-                    if res["state"] == JobState.failed:
-                        raise SalesforceBulkV2LoadError(
-                            f"Failed to upload job data. Response content: "
-                            f"{res.get('errorMessage')}"
-                        )
-                    sleep(wait)
-                    res = self._client.get_job(job_id, False)
+                self._client.close_job(job_id)
+                self._client.wait_for_job(job_id, False, wait)
+                res = self._client.get_job(job_id, False)
                 return {
                     "numberRecordsFailed": int(res["numberRecordsFailed"]),
                     "numberRecordsProcessed": int(
@@ -441,10 +540,10 @@ class SFBulk2Type:
                     "job_id": job_id,
                 }
             raise SalesforceBulkV2LoadError(
-                f"Failed to upload job data. Response content: "
-                f"{res.content}"
+                f"Failed to upload job data. Response content: {res}"
             )
         except Exception:
+            res = self._client.get_job(job_id, False)
             if res["state"] in (
                 JobState.upload_complete,
                 JobState.in_progress,
@@ -627,7 +726,7 @@ class SFBulk2Type:
         column_delimiter=ColumnDelimiter.COMMA,
         line_ending=LineEnding.LF,
         wait=5,
-    ) -> Generator[Dict, None, None]:
+    ) -> Generator[str, None, None]:
         """bulk 2.0 query
 
         Arguments:
@@ -643,13 +742,7 @@ class SFBulk2Type:
             Operation.query, query, column_delimiter, line_ending
         )
         job_id = res["id"]
-        while res["state"] not in [
-            JobState.job_complete,
-            JobState.failed,
-            JobState.aborted,
-        ]:
-            sleep(wait)
-            res = self._client.get_job(job_id, True)
+        self._client.wait_for_job(job_id, True, wait)
 
         locator = "INIT"
         while locator:
@@ -659,7 +752,7 @@ class SFBulk2Type:
                 job_id, locator, max_records
             )
             locator = result["locator"]
-            yield result
+            yield result["records"]
 
     def get_failed_records(self, job_id):
         """Get failed record results

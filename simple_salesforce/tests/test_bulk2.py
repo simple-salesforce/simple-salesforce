@@ -173,19 +173,15 @@ class TestSFBulk2Type(unittest.TestCase):
             "job_id": "Job-1",
         }
         self.expected_query = [
-            {
-                "locator": "",
-                "number_of_records": 4,
-                "records": textwrap.dedent(
-                    """
-        "Id","AccountId","Email","FirstName","LastName"
-        "001xx000003DHP0AAO","ID-13","contact1@example.com","Bob","x"
-        "001xx000003DHP1AAO","ID-24","contact2@example.com","Alice","y"
-        "001xx000003DHP0AAO","ID-13","contact1@example.com","Bob","x"
-        "001xx000003DHP1AAO","ID-24","contact2@example.com","Alice","y"
-        """
-                ),
-            }
+            textwrap.dedent(
+                """
+                "Id","AccountId","Email","FirstName","LastName"
+                "001xx000003DHP0AAO","ID-13","contact1@example.com","Bob","x"
+                "001xx000003DHP1AAO","ID-24","contact2@example.com","Alice","y"
+                "001xx000003DHP0AAO","ID-13","contact1@example.com","Bob","x"
+                "001xx000003DHP1AAO","ID-24","contact2@example.com","Alice","y"
+                """
+            )
         ]
         self.insert_data = [
             {
