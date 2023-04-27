@@ -5,7 +5,6 @@ import http.client as http
 import json
 import os
 import re
-import sys
 import tempfile
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
@@ -18,6 +17,7 @@ import math
 import pendulum
 import requests
 from pendulum import DateTime
+from more_itertools import chunked
 
 from .exceptions import (
     SalesforceBulkV2ExtractError,
@@ -85,33 +85,39 @@ class ResultsType:
 
 # https://developer.salesforce.com/docs/atlas.en-us.242.0.salesforce_app_limits_cheatsheet.meta/salesforce_app_limits_cheatsheet/salesforce_app_limits_platform_bulkapi.htm
 # https://developer.salesforce.com/docs/atlas.en-us.api_asynch.meta/api_asynch/datafiles_prepare_csv.htm
-MAX_INGEST_FILE_SIZE = 100 * 1024 * 1024
-MAX_INGEST_SIZE = 10000
-MAX_INGEST_BYTES = 10_000_000
-MAX_EXTRACT_SIZE = 50000
+MAX_INGEST_JOB_FILE_SIZE = 100 * 1024 * 1024
+MAX_INGEST_JOB_PARALLELISM = 5  # TODO: ? Salesforce limits
+DEFAULT_QUERY_PAGE_SIZE = 50000
 
 
-def _split_csv(filename, max_records=MAX_INGEST_SIZE):
+def _split_csv(filename, max_records: int = None):
     """Split a CSV file into chunks to avoid exceeding the Salesforce
     bulk 2.0 API limits.
+
+    Arguments:
+        * filename -- csv file
+        * max_records -- the number of records per chunk, None for auto size
     """
-    max_bytes = MAX_INGEST_BYTES
+    total_records = _count_csv(filename, skip_header=True)
+    max_records = max_records or total_records
+    max_records = min(max_records, total_records)
+    max_bytes = min(
+        os.path.getsize(filename), MAX_INGEST_JOB_FILE_SIZE - 1 * 1024 * 1024
+    )  # -1 MB for sentinel
     records_size = 0
     bytes_size = 0
     buff = []
     with open(filename, encoding="utf-8") as bis:
         header = bis.readline()
-        max_bytes -= sys.getsizeof(header)
-        max_records -= 1
         for line in bis:
             records_size += 1
-            bytes_size += sys.getsizeof(line)
+            bytes_size += len(line.encode("utf-8"))
             if records_size > max_records or bytes_size > max_bytes:
                 if buff:
                     yield records_size - 1, header + "".join(buff)
                 buff = [line]
                 records_size = 1
-                bytes_size = sys.getsizeof(line)
+                bytes_size = len(line.encode("utf-8"))
             else:
                 buff.append(line)
         if buff:
@@ -358,7 +364,7 @@ class _Bulk2Client:
         raise TypeError("Expected str or bytes")
 
     def get_query_results(
-        self, job_id, locator: str = "", max_records=MAX_EXTRACT_SIZE
+        self, job_id, locator: str = "", max_records=DEFAULT_QUERY_PAGE_SIZE
     ):
         """Get results for a query job"""
         url = self._construct_request_url(job_id, True) + "/results"
@@ -390,7 +396,7 @@ class _Bulk2Client:
         path,
         job_id,
         locator: str = "",
-        max_records=MAX_EXTRACT_SIZE,
+        max_records=DEFAULT_QUERY_PAGE_SIZE,
         chunk_size=1024,
     ):
         """Get results for a query job"""
@@ -441,9 +447,11 @@ class _Bulk2Client:
         if not data:
             raise SalesforceBulkV2LoadError("Data is required for ingest jobs")
 
-        if sys.getsizeof(data) > MAX_INGEST_FILE_SIZE:
+        # performance reduction here
+        data_size = len(data.encode("utf-8"))
+        if data_size > MAX_INGEST_JOB_FILE_SIZE:
             raise SalesforceBulkV2LoadError(
-                "Data size exceeds the max file size accepted by "
+                f"Data size {data_size} exceeds the max file size accepted by "
                 "Bulk V2 (100 MB)"
             )
 
@@ -557,7 +565,7 @@ class SFBulk2Type:
         self,
         operation,
         csv_file,
-        batch_size=MAX_INGEST_SIZE,
+        batch_size=None,
         column_delimiter=ColumnDelimiter.COMMA,
         line_ending=LineEnding.LF,
         external_id_field=None,
@@ -582,7 +590,8 @@ class SFBulk2Type:
                     )
 
         results = []
-        if concurrency == 1:
+        workers = min(concurrency, MAX_INGEST_JOB_PARALLELISM)
+        if workers == 1:
             for data in _split_csv(csv_file, max_records=batch_size):
                 result = self._upload_data(
                     operation,
@@ -595,19 +604,21 @@ class SFBulk2Type:
                 results.append(result)
         else:
             # OOM is possible if the file is too large
-            chunks = list(_split_csv(csv_file, max_records=batch_size))
-            concurrency = min(concurrency, len(chunks))
-            with ThreadPoolExecutor(max_workers=concurrency) as pool:
-                multi_thread_worker = partial(
-                    self._upload_data,
-                    operation,
-                    column_delimiter=column_delimiter,
-                    line_ending=line_ending,
-                    external_id_field=external_id_field,
-                    wait=wait,
-                )
-                results = pool.map(multi_thread_worker, chunks)
-            results = list(results)
+            for chunks in chunked(
+                _split_csv(csv_file, max_records=batch_size), n=workers
+            ):
+                workers = min(workers, len(chunks))
+                with ThreadPoolExecutor(max_workers=workers) as pool:
+                    multi_thread_worker = partial(
+                        self._upload_data,
+                        operation,
+                        column_delimiter=column_delimiter,
+                        line_ending=line_ending,
+                        external_id_field=external_id_field,
+                        wait=wait,
+                    )
+                    _results = pool.map(multi_thread_worker, chunks)
+                results.extend(list(_results))
 
         job_id = results[0]["job_id"]
         total = processed = failed = 0
@@ -626,7 +637,7 @@ class SFBulk2Type:
     def delete(
         self,
         csv_file,
-        batch_size=10000,
+        batch_size=None,
         column_delimiter=ColumnDelimiter.COMMA,
         line_ending=LineEnding.LF,
         external_id_field=None,
@@ -646,7 +657,7 @@ class SFBulk2Type:
     def insert(
         self,
         csv_file,
-        batch_size=10000,
+        batch_size=None,
         concurrency=1,
         column_delimiter=ColumnDelimiter.COMMA,
         line_ending=LineEnding.LF,
@@ -667,7 +678,7 @@ class SFBulk2Type:
         self,
         csv_file,
         external_id_field,
-        batch_size=10000,
+        batch_size=None,
         column_delimiter=ColumnDelimiter.COMMA,
         line_ending=LineEnding.LF,
         wait=5,
@@ -686,7 +697,7 @@ class SFBulk2Type:
     def update(
         self,
         csv_file,
-        batch_size=10000,
+        batch_size=None,
         column_delimiter=ColumnDelimiter.COMMA,
         line_ending=LineEnding.LF,
         wait=5,
@@ -704,7 +715,7 @@ class SFBulk2Type:
     def hard_delete(
         self,
         csv_file,
-        batch_size=10000,
+        batch_size=None,
         column_delimiter=ColumnDelimiter.COMMA,
         line_ending=LineEnding.LF,
         wait=5,
@@ -722,7 +733,7 @@ class SFBulk2Type:
     def query(
         self,
         query,
-        max_records=MAX_EXTRACT_SIZE,
+        max_records=DEFAULT_QUERY_PAGE_SIZE,
         column_delimiter=ColumnDelimiter.COMMA,
         line_ending=LineEnding.LF,
         wait=5,
