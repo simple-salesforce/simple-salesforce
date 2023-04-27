@@ -31,7 +31,8 @@ install_requires = [
                        'cryptography',
                        'zeep',
                        'pyjwt',
-                       'more-itertools'
+                       'more-itertools',
+                       'pendulum'
                        ],
                    tests_require = [
                                        'pytest',
