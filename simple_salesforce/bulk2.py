@@ -419,7 +419,7 @@ class _Bulk2Client:
                 stream=True,
             )
         ) as result, tempfile.NamedTemporaryFile(
-            "wb", encoding="utf-8", dir=path, suffix=".csv", delete=False
+            "wb", dir=path, suffix=".csv", delete=False
         ) as bos:
             locator = result.headers.get("Sforce-Locator", "")
             if locator == "null":
@@ -748,6 +748,47 @@ class SFBulk2Type:
             )
             locator = result["locator"]
             yield result["records"]
+
+    def download(
+        self,
+        query,
+        path,
+        max_records=DEFAULT_QUERY_PAGE_SIZE,
+        column_delimiter=ColumnDelimiter.COMMA,
+        line_ending=LineEnding.LF,
+        wait=5,
+    ) -> List[Dict]:
+        """bulk 2.0 query stream to file, avoiding high memory usage
+
+        Arguments:
+        * query -- SOQL query
+        * max_records -- max records to retrieve per batch, default 50000
+
+        Returns:
+        * locator  -- the locator for the next set of results
+        * number_of_records -- the number of records in this set
+        * file -- downloaded file
+        """
+        if not os.path.exists(path):
+            raise SalesforceBulkV2LoadError(f"Path does not exist: {path}")
+
+        res = self._client.create_job(
+            Operation.query, query, column_delimiter, line_ending
+        )
+        job_id = res["id"]
+        self._client.wait_for_job(job_id, True, wait)
+
+        results = []
+        locator = "INIT"
+        while locator:
+            if locator == "INIT":
+                locator = ""
+            result = self._client.download_job_data(
+                path, job_id, locator, max_records
+            )
+            locator = result["locator"]
+            results.append(result)
+        return results
 
     def get_failed_records(self, job_id):
         """Get failed record results
