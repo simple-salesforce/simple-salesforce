@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import closing
 from functools import partial
 from time import sleep
-from typing import Dict, Tuple, Union, Generator
+from typing import Dict, Tuple, Union, Generator, List
 
 import math
 import pendulum
@@ -85,7 +85,7 @@ class ResultsType:
 # https://developer.salesforce.com/docs/atlas.en-us.242.0.salesforce_app_limits_cheatsheet.meta/salesforce_app_limits_cheatsheet/salesforce_app_limits_platform_bulkapi.htm
 # https://developer.salesforce.com/docs/atlas.en-us.api_asynch.meta/api_asynch/datafiles_prepare_csv.htm
 MAX_INGEST_JOB_FILE_SIZE = 100 * 1024 * 1024
-MAX_INGEST_JOB_PARALLELISM = 5  # TODO: ? Salesforce limits
+MAX_INGEST_JOB_PARALLELISM = 10  # TODO: ? Salesforce limits
 DEFAULT_QUERY_PAGE_SIZE = 50000
 
 
@@ -419,7 +419,7 @@ class _Bulk2Client:
                 stream=True,
             )
         ) as result, tempfile.NamedTemporaryFile(
-            "wb", encoding="utf-8", dir=path, suffix=".csv"
+            "wb", encoding="utf-8", dir=path, suffix=".csv", delete=False
         ) as bos:
             locator = result.headers.get("Sforce-Locator", "")
             if locator == "null":
@@ -568,7 +568,7 @@ class SFBulk2Type:
         external_id_field=None,
         concurrency=1,
         wait=5,
-    ) -> Dict:
+    ) -> List[Dict]:
         """Upload csv file to Salesforce"""
         if not os.path.exists(csv_file):
             raise SalesforceBulkV2LoadError(csv_file + " not found.")
@@ -616,20 +616,7 @@ class SFBulk2Type:
                     )
                     _results = pool.map(multi_thread_worker, chunks)
                 results.extend(list(_results))
-
-        job_id = results[0]["job_id"]
-        total = processed = failed = 0
-        for ret in results:
-            failed += ret["numberRecordsFailed"]
-            processed += ret["numberRecordsProcessed"]
-            total += ret["numberRecordsTotal"]
-
-        return {
-            "numberRecordsFailed": failed,
-            "numberRecordsProcessed": processed,
-            "numberRecordsTotal": total,
-            "job_id": job_id,
-        }
+        return results
 
     def delete(
         self,
@@ -639,7 +626,7 @@ class SFBulk2Type:
         line_ending=LineEnding.LF,
         external_id_field=None,
         wait=5,
-    ) -> Dict:
+    ) -> List[Dict]:
         """soft delete records"""
         return self._upload_file(
             Operation.delete,
@@ -659,7 +646,7 @@ class SFBulk2Type:
         column_delimiter=ColumnDelimiter.COMMA,
         line_ending=LineEnding.LF,
         wait=5,
-    ) -> Dict:
+    ) -> List[Dict]:
         """insert records"""
         return self._upload_file(
             Operation.insert,
@@ -679,7 +666,7 @@ class SFBulk2Type:
         column_delimiter=ColumnDelimiter.COMMA,
         line_ending=LineEnding.LF,
         wait=5,
-    ) -> Dict:
+    ) -> List[Dict]:
         """upsert records based on a unique identifier"""
         return self._upload_file(
             Operation.upsert,
@@ -698,7 +685,7 @@ class SFBulk2Type:
         column_delimiter=ColumnDelimiter.COMMA,
         line_ending=LineEnding.LF,
         wait=5,
-    ) -> Dict:
+    ) -> List[Dict]:
         """update records"""
         return self._upload_file(
             Operation.update,
@@ -716,7 +703,7 @@ class SFBulk2Type:
         column_delimiter=ColumnDelimiter.COMMA,
         line_ending=LineEnding.LF,
         wait=5,
-    ) -> Dict:
+    ) -> List[Dict]:
         """hard delete records"""
         return self._upload_file(
             Operation.hard_delete,

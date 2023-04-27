@@ -166,12 +166,14 @@ class TestSFBulk2Type(unittest.TestCase):
         request_patcher = patch("simple_salesforce.api.requests")
         self.mockrequest = request_patcher.start()
         self.addCleanup(request_patcher.stop)
-        self.expected_results = {
-            "numberRecordsFailed": 0,
-            "numberRecordsProcessed": 2,
-            "numberRecordsTotal": 2,
-            "job_id": "Job-1",
-        }
+        self.expected_results = [
+            {
+                "numberRecordsFailed": 0,
+                "numberRecordsProcessed": 2,
+                "numberRecordsTotal": 2,
+                "job_id": "Job-1",
+            }
+        ]
         self.expected_query = [
             textwrap.dedent(
                 """
@@ -449,12 +451,14 @@ class TestSFBulk2Type(unittest.TestCase):
         )
         results = ingest_data(operation, self.insert_data)
         self.assertEqual(
-            {
-                "numberRecordsFailed": total,
-                "numberRecordsProcessed": total,
-                "numberRecordsTotal": total,
-                "job_id": "Job-1",
-            },
+            [
+                {
+                    "numberRecordsFailed": total,
+                    "numberRecordsProcessed": total,
+                    "numberRecordsTotal": total,
+                    "job_id": "Job-1",
+                }
+            ],
             results,
         )
 
@@ -497,12 +501,14 @@ class TestSFBulk2Type(unittest.TestCase):
         )
         results = ingest_data(operation, self.insert_data)
         self.assertEqual(
-            {
-                "numberRecordsFailed": 0,
-                "numberRecordsProcessed": total - 1,
-                "numberRecordsTotal": total,
-                "job_id": "Job-1",
-            },
+            [
+                {
+                    "numberRecordsFailed": 0,
+                    "numberRecordsProcessed": total - 1,
+                    "numberRecordsTotal": total,
+                    "job_id": "Job-1",
+                }
+            ],
             results,
         )
         responses.add(
