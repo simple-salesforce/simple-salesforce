@@ -16,8 +16,8 @@ from typing import Dict, Tuple, Union, Generator
 import math
 import pendulum
 import requests
-from pendulum import DateTime
 from more_itertools import chunked
+from pendulum import DateTime
 
 from .exceptions import (
     SalesforceBulkV2ExtractError,
@@ -27,7 +27,9 @@ from .exceptions import (
 from .util import call_salesforce
 
 
-# pylint: disable=missing-class-docstring
+# pylint: disable=missing-class-docstring,no-self-use,invalid-name,too-many-arguments,too-many-locals
+
+
 class Operation:
     insert = "insert"
     upsert = "upsert"
@@ -38,7 +40,6 @@ class Operation:
     query_all = "queryAll"
 
 
-# pylint: disable=missing-class-docstring
 class JobState:
     open = "Open"
     aborted = "Aborted"
@@ -48,7 +49,6 @@ class JobState:
     job_complete = "JobComplete"
 
 
-# pylint: disable=missing-class-docstring
 class ColumnDelimiter:
     BACKQUOTE = "BACKQUOTE"  # (`)
     CARET = "CARET"  # (^)
@@ -68,9 +68,8 @@ _delimiter_char = {
 }
 
 
-# pylint: disable=missing-class-docstring
 class LineEnding:
-    LF = "LF"  # pylint: disable=invalid-name
+    LF = "LF"
     CRLF = "CRLF"
 
 
@@ -359,7 +358,7 @@ class _Bulk2Client:
         """
         if isinstance(b, str):
             return b.replace("\x00", "")
-        elif isinstance(b, bytes):
+        if isinstance(b, bytes):
             return b.replace(b"\x00", b"")
         raise TypeError("Expected str or bytes")
 
@@ -437,10 +436,10 @@ class _Bulk2Client:
                     "number_of_records": number_of_records,
                     "file": bos.name,
                 }
-            else:
-                raise SalesforceBulkV2LoadError(
-                    f"The IO/Error occured while verifying binary data. File {bos.name} doesn't exist, url: {url}, "
-                )
+            raise SalesforceBulkV2LoadError(
+                f"The IO/Error occured while verifying binary data. "
+                f"File {bos.name} doesn't exist, url: {url}, "
+            )
 
     def upload_job_data(self, job_id, data: str, content_url=None):
         """Upload job data"""
@@ -509,7 +508,6 @@ class SFBulk2Type:
         self.headers = headers
         self._client = _Bulk2Client(object_name, bulk2_url, headers, session)
 
-    # pylint: disable=too-many-arguments
     def _upload_data(
         self,
         operation,
@@ -560,7 +558,6 @@ class SFBulk2Type:
                 self._client.abort_job(job_id, False)
             raise
 
-    # pylint: disable=too-many-arguments,too-many-locals
     def _upload_file(
         self,
         operation,
