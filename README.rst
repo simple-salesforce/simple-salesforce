@@ -589,9 +589,23 @@ Query records:
 
     query = 'SELECT Id, Name FROM Account LIMIT 100000'
 
-    results = sf.bulk2.Account.query(query, max_records=50000)
-    for ret in results:
-        records = ret["records"]
+    results = sf.bulk2.Account.query(
+        query, max_records=50000, column_delimiter="COMM", line_ending="LF"
+    )
+    for i, data in enumerate(results):
+        with open(f"results/part-{1}.csv", "w") as bos:
+            bos.write(data)
+
+
+Download records(low memory usage):
+
+.. code-block:: python
+
+    query = 'SELECT Id, Name FROM Account'
+
+    sf.bulk2.Account.download(
+        query, path="results/", max_records=200000
+    )
 
 
 Delete records (soft deletion):
