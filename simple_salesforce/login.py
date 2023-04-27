@@ -19,7 +19,7 @@ from .exceptions import SalesforceAuthenticationFailed
 from .util import getUniqueElementValueFromXmlString
 
 
-# pylint: disable=invalid-name,too-many-arguments,too-many-locals
+# pylint: disable=invalid-name,too-many-arguments,too-many-locals,too-many-branches
 def SalesforceLogin(
         username=None,
         password=None,
@@ -126,7 +126,6 @@ def SalesforceLogin(
     elif username is not None and \
             consumer_key is not None and \
             consumer_secret is not None:
-        header = {'Content-Type': 'application/json'}
         payload = {
             'grant_type': 'password',
             'client_id': consumer_key,
@@ -135,13 +134,8 @@ def SalesforceLogin(
             'password': password
             }
 
-        login_token_request_data = {
-            'grant_type': 'password'
-            }
-
         return token_login(
-            'https://{domain}.salesforce.com/services/oauth2/token'.format(
-                domain=domain),
+            f'https://{domain}.salesforce.com/services/oauth2/token',
             payload, domain, consumer_key,
             None, proxies, session)
 
