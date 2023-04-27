@@ -27,7 +27,7 @@ from .exceptions import (
 from .util import call_salesforce
 
 
-# pylint: disable=missing-class-docstring,no-self-use,invalid-name,too-many-arguments,too-many-locals
+# pylint: disable=missing-class-docstring,invalid-name,too-many-arguments,too-many-locals
 
 
 class Operation:

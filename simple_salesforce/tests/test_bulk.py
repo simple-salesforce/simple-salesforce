@@ -16,8 +16,6 @@ from simple_salesforce.api import Salesforce
 from simple_salesforce.bulk import SFBulkType
 from simple_salesforce.exceptions import SalesforceGeneralError
 
-# pylint: disable=no-self-use
-
 
 class TestSFBulkHandler(unittest.TestCase):
     """Test for SFBulkHandler"""

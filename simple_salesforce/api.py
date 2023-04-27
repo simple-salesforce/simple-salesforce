@@ -960,7 +960,6 @@ class SFType:
 
         return result
 
-    # pylint: disable=no-self-use
     def _raw_response(self, response, body_flag):
         """Utility method for processing the response and returning either the
         status code or the response object.
