@@ -69,6 +69,28 @@ class TestSFBulkType(unittest.TestCase):
              "FirstName": "Alice", "LastName": "y"}
         ]
 
+        self.expected_query_chunked = [
+            {"Id": "001xx000003DHP0AAO", "AccountId": "ID-13",
+             "Email": "contact1@example.com",
+             "FirstName": "Bob", "LastName": "batch2r1"},
+            {"Id": "001xx000003DHP1AAO", "AccountId": "ID-14",
+             "Email": "contact2@example.com",
+             "FirstName": "Alice", "LastName": "batch2r1"},
+            {"Id": "001xx000003DHP3AAO", "AccountId": "ID-15",
+             "Email": "contact3@example.com",
+             "FirstName": "Bob", "LastName": "batch3r1"},
+            {"Id": "001xx000003DHP4AAO", "AccountId": "ID-16",
+             "Email": "contact4@example.com",
+             "FirstName": "Alice", "LastName": "batch3r1"},
+            {"Id": "001xx000003DHP5AAO", "AccountId": "ID-17",
+             "Email": "contact5@example.com",
+             "FirstName": "Bob", "LastName": "batch3r2"},
+            {"Id": "001xx000003DHP6AAO", "AccountId": "ID-18",
+             "Email": "contact6@example.com",
+             "FirstName": "Alice", "LastName": "batch3r2"}
+        ]
+
+
     def test_bulk_type(self):
         """Test bulk type creation"""
         session = requests.Session()
@@ -414,6 +436,169 @@ class TestSFBulkType(unittest.TestCase):
         contact = client.bulk.Contact.query(data)
         self.assertEqual(self.expected_query, contact)
 
+    @responses.activate
+    def test_query_with_chunking(self):
+        """Test bulk query with chunking records"""
+        operation = 'query'
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job$'),
+            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
+                 '"contentType": "JSON","id": "Job-1","object": "Contact",'
+                 f'"operation": "{operation}","state": "Open"}}',
+            status=http.OK)
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "Queued"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch$'),
+            body='{"id": "Batch-2","jobId": "Job-1","state": "Queued"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch$'),
+            body='{"id": "Batch-3","jobId": "Job-1","state": "Queued"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1$'),
+            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
+                 '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
+                 f'"operation" : "{operation}","state" : "Closed"}}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch$'),
+            body='{ "batchInfo" : [ {"id" : "Batch-1","jobId" : "Job-1"},'
+                 '{"id" : "Batch-2","jobId" : "Job-1"},'
+                 '{"id" : "Batch-3","jobId" : "Job-1"} ]}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-1$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "InProgress"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-1$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "NotProcessed"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-2$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "InProgress"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-2$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "Completed"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-3$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "InProgress"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-3$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "Completed"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(
+                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result$'),
+            body='[]',
+            status=http.OK
+        )
+
+        responses.add(
+            responses.GET,
+            re.compile(
+                r'^https://[^/job].*/job/Job-1/batch/Batch-2/result$'),
+            body='["752x000000000F2"]',
+            status=http.OK
+        )
+
+        responses.add(
+            responses.GET,
+            re.compile(
+                r'^https://[^/job].*/job/Job-1/batch/Batch-3/result$'),
+            body='["752x000000000F3","752x000000000F4"]',
+            status=http.OK
+        )
+
+        responses.add(
+            responses.GET,
+            re.compile(r"""^https://[^/job].*/job/Job-1/batch/Batch-1/result
+              /752x000000000F1$""", re.X),
+            body='[]',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(
+                r"""^https://[^/job].*/job/Job-1/batch/Batch-2/result
+                /752x000000000F2$""", re.X),
+            body='[{"Id": "001xx000003DHP0AAO", "AccountId": "ID-13",'
+                 '"Email": "contact1@example.com","FirstName": "Bob",'
+                 '"LastName": "batch2r1"},{"Id": "001xx000003DHP1AAO",'
+                 '"AccountId": "ID-14","Email": "contact2@example.com",'
+                 '"FirstName": "Alice","LastName": "batch2r1"}]',
+            status=http.OK
+        )
+
+        responses.add(
+            responses.GET,
+            re.compile(
+                r"""^https://[^/job].*/job/Job-1/batch/Batch-3/result
+                /752x000000000F3$""", re.X),
+            body='[{"Id": "001xx000003DHP3AAO", "AccountId": "ID-15",'
+                 '"Email": "contact3@example.com","FirstName": "Bob",'
+                 '"LastName": "batch3r1"},{"Id": "001xx000003DHP4AAO",'
+                 '"AccountId": "ID-16","Email": "contact4@example.com",'
+                 '"FirstName": "Alice","LastName": "batch3r1"}]',
+            status=http.OK
+        )
+
+        responses.add(
+            responses.GET,
+            re.compile(
+                r"""^https://[^/job].*/job/Job-1/batch/Batch-3/result
+                /752x000000000F4$""", re.X),
+            body='[{"Id": "001xx000003DHP5AAO", "AccountId": "ID-17",'
+                 '"Email": "contact5@example.com","FirstName": "Bob",'
+                 '"LastName": "batch3r2"},{"Id": "001xx000003DHP6AAO",'
+                 '"AccountId": "ID-18","Email": "contact6@example.com",'
+                 '"FirstName": "Alice","LastName": "batch3r2"}]',
+            status=http.OK
+        )
+
+        data = 'SELECT Id,AccountId,Email,FirstName,LastName FROM Contact'
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+        contact_result_gen = client.bulk.Contact.query_with_chunking(data)
+        results = []
+        for batch_result in contact_result_gen:
+            for result in batch_result:
+                results.append(result)
+
+        self.assertEqual(self.expected_query_chunked, results)
 
     @responses.activate
     def test_query_fail(self):
