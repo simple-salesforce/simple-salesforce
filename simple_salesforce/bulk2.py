@@ -486,6 +486,28 @@ class _Bulk2Client:
         )
         return result.text
 
+    def download_ingest_results(
+        self, file, job_id, results_type, chunk_size=1024
+    ):
+        """Download record results to a file"""
+        url = self._construct_request_url(job_id, False) + "/" + results_type
+        headers = self._get_headers(
+            self.JSON_CONTENT_TYPE, self.CSV_CONTENT_TYPE
+        )
+        with closing(
+            call_salesforce(
+                url=url, method="GET", session=self.session, headers=headers
+            )
+        ) as result, open(file, "wb") as bos:
+            for chunk in result.iter_content(chunk_size=chunk_size):
+                bos.write(self.filter_null_bytes(chunk))
+
+        if not os.path.exists(file):
+            raise SalesforceBulkV2LoadError(
+                f"The IO/Error occured while verifying binary data. "
+                f"File {file} doesn't exist, url: {url}, "
+            )
+
 
 class SFBulk2Type:
     """Interface to Bulk 2.0 API functions"""
@@ -791,7 +813,14 @@ class SFBulk2Type:
             results.append(result)
         return results
 
-    def get_failed_records(self, job_id):
+    def _retrieve_ingest_records(self, job_id, results_type, file=None):
+        """Retrieve the results of an ingest job"""
+        if not file:
+            return self._client.get_ingest_results(job_id, results_type)
+        self._client.download_ingest_results(file, job_id, results_type)
+        return ""
+
+    def get_failed_records(self, job_id, file=None):
         """Get failed record results
 
         Results Property:
@@ -799,17 +828,19 @@ class SFBulk2Type:
             sf__Error:	[Error]	Error code and message
             Fields from the original CSV request data:	various
         """
-        return self._client.get_ingest_results(job_id, ResultsType.failed)
+        return self._retrieve_ingest_records(job_id, ResultsType.failed, file)
 
-    def get_unprocessed_records(self, job_id):
+    def get_unprocessed_records(self, job_id, file=None):
         """Get unprocessed record results
 
         Results Property:
             Fields from the original CSV request data:	[various]
         """
-        return self._client.get_ingest_results(job_id, ResultsType.unprocessed)
+        return self._retrieve_ingest_records(
+            job_id, ResultsType.unprocessed, file
+        )
 
-    def get_successful_records(self, job_id):
+    def get_successful_records(self, job_id, file=None):
         """Get successful record results.
 
         Results Property:
@@ -817,4 +848,6 @@ class SFBulk2Type:
             sf__Created: [boolean] Indicates if the record was created
             Fields from the original CSV request data:	[various]
         """
-        return self._client.get_ingest_results(job_id, ResultsType.successful)
+        return self._retrieve_ingest_records(
+            job_id, ResultsType.successful, file
+        )

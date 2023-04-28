@@ -39,6 +39,17 @@ def to_csv_file(data):
             os.remove(temp_file.name)
 
 
+@contextmanager
+def temp_csv_file():
+    temp_file = None
+    try:
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        yield temp_file.name
+    finally:
+        if temp_file is not None:
+            os.remove(temp_file.name)
+
+
 class TestSFBulk2Handler(unittest.TestCase):
     """Test for SFBulkHandler"""
 
@@ -462,24 +473,25 @@ class TestSFBulk2Type(unittest.TestCase):
             results,
         )
 
-        responses.add(
-            responses.GET,
-            re.compile(r"^https://.*/jobs/ingest/Job-1/failedResults$"),
-            body=textwrap.dedent(
-                """
-                    "sf__Id","sf__Error","Custom_Id__c","AccountId","Email","FirstName","LastName"
-                    "","UNABLE_TO_LOCK_ROW","CustomID1","ID-13","contact1@example.com","Bob","x"
-                    "","UNABLE_TO_LOCK_ROW","CustomID2","ID-24","contact2@example.com","Alice","y"
+        def make_responses():
+            responses.add(
+                responses.GET,
+                re.compile(r"^https://.*/jobs/ingest/Job-1/failedResults$"),
+                body=textwrap.dedent(
                     """
-            ),
-            status=http.OK,
-        )
+                        "sf__Id","sf__Error","Custom_Id__c","AccountId","Email","FirstName","LastName"
+                        "","UNABLE_TO_LOCK_ROW","CustomID1","ID-13","contact1@example.com","Bob","x"
+                        "","UNABLE_TO_LOCK_ROW","CustomID2","ID-24","contact2@example.com","Alice","y"
+                        """
+                ),
+                status=http.OK,
+            )
+
         client = Salesforce(
             session_id=tests.SESSION_ID,
             instance_url=tests.SERVER_URL,
             session=requests.Session(),
         )
-        failed_results = client.bulk2.Contact.get_failed_records("Job-1")
         expected_results = textwrap.dedent(
             """
                 "sf__Id","sf__Error","Custom_Id__c","AccountId","Email","FirstName","LastName"
@@ -487,7 +499,16 @@ class TestSFBulk2Type(unittest.TestCase):
                 "","UNABLE_TO_LOCK_ROW","CustomID2","ID-24","contact2@example.com","Alice","y"
                 """
         )
+
+        make_responses()
+        failed_results = client.bulk2.Contact.get_failed_records("Job-1")
         self.assertEqual(expected_results, failed_results)
+
+        make_responses()
+        with temp_csv_file() as csv_file:
+            client.bulk2.Contact.get_failed_records("Job-1", file=csv_file)
+            with open(csv_file, "r", encoding="utf-8") as bis:
+                self.assertEqual(expected_results, bis.read())
 
     @responses.activate
     def test_get_unprocessed_record_results(self):
@@ -511,29 +532,40 @@ class TestSFBulk2Type(unittest.TestCase):
             ],
             results,
         )
-        responses.add(
-            responses.GET,
-            re.compile(r"^https://.*/jobs/ingest/Job-1/unprocessedRecords$"),
-            body=textwrap.dedent(
-                """
-                    "Custom_Id__c","AccountId","Email","FirstName","LastName"
-                    "CustomID2","ID-24","contact2@example.com","Alice","y"
+
+        def make_responses():
+            responses.add(
+                responses.GET,
+                re.compile(
+                    r"^https://.*/jobs/ingest/Job-1/unprocessedRecords$"
+                ),
+                body=textwrap.dedent(
                     """
-            ),
-            status=http.OK,
-        )
+                        "Custom_Id__c","AccountId","Email","FirstName","LastName"
+                        "CustomID2","ID-24","contact2@example.com","Alice","y"
+                        """
+                ),
+                status=http.OK,
+            )
+
         client = Salesforce(
             session_id=tests.SESSION_ID,
             instance_url=tests.SERVER_URL,
             session=requests.Session(),
         )
-        results = client.bulk2.Contact.get_unprocessed_records("Job-1")
-        self.assertEqual(
-            textwrap.dedent(
-                """
-                "Custom_Id__c","AccountId","Email","FirstName","LastName"
-                "CustomID2","ID-24","contact2@example.com","Alice","y"
-                """
-            ),
-            results,
+        expected_results = textwrap.dedent(
+            """
+            "Custom_Id__c","AccountId","Email","FirstName","LastName"
+            "CustomID2","ID-24","contact2@example.com","Alice","y"
+            """
         )
+
+        make_responses()
+        results = client.bulk2.Contact.get_unprocessed_records("Job-1")
+        self.assertEqual(expected_results, results)
+
+        make_responses()
+        with temp_csv_file() as csv_file:
+            client.bulk2.Contact.get_unprocessed_records("Job-1", file=csv_file)
+            with open(csv_file, "r", encoding="utf-8") as bis:
+                self.assertEqual(expected_results, bis.read())
