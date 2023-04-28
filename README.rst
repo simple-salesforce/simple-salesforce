@@ -630,6 +630,20 @@ Hard deletion:
     sf.bulk2.Contact.hard_delete("./sample.csv")
 
 
+Retrieve failed/successful/unprocessed records for ingest(insert,update...) job:
+
+.. code-block:: python
+
+    results = sf.bulk2.Contact.insert("./sample.csv")
+    # [{"numberRecordsFailed": 123, "numberRecordsProcessed": 2000, "numberRecordsTotal": 2000, "job_id": "Job-1"}, ...]
+    for result in results:
+        job_id = result['job_id']
+        # also available: get_unprocessed_records, get_successful_records
+        data = sf.bulk2.Contact.get_failed_records(job_id)
+        # or save to file
+        sf.bulk2.Contact.get_failed_records(job_id, file=f'{job_id}.csv')
+
+
 Using Apex
 --------------------------
 
