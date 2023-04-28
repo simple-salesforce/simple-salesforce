@@ -9,6 +9,7 @@ import tempfile
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import closing
+from enum import Enum
 from functools import partial
 from time import sleep
 from typing import Dict, Tuple, Union, Generator, List
@@ -30,7 +31,7 @@ from .util import call_salesforce
 # pylint: disable=missing-class-docstring,invalid-name,too-many-arguments,too-many-locals
 
 
-class Operation:
+class Operation(str, Enum):
     insert = "insert"
     upsert = "upsert"
     update = "update"
@@ -40,7 +41,7 @@ class Operation:
     query_all = "queryAll"
 
 
-class JobState:
+class JobState(str, Enum):
     open = "Open"
     aborted = "Aborted"
     failed = "Failed"
@@ -49,7 +50,7 @@ class JobState:
     job_complete = "JobComplete"
 
 
-class ColumnDelimiter:
+class ColumnDelimiter(str, Enum):
     BACKQUOTE = "BACKQUOTE"  # (`)
     CARET = "CARET"  # (^)
     COMMA = "COMMA"  # (,)
@@ -68,7 +69,7 @@ _delimiter_char = {
 }
 
 
-class LineEnding:
+class LineEnding(str, Enum):
     LF = "LF"
     CRLF = "CRLF"
 
@@ -76,7 +77,7 @@ class LineEnding:
 _line_ending_char = {LineEnding.LF: "\n", LineEnding.CRLF: "\r\n"}
 
 
-class ResultsType:
+class ResultsType(str, Enum):
     failed = "failedResults"
     successful = "successfulResults"
     unprocessed = "unprocessedRecords"
