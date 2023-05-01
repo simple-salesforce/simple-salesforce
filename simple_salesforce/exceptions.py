@@ -85,6 +85,7 @@ class SalesforceResourceNotFound(SalesforceError):
         return self.message.format(name=self.resource_name,
                                    content=self.content)
 
+
 class SalesforceAuthenticationFailed(SalesforceError):
     """
     Thrown to indicate that authentication with Salesforce failed.
@@ -98,7 +99,7 @@ class SalesforceAuthenticationFailed(SalesforceError):
         self.message = message
 
     def __str__(self):
-        return '{code}: {message}'.format(code=self.code, message=self.message)
+        return f'{self.code}: {self.message}'
 
 
 class SalesforceGeneralError(SalesforceError):
@@ -110,3 +111,19 @@ class SalesforceGeneralError(SalesforceError):
 
     def __str__(self):
         return self.message.format(status=self.status, content=self.content)
+
+
+class SalesforceOperationError(Exception):
+    """Base error for Bulk API 2.0 operations"""
+
+
+class SalesforceBulkV2LoadError(SalesforceOperationError):
+    """
+    Error occurred during bulk 2.0 load
+    """
+
+
+class SalesforceBulkV2ExtractError(SalesforceOperationError):
+    """
+    Error occurred during bulk 2.0 extract
+    """

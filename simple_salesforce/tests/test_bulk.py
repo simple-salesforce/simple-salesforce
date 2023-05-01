@@ -1,13 +1,19 @@
 """Test for bulk.py"""
 import http.client as http
+import json
+
+import itertools
+import random
 import re
 import unittest
+from unittest import mock
 from unittest.mock import patch
 
 import requests
 import responses
 from simple_salesforce import tests
 from simple_salesforce.api import Salesforce
+from simple_salesforce.bulk import SFBulkType
 from simple_salesforce.exceptions import SalesforceGeneralError
 
 
@@ -83,7 +89,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job$'),
             body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
             '"contentType": "JSON","id": "Job-1","object": "Contact",'
-            '"operation": "%s","state": "Open"}' % operation,
+            f'"operation": "{operation}","state": "Open"}}',
             status=http.OK)
         responses.add(
             responses.POST,
@@ -96,7 +102,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job/Job-1$'),
             body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
             '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
-            '"operation" : "%s","state" : "Closed"}' % operation,
+            f'"operation" : "{operation}","state" : "Closed"}}',
             status=http.OK
         )
         responses.add(
@@ -141,7 +147,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job$'),
             body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
             '"contentType": "JSON","id": "Job-1","object": "Contact",'
-            '"operation": "%s","state": "Open"}' % operation,
+            f'"operation": "{operation}","state": "Open"}}',
             status=http.OK)
         responses.add(
             responses.POST,
@@ -154,7 +160,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job/Job-1$'),
             body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
             '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
-            '"operation" : "%s","state" : "Closed"}' % operation,
+            f'"operation" : "{operation}","state" : "Closed"}}',
             status=http.OK
         )
         responses.add(
@@ -206,7 +212,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job$'),
             body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
             '"contentType": "JSON","id": "Job-1","object": "Contact",'
-            '"operation": "%s","state": "Open"}' % operation,
+            f'"operation": "{operation}","state": "Open"}}',
             status=http.OK)
         responses.add(
             responses.POST,
@@ -219,7 +225,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job/Job-1$'),
             body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
             '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
-            '"operation" : "%s","state" : "Closed"}' % operation,
+            f'"operation" : "{operation}","state" : "Closed"}}',
             status=http.OK
         )
         responses.add(
@@ -273,7 +279,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job$'),
             body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
             '"contentType": "JSON","id": "Job-1","object": "Contact",'
-            '"operation": "%s","state": "Open"}' % operation,
+            f'"operation": "{operation}","state": "Open"}}',
             status=http.OK)
         responses.add(
             responses.POST,
@@ -286,7 +292,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job/Job-1$'),
             body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
             '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
-            '"operation" : "%s","state" : "Closed"}' % operation,
+            f'"operation" : "{operation}","state" : "Closed"}}',
             status=http.OK
         )
         responses.add(
@@ -340,7 +346,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job$'),
             body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
             '"contentType": "JSON","id": "Job-1","object": "Contact",'
-            '"operation": "%s","state": "Open"}' % operation,
+            f'"operation": "{operation}","state": "Open"}}',
             status=http.OK)
         responses.add(
             responses.POST,
@@ -353,7 +359,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job/Job-1$'),
             body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
             '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
-            '"operation" : "%s","state" : "Closed"}' % operation,
+            f'"operation" : "{operation}","state" : "Closed"}}',
             status=http.OK
         )
         responses.add(
@@ -418,7 +424,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job$'),
             body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
             '"contentType": "JSON","id": "Job-1","object": "Contact",'
-            '"operation": "%s","state": "Open"}' % operation,
+            f'"operation": "{operation}","state": "Open"}}',
             status=http.OK)
         responses.add(
             responses.POST,
@@ -431,7 +437,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job/Job-1$'),
             body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
             '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
-            '"operation" : "%s","state" : "Closed"}' % operation,
+            f'"operation" : "{operation}","state" : "Closed"}}',
             status=http.OK
         )
         responses.add(
@@ -465,7 +471,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job$'),
             body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
             '"contentType": "JSON","id": "Job-1","object": "Contact",'
-            '"operation": "%s","state": "Open"}' % operation,
+            f'"operation": "{operation}","state": "Open"}}',
             status=http.OK)
         responses.add(
             responses.POST,
@@ -478,7 +484,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job/Job-1$'),
             body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
             '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
-            '"operation" : "%s","state" : "Closed"}' % operation,
+            f'"operation" : "{operation}","state" : "Closed"}}',
             status=http.OK
         )
         responses.add(
@@ -546,7 +552,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job$'),
             body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
             '"contentType": "JSON","id": "Job-1","object": "Contact",'
-            '"operation": "%s","state": "Open"}' % operation,
+            f'"operation": "{operation}","state": "Open"}}',
             status=http.OK)
         responses.add(
             responses.POST,
@@ -559,7 +565,7 @@ class TestSFBulkType(unittest.TestCase):
             re.compile(r'^https://[^/job].*/job/Job-1$'),
             body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
             '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
-            '"operation" : "%s","state" : "Closed"}' % operation,
+            f'"operation" : "{operation}","state" : "Closed"}}',
             status=http.OK
         )
         responses.add(
@@ -612,3 +618,81 @@ class TestSFBulkType(unittest.TestCase):
                             session=session)
         contact = client.bulk.Contact.query_all(data)
         self.assertEqual(self.expected_query, contact)
+
+    @responses.activate
+    @mock.patch('simple_salesforce.bulk.SFBulkType._add_autosized_batches')
+    def test_bulk_operation_auto_batch_size(self, add_autosized_batches):
+        """Test that batch_size="auto" leads to using _add_autosized_batches"""
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        operation = "update"
+
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job$'),
+            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
+            '"contentType": "JSON","id": "Job-1","object": "Contact",'
+            f'"operation": "{operation}","state": "Open"}}',
+            status=http.OK)
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1$'),
+            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
+            '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
+            f'"operation" : "{operation}","state" : "Closed"}}',
+            status=http.OK
+        )
+        data = [{
+            'AccountId': 'ID-1',
+            'Email': 'contact1@example.com',
+            'FirstName': 'Bob',
+            'LastName': 'x'
+        }]
+        add_autosized_batches.return_value = []
+        client.bulk.Contact._bulk_operation(  # pylint: disable=protected-access
+            operation, data, batch_size="auto"
+        )
+        add_autosized_batches.assert_called_once_with(
+            job='Job-1', data=data, operation=operation
+        )
+
+    @mock.patch('simple_salesforce.bulk.SFBulkType._add_batch')
+    def test_add_autosized_batches(self, add_batch):
+        """Test that _add_autosized_batches batches all records correctly"""
+        # _add_autosized_batches passes the return values from add_batch, so we
+        # can pass the data it was given back so that we can test it
+        add_batch.side_effect = lambda job_id, data, operation: data
+        sf_bulk_type = SFBulkType(None, None, None, None)
+        data = [
+            # Expected serialized record size of 13 to 1513. Idea is that
+            # earlier record batches are split on record count, whereas later
+            # batches are split for hitting the byte limit.
+            {'key': 'value' * random.randint(0, i // 50)}
+            for i in range(30000)
+        ]
+        result = sf_bulk_type._add_autosized_batches(  # pylint: disable=protected-access
+            data=data, operation="update", job="Job-1"
+        )
+        reconstructed_data = list(itertools.chain(*result))
+        # all data was put in a batch
+        self.assertEqual(len(data), len(reconstructed_data))
+        self.assertEqual(data, list(itertools.chain(*result)))
+
+        for i, batch in enumerate(result):
+            record_count = len(batch)
+            size_in_bytes = len(json.dumps(batch))
+            is_last_batch = i == len(result) - 1
+            # Check that all batches are within limits
+            self.assertLessEqual(record_count, 10_000)
+            self.assertLessEqual(size_in_bytes, 10_000_000)
+            # ... and that - except for the last batch - all batches have maxed
+            # out one of the two limits
+            self.assertTrue(
+                is_last_batch or
+                record_count == 10_000 or
+                (size_in_bytes + len(json.dumps(result[i + 1][0])) + 2
+                    > 10_000_000)
+            )
