@@ -170,8 +170,9 @@ def _count_csv(
 
 
 def _convert_dict_to_csv(data, column_delimiter=',', line_ending=LineEnding.LF):
+    """Converts list of dicts to CSV like object."""
     if data:
-        keys = set([i for s in [d.keys() for d in data] for i in s])
+        keys = set(i for s in [d.keys() for d in data] for i in s)
         dict_to_csv_file = io.StringIO()
         writer = csv.DictWriter(dict_to_csv_file, fieldnames=keys,
                                 delimiter=column_delimiter,
@@ -620,7 +621,7 @@ class SFBulk2Type:
                     ):
                 self._client.abort_job(job_id, False)
             raise
-
+    #pylint:disable=too-many-locals
     def _upload_file(
             self,
             operation,
