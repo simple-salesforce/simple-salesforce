@@ -111,3 +111,19 @@ class SalesforceGeneralError(SalesforceError):
 
     def __str__(self):
         return self.message.format(status=self.status, content=self.content)
+
+
+class SalesforceOperationError(Exception):
+    """Base error for Bulk API 2.0 operations"""
+
+
+class SalesforceBulkV2LoadError(SalesforceOperationError):
+    """
+    Error occurred during bulk 2.0 load
+    """
+
+
+class SalesforceBulkV2ExtractError(SalesforceOperationError):
+    """
+    Error occurred during bulk 2.0 extract
+    """

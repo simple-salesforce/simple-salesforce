@@ -19,7 +19,7 @@ from .exceptions import SalesforceAuthenticationFailed
 from .util import getUniqueElementValueFromXmlString
 
 
-# pylint: disable=invalid-name,too-many-arguments,too-many-locals
+# pylint: disable=invalid-name,too-many-arguments,too-many-locals,too-many-branches
 def SalesforceLogin(
         username=None,
         password=None,
