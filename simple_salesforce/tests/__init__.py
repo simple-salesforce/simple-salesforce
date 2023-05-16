@@ -99,9 +99,3 @@ BULK_HEADERS = {
     'X-SFDC-Session': SESSION_ID,
     'X-PrettyPrint': '1'
 }
-
-BULKv2_HEADERS = {
-    'Content-Type': 'application/json',
-    "Authorization": 'Bearer ' + SESSION_ID,
-    'X-PrettyPrint': '1'
-}
