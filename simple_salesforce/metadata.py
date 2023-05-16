@@ -327,6 +327,7 @@ class SfdcMetadataApi:
             raw = Path(zipfile).read_bytes()
         return b64encode(raw).decode()
 
+    # pylint: disable=broad-exception-raised
     def _retrieve_deploy_result(self, async_process_id, **kwargs):
         """ Retrieves status for specified deployment id
         :param async_process_id:
@@ -374,7 +375,6 @@ class SfdcMetadataApi:
         except ValueError:
             return 0
 
-    # pylint: disable=broad-exception-raised
     def check_deploy_status(self, async_process_id, **kwargs):
         """
         Checks whether deployment succeeded
