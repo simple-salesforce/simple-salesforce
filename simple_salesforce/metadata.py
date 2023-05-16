@@ -30,6 +30,7 @@ class MetadataType:
         self._session_header = session_header
 
     @staticmethod
+    # pylint: disable=broad-exception-raised
     def _handle_api_response(response):
         """
         Parses SaveResult and DeleteResult objects to identify if there was
@@ -373,6 +374,7 @@ class SfdcMetadataApi:
         except ValueError:
             return 0
 
+    # pylint: disable=broad-exception-raised
     def check_deploy_status(self, async_process_id, **kwargs):
         """
         Checks whether deployment succeeded
@@ -503,6 +505,7 @@ class SfdcMetadataApi:
 
         return async_process_id, state
 
+    # pylint: disable=broad-exception-raised
     def retrieve_retrieve_result(self, async_process_id, include_zip, **kwargs):
         """ Retrieves status for specified retrieval id """
         client = kwargs.get('client', 'simple_salesforce_metahelper')
