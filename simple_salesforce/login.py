@@ -19,7 +19,7 @@ from .exceptions import SalesforceAuthenticationFailed
 from .util import getUniqueElementValueFromXmlString
 
 
-# pylint: disable=invalid-name,too-many-arguments,too-many-locals
+# pylint: disable=invalid-name,too-many-arguments,too-many-locals,too-many-branches
 def SalesforceLogin(
         username=None,
         password=None,
@@ -171,7 +171,7 @@ def SalesforceLogin(
         expiration = datetime.now(timezone.utc) + timedelta(minutes=3)
         payload = {
             'iss': consumer_key,
-            'sub': username,
+            'sub': unescape(username),
             'aud': f'https://{domain}.salesforce.com',
             'exp': f'{expiration.timestamp():.0f}'
             }
