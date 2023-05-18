@@ -350,7 +350,7 @@ class Salesforce:
         return self.parse_result_to_json(result)
 
     # Generic Rest Function
-    def restful(self, path, params=None, method='GET', **kwargs):
+    def restful(self, path, params=None, method='GET', as_json=True, **kwargs):
         """Allows you to make a direct REST call if you know the path
 
         Arguments:
@@ -358,18 +358,18 @@ class Salesforce:
             Example: sobjects/User/ABC123/password'
         * params: dict of parameters to pass to the path
         * method: HTTP request method, default GET
+        * as_json: boolean indicating whether to apply 'parse_result_to_json'
+            method to result
         * other arguments supported by requests.request (e.g. json, timeout)
         """
 
         url = self.base_url + path
         result = self._call_salesforce(method, url, name=path, params=params,
                                        **kwargs)
-
-        json_result = self.parse_result_to_json(result)
-        if len(json_result) == 0:
+        result = self.parse_result_to_json(result) if as_json else result.text
+        if not result:
             return None
-
-        return json_result
+        return result
 
     # OAuth Endpoints Function
     def oauth2(self, path, params=None, method='GET'):
