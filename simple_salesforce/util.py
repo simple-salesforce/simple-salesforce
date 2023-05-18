@@ -6,7 +6,6 @@ import xml.dom.minidom
 from typing import Any, Iterable, MutableMapping, NoReturn
 
 import requests
-import responses
 
 from .exceptions import (SalesforceExpiredSession, SalesforceGeneralError,
                          SalesforceMalformedRequest,
@@ -51,7 +50,7 @@ def date_to_iso8601(date: datetime.date) -> str:
 
 
 def exception_handler(
-        result: responses.models.Response,
+        result: requests.Response,
         name: str = "") -> NoReturn:
     """Exception router. Determines which error to raise for bad results"""
     try:
