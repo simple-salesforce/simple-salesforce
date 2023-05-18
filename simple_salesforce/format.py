@@ -42,7 +42,7 @@ class SoqlFormatter(Formatter):
         return super().format_field(value, format_spec)
 
 
-def format_soql(query: str, *args: str, **kwargs: str) -> str:
+def format_soql(query: str, *args: Any, **kwargs: Any) -> str:
     """ Insert values quoted for SOQL into a format string """
     return SoqlFormatter().vformat(query, args, kwargs)
 

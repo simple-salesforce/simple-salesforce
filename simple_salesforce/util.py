@@ -15,7 +15,7 @@ from .exceptions import (SalesforceExpiredSession, SalesforceGeneralError,
 
 
 # pylint: disable=invalid-name
-def getUniqueElementValueFromXmlString(xmlString: bytes, elementName: str) -> str | None:
+def getUniqueElementValueFromXmlString(xmlString: str | bytes, elementName: str) -> str | None:
     """
     Extracts an element value from an XML string.
 
