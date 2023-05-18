@@ -9,7 +9,7 @@ import base64
 import json
 import logging
 import re
-from typing import Any, Callable, Iterator, Mapping, MutableMapping, cast
+from typing import Any, Callable, IO, Iterator, Mapping, MutableMapping, cast
 from collections import OrderedDict, namedtuple
 from functools import partial
 from pathlib import Path
@@ -59,7 +59,7 @@ class Salesforce:
             privatekey_file: str | None = None,
             privatekey: str | None = None,
             parse_float: Callable[[str], Any] | None = None,
-            object_pairs_hook: Callable[[list[tuple[Any, Any]]], Any] = OrderedDict,
+            object_pairs_hook: Callable[[list[tuple[Any, Any]]], Any] | None = OrderedDict,
             ):
 
         """Initialize the instance with the given parameters.
@@ -153,17 +153,17 @@ class Salesforce:
         elif all(arg is not None for arg in (
                 session_id, instance or instance_url)):
             self.auth_type = "direct"
-            self.session_id = session_id
+            self.session_id: str = cast(str, session_id)
 
             # If the user provides the full url (as returned by the OAuth
             # interface for example) extract the hostname (which we rely on)
             if instance_url is not None:
-                self.sf_instance = urlparse(instance_url).hostname
+                self.sf_instance: str = urlparse(instance_url).hostname  # type: ignore[assignment]
                 port = urlparse(instance_url).port
                 if port not in (None, 443):
                     self.sf_instance += f':{port}'
             else:
-                self.sf_instance = instance
+                self.sf_instance = cast(str, instance)
 
             # Only generate the headers wihtout logging in first
             self._generate_headers()
@@ -239,10 +239,10 @@ class Salesforce:
             f'https://{self.sf_instance}/services/Soap/m/{self.sf_version}/')
         self.tooling_url = f'{self.base_url}tooling/'
         self.oauth2_url = f'https://{self.sf_instance}/services/oauth2/'
-        self.api_usage = {}
+        self.api_usage: MutableMapping[str, Usage | PerAppUsage] = {}
         self._parse_float = parse_float
-        self._object_pairs_hook = object_pairs_hook
-        self._mdapi = None
+        self._object_pairs_hook = object_pairs_hook  # type: ignore[assignment]
+        self._mdapi: SfdcMetadataApi | None = None
 
     @property
     def mdapi(self) -> SfdcMetadataApi:
@@ -293,10 +293,8 @@ class Salesforce:
         is_sandbox = None
         if self.session_id:
             is_sandbox = self.query_all("SELECT IsSandbox "
-                                        "FROM Organization LIMIT 1")
-            is_sandbox = is_sandbox.get('records', [{'IsSandbox': None}])[
-                0].get(
-                'IsSandbox')
+                                        "FROM Organization LIMIT 1").get(
+                'records', [{'IsSandbox': None}])[0].get('IsSandbox')
         return is_sandbox
 
     # SObject Handler
@@ -314,7 +312,7 @@ class Salesforce:
         # fix to enable serialization
         # (https://github.com/heroku/simple-salesforce/issues/60)
         if name.startswith('__'):
-            return super().__getattr__(name)
+            return super().__getattr__(name)  # type: ignore[misc]
 
         if name == 'bulk':
             # Deal with bulk API functions
@@ -621,7 +619,7 @@ class Salesforce:
             Example 2: 'api-usage=25/5000;
                 per-app-api-usage=17/250(appName=sample-connected-app)'
         """
-        result = {}
+        result: MutableMapping[str, Usage | PerAppUsage] = {}
 
         api_usage = re.match(r'[^-]?api-usage=(?P<used>\d+)/(?P<tot>\d+)',
                              sforce_limit_info)
@@ -641,7 +639,7 @@ class Salesforce:
         return result
 
     # file-based deployment function
-    def deploy(self, zipfile: str, sandbox: bool, **kwargs: Any) -> dict[str, str | None]:
+    def deploy(self, zipfile: str | IO[bytes], sandbox: bool, **kwargs: Any) -> dict[str, str | None]:
         """Deploy using the Salesforce Metadata API. Wrapper for
         SfdcMetaDataApi.deploy(...).
         Arguments:
@@ -732,12 +730,12 @@ class SFType:
         self.name = object_name
         self.session = session or requests.Session()
         self._parse_float = parse_float
-        self._object_pairs_hook = object_pairs_hook
+        self._object_pairs_hook = object_pairs_hook  # type: ignore[assignment]
 
         # don't wipe out original proxies with None
         if not session and proxies is not None:
             self.session.proxies = proxies
-        self.api_usage = {}
+        self.api_usage: MutableMapping[str, Usage | PerAppUsage] = {}
 
         self.base_url = (
             f'https://{sf_instance}/services/data/v{sf_version}/sobjects'
