@@ -311,12 +311,14 @@ class SfdcMetadataApi:
                                  additional_headers=headers,
                                  data=request)
 
-        async_process_id = ET.fromstring(result.text).find(
+        async_process_id = ET.fromstring(result.text).findtext(
             'soapenv:Body/mt:deployResponse/mt:result/mt:id',
-            self._XML_NAMESPACES).text
-        state = ET.fromstring(result.text).find(
+            None,
+            self._XML_NAMESPACES)
+        state = ET.fromstring(result.text).findtext(
             'soapenv:Body/mt:deployResponse/mt:result/mt:state',
-            self._XML_NAMESPACES).text
+            None,
+            self._XML_NAMESPACES)
 
         return async_process_id, state
 
@@ -329,7 +331,7 @@ class SfdcMetadataApi:
         :return:
         :rtype:
         """
-        if hasattr(zipfile, 'read'):
+        if hasattr(zipfile, 'read') and hasattr(zipfile, 'seek'):
             zipfile.seek(0)
             raw = zipfile.read()
         else:
@@ -396,29 +398,31 @@ class SfdcMetadataApi:
         """
         result = self._retrieve_deploy_result(async_process_id, **kwargs)
 
-        state = result.find('mt:status', self._XML_NAMESPACES).text
-        state_detail = result.find('mt:stateDetail', self._XML_NAMESPACES)
-        if state_detail is not None:
-            state_detail = state_detail.text
+        state = result.findtext('mt:status', None, self._XML_NAMESPACES)
+        state_detail = result.findtext('mt:stateDetail', None, self._XML_NAMESPACES)
 
         unit_test_errors = []
         deployment_errors = []
         failed_count = self.get_component_error_count(
-            result.find('mt:numberComponentErrors', self._XML_NAMESPACES).text)
+            result.findtext('mt:numberComponentErrors', '', self._XML_NAMESPACES))
         if state == 'Failed' or failed_count > 0:
             # Deployment failures
             failures = result.findall('mt:details/mt:componentFailures',
                                       self._XML_NAMESPACES)
             for failure in failures:
                 deployment_errors.append({
-                    'type': failure.find('mt:componentType',
-                                         self._XML_NAMESPACES).text,
-                    'file': failure.find('mt:fileName',
-                                         self._XML_NAMESPACES).text,
-                    'status': failure.find('mt:problemType',
-                                           self._XML_NAMESPACES).text,
-                    'message': failure.find('mt:problem',
-                                            self._XML_NAMESPACES).text
+                    'type': failure.findtext('mt:componentType',
+                                             None,
+                                             self._XML_NAMESPACES),
+                    'file': failure.findtext('mt:fileName',
+                                             None,
+                                             self._XML_NAMESPACES),
+                    'status': failure.findtext('mt:problemType',
+                                               None,
+                                               self._XML_NAMESPACES),
+                    'message': failure.findtext('mt:problem',
+                                                None,
+                                                self._XML_NAMESPACES)
                     })
             # Unit test failures
             failures = result.findall(
@@ -426,31 +430,40 @@ class SfdcMetadataApi:
                 self._XML_NAMESPACES)
             for failure in failures:
                 unit_test_errors.append({
-                    'class': failure.find('mt:name', self._XML_NAMESPACES).text,
-                    'method': failure.find('mt:methodName',
-                                           self._XML_NAMESPACES).text,
-                    'message': failure.find('mt:message',
-                                            self._XML_NAMESPACES).text,
-                    'stack_trace': failure.find('mt:stackTrace',
-                                                self._XML_NAMESPACES).text
+                    'class': failure.findtext('mt:name', None, self._XML_NAMESPACES),
+                    'method': failure.findtext('mt:methodName',
+                                               None,
+                                               self._XML_NAMESPACES),
+                    'message': failure.findtext('mt:message',
+                                                None,
+                                                self._XML_NAMESPACES),
+                    'stack_trace': failure.findtext('mt:stackTrace',
+                                                    None,
+                                                    self._XML_NAMESPACES)
                     })
 
         deployment_detail = {
-            'total_count': result.find('mt:numberComponentsTotal',
-                                       self._XML_NAMESPACES).text,
-            'failed_count': result.find('mt:numberComponentErrors',
-                                        self._XML_NAMESPACES).text,
-            'deployed_count': result.find('mt:numberComponentsDeployed',
-                                          self._XML_NAMESPACES).text,
+            'total_count': result.findtext('mt:numberComponentsTotal',
+                                           None,
+                                           self._XML_NAMESPACES),
+            'failed_count': result.findtext('mt:numberComponentErrors',
+                                            None,
+                                            self._XML_NAMESPACES),
+            'deployed_count': result.findtext('mt:numberComponentsDeployed',
+                                              None,
+                                              self._XML_NAMESPACES),
             'errors': deployment_errors
             }
         unit_test_detail = {
-            'total_count': result.find('mt:numberTestsTotal',
-                                       self._XML_NAMESPACES).text,
-            'failed_count': result.find('mt:numberTestErrors',
-                                        self._XML_NAMESPACES).text,
-            'completed_count': result.find('mt:numberTestsCompleted',
-                                           self._XML_NAMESPACES).text,
+            'total_count': result.findtext('mt:numberTestsTotal',
+                                           None,
+                                           self._XML_NAMESPACES),
+            'failed_count': result.findtext('mt:numberTestErrors',
+                                            None,
+                                            self._XML_NAMESPACES),
+            'completed_count': result.findtext('mt:numberTestsCompleted',
+                                               None,
+                                               self._XML_NAMESPACES),
             'errors': unit_test_errors
             }
 
@@ -474,9 +487,9 @@ class SfdcMetadataApi:
 
         unpackaged = ''
         if kwargs.get('unpackaged'):
-            for metadata_type in kwargs.get('unpackaged'):
+            for metadata_type in kwargs.get('unpackaged', {}):
                 if isinstance(kwargs.get('unpackaged'), dict):
-                    members = kwargs.get('unpackaged')[metadata_type]
+                    members = kwargs.get('unpackaged', {})[metadata_type]
                     unpackaged += '<types>'
                     for member in members:
                         unpackaged += f'<members>{member}</members>'
@@ -505,14 +518,16 @@ class SfdcMetadataApi:
             data=request)
 
         # Parse response to get async Id and status
-        async_process_id = ET.fromstring(res.text).find(
+        async_process_id_ = ET.fromstring(res.text).findtext(
             'soapenv:Body/mt:retrieveResponse/mt:result/mt:id',
-            self._XML_NAMESPACES).text
-        state = ET.fromstring(res.text).find(
+            None,
+            self._XML_NAMESPACES)
+        state = ET.fromstring(res.text).findtext(
             'soapenv:Body/mt:retrieveResponse/mt:result/mt:state',
-            self._XML_NAMESPACES).text
+            None,
+            self._XML_NAMESPACES)
 
-        return async_process_id, state
+        return async_process_id_, state
 
     # pylint: disable=broad-exception-raised
     def retrieve_retrieve_result(self, async_process_id: str, include_zip: str, **kwargs: Any) -> Element:
@@ -549,10 +564,8 @@ class SfdcMetadataApi:
         """ Retrieves ZIP file """
         result = self.retrieve_retrieve_result(async_process_id, 'true',
                                                **kwargs)
-        state = result.find('mt:status', self._XML_NAMESPACES).text
-        error_message = result.find('mt:errorMessage', self._XML_NAMESPACES)
-        if error_message is not None:
-            error_message = error_message.text
+        state = result.findtext('mt:status', None, self._XML_NAMESPACES)
+        error_message = result.findtext('mt:errorMessage', None, self._XML_NAMESPACES)
 
         # Check if there are any messages
         messages = []
@@ -560,13 +573,13 @@ class SfdcMetadataApi:
                                       self._XML_NAMESPACES)
         for message in message_list:
             messages.append({
-                'file': message.find('mt:fileName', self._XML_NAMESPACES).text,
-                'message': message.find('mt:problem', self._XML_NAMESPACES).text
+                'file': message.findtext('mt:fileName', None, self._XML_NAMESPACES),
+                'message': message.findtext('mt:problem', None, self._XML_NAMESPACES)
                 })
 
         # Retrieve base64 encoded ZIP file
-        zipfile_base64 = result.find('mt:zipFile', self._XML_NAMESPACES).text
-        zipfile = b64decode(zipfile_base64)
+        zipfile_base64 = result.findtext('mt:zipFile', None, self._XML_NAMESPACES)
+        zipfile = b64decode(zipfile_base64)  # type: ignore[arg-type]
 
         return state, error_message, messages, zipfile
 
@@ -574,10 +587,8 @@ class SfdcMetadataApi:
         """ Checks whether retrieval succeeded """
         result = self.retrieve_retrieve_result(async_process_id, 'false',
                                                **kwargs)
-        state = result.find('mt:status', self._XML_NAMESPACES).text
-        error_message = result.find('mt:errorMessage', self._XML_NAMESPACES)
-        if error_message is not None:
-            error_message = error_message.text
+        state = result.findtext('mt:status', None, self._XML_NAMESPACES)
+        error_message = result.findtext('mt:errorMessage', None, self._XML_NAMESPACES)
 
         # Check if there are any messages
         messages = []
@@ -585,8 +596,8 @@ class SfdcMetadataApi:
                                       self._XML_NAMESPACES)
         for message in message_list:
             messages.append({
-                'file': message.find('mt:fileName', self._XML_NAMESPACES).text,
-                'message': message.find('mt:problem', self._XML_NAMESPACES).text
+                'file': message.findtext('mt:fileName', None, self._XML_NAMESPACES),
+                'message': message.findtext('mt:problem', None, self._XML_NAMESPACES)
                 })
 
         return state, error_message, messages
