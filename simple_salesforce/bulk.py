@@ -86,14 +86,10 @@ class SFBulkType:
         * external_id_field -- unique identifier field for upsert operations
         """
 
-        if use_serial:
-            use_serial = 1
-        else:
-            use_serial = 0
         payload = {
             'operation': operation,
             'object': self.object_name,
-            'concurrencyMode': use_serial,
+            'concurrencyMode': 1 if use_serial else 0,
             'contentType': 'JSON'
             }
 
@@ -270,7 +266,7 @@ class SFBulkType:
         # & the string `auto`
         if not (isinstance(batch_size, int) or batch_size == 'auto'):
             raise ValueError('batch size should be auto or an integer')
-
+        results: Iterable[Any]
         if operation not in ('query', 'queryAll'):
             # Checks if data is present
             if not data:
@@ -290,6 +286,7 @@ class SFBulkType:
                                                           data=data,
                                                           operation=operation)
                 else:
+                    batch_size = cast(int, batch_size)
                     batches = [
                         self._add_batch(job_id=job['id'], data=i,
                                         operation=operation)
