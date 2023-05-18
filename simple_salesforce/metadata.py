@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from base64 import b64encode, b64decode
 from pathlib import Path
-from typing import Any, IO, Mapping, MutableMapping
+from typing import Any, IO, Mapping, MutableMapping, Optional
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import Element
 
@@ -211,7 +211,7 @@ class SfdcMetadataApi:
             instance: str,
             metadata_url: str,
             headers: MutableMapping[str, Any],
-            api_version: str | None):
+            api_version: Optional[str]):
         """ Initialize and check session """
         self.session = session
         self._session_id = session_id
@@ -273,7 +273,7 @@ class SfdcMetadataApi:
             self,
             zipfile: str | IO[bytes],
             sandbox: bool,
-            **kwargs: Any) -> tuple[str | None, str | None]:
+            **kwargs: Any) -> tuple[Optional[str], Optional[str]]:
         """ Kicks off async deployment, returns deployment id
         :param zipfile:
         :type zipfile:
@@ -417,10 +417,10 @@ class SfdcMetadataApi:
             self,
             async_process_id: str,
             **kwargs: Any
-    ) -> tuple[str | None,
-                str | None,
-                Mapping[str, Any] | None,
-                Mapping[str, Any] | None]:
+    ) -> tuple[Optional[str],
+                Optional[str],
+                Optional[Mapping[str, Any]],
+                Optional[Mapping[str, Any]]]:
         """
         Checks whether deployment succeeded
         :param async_process_id:
@@ -510,7 +510,7 @@ class SfdcMetadataApi:
     def retrieve(
             self,
             async_process_id: str,
-            **kwargs: Any) -> tuple[str | None, str | None]:
+            **kwargs: Any) -> tuple[Optional[str], Optional[str]]:
         """ Submits retrieve request """
         # Compose unpackaged XML
         client = kwargs.get('client', 'simple_salesforce_metahelper')
@@ -602,7 +602,7 @@ class SfdcMetadataApi:
             self,
             async_process_id: str,
             **kwargs: Any
-    ) -> tuple[str | None, str | None, list[dict[str, Any]], bytes]:
+    ) -> tuple[Optional[str], Optional[str], list[dict[str, Any]], bytes]:
         """ Retrieves ZIP file """
         result = self.retrieve_retrieve_result(async_process_id, 'true',
                                                **kwargs)
@@ -634,7 +634,7 @@ class SfdcMetadataApi:
             self,
             async_process_id: str,
             **kwargs: Any
-    ) -> tuple[str | None, str | None, list[dict[str, str | None]]]:
+    ) -> tuple[Optional[str], Optional[str], list[dict[str, Optional[str]]]]:
         """ Checks whether retrieval succeeded """
         result = self.retrieve_retrieve_result(async_process_id, 'false',
                                                **kwargs)

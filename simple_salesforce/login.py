@@ -4,7 +4,7 @@ Heavily Modified from RestForce 1.0.0
 """
 from __future__ import annotations
 
-from typing import Any, MutableMapping
+from typing import Any, MutableMapping, Optional
 
 DEFAULT_CLIENT_ID_PREFIX = 'simple-salesforce'
 
@@ -24,19 +24,19 @@ from .util import getUniqueElementValueFromXmlString
 
 # pylint: disable=invalid-name,too-many-arguments,too-many-locals
 def SalesforceLogin(
-        username: str | None = None,
-        password: str | None = None,
-        security_token: str | None = None,
-        organizationId: str | None = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        security_token: Optional[str] = None,
+        organizationId: Optional[str] = None,
         sf_version: str = DEFAULT_API_VERSION,
-        proxies: MutableMapping[str, str] | None = None,
-        session: requests.Session | None = None,
-        client_id: str | None = None,
-        domain: str | None = None,
-        consumer_key: str | None = None,
-        consumer_secret: str | None = None,
-        privatekey_file: str | None = None,
-        privatekey: str | None = None,
+        proxies: Optional[MutableMapping[str, str]] = None,
+        session: Optional[requests.Session] = None,
+        client_id: Optional[str] = None,
+        domain: Optional[str] = None,
+        consumer_key: Optional[str] = None,
+        consumer_secret: Optional[str] = None,
+        privatekey_file: Optional[str] = None,
+        privatekey: Optional[str] = None,
         ) -> tuple[str, str]:
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
@@ -215,9 +215,9 @@ def SalesforceLogin(
 def soap_login(
         soap_url: str,
         request_body: str,
-        headers: dict[str, Any] | None,
+        headers: Optional[dict[str, Any]],
         proxies: Any,
-        session: requests.Session | None = None) -> tuple[str, str]:
+        session: Optional[requests.Session] = None) -> tuple[str, str]:
     """Process SOAP specific login workflow."""
     response = (session or requests).post(
         soap_url, request_body, headers=headers, proxies=proxies)
@@ -258,9 +258,9 @@ def token_login(
         token_data: dict[str, Any],
         domain: str,
         consumer_key: str,
-        headers: dict[str, Any] | None,
-        proxies: MutableMapping[str, str] | None,
-        session: requests.Session | None = None) -> tuple[Any, Any]:
+        headers: Optional[dict[str, Any]],
+        proxies: Optional[MutableMapping[str, str]],
+        session: Optional[requests.Session] = None) -> tuple[Any, Any]:
     """Process OAuth 2.0 JWT Bearer Token Flow."""
     response = (session or requests).post(
         token_url, token_data, headers=headers, proxies=proxies)

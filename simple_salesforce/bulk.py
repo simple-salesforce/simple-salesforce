@@ -6,7 +6,7 @@ from collections import OrderedDict
 from time import sleep
 import concurrent.futures
 from functools import partial
-from typing import Any, Iterable, MutableMapping, cast
+from typing import Any, Iterable, MutableMapping, Optional, cast
 
 import requests
 
@@ -26,8 +26,8 @@ class SFBulkHandler:
             self,
             session_id: str,
             bulk_url: str,
-            proxies: MutableMapping[str, Any] | None = None,
-            session: requests.Session | None = None):
+            proxies: Optional[MutableMapping[str, Any]] = None,
+            session: Optional[requests.Session] = None):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -86,7 +86,7 @@ class SFBulkType:
         self.headers = headers
 
     def _create_job(self, operation: str, use_serial: bool,
-                    external_id_field: str | None = None) -> Any:
+                    external_id_field: Optional[str] = None) -> Any:
         """ Create a bulk job
 
         Arguments:
@@ -275,7 +275,7 @@ class SFBulkType:
             operation: str,
             data: list[dict[str, str]],
             use_serial: bool = False,
-            external_id_field: str | None = None,
+            external_id_field: Optional[str] = None,
             batch_size: int | str = 10000,
             wait: int = 5,
             bypass_results: bool = False) -> Iterable[Any]:
