@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import datetime
 import xml.dom.minidom
-from typing import Any, Iterable, NoReturn
+from typing import Any, Iterable, MutableMapping, NoReturn
 
 import requests
 import responses
@@ -68,7 +68,12 @@ def exception_handler(result: responses.models.Response, name: str = "") -> NoRe
     raise exc_cls(result.url, result.status_code, name, response_content)
 
 
-def call_salesforce(url: str, method: str, session: requests.Session, headers: dict[str, Any], **kwargs: Any) -> requests.Response:
+def call_salesforce(
+        url: str,
+        method: str,
+        session: requests.Session,
+        headers: MutableMapping[str, Any],
+        **kwargs: Any) -> requests.Response:
     """Utility method for performing HTTP call to Salesforce.
 
     Returns a `requests.result` object.

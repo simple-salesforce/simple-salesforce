@@ -199,8 +199,14 @@ class SfdcMetadataApi:
         }
 
     # pylint: disable=R0913
-    def __init__(self, session: requests.Session, session_id: str, instance: str, metadata_url: str, headers: dict[str, Any],
-                 api_version: str | None):
+    def __init__(
+            self,
+            session: requests.Session,
+            session_id: str,
+            instance: str,
+            metadata_url: str,
+            headers: MutableMapping[str, Any],
+            api_version: str | None):
         """ Initialize and check session """
         self.session = session
         self._session_id = session_id

@@ -57,7 +57,12 @@ class SFBulkHandler:
 class SFBulkType:
     """ Interface to Bulk/Async API functions"""
 
-    def __init__(self, object_name: str, bulk_url: str, headers: dict[str, str], session: requests.Session):
+    def __init__(
+            self,
+            object_name: str,
+            bulk_url: str,
+            headers: MutableMapping[str, str],
+            session: requests.Session):
         """Initialize the instance with the given parameters.
 
         Arguments:
