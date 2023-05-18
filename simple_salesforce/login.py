@@ -219,9 +219,9 @@ def soap_login(soap_url: str, request_body: str, headers: dict[str, Any] | None,
 
     if response.status_code != 200:
         except_code = getUniqueElementValueFromXmlString(
-            response.content, 'sf:exceptionCode')
+            response.content, 'sf:exceptionCode') or 'UNKNOWN_EXCEPTION_CODE'
         except_msg = getUniqueElementValueFromXmlString(
-            response.content, 'sf:exceptionMessage')
+            response.content, 'sf:exceptionMessage') or 'UNKNOWN_EXCEPTION_MESSAGE'
         raise SalesforceAuthenticationFailed(except_code, except_msg)
 
     session_id = getUniqueElementValueFromXmlString(
@@ -230,9 +230,9 @@ def soap_login(soap_url: str, request_body: str, headers: dict[str, Any] | None,
         response.content, 'serverUrl')
     if session_id is None or server_url is None:
         except_code = getUniqueElementValueFromXmlString(
-            response.content, 'sf:exceptionCode')
+            response.content, 'sf:exceptionCode') or 'UNKNOWN_EXCEPTION_CODE'
         except_msg = getUniqueElementValueFromXmlString(
-            response.content, 'sf:exceptionMessage')
+            response.content, 'sf:exceptionMessage') or 'UNKNOWN_EXCEPTION_MESSAGE'
         raise SalesforceAuthenticationFailed(except_code, except_msg)
 
     sf_instance = (server_url
