@@ -2,6 +2,9 @@
 
 Heavily Modified from RestForce 1.0.0
 """
+from __future__ import annotations
+
+from typing import Any, MutableMapping
 
 DEFAULT_CLIENT_ID_PREFIX = 'simple-salesforce'
 
@@ -21,20 +24,20 @@ from .util import getUniqueElementValueFromXmlString
 
 # pylint: disable=invalid-name,too-many-arguments,too-many-locals
 def SalesforceLogin(
-        username=None,
-        password=None,
-        security_token=None,
-        organizationId=None,
-        sf_version=DEFAULT_API_VERSION,
-        proxies=None,
-        session=None,
-        client_id=None,
-        domain=None,
-        consumer_key=None,
-        consumer_secret=None,
-        privatekey_file=None,
-        privatekey=None,
-        ):
+        username: str | None = None,
+        password: str | None = None,
+        security_token: str | None = None,
+        organizationId: str | None = None,
+        sf_version: str = DEFAULT_API_VERSION,
+        proxies: MutableMapping[str, str] | None = None,
+        session: requests.Session | None = None,
+        client_id: str | None = None,
+        domain: str | None = None,
+        consumer_key: str | None = None,
+        consumer_secret: str | None = None,
+        privatekey_file: str | None = None,
+        privatekey: str | None = None,
+        ) -> tuple[str | None, str]:
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
     the domain of the instance of Salesforce to use for the session.
@@ -209,7 +212,7 @@ def SalesforceLogin(
                       login_soap_request_headers, proxies, session)
 
 
-def soap_login(soap_url, request_body, headers, proxies, session=None):
+def soap_login(soap_url: str, request_body: str, headers: dict[str, Any] | None, proxies: Any, session: requests.Session | None = None) -> tuple[str | None, str]:
     """Process SOAP specific login workflow."""
     response = (session or requests).post(
         soap_url, request_body, headers=headers, proxies=proxies)
@@ -235,8 +238,8 @@ def soap_login(soap_url, request_body, headers, proxies, session=None):
     return session_id, sf_instance
 
 
-def token_login(token_url, token_data, domain, consumer_key,
-                headers, proxies, session=None):
+def token_login(token_url: str, token_data: dict[str, Any], domain: str, consumer_key: str,
+                headers: dict[str, Any] | None, proxies: MutableMapping[str, str] | None, session: requests.Session | None = None) -> tuple[Any, Any]:
     """Process OAuth 2.0 JWT Bearer Token Flow."""
     response = (session or requests).post(
         token_url, token_data, headers=headers, proxies=proxies)
