@@ -1,6 +1,12 @@
 """Utility functions for simple-salesforce"""
+from __future__ import annotations
 
+import datetime
 import xml.dom.minidom
+from typing import Any, Iterable, NoReturn
+
+import requests
+import responses
 
 from .exceptions import (SalesforceExpiredSession, SalesforceGeneralError,
                          SalesforceMalformedRequest,
@@ -9,7 +15,7 @@ from .exceptions import (SalesforceExpiredSession, SalesforceGeneralError,
 
 
 # pylint: disable=invalid-name
-def getUniqueElementValueFromXmlString(xmlString, elementName):
+def getUniqueElementValueFromXmlString(xmlString: bytes, elementName: str) -> str | None:
     """
     Extracts an element value from an XML string.
 
@@ -31,7 +37,7 @@ def getUniqueElementValueFromXmlString(xmlString, elementName):
     return elementValue
 
 
-def date_to_iso8601(date):
+def date_to_iso8601(date: datetime.date) -> str:
     """Returns an ISO8601 string from a date"""
     datetimestr = date.strftime('%Y-%m-%dT%H:%M:%S')
     timezonestr = date.strftime('%z')
@@ -42,7 +48,7 @@ def date_to_iso8601(date):
     )
 
 
-def exception_handler(result, name=""):
+def exception_handler(result: responses.models.Response, name: str = "") -> NoReturn:
     """Exception router. Determines which error to raise for bad results"""
     try:
         response_content = result.json()
@@ -62,7 +68,7 @@ def exception_handler(result, name=""):
     raise exc_cls(result.url, result.status_code, name, response_content)
 
 
-def call_salesforce(url, method, session, headers, **kwargs):
+def call_salesforce(url: str, method: str, session: requests.Session, headers: dict[str, Any], **kwargs: Any) -> requests.Response:
     """Utility method for performing HTTP call to Salesforce.
 
     Returns a `requests.result` object.
@@ -77,7 +83,7 @@ def call_salesforce(url, method, session, headers, **kwargs):
 
     return result
 
-def list_from_generator(generator_function):
+def list_from_generator(generator_function: Iterable[Any]) -> list[Any]:
     """Utility method for constructing a list from a generator function"""
     ret_val = []
     for list_results in generator_function:
