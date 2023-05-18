@@ -315,7 +315,7 @@ class Salesforce:
         # fix to enable serialization
         # (https://github.com/heroku/simple-salesforce/issues/60)
         if name.startswith('__'):
-            return super().__getattr__(name)  # type: ignore[misc]
+            return super().__getattr__(name)  # type: ignore[misc,no-any-return]
 
         if name == 'bulk':
             # Deal with bulk API functions

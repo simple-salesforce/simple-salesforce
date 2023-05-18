@@ -262,8 +262,10 @@ class SfdcMetadataApi:
         :returns: List of zeep.objects.FileProperties objects
         :rtype: list
         """
-        return self._service.listMetadata(queries, self._api_version,
-                                          _soapheaders=[self._session_header])
+        return self._service.listMetadata(  # type: ignore[no-any-return]
+            queries,
+            self._api_version,
+            _soapheaders=[self._session_header])
 
     # pylint: disable=R0914
     # pylint: disable-msg=C0103
