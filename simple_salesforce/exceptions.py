@@ -1,12 +1,13 @@
 """All exceptions for Simple Salesforce"""
+from __future__ import annotations
 
 
 class SalesforceError(Exception):
     """Base Salesforce API exception"""
 
-    message = 'Unknown error occurred for {url}. Response content: {content}'
+    message: str = 'Unknown error occurred for {url}. Response content: {content}'
 
-    def __init__(self, url, status, resource_name, content):
+    def __init__(self, url: str, status: int, resource_name: str, content: bytes):
         """Initialize the SalesforceError exception
 
         SalesforceError is the base class of exceptions in simple-salesforce
@@ -25,10 +26,10 @@ class SalesforceError(Exception):
         self.resource_name = resource_name
         self.content = content
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message.format(url=self.url, content=self.content)
 
-    def __unicode__(self):
+    def __unicode__(self) -> str:
         return self.__str__()
 
 
@@ -81,7 +82,7 @@ class SalesforceResourceNotFound(SalesforceError):
 
     message = 'Resource {name} Not Found. Response content: {content}'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message.format(name=self.resource_name,
                                    content=self.content)
 
@@ -91,14 +92,14 @@ class SalesforceAuthenticationFailed(SalesforceError):
     Thrown to indicate that authentication with Salesforce failed.
     """
 
-    def __init__(self, code, message):
+    def __init__(self, code: str | int | None, message: str):
         # TODO exceptions don't seem to be using parent constructors at all.
         # this should be fixed.
         # pylint: disable=super-init-not-called
         self.code = code
         self.message = message
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.code}: {self.message}'
 
 
@@ -109,5 +110,5 @@ class SalesforceGeneralError(SalesforceError):
 
     message = 'Error Code {status}. Response content: {content}'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message.format(status=self.status, content=self.content)
