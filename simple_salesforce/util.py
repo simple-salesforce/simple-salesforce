@@ -15,7 +15,9 @@ from .exceptions import (SalesforceExpiredSession, SalesforceGeneralError,
 
 
 # pylint: disable=invalid-name
-def getUniqueElementValueFromXmlString(xmlString: str | bytes, elementName: str) -> str | None:
+def getUniqueElementValueFromXmlString(
+        xmlString: str | bytes,
+        elementName: str) -> str | None:
     """
     Extracts an element value from an XML string.
 
@@ -48,7 +50,9 @@ def date_to_iso8601(date: datetime.date) -> str:
     )
 
 
-def exception_handler(result: responses.models.Response, name: str = "") -> NoReturn:
+def exception_handler(
+        result: responses.models.Response,
+        name: str = "") -> NoReturn:
     """Exception router. Determines which error to raise for bad results"""
     try:
         response_content = result.json()

@@ -212,16 +212,23 @@ def SalesforceLogin(
                       login_soap_request_headers, proxies, session)
 
 
-def soap_login(soap_url: str, request_body: str, headers: dict[str, Any] | None, proxies: Any, session: requests.Session | None = None) -> tuple[str, str]:
+def soap_login(
+        soap_url: str,
+        request_body: str,
+        headers: dict[str, Any] | None,
+        proxies: Any,
+        session: requests.Session | None = None) -> tuple[str, str]:
     """Process SOAP specific login workflow."""
     response = (session or requests).post(
         soap_url, request_body, headers=headers, proxies=proxies)
 
     if response.status_code != 200:
         except_code = getUniqueElementValueFromXmlString(
-            response.content, 'sf:exceptionCode') or 'UNKNOWN_EXCEPTION_CODE'
+            response.content, 'sf:exceptionCode'
+        ) or 'UNKNOWN_EXCEPTION_CODE'
         except_msg = getUniqueElementValueFromXmlString(
-            response.content, 'sf:exceptionMessage') or 'UNKNOWN_EXCEPTION_MESSAGE'
+            response.content, 'sf:exceptionMessage'
+        ) or 'UNKNOWN_EXCEPTION_MESSAGE'
         raise SalesforceAuthenticationFailed(except_code, except_msg)
 
     session_id = getUniqueElementValueFromXmlString(
@@ -230,9 +237,11 @@ def soap_login(soap_url: str, request_body: str, headers: dict[str, Any] | None,
         response.content, 'serverUrl')
     if session_id is None or server_url is None:
         except_code = getUniqueElementValueFromXmlString(
-            response.content, 'sf:exceptionCode') or 'UNKNOWN_EXCEPTION_CODE'
+            response.content, 'sf:exceptionCode'
+        ) or 'UNKNOWN_EXCEPTION_CODE'
         except_msg = getUniqueElementValueFromXmlString(
-            response.content, 'sf:exceptionMessage') or 'UNKNOWN_EXCEPTION_MESSAGE'
+            response.content, 'sf:exceptionMessage'
+        ) or 'UNKNOWN_EXCEPTION_MESSAGE'
         raise SalesforceAuthenticationFailed(except_code, except_msg)
 
     sf_instance = (server_url
@@ -244,8 +253,14 @@ def soap_login(soap_url: str, request_body: str, headers: dict[str, Any] | None,
     return session_id, sf_instance
 
 
-def token_login(token_url: str, token_data: dict[str, Any], domain: str, consumer_key: str,
-                headers: dict[str, Any] | None, proxies: MutableMapping[str, str] | None, session: requests.Session | None = None) -> tuple[Any, Any]:
+def token_login(
+        token_url: str,
+        token_data: dict[str, Any],
+        domain: str,
+        consumer_key: str,
+        headers: dict[str, Any] | None,
+        proxies: MutableMapping[str, str] | None,
+        session: requests.Session | None = None) -> tuple[Any, Any]:
     """Process OAuth 2.0 JWT Bearer Token Flow."""
     response = (session or requests).post(
         token_url, token_data, headers=headers, proxies=proxies)

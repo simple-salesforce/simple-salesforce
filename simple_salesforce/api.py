@@ -59,7 +59,8 @@ class Salesforce:
             privatekey_file: str | None = None,
             privatekey: str | None = None,
             parse_float: Callable[[str], Any] | None = None,
-            object_pairs_hook: Callable[[list[tuple[Any, Any]]], Any] | None = OrderedDict,
+            object_pairs_hook: Callable[[list[tuple[Any, Any]]], Any] | None
+                = OrderedDict,
             ):
 
         """Initialize the instance with the given parameters.
@@ -158,7 +159,9 @@ class Salesforce:
             # If the user provides the full url (as returned by the OAuth
             # interface for example) extract the hostname (which we rely on)
             if instance_url is not None:
-                self.sf_instance: str = urlparse(instance_url).hostname  # type: ignore[assignment]
+                self.sf_instance: str = urlparse(
+                    instance_url
+                ).hostname  # type: ignore[assignment]
                 port = urlparse(instance_url).port
                 if port not in (None, 443):
                     self.sf_instance += f':{port}'
@@ -352,7 +355,12 @@ class Salesforce:
         return self.parse_result_to_json(result)
 
     # Generic Rest Function
-    def restful(self, path: str, params: dict[str, Any] | None = None, method: str = 'GET', **kwargs: Any) -> Any | None:
+    def restful(
+            self,
+            path: str,
+            params: dict[str, Any] | None = None,
+            method: str = 'GET',
+            **kwargs: Any) -> Any | None:
         """Allows you to make a direct REST call if you know the path
 
         Arguments:
@@ -374,7 +382,11 @@ class Salesforce:
         return json_result
 
     # OAuth Endpoints Function
-    def oauth2(self, path: str, params: dict[str, Any] | None = None, method: str = 'GET') -> Any | None:
+    def oauth2(
+            self,
+            path: str,
+            params: dict[str, Any] | None = None,
+            method: str = 'GET') -> Any | None:
         """Allows you to make a request to OAuth endpoints if you know the path
 
         Arguments:
@@ -439,7 +451,11 @@ class Salesforce:
         return self.parse_result_to_json(result)
 
     # Query Handler
-    def query(self, query: str, include_deleted: bool = False, **kwargs: Any) -> Any:
+    def query(
+            self,
+            query: str,
+            include_deleted: bool = False,
+            **kwargs: Any) -> Any:
         """Return the result of a Salesforce SOQL query as a dict decoded from
         the Salesforce response JSON payload.
         Arguments:
@@ -483,7 +499,11 @@ class Salesforce:
 
         return self.parse_result_to_json(result)
 
-    def query_all_iter(self, query: str, include_deleted: bool = False, **kwargs: Any) -> Iterator[Any]:
+    def query_all_iter(
+            self,
+            query: str,
+            include_deleted: bool = False,
+            **kwargs: Any) -> Iterator[Any]:
         """This is a lazy alternative to `query_all` - it does not construct
         the whole result set into one container, but returns objects from each
         page it retrieves from the API.
@@ -510,7 +530,11 @@ class Salesforce:
             else:
                 return
 
-    def query_all(self, query: str, include_deleted: bool = False, **kwargs: Any) -> dict[str, Any]:
+    def query_all(
+            self,
+            query: str,
+            include_deleted: bool = False,
+            **kwargs: Any) -> dict[str, Any]:
         """Returns the full set of results for the `query`. This is a
         convenience
         wrapper around `query(...)` and `query_more(...)`.
@@ -533,7 +557,12 @@ class Salesforce:
             'done': True,
             }
 
-    def toolingexecute(self, action: str, method: str = 'GET', data: dict[str, Any] | None = None, **kwargs: Any) -> Any:
+    def toolingexecute(
+            self,
+            action: str,
+            method: str = 'GET',
+            data: dict[str, Any] | None = None,
+            **kwargs: Any) -> Any:
         """Makes an HTTP request to an TOOLING REST endpoint
         Arguments:
         * action -- The REST endpoint for the request.
@@ -558,7 +587,12 @@ class Salesforce:
 
         return response_content
 
-    def apexecute(self, action: str, method: str = 'GET', data: dict[str, Any] | None = None, **kwargs: Any) -> Any:
+    def apexecute(
+            self,
+            action: str,
+            method: str = 'GET',
+            data: dict[str, Any] | None = None,
+            **kwargs: Any) -> Any:
         """Makes an HTTP request to an APEX REST endpoint
         Arguments:
         * action -- The REST endpoint for the request.
@@ -583,7 +617,12 @@ class Salesforce:
 
         return response_content
 
-    def _call_salesforce(self, method: str, url: str, name: str = "", **kwargs: Any) -> requests.Response:
+    def _call_salesforce(
+            self,
+            method: str,
+            url: str,
+            name: str = "",
+            **kwargs: Any) -> requests.Response:
         """Utility method for performing HTTP call to Salesforce.
         Returns a `requests.result` object.
         """
@@ -611,7 +650,8 @@ class Salesforce:
         return result
 
     @staticmethod
-    def parse_api_usage(sforce_limit_info: str) -> MutableMapping[str, Usage | PerAppUsage]:
+    def parse_api_usage(
+            sforce_limit_info: str) -> MutableMapping[str, Usage | PerAppUsage]:
         """parse API usage and limits out of the Sforce-Limit-Info header
         Arguments:
         * sforce_limit_info: The value of response header 'Sforce-Limit-Info'
@@ -639,7 +679,11 @@ class Salesforce:
         return result
 
     # file-based deployment function
-    def deploy(self, zipfile: str | IO[bytes], sandbox: bool, **kwargs: Any) -> dict[str, str | None]:
+    def deploy(
+            self,
+            zipfile: str | IO[bytes],
+            sandbox: bool,
+            **kwargs: Any) -> dict[str, str | None]:
         """Deploy using the Salesforce Metadata API. Wrapper for
         SfdcMetaDataApi.deploy(...).
         Arguments:
@@ -656,7 +700,10 @@ class Salesforce:
         return result
 
     # check on a file-based deployment
-    def checkDeployStatus(self, asyncId: str, **kwargs: Any) -> dict[str, str | Mapping[str, str] | None]:
+    def checkDeployStatus(
+            self,
+            asyncId: str,
+            **kwargs: Any) -> dict[str, str | Mapping[str, str] | None]:
         """Check on the progress of a file-based deployment via Salesforce
         Metadata API.
         Wrapper for SfdcMetaDataApi.check_deploy_status(...).
@@ -696,7 +743,8 @@ class SFType:
             session: requests.Session | None = None,
             salesforce: Salesforce | None = None,
             parse_float: Callable[[str], Any] | None = None,
-            object_pairs_hook: Callable[[list[tuple[Any, Any]]], Any] = OrderedDict,
+            object_pairs_hook: Callable[[list[tuple[Any, Any]]], Any]
+                = OrderedDict,
             ):
         """Initialize the instance with the given parameters.
         Arguments:
@@ -769,7 +817,10 @@ class SFType:
             )
         return self.parse_result_to_json(result)
 
-    def describe_layout(self, record_id: str, headers: dict[str, Any] | None = None) -> Any:
+    def describe_layout(
+            self,
+            record_id: str,
+            headers: dict[str, Any] | None = None) -> Any:
         """Returns the layout of the object
         Returns the result of a GET to
         `.../{object_name}/describe/layouts/<recordid>` as a dict decoded from
@@ -799,7 +850,11 @@ class SFType:
             )
         return self.parse_result_to_json(result)
 
-    def get_by_custom_id(self, custom_id_field: str, custom_id: str, headers: dict[str, Any] | None = None) -> Any:
+    def get_by_custom_id(
+            self,
+            custom_id_field: str,
+            custom_id: str,
+            headers: dict[str, Any] | None = None) -> Any:
         """Return an ``SFType`` by custom ID
         Returns the result of a GET to
         `.../{object_name}/{custom_id_field}/{custom_id}` as a dict decoded
@@ -816,7 +871,10 @@ class SFType:
             )
         return self.parse_result_to_json(result)
 
-    def create(self, data: dict[str, Any], headers: dict[str, Any] | None = None) -> Any:
+    def create(
+            self,
+            data: dict[str, Any],
+            headers: dict[str, Any] | None = None) -> Any:
         """Creates a new SObject using a POST to `.../{object_name}/`.
         Returns a dict decoded from the JSON payload returned by Salesforce.
         Arguments:
@@ -830,7 +888,12 @@ class SFType:
             )
         return self.parse_result_to_json(result)
 
-    def upsert(self, record_id: str, data: dict[str, Any], raw_response: bool = False, headers: dict[str, Any] | None = None) -> Any:
+    def upsert(
+            self,
+            record_id: str,
+            data: dict[str, Any],
+            raw_response: bool = False,
+            headers: dict[str, Any] | None = None) -> Any:
         """Creates or updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
         If `raw_response` is false (the default), returns the status code
@@ -851,7 +914,12 @@ class SFType:
             )
         return self._raw_response(result, raw_response)
 
-    def update(self, record_id: str, data: dict[str, Any], raw_response: bool = False, headers: dict[str, Any] | None = None) -> Any:
+    def update(
+            self,
+            record_id: str,
+            data: dict[str, Any],
+            raw_response: bool = False,
+            headers: dict[str, Any] | None = None) -> Any:
         """Updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
         If `raw_response` is false (the default), returns the status code
@@ -871,7 +939,11 @@ class SFType:
             )
         return self._raw_response(result, raw_response)
 
-    def delete(self, record_id: str, raw_response: bool = False, headers: dict[str, Any] | None = None) -> int | requests.Response:
+    def delete(
+            self,
+            record_id: str,
+            raw_response: bool = False,
+            headers: dict[str, Any] | None = None) -> int | requests.Response:
         """Deletes an SObject using a DELETE to
         `.../{object_name}/{record_id}`.
         If `raw_response` is false (the default), returns the status code
@@ -889,7 +961,11 @@ class SFType:
             )
         return self._raw_response(result, raw_response)
 
-    def deleted(self, start: datetime, end: datetime, headers: Mapping[str, Any] | None = None) -> Any:
+    def deleted(
+            self,
+            start: datetime,
+            end: datetime,
+            headers: Mapping[str, Any] | None = None) -> Any:
         # pylint: disable=line-too-long
         """Gets a list of deleted records
         Use the SObject Get Deleted resource to get a list of deleted records
@@ -907,7 +983,11 @@ class SFType:
         result = self._call_salesforce(method='GET', url=url, headers=headers)
         return self.parse_result_to_json(result)
 
-    def updated(self, start: datetime, end: datetime, headers: Mapping[str, Any] | None = None) -> Any:
+    def updated(
+            self,
+            start: datetime,
+            end: datetime,
+            headers: Mapping[str, Any] | None = None) -> Any:
         # pylint: disable=line-too-long
         """Gets a list of updated records
         Use the SObject Get Updated resource to get a list of updated
@@ -925,7 +1005,11 @@ class SFType:
         result = self._call_salesforce(method='GET', url=url, headers=headers)
         return self.parse_result_to_json(result)
 
-    def _call_salesforce(self, method: str, url: str, **kwargs: Any) -> requests.Response:
+    def _call_salesforce(
+            self,
+            method: str,
+            url: str,
+            **kwargs: Any) -> requests.Response:
         """Utility method for performing HTTP call to Salesforce.
 
         Returns a `requests.result` object.
@@ -956,7 +1040,10 @@ class SFType:
 
         return result
 
-    def _raw_response(self, response: requests.Response, body_flag: bool) -> int | requests.Response:
+    def _raw_response(
+            self,
+            response: requests.Response,
+            body_flag: bool) -> int | requests.Response:
         """Utility method for processing the response and returning either the
         status code or the response object.
 
@@ -972,7 +1059,11 @@ class SFType:
         return result.json(object_pairs_hook=self._object_pairs_hook,
                            parse_float=self._parse_float)
 
-    def upload_base64(self, file_path: str, base64_field: str = 'Body', headers: Mapping[str, Any] | None = None,
+    def upload_base64(
+            self,
+            file_path: str,
+            base64_field: str = 'Body',
+            headers: Mapping[str, Any] | None = None,
                       **kwargs: Any) -> requests.Response:
         """Upload base64 encoded file to Salesforce"""
         data = {}
@@ -983,9 +1074,14 @@ class SFType:
 
         return result
 
-    def update_base64(self, record_id: str, file_path: str, base64_field: str = 'Body',
-                      headers: Mapping[str, Any] | None = None, raw_response: bool = False,
-                      **kwargs: Any) -> int | requests.Response:
+    def update_base64(
+            self,
+            record_id: str,
+            file_path: str,
+            base64_field: str = 'Body',
+            headers: Mapping[str, Any] | None = None,
+            raw_response: bool = False,
+            **kwargs: Any) -> int | requests.Response:
         """Updated base64 image from file to Salesforce"""
         data = {}
         body = base64.b64encode(Path(file_path).read_bytes()).decode()
@@ -997,8 +1093,13 @@ class SFType:
 
         return self._raw_response(result, raw_response)
 
-    def get_base64(self, record_id: str, base64_field: str = 'Body', data: Any | None = None,
-                   headers: Mapping[str, Any] | None = None, **kwargs: Any) -> bytes:
+    def get_base64(
+            self,
+            record_id: str,
+            base64_field: str = 'Body',
+            data: Any | None = None,
+            headers: Mapping[str, Any] | None = None,
+            **kwargs: Any) -> bytes:
         """Returns binary stream of base64 object at specific path.
 
         Arguments:

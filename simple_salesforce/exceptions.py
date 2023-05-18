@@ -5,9 +5,15 @@ from __future__ import annotations
 class SalesforceError(Exception):
     """Base Salesforce API exception"""
 
-    message: str = 'Unknown error occurred for {url}. Response content: {content}'
+    message: str = \
+        'Unknown error occurred for {url}. Response content: {content}'
 
-    def __init__(self, url: str, status: int, resource_name: str, content: bytes):
+    def __init__(
+            self,
+            url: str,
+            status: int,
+            resource_name: str,
+            content: bytes):
         """Initialize the SalesforceError exception
 
         SalesforceError is the base class of exceptions in simple-salesforce

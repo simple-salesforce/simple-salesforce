@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from base64 import b64encode, b64decode
 from pathlib import Path
-from typing import Any, IO, Mapping
+from typing import Any, IO, Mapping, MutableMapping
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import Element
 
@@ -21,7 +21,12 @@ class MetadataType:
     """
     Salesforce Metadata Type
     """
-    def __init__(self, name: str, service: ServiceProxy, zeep_type: ComplexType | AnySimpleType, session_header: CompoundValue):
+    def __init__(
+            self,
+            name: str,
+            service: ServiceProxy,
+            zeep_type: ComplexType | AnySimpleType,
+            session_header: CompoundValue):
         """
         Initialize metadata type
 
@@ -216,19 +221,26 @@ class SfdcMetadataApi:
         self._api_version = api_version
         self._deploy_zip = None
         wsdl_path = Path(__file__).parent / 'metadata.wsdl'
-        self._client = Client(wsdl_path.absolute().as_uri(),
-                              settings=Settings(strict=False,
-                                                xsd_ignore_sequence_order=True))  # type: ignore[no-untyped-call]
+        self._client = Client(
+            wsdl_path.absolute().as_uri(),
+            settings=Settings(
+                strict=False,
+                xsd_ignore_sequence_order=True
+            ))  # type: ignore[no-untyped-call]
         self._service = self._client.create_service(
             "{http://soap.sforce.com/2006/04/metadata}MetadataBinding",
             self.metadata_url)  # type: ignore[no-untyped-call]
-        self._session_header = self._client.get_element('ns0:SessionHeader')(  # type: ignore[no-untyped-call]
-            sessionId=self._session_id)
+        self._session_header = self._client.get_element(
+            'ns0:SessionHeader'  # type: ignore[no-untyped-call]
+        )(sessionId=self._session_id)
 
     def __getattr__(self, item: str) -> MetadataType:
-        return MetadataType(item, self._service,
-                            self._client.get_type('ns0:' + item),  # type: ignore[no-untyped-call]
-                            self._session_header)
+        return MetadataType(
+            item,
+            self._service,
+            self._client.get_type(
+                'ns0:' + item),  # type: ignore[no-untyped-call]
+            self._session_header)
 
     def describe_metadata(self) -> Any:
         """
@@ -255,7 +267,11 @@ class SfdcMetadataApi:
 
     # pylint: disable=R0914
     # pylint: disable-msg=C0103
-    def deploy(self, zipfile: str | IO[bytes], sandbox: bool, **kwargs: Any) -> tuple[str | None, str | None]:
+    def deploy(
+            self,
+            zipfile: str | IO[bytes],
+            sandbox: bool,
+            **kwargs: Any) -> tuple[str | None, str | None]:
         """ Kicks off async deployment, returns deployment id
         :param zipfile:
         :type zipfile:
@@ -345,7 +361,10 @@ class SfdcMetadataApi:
         return b64encode(raw).decode()
 
     # pylint: disable=broad-exception-raised
-    def _retrieve_deploy_result(self, async_process_id: str, **kwargs: Any) -> Element:
+    def _retrieve_deploy_result(
+            self,
+            async_process_id: str,
+            **kwargs: Any) -> Element:
         """ Retrieves status for specified deployment id
         :param async_process_id:
         :type async_process_id:
@@ -392,7 +411,14 @@ class SfdcMetadataApi:
         except ValueError:
             return 0
 
-    def check_deploy_status(self, async_process_id: str, **kwargs: Any) -> tuple[str | None, str | None, Mapping[str, Any] | None, Mapping[str, Any] | None]:
+    def check_deploy_status(
+            self,
+            async_process_id: str,
+            **kwargs: Any
+    ) -> tuple[str | None,
+                str | None,
+                Mapping[str, Any] | None,
+                Mapping[str, Any] | None]:
         """
         Checks whether deployment succeeded
         :param async_process_id:
@@ -404,31 +430,30 @@ class SfdcMetadataApi:
         """
         result = self._retrieve_deploy_result(async_process_id, **kwargs)
 
-        state = result.findtext('mt:status', None, self._XML_NAMESPACES) or None
-        state_detail = result.findtext('mt:stateDetail', None, self._XML_NAMESPACES) or None
+        state = result.findtext(
+            'mt:status', None, self._XML_NAMESPACES) or None
+        state_detail = result.findtext(
+            'mt:stateDetail', None, self._XML_NAMESPACES) or None
 
         unit_test_errors = []
         deployment_errors = []
         failed_count = self.get_component_error_count(
-            result.findtext('mt:numberComponentErrors', '', self._XML_NAMESPACES))
+            result.findtext(
+                'mt:numberComponentErrors', '', self._XML_NAMESPACES))
         if state == 'Failed' or failed_count > 0:
             # Deployment failures
             failures = result.findall('mt:details/mt:componentFailures',
                                       self._XML_NAMESPACES)
             for failure in failures:
                 deployment_errors.append({
-                    'type': failure.findtext('mt:componentType',
-                                             None,
-                                             self._XML_NAMESPACES) or None,
-                    'file': failure.findtext('mt:fileName',
-                                             None,
-                                             self._XML_NAMESPACES) or None,
-                    'status': failure.findtext('mt:problemType',
-                                               None,
-                                               self._XML_NAMESPACES) or None,
-                    'message': failure.findtext('mt:problem',
-                                                None,
-                                                self._XML_NAMESPACES) or None
+                    'type': failure.findtext(
+                        'mt:componentType', None, self._XML_NAMESPACES) or None,
+                    'file': failure.findtext(
+                        'mt:fileName', None, self._XML_NAMESPACES) or None,
+                    'status': failure.findtext(
+                        'mt:problemType', None, self._XML_NAMESPACES) or None,
+                    'message': failure.findtext(
+                        'mt:problem', None, self._XML_NAMESPACES) or None
                     })
             # Unit test failures
             failures = result.findall(
@@ -436,16 +461,14 @@ class SfdcMetadataApi:
                 self._XML_NAMESPACES)
             for failure in failures:
                 unit_test_errors.append({
-                    'class': failure.findtext('mt:name', None, self._XML_NAMESPACES) or None,
-                    'method': failure.findtext('mt:methodName',
-                                               None,
-                                               self._XML_NAMESPACES) or None,
-                    'message': failure.findtext('mt:message',
-                                                None,
-                                                self._XML_NAMESPACES) or None,
-                    'stack_trace': failure.findtext('mt:stackTrace',
-                                                    None,
-                                                    self._XML_NAMESPACES) or None
+                    'class': failure.findtext(
+                        'mt:name', None, self._XML_NAMESPACES) or None,
+                    'method': failure.findtext(
+                        'mt:methodName', None, self._XML_NAMESPACES) or None,
+                    'message': failure.findtext(
+                        'mt:message', None, self._XML_NAMESPACES) or None,
+                    'stack_trace': failure.findtext(
+                        'mt:stackTrace', None, self._XML_NAMESPACES) or None
                     })
 
         deployment_detail = {
@@ -482,7 +505,10 @@ class SfdcMetadataApi:
         print("response:", ET.tostring(result, encoding="us-ascii",
                                        method="xml"))
 
-    def retrieve(self, async_process_id: str, **kwargs: Any) -> tuple[str | None, str | None]:
+    def retrieve(
+            self,
+            async_process_id: str,
+            **kwargs: Any) -> tuple[str | None, str | None]:
         """ Submits retrieve request """
         # Compose unpackaged XML
         client = kwargs.get('client', 'simple_salesforce_metahelper')
@@ -536,7 +562,11 @@ class SfdcMetadataApi:
         return async_process_id_, state
 
     # pylint: disable=broad-exception-raised
-    def retrieve_retrieve_result(self, async_process_id: str, include_zip: str, **kwargs: Any) -> Element:
+    def retrieve_retrieve_result(
+            self,
+            async_process_id: str,
+            include_zip: str,
+            **kwargs: Any) -> Element:
         """ Retrieves status for specified retrieval id """
         client = kwargs.get('client', 'simple_salesforce_metahelper')
         attributes = {
@@ -566,12 +596,17 @@ class SfdcMetadataApi:
 
         return result
 
-    def retrieve_zip(self, async_process_id: str, **kwargs: Any) -> tuple[str | None, str | None, list[dict[str, Any]], bytes]:
+    def retrieve_zip(
+            self,
+            async_process_id: str,
+            **kwargs: Any
+    ) -> tuple[str | None, str | None, list[dict[str, Any]], bytes]:
         """ Retrieves ZIP file """
         result = self.retrieve_retrieve_result(async_process_id, 'true',
                                                **kwargs)
         state = result.findtext('mt:status', None, self._XML_NAMESPACES) or None
-        error_message = result.findtext('mt:errorMessage', None, self._XML_NAMESPACES)
+        error_message = result.findtext(
+            'mt:errorMessage', None, self._XML_NAMESPACES)
 
         # Check if there are any messages
         messages = []
@@ -579,22 +614,31 @@ class SfdcMetadataApi:
                                       self._XML_NAMESPACES)
         for message in message_list:
             messages.append({
-                'file': message.findtext('mt:fileName', None, self._XML_NAMESPACES) or None,
-                'message': message.findtext('mt:problem', None, self._XML_NAMESPACES) or None
+                'file': message.findtext(
+                    'mt:fileName', None, self._XML_NAMESPACES) or None,
+                'message': message.findtext(
+                    'mt:problem', None, self._XML_NAMESPACES) or None
                 })
 
         # Retrieve base64 encoded ZIP file
-        zipfile_base64 = result.findtext('mt:zipFile', None, self._XML_NAMESPACES) or None
+        zipfile_base64 = result.findtext(
+            'mt:zipFile', None, self._XML_NAMESPACES
+        ) or None
         zipfile = b64decode(zipfile_base64)  # type: ignore[arg-type]
 
         return state, error_message, messages, zipfile
 
-    def check_retrieve_status(self, async_process_id: str, **kwargs: Any) -> tuple[str | None, str | None, list[dict[str, str | None]]]:
+    def check_retrieve_status(
+            self,
+            async_process_id: str,
+            **kwargs: Any
+    ) -> tuple[str | None, str | None, list[dict[str, str | None]]]:
         """ Checks whether retrieval succeeded """
         result = self.retrieve_retrieve_result(async_process_id, 'false',
                                                **kwargs)
         state = result.findtext('mt:status', None, self._XML_NAMESPACES) or None
-        error_message = result.findtext('mt:errorMessage', None, self._XML_NAMESPACES)
+        error_message = result.findtext(
+            'mt:errorMessage', None, self._XML_NAMESPACES)
 
         # Check if there are any messages
         messages = []
@@ -602,8 +646,10 @@ class SfdcMetadataApi:
                                       self._XML_NAMESPACES)
         for message in message_list:
             messages.append({
-                'file': message.findtext('mt:fileName', None, self._XML_NAMESPACES) or None,
-                'message': message.findtext('mt:problem', None, self._XML_NAMESPACES) or None
+                'file': message.findtext(
+                    'mt:fileName', None, self._XML_NAMESPACES) or None,
+                'message': message.findtext(
+                    'mt:problem', None, self._XML_NAMESPACES) or None
                 })
 
         return state, error_message, messages
