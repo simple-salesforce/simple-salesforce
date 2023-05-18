@@ -37,7 +37,7 @@ def SalesforceLogin(
         consumer_secret: str | None = None,
         privatekey_file: str | None = None,
         privatekey: str | None = None,
-        ) -> tuple[str | None, str]:
+        ) -> tuple[str, str]:
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
     the domain of the instance of Salesforce to use for the session.
@@ -179,7 +179,7 @@ def SalesforceLogin(
             'exp': f'{expiration.timestamp():.0f}'
             }
         if privatekey_file is not None:
-            key = Path(privatekey_file).read_bytes()
+            key: bytes | str | None = Path(privatekey_file).read_bytes()
         else:
             key = privatekey
         assertion = jwt.encode(payload, key, algorithm='RS256')
@@ -212,7 +212,7 @@ def SalesforceLogin(
                       login_soap_request_headers, proxies, session)
 
 
-def soap_login(soap_url: str, request_body: str, headers: dict[str, Any] | None, proxies: Any, session: requests.Session | None = None) -> tuple[str | None, str]:
+def soap_login(soap_url: str, request_body: str, headers: dict[str, Any] | None, proxies: Any, session: requests.Session | None = None) -> tuple[str, str]:
     """Process SOAP specific login workflow."""
     response = (session or requests).post(
         soap_url, request_body, headers=headers, proxies=proxies)
@@ -228,6 +228,12 @@ def soap_login(soap_url: str, request_body: str, headers: dict[str, Any] | None,
         response.content, 'sessionId')
     server_url = getUniqueElementValueFromXmlString(
         response.content, 'serverUrl')
+    if session_id is None or server_url is None:
+        except_code = getUniqueElementValueFromXmlString(
+            response.content, 'sf:exceptionCode')
+        except_msg = getUniqueElementValueFromXmlString(
+            response.content, 'sf:exceptionMessage')
+        raise SalesforceAuthenticationFailed(except_code, except_msg)
 
     sf_instance = (server_url
                    .replace('http://', '')
