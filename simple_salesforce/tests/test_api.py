@@ -518,6 +518,18 @@ class TestSalesforce(unittest.TestCase):
         self.assertEqual(session, client.session)
 
     @responses.activate
+    def test_custom_login(self):
+        """ Test custom login """
+        def login():
+            return tests.SESSION_ID, 'instance.example.com'
+
+        client = Salesforce(
+            custom_login=login
+        )
+        self.assertEqual(tests.SESSION_ID, client.session_id)
+        self.assertEqual('instance.example.com', client.sf_instance)
+
+    @responses.activate
     def test_custom_version_success(self):
         """Test custom version"""
         responses.add(
