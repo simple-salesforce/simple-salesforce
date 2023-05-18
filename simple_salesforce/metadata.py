@@ -1,7 +1,16 @@
 """ Class to work with Salesforce Metadata API """
+from __future__ import annotations
+
 from base64 import b64encode, b64decode
 from pathlib import Path
+from typing import Any, IO, Mapping
 from xml.etree import ElementTree as ET
+from xml.etree.ElementTree import Element
+
+import requests
+from zeep.proxy import ServiceProxy
+from zeep.xsd import AnySimpleType, ComplexType, CompoundValue
+
 from .util import call_salesforce
 from .messages import DEPLOY_MSG, CHECK_DEPLOY_STATUS_MSG, \
     CHECK_RETRIEVE_STATUS_MSG, RETRIEVE_MSG
@@ -12,7 +21,7 @@ class MetadataType:
     """
     Salesforce Metadata Type
     """
-    def __init__(self, name, service, zeep_type, session_header):
+    def __init__(self, name: str, service: ServiceProxy, zeep_type: ComplexType | AnySimpleType, session_header: CompoundValue):
         """
         Initialize metadata type
 
@@ -31,7 +40,7 @@ class MetadataType:
 
     @staticmethod
     # pylint: disable=broad-exception-raised
-    def _handle_api_response(response):
+    def _handle_api_response(response: list[Any]) -> None:
         """
         Parses SaveResult and DeleteResult objects to identify if there was
         an error, and raises exception accordingly
@@ -51,7 +60,7 @@ class MetadataType:
         if err_string:
             raise Exception(err_string)
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """
         Creates a new object of this metadata type
 
@@ -61,7 +70,7 @@ class MetadataType:
         """
         return self._zeep_type(*args, **kwargs)
 
-    def create(self, metadata):
+    def create(self, metadata: list[Any]) -> None:
         """
         Performs a createMetadata call
 
@@ -78,7 +87,7 @@ class MetadataType:
             self._session_header])
         self._handle_api_response(response)
 
-    def read(self, full_names):
+    def read(self, full_names: list[str]) -> list[Any] | Any:
         """
         Performs a readMetadata call
 
@@ -100,7 +109,7 @@ class MetadataType:
             return response[0]
         return response
 
-    def update(self, metadata):
+    def update(self, metadata: list[Any]) -> None:
         """
         Performs an updateMetadata call. All required fields must be passed
         for each component
@@ -118,7 +127,7 @@ class MetadataType:
             self._session_header])
         self._handle_api_response(response)
 
-    def upsert(self, metadata):
+    def upsert(self, metadata: list[Any]) -> None:
         """
         Performs an upsertMetadata call. All required fields must be passed
         for each component
@@ -136,7 +145,7 @@ class MetadataType:
             self._session_header])
         self._handle_api_response(response)
 
-    def delete(self, full_names):
+    def delete(self, full_names: list[dict[str, Any]]) -> None:
         """
         Performs a deleteMetadata call
 
@@ -154,7 +163,7 @@ class MetadataType:
                                                     self._session_header])
         self._handle_api_response(response)
 
-    def rename(self, old_full_name, new_full_name):
+    def rename(self, old_full_name: str, new_full_name: str) -> None:
         """
         Performs a renameMetadata call
 
@@ -169,7 +178,7 @@ class MetadataType:
                                                   self._session_header])
         self._handle_api_response([result])
 
-    def describe(self):
+    def describe(self) -> Any:
         """
         Performs a describeValueType call
 
@@ -190,8 +199,8 @@ class SfdcMetadataApi:
         }
 
     # pylint: disable=R0913
-    def __init__(self, session, session_id, instance, metadata_url, headers,
-                 api_version):
+    def __init__(self, session: requests.Session, session_id: str, instance: str, metadata_url: str, headers: dict[str, Any],
+                 api_version: str | None):
         """ Initialize and check session """
         self.session = session
         self._session_id = session_id
@@ -203,19 +212,19 @@ class SfdcMetadataApi:
         wsdl_path = Path(__file__).parent / 'metadata.wsdl'
         self._client = Client(wsdl_path.absolute().as_uri(),
                               settings=Settings(strict=False,
-                                                xsd_ignore_sequence_order=True))
+                                                xsd_ignore_sequence_order=True))  # type: ignore[no-untyped-call]
         self._service = self._client.create_service(
             "{http://soap.sforce.com/2006/04/metadata}MetadataBinding",
-            self.metadata_url)
-        self._session_header = self._client.get_element('ns0:SessionHeader')(
+            self.metadata_url)  # type: ignore[no-untyped-call]
+        self._session_header = self._client.get_element('ns0:SessionHeader')(  # type: ignore[no-untyped-call]
             sessionId=self._session_id)
 
-    def __getattr__(self, item):
+    def __getattr__(self, item: str) -> MetadataType:
         return MetadataType(item, self._service,
-                            self._client.get_type('ns0:' + item),
+                            self._client.get_type('ns0:' + item),  # type: ignore[no-untyped-call]
                             self._session_header)
 
-    def describe_metadata(self):
+    def describe_metadata(self) -> Any:
         """
         Performs a describeMetadata call
 
@@ -224,7 +233,7 @@ class SfdcMetadataApi:
         return self._service.describeMetadata(self._api_version, _soapheaders=[
             self._session_header])
 
-    def list_metadata(self, queries):
+    def list_metadata(self, queries: list[Any]) -> list[Any]:
         """
         Performs a listMetadata call
 
@@ -240,7 +249,7 @@ class SfdcMetadataApi:
 
     # pylint: disable=R0914
     # pylint: disable-msg=C0103
-    def deploy(self, zipfile, sandbox, **kwargs):
+    def deploy(self, zipfile: str, sandbox: bool, **kwargs: Any) -> tuple[str | None, str | None]:
         """ Kicks off async deployment, returns deployment id
         :param zipfile:
         :type zipfile:
@@ -313,7 +322,7 @@ class SfdcMetadataApi:
 
     @staticmethod
     # pylint: disable=R1732
-    def _read_deploy_zip(zipfile):
+    def _read_deploy_zip(zipfile: str | IO[bytes]) -> str:
         """
         :param zipfile:
         :type zipfile:
@@ -328,7 +337,7 @@ class SfdcMetadataApi:
         return b64encode(raw).decode()
 
     # pylint: disable=broad-exception-raised
-    def _retrieve_deploy_result(self, async_process_id, **kwargs):
+    def _retrieve_deploy_result(self, async_process_id: str, **kwargs: Any) -> Element:
         """ Retrieves status for specified deployment id
         :param async_process_id:
         :type async_process_id:
@@ -368,14 +377,14 @@ class SfdcMetadataApi:
         return result
 
     @staticmethod
-    def get_component_error_count(value):
+    def get_component_error_count(value: str) -> int:
         """Get component error counts"""
         try:
             return int(value)
         except ValueError:
             return 0
 
-    def check_deploy_status(self, async_process_id, **kwargs):
+    def check_deploy_status(self, async_process_id: str, **kwargs: Any) -> tuple[str | None, str | None, Mapping[str, Any] | None, Mapping[str, Any] | None]:
         """
         Checks whether deployment succeeded
         :param async_process_id:
@@ -447,14 +456,14 @@ class SfdcMetadataApi:
 
         return state, state_detail, deployment_detail, unit_test_detail
 
-    def download_unit_test_logs(self, async_process_id):
+    def download_unit_test_logs(self, async_process_id: str) -> None:
         """ Downloads Apex logs for unit tests executed during specified
         deployment """
         result = self._retrieve_deploy_result(async_process_id)
         print("response:", ET.tostring(result, encoding="us-ascii",
                                        method="xml"))
 
-    def retrieve(self, async_process_id, **kwargs):
+    def retrieve(self, async_process_id: str, **kwargs: Any) -> tuple[str | None, str | None]:
         """ Submits retrieve request """
         # Compose unpackaged XML
         client = kwargs.get('client', 'simple_salesforce_metahelper')
@@ -506,7 +515,7 @@ class SfdcMetadataApi:
         return async_process_id, state
 
     # pylint: disable=broad-exception-raised
-    def retrieve_retrieve_result(self, async_process_id, include_zip, **kwargs):
+    def retrieve_retrieve_result(self, async_process_id: str, include_zip: str, **kwargs: Any) -> Element:
         """ Retrieves status for specified retrieval id """
         client = kwargs.get('client', 'simple_salesforce_metahelper')
         attributes = {
@@ -536,7 +545,7 @@ class SfdcMetadataApi:
 
         return result
 
-    def retrieve_zip(self, async_process_id, **kwargs):
+    def retrieve_zip(self, async_process_id: str, **kwargs: Any) -> tuple[str | None, str | None, list[dict[str, Any]], bytes]:
         """ Retrieves ZIP file """
         result = self.retrieve_retrieve_result(async_process_id, 'true',
                                                **kwargs)
@@ -561,7 +570,7 @@ class SfdcMetadataApi:
 
         return state, error_message, messages, zipfile
 
-    def check_retrieve_status(self, async_process_id, **kwargs):
+    def check_retrieve_status(self, async_process_id: str, **kwargs: Any) -> tuple[str | None, str | None, list[dict[str, str | None]]]:
         """ Checks whether retrieval succeeded """
         result = self.retrieve_retrieve_result(async_process_id, 'false',
                                                **kwargs)
