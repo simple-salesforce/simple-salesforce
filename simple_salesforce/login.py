@@ -4,7 +4,7 @@ Heavily Modified from RestForce 1.0.0
 """
 from __future__ import annotations
 
-from typing import Any, MutableMapping, Optional
+from typing import Any, MutableMapping, Optional, cast
 
 DEFAULT_CLIENT_ID_PREFIX = 'simple-salesforce'
 
@@ -179,9 +179,9 @@ def SalesforceLogin(
             'exp': f'{expiration.timestamp():.0f}'
             }
         if privatekey_file is not None:
-            key: bytes | str | None = Path(privatekey_file).read_bytes()
+            key: bytes | str = Path(privatekey_file).read_bytes()
         else:
-            key = privatekey
+            key = cast(str, privatekey)
         assertion = jwt.encode(payload, key, algorithm='RS256')
 
         token_data = {
