@@ -1,2 +1,5 @@
 pylint
 coverage
+mypy
+types-requests
+types-pytz
