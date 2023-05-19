@@ -2,7 +2,9 @@
 
 from base64 import b64encode, b64decode
 from pathlib import Path
-from typing import Any, IO, Mapping, MutableMapping, Optional, Union
+from typing import Any, Dict, IO, List, Mapping, MutableMapping, Optional, \
+    Tuple, \
+    Union
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import Element
 
@@ -44,7 +46,7 @@ class MetadataType:
 
     @staticmethod
     # pylint: disable=broad-exception-raised
-    def _handle_api_response(response: list[Any]) -> None:
+    def _handle_api_response(response: List[Any]) -> None:
         """
         Parses SaveResult and DeleteResult objects to identify if there was
         an error, and raises exception accordingly
@@ -74,7 +76,7 @@ class MetadataType:
         """
         return self._zeep_type(*args, **kwargs)
 
-    def create(self, metadata: list[Any]) -> None:
+    def create(self, metadata: List[Any]) -> None:
         """
         Performs a createMetadata call
 
@@ -91,7 +93,7 @@ class MetadataType:
             self._session_header])
         self._handle_api_response(response)
 
-    def read(self, full_names: list[str]) -> Union[list[Any], Any]:
+    def read(self, full_names: List[str]) -> Union[List[Any], Any]:
         """
         Performs a readMetadata call
 
@@ -113,7 +115,7 @@ class MetadataType:
             return response[0]
         return response
 
-    def update(self, metadata: list[Any]) -> None:
+    def update(self, metadata: List[Any]) -> None:
         """
         Performs an updateMetadata call. All required fields must be passed
         for each component
@@ -131,7 +133,7 @@ class MetadataType:
             self._session_header])
         self._handle_api_response(response)
 
-    def upsert(self, metadata: list[Any]) -> None:
+    def upsert(self, metadata: List[Any]) -> None:
         """
         Performs an upsertMetadata call. All required fields must be passed
         for each component
@@ -149,7 +151,7 @@ class MetadataType:
             self._session_header])
         self._handle_api_response(response)
 
-    def delete(self, full_names: list[dict[str, Any]]) -> None:
+    def delete(self, full_names: List[Dict[str, Any]]) -> None:
         """
         Performs a deleteMetadata call
 
@@ -250,7 +252,7 @@ class SfdcMetadataApi:
         return self._service.describeMetadata(self._api_version, _soapheaders=[
             self._session_header])
 
-    def list_metadata(self, queries: list[Any]) -> list[Any]:
+    def list_metadata(self, queries: List[Any]) -> List[Any]:
         """
         Performs a listMetadata call
 
@@ -272,7 +274,7 @@ class SfdcMetadataApi:
             self,
             zipfile: Union[str, IO[bytes]],
             sandbox: bool,
-            **kwargs: Any) -> tuple[Optional[str], Optional[str]]:
+            **kwargs: Any) -> Tuple[Optional[str], Optional[str]]:
         """ Kicks off async deployment, returns deployment id
         :param zipfile:
         :type zipfile:
@@ -416,7 +418,7 @@ class SfdcMetadataApi:
             self,
             async_process_id: str,
             **kwargs: Any
-    ) -> tuple[Optional[str],
+    ) -> Tuple[Optional[str],
                 Optional[str],
                 Optional[Mapping[str, Any]],
                 Optional[Mapping[str, Any]]]:
@@ -509,7 +511,7 @@ class SfdcMetadataApi:
     def retrieve(
             self,
             async_process_id: str,
-            **kwargs: Any) -> tuple[Optional[str], Optional[str]]:
+            **kwargs: Any) -> Tuple[Optional[str], Optional[str]]:
         """ Submits retrieve request """
         # Compose unpackaged XML
         client = kwargs.get('client', 'simple_salesforce_metahelper')
@@ -601,7 +603,7 @@ class SfdcMetadataApi:
             self,
             async_process_id: str,
             **kwargs: Any
-    ) -> tuple[Optional[str], Optional[str], list[dict[str, Any]], bytes]:
+    ) -> Tuple[Optional[str], Optional[str], List[Dict[str, Any]], bytes]:
         """ Retrieves ZIP file """
         result = self.retrieve_retrieve_result(async_process_id, 'true',
                                                **kwargs)
@@ -633,7 +635,7 @@ class SfdcMetadataApi:
             self,
             async_process_id: str,
             **kwargs: Any
-    ) -> tuple[Optional[str], Optional[str], list[dict[str, Optional[str]]]]:
+    ) -> Tuple[Optional[str], Optional[str], List[Dict[str, Optional[str]]]]:
         """ Checks whether retrieval succeeded """
         result = self.retrieve_retrieve_result(async_process_id, 'false',
                                                **kwargs)

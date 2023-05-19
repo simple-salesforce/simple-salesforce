@@ -2,7 +2,7 @@
 
 Heavily Modified from RestForce 1.0.0
 """
-from typing import Any, MutableMapping, Optional, Union, cast
+from typing import Any, Dict, MutableMapping, Optional, Tuple, Union, cast
 
 DEFAULT_CLIENT_ID_PREFIX = 'simple-salesforce'
 
@@ -35,7 +35,7 @@ def SalesforceLogin(
         consumer_secret: Optional[str] = None,
         privatekey_file: Optional[str] = None,
         privatekey: Optional[str] = None,
-        ) -> tuple[str, str]:
+        ) -> Tuple[str, str]:
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
     the domain of the instance of Salesforce to use for the session.
@@ -213,9 +213,9 @@ def SalesforceLogin(
 def soap_login(
         soap_url: str,
         request_body: str,
-        headers: Optional[dict[str, Any]],
+        headers: Optional[Dict[str, Any]],
         proxies: Any,
-        session: Optional[requests.Session] = None) -> tuple[str, str]:
+        session: Optional[requests.Session] = None) -> Tuple[str, str]:
     """Process SOAP specific login workflow."""
     response = (session or requests).post(
         soap_url, request_body, headers=headers, proxies=proxies)
@@ -253,12 +253,12 @@ def soap_login(
 
 def token_login(
         token_url: str,
-        token_data: dict[str, Any],
+        token_data: Dict[str, Any],
         domain: str,
         consumer_key: str,
-        headers: Optional[dict[str, Any]],
+        headers: Optional[Dict[str, Any]],
         proxies: Optional[MutableMapping[str, str]],
-        session: Optional[requests.Session] = None) -> tuple[Any, Any]:
+        session: Optional[requests.Session] = None) -> Tuple[Any, Any]:
     """Process OAuth 2.0 JWT Bearer Token Flow."""
     response = (session or requests).post(
         token_url, token_data, headers=headers, proxies=proxies)

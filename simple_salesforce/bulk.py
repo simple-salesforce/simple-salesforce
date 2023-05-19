@@ -5,7 +5,8 @@ from collections import OrderedDict
 from time import sleep
 import concurrent.futures
 from functools import partial
-from typing import Any, Iterable, MutableMapping, Optional, Union, cast
+from typing import Any, Dict, Iterable, List, MutableMapping, Optional, Union, \
+    cast
 
 import requests
 
@@ -183,7 +184,7 @@ class SFBulkType:
 
     def worker(
             self,
-            batch: dict[str, Any],
+            batch: Dict[str, Any],
             operation: str,
             wait: int = 5,
             bypass_results: bool = False) -> Iterable[Any]:
@@ -214,8 +215,8 @@ class SFBulkType:
 
     def _add_autosized_batches(
             self,
-            data: list[dict[str, str]],
-            operation: str, job: str) -> list[Any]:
+            data: List[Dict[str, str]],
+            operation: str, job: str) -> List[Any]:
         """
         Auto-create batches that respect bulk api V1 limits.
 
@@ -272,7 +273,7 @@ class SFBulkType:
     def _bulk_operation(
             self,
             operation: str,
-            data: list[dict[str, str]],
+            data: List[Dict[str, str]],
             use_serial: bool = False,
             external_id_field: Optional[str] = None,
             batch_size: Union[int, str] = 10000,
@@ -367,7 +368,7 @@ class SFBulkType:
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
     def delete(
             self,
-            data: list[dict[str, str]],
+            data: List[Dict[str, str]],
             batch_size: int = 10000,
             use_serial: bool = False,
             bypass_results: bool = False) -> Iterable[Any]:
@@ -385,7 +386,7 @@ class SFBulkType:
 
     def insert(
             self,
-            data: list[dict[str, str]],
+            data: List[Dict[str, str]],
             batch_size: int = 10000,
             use_serial: bool = False,
             bypass_results: bool = False) -> Iterable[Any]:
@@ -403,7 +404,7 @@ class SFBulkType:
 
     def upsert(
             self,
-            data: list[dict[str, str]],
+            data: List[Dict[str, str]],
             external_id_field: str,
             batch_size: int = 10000,
             use_serial: bool = False,
@@ -423,7 +424,7 @@ class SFBulkType:
 
     def update(
             self,
-            data: list[dict[str, str]],
+            data: List[Dict[str, str]],
             batch_size: int = 10000,
             use_serial: bool = False,
             bypass_results: bool = False) -> Iterable[Any]:
@@ -441,7 +442,7 @@ class SFBulkType:
 
     def hard_delete(
             self,
-            data: list[dict[str, str]],
+            data: List[Dict[str, str]],
             batch_size: int = 10000,
             use_serial: bool = False,
             bypass_results: bool = False) -> Iterable[Any]:
@@ -459,7 +460,7 @@ class SFBulkType:
 
     def query(
             self,
-            data: list[dict[str, str]],
+            data: List[Dict[str, str]],
             lazy_operation: bool = False,
             wait: int = 5) -> Iterable[Any]:
         """ bulk query """
@@ -472,7 +473,7 @@ class SFBulkType:
 
     def query_all(
             self,
-            data: list[dict[str, str]],
+            data: List[Dict[str, str]],
             lazy_operation: bool = False,
             wait: int = 5) -> Iterable[Any]:
         """ bulk queryAll """

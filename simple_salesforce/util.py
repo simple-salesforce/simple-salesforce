@@ -2,7 +2,8 @@
 
 import datetime
 import xml.dom.minidom
-from typing import Any, Iterable, MutableMapping, NoReturn, Optional, Union
+from typing import Any, Iterable, List, MutableMapping, NoReturn, Optional, \
+    Union
 
 import requests
 
@@ -90,7 +91,7 @@ def call_salesforce(
 
     return result
 
-def list_from_generator(generator_function: Iterable[Any]) -> list[Any]:
+def list_from_generator(generator_function: Iterable[Any]) -> List[Any]:
     """Utility method for constructing a list from a generator function"""
     ret_val = []
     for list_results in generator_function:

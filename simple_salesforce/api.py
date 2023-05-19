@@ -7,8 +7,9 @@ import base64
 import json
 import logging
 import re
-from typing import Any, Callable, IO, Iterator, Mapping, MutableMapping, \
-    Optional, Union, cast
+from typing import Any, Callable, Dict, IO, Iterator, List, Mapping, \
+    MutableMapping, \
+    Optional, Tuple, Union, cast
 from collections import OrderedDict, namedtuple
 from functools import partial
 from pathlib import Path
@@ -58,7 +59,7 @@ class Salesforce:
             privatekey_file: Optional[str] = None,
             privatekey: Optional[str] = None,
             parse_float: Optional[Callable[[str], Any]] = None,
-            object_pairs_hook: Optional[Callable[[list[tuple[Any, Any]]], Any]]
+            object_pairs_hook: Optional[Callable[[List[Tuple[Any, Any]]], Any]]
                 = OrderedDict,
             ):
 
@@ -357,7 +358,7 @@ class Salesforce:
     def restful(
             self,
             path: str,
-            params: Optional[dict[str, Any]] = None,
+            params: Optional[Dict[str, Any]] = None,
             method: str = 'GET',
             **kwargs: Any) -> Optional[Any]:
         """Allows you to make a direct REST call if you know the path
@@ -384,7 +385,7 @@ class Salesforce:
     def oauth2(
             self,
             path: str,
-            params: Optional[dict[str, Any]] = None,
+            params: Optional[Dict[str, Any]] = None,
             method: str = 'GET') -> Optional[Any]:
         """Allows you to make a request to OAuth endpoints if you know the path
 
@@ -533,7 +534,7 @@ class Salesforce:
             self,
             query: str,
             include_deleted: bool = False,
-            **kwargs: Any) -> dict[str, Any]:
+            **kwargs: Any) -> Dict[str, Any]:
         """Returns the full set of results for the `query`. This is a
         convenience
         wrapper around `query(...)` and `query_more(...)`.
@@ -560,7 +561,7 @@ class Salesforce:
             self,
             action: str,
             method: str = 'GET',
-            data: Optional[dict[str, Any]] = None,
+            data: Optional[Dict[str, Any]] = None,
             **kwargs: Any) -> Any:
         """Makes an HTTP request to an TOOLING REST endpoint
         Arguments:
@@ -590,7 +591,7 @@ class Salesforce:
             self,
             action: str,
             method: str = 'GET',
-            data: Optional[dict[str, Any]] = None,
+            data: Optional[Dict[str, Any]] = None,
             **kwargs: Any) -> Any:
         """Makes an HTTP request to an APEX REST endpoint
         Arguments:
@@ -683,7 +684,7 @@ class Salesforce:
             self,
             zipfile: Union[str, IO[bytes]],
             sandbox: bool,
-            **kwargs: Any) -> dict[str, Optional[str]]:
+            **kwargs: Any) -> Dict[str, Optional[str]]:
         """Deploy using the Salesforce Metadata API. Wrapper for
         SfdcMetaDataApi.deploy(...).
         Arguments:
@@ -704,7 +705,7 @@ class Salesforce:
             self,
             asyncId: str,
             **kwargs: Any
-    ) -> dict[str, Optional[Union[str, Mapping[str, str]]]]:
+    ) -> Dict[str, Optional[Union[str, Mapping[str, str]]]]:
         """Check on the progress of a file-based deployment via Salesforce
         Metadata API.
         Wrapper for SfdcMetaDataApi.check_deploy_status(...).
@@ -744,7 +745,7 @@ class SFType:
             session: Optional[requests.Session] = None,
             salesforce: Optional[Salesforce] = None,
             parse_float: Optional[Callable[[str], Any]] = None,
-            object_pairs_hook: Callable[[list[tuple[Any, Any]]], Any]
+            object_pairs_hook: Callable[[List[Tuple[Any, Any]]], Any]
                 = OrderedDict,
             ):
         """Initialize the instance with the given parameters.
@@ -797,7 +798,7 @@ class SFType:
             return self.salesforce.session_id
         return self._session_id
 
-    def metadata(self, headers: Optional[dict[str, Any]] = None) -> Any:
+    def metadata(self, headers: Optional[Dict[str, Any]] = None) -> Any:
         """Returns the result of a GET to `.../{object_name}/` as a dict
         decoded from the JSON payload returned by Salesforce.
         Arguments:
@@ -806,7 +807,7 @@ class SFType:
         result = self._call_salesforce('GET', self.base_url, headers=headers)
         return self.parse_result_to_json(result)
 
-    def describe(self, headers: Optional[dict[str, Any]] = None) -> Any:
+    def describe(self, headers: Optional[Dict[str, Any]] = None) -> Any:
         """Returns the result of a GET to `.../{object_name}/describe` as a
         dict decoded from the JSON payload returned by Salesforce.
         Arguments:
@@ -821,7 +822,7 @@ class SFType:
     def describe_layout(
             self,
             record_id: str,
-            headers: Optional[dict[str, Any]] = None) -> Any:
+            headers: Optional[Dict[str, Any]] = None) -> Any:
         """Returns the layout of the object
         Returns the result of a GET to
         `.../{object_name}/describe/layouts/<recordid>` as a dict decoded from
@@ -841,7 +842,7 @@ class SFType:
     def get(
             self,
             record_id: str,
-            headers: Optional[dict[str, Any]] = None) -> Any:
+            headers: Optional[Dict[str, Any]] = None) -> Any:
         """Returns the result of a GET to `.../{object_name}/{record_id}` as a
         dict decoded from the JSON payload returned by Salesforce.
         Arguments:
@@ -858,7 +859,7 @@ class SFType:
             self,
             custom_id_field: str,
             custom_id: str,
-            headers: Optional[dict[str, Any]] = None) -> Any:
+            headers: Optional[Dict[str, Any]] = None) -> Any:
         """Return an ``SFType`` by custom ID
         Returns the result of a GET to
         `.../{object_name}/{custom_id_field}/{custom_id}` as a dict decoded
@@ -877,8 +878,8 @@ class SFType:
 
     def create(
             self,
-            data: dict[str, Any],
-            headers: Optional[dict[str, Any]] = None) -> Any:
+            data: Dict[str, Any],
+            headers: Optional[Dict[str, Any]] = None) -> Any:
         """Creates a new SObject using a POST to `.../{object_name}/`.
         Returns a dict decoded from the JSON payload returned by Salesforce.
         Arguments:
@@ -895,9 +896,9 @@ class SFType:
     def upsert(
             self,
             record_id: str,
-            data: dict[str, Any],
+            data: Dict[str, Any],
             raw_response: bool = False,
-            headers: Optional[dict[str, Any]] = None) -> Any:
+            headers: Optional[Dict[str, Any]] = None) -> Any:
         """Creates or updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
         If `raw_response` is false (the default), returns the status code
@@ -921,9 +922,9 @@ class SFType:
     def update(
             self,
             record_id: str,
-            data: dict[str, Any],
+            data: Dict[str, Any],
             raw_response: bool = False,
-            headers: Optional[dict[str, Any]] = None) -> Any:
+            headers: Optional[Dict[str, Any]] = None) -> Any:
         """Updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
         If `raw_response` is false (the default), returns the status code
@@ -947,7 +948,7 @@ class SFType:
             self,
             record_id: str,
             raw_response: bool = False,
-            headers: Optional[dict[str, Any]] = None
+            headers: Optional[Dict[str, Any]] = None
     ) -> Union[int, requests.Response]:
         """Deletes an SObject using a DELETE to
         `.../{object_name}/{record_id}`.
