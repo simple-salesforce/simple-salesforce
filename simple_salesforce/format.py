@@ -1,10 +1,8 @@
 """ Formatting helpers that perform quoting and escaping """
-from __future__ import annotations
-
 import urllib.parse
 from datetime import date, datetime, timezone
 from string import Formatter
-from typing import Any
+from typing import Any, Union
 
 # https://developer.salesforce.com/docs/atlas.en-us.soql_sosl.meta/soql_sosl/sforce_api_calls_soql_select_quotedstringescapes.htm
 soql_escapes = str.maketrans({
@@ -75,6 +73,6 @@ def quote_soql_value(value: Any) -> str:
     raise ValueError('unquotable value type')
 
 
-def format_external_id(field: str, value: str | bytes) -> str:
+def format_external_id(field: str, value: Union[str, bytes]) -> str:
     """ Create an external ID string for use with get() or upsert() """
     return field + '/' + urllib.parse.quote(value, safe='')

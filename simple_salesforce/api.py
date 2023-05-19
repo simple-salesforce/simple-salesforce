@@ -1,6 +1,4 @@
 """Core classes and exceptions for Simple-Salesforce"""
-from __future__ import annotations
-
 from datetime import datetime
 
 # has to be defined prior to login import
@@ -10,7 +8,7 @@ import json
 import logging
 import re
 from typing import Any, Callable, IO, Iterator, Mapping, MutableMapping, \
-    Optional, cast
+    Optional, Union, cast
 from collections import OrderedDict, namedtuple
 from functools import partial
 from pathlib import Path
@@ -243,7 +241,7 @@ class Salesforce:
             f'https://{self.sf_instance}/services/Soap/m/{self.sf_version}/')
         self.tooling_url = f'{self.base_url}tooling/'
         self.oauth2_url = f'https://{self.sf_instance}/services/oauth2/'
-        self.api_usage: MutableMapping[str, Usage | PerAppUsage] = {}
+        self.api_usage: MutableMapping[str, Union[Usage, PerAppUsage]] = {}
         self._parse_float = parse_float
         self._object_pairs_hook = object_pairs_hook  # type: ignore[assignment]
         self._mdapi: Optional[SfdcMetadataApi] = None
@@ -302,7 +300,7 @@ class Salesforce:
         return is_sandbox
 
     # SObject Handler
-    def __getattr__(self, name: str) -> SFBulkHandler | SFType:
+    def __getattr__(self, name: str) -> Union[SFBulkHandler, "SFType"]:
         """Returns an `SFType` instance for the given Salesforce object type
         (given in `name`).
         The magic part of the SalesforceAPI, this function translates
@@ -652,7 +650,8 @@ class Salesforce:
 
     @staticmethod
     def parse_api_usage(
-            sforce_limit_info: str) -> MutableMapping[str, Usage | PerAppUsage]:
+            sforce_limit_info: str
+    ) -> MutableMapping[str, Union[Usage, PerAppUsage]]:
         """parse API usage and limits out of the Sforce-Limit-Info header
         Arguments:
         * sforce_limit_info: The value of response header 'Sforce-Limit-Info'
@@ -660,7 +659,7 @@ class Salesforce:
             Example 2: 'api-usage=25/5000;
                 per-app-api-usage=17/250(appName=sample-connected-app)'
         """
-        result: MutableMapping[str, Usage | PerAppUsage] = {}
+        result: MutableMapping[str, Union[Usage, PerAppUsage]] = {}
 
         api_usage = re.match(r'[^-]?api-usage=(?P<used>\d+)/(?P<tot>\d+)',
                              sforce_limit_info)
@@ -682,7 +681,7 @@ class Salesforce:
     # file-based deployment function
     def deploy(
             self,
-            zipfile: str | IO[bytes],
+            zipfile: Union[str, IO[bytes]],
             sandbox: bool,
             **kwargs: Any) -> dict[str, Optional[str]]:
         """Deploy using the Salesforce Metadata API. Wrapper for
@@ -704,7 +703,8 @@ class Salesforce:
     def checkDeployStatus(
             self,
             asyncId: str,
-            **kwargs: Any) -> dict[str, Optional[str | Mapping[str, str]]]:
+            **kwargs: Any
+    ) -> dict[str, Optional[Union[str, Mapping[str, str]]]]:
         """Check on the progress of a file-based deployment via Salesforce
         Metadata API.
         Wrapper for SfdcMetaDataApi.check_deploy_status(...).
@@ -784,7 +784,7 @@ class SFType:
         # don't wipe out original proxies with None
         if not session and proxies is not None:
             self.session.proxies = proxies
-        self.api_usage: MutableMapping[str, Usage | PerAppUsage] = {}
+        self.api_usage: MutableMapping[str, Union[Usage, PerAppUsage]] = {}
 
         self.base_url = (
             f'https://{sf_instance}/services/data/v{sf_version}/sobjects'
@@ -948,7 +948,7 @@ class SFType:
             record_id: str,
             raw_response: bool = False,
             headers: Optional[dict[str, Any]] = None
-    ) -> int | requests.Response:
+    ) -> Union[int, requests.Response]:
         """Deletes an SObject using a DELETE to
         `.../{object_name}/{record_id}`.
         If `raw_response` is false (the default), returns the status code
@@ -1048,7 +1048,7 @@ class SFType:
     def _raw_response(
             self,
             response: requests.Response,
-            body_flag: bool) -> int | requests.Response:
+            body_flag: bool) -> Union[int, requests.Response]:
         """Utility method for processing the response and returning either the
         status code or the response object.
 
@@ -1086,7 +1086,7 @@ class SFType:
             base64_field: str = 'Body',
             headers: Optional[Mapping[str, Any]] = None,
             raw_response: bool = False,
-            **kwargs: Any) -> int | requests.Response:
+            **kwargs: Any) -> Union[int, requests.Response]:
         """Updated base64 image from file to Salesforce"""
         data = {}
         body = base64.b64encode(Path(file_path).read_bytes()).decode()

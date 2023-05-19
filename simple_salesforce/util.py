@@ -1,9 +1,8 @@
 """Utility functions for simple-salesforce"""
-from __future__ import annotations
 
 import datetime
 import xml.dom.minidom
-from typing import Any, Iterable, MutableMapping, NoReturn, Optional
+from typing import Any, Iterable, MutableMapping, NoReturn, Optional, Union
 
 import requests
 
@@ -15,7 +14,7 @@ from .exceptions import (SalesforceExpiredSession, SalesforceGeneralError,
 
 # pylint: disable=invalid-name
 def getUniqueElementValueFromXmlString(
-        xmlString: str | bytes,
+        xmlString: Union[str, bytes],
         elementName: str) -> Optional[str]:
     """
     Extracts an element value from an XML string.

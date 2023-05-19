@@ -1,12 +1,11 @@
 """ Classes for interacting with Salesforce Bulk API """
-from __future__ import annotations
 
 import json
 from collections import OrderedDict
 from time import sleep
 import concurrent.futures
 from functools import partial
-from typing import Any, Iterable, MutableMapping, Optional, cast
+from typing import Any, Iterable, MutableMapping, Optional, Union, cast
 
 import requests
 
@@ -54,7 +53,7 @@ class SFBulkHandler:
             'X-PrettyPrint': '1'
             }
 
-    def __getattr__(self, name: str) -> SFBulkType:
+    def __getattr__(self, name: str) -> "SFBulkType":
         return SFBulkType(object_name=name, bulk_url=self.bulk_url,
                           headers=self.headers, session=self.session)
 
@@ -276,7 +275,7 @@ class SFBulkType:
             data: list[dict[str, str]],
             use_serial: bool = False,
             external_id_field: Optional[str] = None,
-            batch_size: int | str = 10000,
+            batch_size: Union[int, str] = 10000,
             wait: int = 5,
             bypass_results: bool = False) -> Iterable[Any]:
         """ String together helper functions to create a complete

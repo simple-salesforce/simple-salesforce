@@ -1,9 +1,8 @@
 """ Class to work with Salesforce Metadata API """
-from __future__ import annotations
 
 from base64 import b64encode, b64decode
 from pathlib import Path
-from typing import Any, IO, Mapping, MutableMapping, Optional
+from typing import Any, IO, Mapping, MutableMapping, Optional, Union
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import Element
 
@@ -25,7 +24,7 @@ class MetadataType:
             self,
             name: str,
             service: ServiceProxy,
-            zeep_type: ComplexType | AnySimpleType,
+            zeep_type: Union[ComplexType, AnySimpleType],
             session_header: CompoundValue):
         """
         Initialize metadata type
@@ -92,7 +91,7 @@ class MetadataType:
             self._session_header])
         self._handle_api_response(response)
 
-    def read(self, full_names: list[str]) -> list[Any] | Any:
+    def read(self, full_names: list[str]) -> Union[list[Any], Any]:
         """
         Performs a readMetadata call
 
@@ -271,7 +270,7 @@ class SfdcMetadataApi:
     # pylint: disable-msg=C0103
     def deploy(
             self,
-            zipfile: str | IO[bytes],
+            zipfile: Union[str, IO[bytes]],
             sandbox: bool,
             **kwargs: Any) -> tuple[Optional[str], Optional[str]]:
         """ Kicks off async deployment, returns deployment id
@@ -348,7 +347,7 @@ class SfdcMetadataApi:
 
     @staticmethod
     # pylint: disable=R1732
-    def _read_deploy_zip(zipfile: str | IO[bytes]) -> str:
+    def _read_deploy_zip(zipfile: Union[str, IO[bytes]]) -> str:
         """
         :param zipfile:
         :type zipfile:
