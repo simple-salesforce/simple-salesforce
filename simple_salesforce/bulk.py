@@ -10,7 +10,9 @@ from typing import Any, Dict, Iterable, List, Optional, Union, \
 
 import requests
 
-from .util import Headers, Proxies, call_salesforce, list_from_generator
+from .util import BulkDataAny, BulkDataStr, Headers, Proxies, \
+    call_salesforce, \
+    list_from_generator
 from .exceptions import SalesforceGeneralError
 
 
@@ -134,7 +136,11 @@ class SFBulkType:
                                  headers=self.headers)
         return result.json(object_pairs_hook=OrderedDict)
 
-    def _add_batch(self, job_id: str, data: Any, operation: str) -> Any:
+    def _add_batch(
+            self,
+            job_id: str,
+            data: BulkDataAny,
+            operation: str) -> Any:
         """ Add a set of data as a batch to an existing job
         Separating this out in case of later
         implementations involving multiple batches
@@ -142,11 +148,14 @@ class SFBulkType:
 
         url = f'{self.bulk_url}job/{job_id}/batch'
 
+        data_: Union[BulkDataAny, str]
         if operation not in ('query', 'queryAll'):
-            data = json.dumps(data, allow_nan=False)
+            data_ = json.dumps(data, allow_nan=False)
+        else:
+            data_ = data
 
         result = call_salesforce(url=url, method='POST', session=self.session,
-                                 headers=self.headers, data=data)
+                                 headers=self.headers, data=data_)
         return result.json(object_pairs_hook=OrderedDict)
 
     def _get_batch(self, job_id: str, batch_id: str) -> Any:
@@ -215,7 +224,7 @@ class SFBulkType:
 
     def _add_autosized_batches(
             self,
-            data: List[Dict[str, str]],
+            data: BulkDataAny,
             operation: str, job: str) -> List[Any]:
         """
         Auto-create batches that respect bulk api V1 limits.
@@ -273,7 +282,7 @@ class SFBulkType:
     def _bulk_operation(
             self,
             operation: str,
-            data: List[Dict[str, str]],
+            data: BulkDataAny,
             use_serial: bool = False,
             external_id_field: Optional[str] = None,
             batch_size: Union[int, str] = 10000,
@@ -368,7 +377,7 @@ class SFBulkType:
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
     def delete(
             self,
-            data: List[Dict[str, str]],
+            data: BulkDataStr,
             batch_size: int = 10000,
             use_serial: bool = False,
             bypass_results: bool = False) -> Iterable[Any]:
@@ -386,7 +395,7 @@ class SFBulkType:
 
     def insert(
             self,
-            data: List[Dict[str, str]],
+            data: BulkDataAny,
             batch_size: int = 10000,
             use_serial: bool = False,
             bypass_results: bool = False) -> Iterable[Any]:
@@ -404,7 +413,7 @@ class SFBulkType:
 
     def upsert(
             self,
-            data: List[Dict[str, str]],
+            data: BulkDataAny,
             external_id_field: str,
             batch_size: int = 10000,
             use_serial: bool = False,
@@ -424,7 +433,7 @@ class SFBulkType:
 
     def update(
             self,
-            data: List[Dict[str, str]],
+            data: BulkDataAny,
             batch_size: int = 10000,
             use_serial: bool = False,
             bypass_results: bool = False) -> Iterable[Any]:
@@ -442,7 +451,7 @@ class SFBulkType:
 
     def hard_delete(
             self,
-            data: List[Dict[str, str]],
+            data: BulkDataStr,
             batch_size: int = 10000,
             use_serial: bool = False,
             bypass_results: bool = False) -> Iterable[Any]:
@@ -460,7 +469,7 @@ class SFBulkType:
 
     def query(
             self,
-            data: List[Dict[str, str]],
+            data: BulkDataStr,
             lazy_operation: bool = False,
             wait: int = 5) -> Iterable[Any]:
         """ bulk query """
@@ -473,7 +482,7 @@ class SFBulkType:
 
     def query_all(
             self,
-            data: List[Dict[str, str]],
+            data: BulkDataStr,
             lazy_operation: bool = False,
             wait: int = 5) -> Iterable[Any]:
         """ bulk queryAll """

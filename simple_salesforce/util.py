@@ -2,7 +2,7 @@
 
 import datetime
 import xml.dom.minidom
-from typing import Any, Iterable, List, MutableMapping, NoReturn, \
+from typing import Any, Iterable, List, Mapping, MutableMapping, NoReturn, \
     Optional, \
     TypeVar, Union
 
@@ -15,6 +15,8 @@ from .exceptions import (SalesforceExpiredSession, SalesforceGeneralError,
 
 Headers = MutableMapping[str, str]
 Proxies = MutableMapping[str, str]
+BulkDataAny = List[Mapping[str, Any]]
+BulkDataStr = List[Mapping[str, str]]
 T = TypeVar('T')
 
 # pylint: disable=invalid-name
