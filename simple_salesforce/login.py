@@ -2,7 +2,7 @@
 
 Heavily Modified from RestForce 1.0.0
 """
-from typing import Any, Dict, MutableMapping, Optional, Tuple, Union, cast
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
 DEFAULT_CLIENT_ID_PREFIX = 'simple-salesforce'
 
@@ -17,7 +17,7 @@ import jwt
 
 from .api import DEFAULT_API_VERSION
 from .exceptions import SalesforceAuthenticationFailed
-from .util import Headers, getUniqueElementValueFromXmlString
+from .util import Headers, Proxies, getUniqueElementValueFromXmlString
 
 
 # pylint: disable=invalid-name,too-many-arguments,too-many-locals
@@ -27,7 +27,7 @@ def SalesforceLogin(
         security_token: Optional[str] = None,
         organizationId: Optional[str] = None,
         sf_version: str = DEFAULT_API_VERSION,
-        proxies: Optional[MutableMapping[str, str]] = None,
+        proxies: Optional[Proxies] = None,
         session: Optional[requests.Session] = None,
         client_id: Optional[str] = None,
         domain: Optional[str] = None,
@@ -214,7 +214,7 @@ def soap_login(
         soap_url: str,
         request_body: str,
         headers: Optional[Headers],
-        proxies: Any,
+        proxies: Optional[Proxies],
         session: Optional[requests.Session] = None) -> Tuple[str, str]:
     """Process SOAP specific login workflow."""
     response = (session or requests).post(
@@ -257,7 +257,7 @@ def token_login(
         domain: str,
         consumer_key: str,
         headers: Optional[Headers],
-        proxies: Optional[MutableMapping[str, str]],
+        proxies: Optional[Proxies],
         session: Optional[requests.Session] = None) -> Tuple[Any, Any]:
     """Process OAuth 2.0 JWT Bearer Token Flow."""
     response = (session or requests).post(

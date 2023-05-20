@@ -5,12 +5,12 @@ from collections import OrderedDict
 from time import sleep
 import concurrent.futures
 from functools import partial
-from typing import Any, Dict, Iterable, List, MutableMapping, Optional, Union, \
+from typing import Any, Dict, Iterable, List, Optional, Union, \
     cast
 
 import requests
 
-from .util import Headers, call_salesforce, list_from_generator
+from .util import Headers, Proxies, call_salesforce, list_from_generator
 from .exceptions import SalesforceGeneralError
 
 
@@ -26,7 +26,7 @@ class SFBulkHandler:
             self,
             session_id: str,
             bulk_url: str,
-            proxies: Optional[MutableMapping[str, Any]] = None,
+            proxies: Optional[Proxies] = None,
             session: Optional[requests.Session] = None):
         """Initialize the instance with the given parameters.
 

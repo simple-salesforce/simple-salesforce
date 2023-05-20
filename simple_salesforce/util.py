@@ -13,6 +13,7 @@ from .exceptions import (SalesforceExpiredSession, SalesforceGeneralError,
                          SalesforceResourceNotFound)
 
 Headers = MutableMapping[str, str]
+Proxies = MutableMapping[str, str]
 
 # pylint: disable=invalid-name
 def getUniqueElementValueFromXmlString(

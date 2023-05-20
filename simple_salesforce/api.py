@@ -21,7 +21,7 @@ from .bulk import SFBulkHandler
 from .exceptions import SalesforceGeneralError
 from .login import SalesforceLogin
 from .metadata import SfdcMetadataApi
-from .util import Headers, date_to_iso8601, exception_handler
+from .util import Headers, Proxies, date_to_iso8601, exception_handler
 
 # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ class Salesforce:
             instance_url: Optional[str] = None,
             organizationId: Optional[str] = None,
             version: Optional[str] = DEFAULT_API_VERSION,
-            proxies: Optional[MutableMapping[str, str]] = None,
+            proxies: Optional[Proxies] = None,
             session: Optional[requests.Session] = None,
             client_id: Optional[str] = None,
             domain: Optional[str] = None,
@@ -741,7 +741,7 @@ class SFType:
             session_id: str,
             sf_instance: str,
             sf_version: Optional[str] = DEFAULT_API_VERSION,
-            proxies: Optional[MutableMapping[str, str]] = None,
+            proxies: Optional[Proxies] = None,
             session: Optional[requests.Session] = None,
             salesforce: Optional[Salesforce] = None,
             parse_float: Optional[Callable[[str], Any]] = None,
