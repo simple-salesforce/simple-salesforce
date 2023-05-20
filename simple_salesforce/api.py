@@ -1,6 +1,5 @@
 """Core classes and exceptions for Simple-Salesforce"""
 from datetime import datetime
-from http import HTTPMethod
 
 # has to be defined prior to login import
 DEFAULT_API_VERSION = '52.0'
@@ -284,11 +283,7 @@ class Salesforce:
         * keyword arguments supported by requests.request (e.g. json, timeout)
         """
         url = self.base_url + "sobjects"
-        result = self._call_salesforce(
-            HTTPMethod.GET,
-            url,
-            name='describe',
-            **kwargs)
+        result = self._call_salesforce('GET', url, name='describe', **kwargs)
 
         json_result = self.parse_result_to_json(result)
         if len(json_result) == 0:
@@ -346,10 +341,7 @@ class Salesforce:
         url = f'{self.base_url}sobjects/User/{user}/password'
         params = {'NewPassword': password}
 
-        result = self._call_salesforce(
-            HTTPMethod.POST,
-            url,
-            data=json.dumps(params))
+        result = self._call_salesforce('POST', url, data=json.dumps(params))
 
         if result.status_code == 204:
             return None
@@ -367,7 +359,7 @@ class Salesforce:
             self,
             path: str,
             params: Optional[Dict[str, Any]] = None,
-            method: Union[str, HTTPMethod] = HTTPMethod.GET,
+            method: str = 'GET',
             **kwargs: Any) -> Optional[Any]:
         """Allows you to make a direct REST call if you know the path
 
@@ -394,7 +386,7 @@ class Salesforce:
             self,
             path: str,
             params: Optional[Dict[str, Any]] = None,
-            method: Union[str, HTTPMethod] = HTTPMethod.GET) -> Optional[Any]:
+            method: str = 'GET') -> Optional[Any]:
         """Allows you to make a request to OAuth endpoints if you know the path
 
         Arguments:
@@ -427,11 +419,7 @@ class Salesforce:
 
         # `requests` will correctly encode the query string passed as `params`
         params = {'q': search}
-        result = self._call_salesforce(
-            HTTPMethod.GET,
-            url,
-            name='search',
-            params=params)
+        result = self._call_salesforce('GET', url, name='search', params=params)
 
         json_result = self.parse_result_to_json(result)
         if len(json_result) == 0:
@@ -455,7 +443,7 @@ class Salesforce:
         limits.
         """
         url = self.base_url + 'limits/'
-        result = self._call_salesforce(HTTPMethod.GET, url, **kwargs)
+        result = self._call_salesforce('GET', url, **kwargs)
 
         if result.status_code != 200:
             exception_handler(result)
@@ -478,7 +466,7 @@ class Salesforce:
         url = self.base_url + ('queryAll/' if include_deleted else 'query/')
         params = {'q': query}
         # `requests` will correctly encode the query string passed as `params`
-        result = self._call_salesforce(HTTPMethod.GET, url, name='query',
+        result = self._call_salesforce('GET', url, name='query',
                                        params=params, **kwargs)
 
         return self.parse_result_to_json(result)
@@ -507,11 +495,7 @@ class Salesforce:
         else:
             endpoint = 'queryAll' if include_deleted else 'query'
             url = f'{self.base_url}{endpoint}/{next_records_identifier}'
-        result = self._call_salesforce(
-            HTTPMethod.GET,
-            url,
-            name='query_more',
-            **kwargs)
+        result = self._call_salesforce('GET', url, name='query_more', **kwargs)
 
         return self.parse_result_to_json(result)
 
@@ -576,7 +560,7 @@ class Salesforce:
     def toolingexecute(
             self,
             action: str,
-            method: Union[str, HTTPMethod] = HTTPMethod.GET,
+            method: str = 'GET',
             data: Optional[Dict[str, Any]] = None,
             **kwargs: Any) -> Any:
         """Makes an HTTP request to an TOOLING REST endpoint
@@ -606,7 +590,7 @@ class Salesforce:
     def apexecute(
             self,
             action: str,
-            method: Union[str, HTTPMethod] = HTTPMethod.GET,
+            method: str = 'GET',
             data: Optional[Dict[str, Any]] = None,
             **kwargs: Any) -> Any:
         """Makes an HTTP request to an APEX REST endpoint
@@ -635,7 +619,7 @@ class Salesforce:
 
     def _call_salesforce(
             self,
-            method: Union[str, HTTPMethod],
+            method: str,
             url: str,
             name: str = "",
             **kwargs: Any) -> requests.Response:
@@ -820,10 +804,7 @@ class SFType:
         Arguments:
         * headers -- a dict with additional request headers.
         """
-        result = self._call_salesforce(
-            HTTPMethod.GET,
-            self.base_url,
-            headers=headers)
+        result = self._call_salesforce('GET', self.base_url, headers=headers)
         return self.parse_result_to_json(result)
 
     def describe(self, headers: Optional[Headers] = None) -> Any:
@@ -833,7 +814,7 @@ class SFType:
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            method=HTTPMethod.GET, url=urljoin(self.base_url, 'describe'),
+            method='GET', url=urljoin(self.base_url, 'describe'),
             headers=headers
             )
         return self.parse_result_to_json(result)
@@ -852,7 +833,7 @@ class SFType:
         """
         custom_url_part = f'describe/layouts/{record_id}'
         result = self._call_salesforce(
-            method=HTTPMethod.GET,
+            method='GET',
             url=urljoin(self.base_url, custom_url_part),
             headers=headers
             )
@@ -869,7 +850,7 @@ class SFType:
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            method=HTTPMethod.GET, url=urljoin(self.base_url, record_id),
+            method='GET', url=urljoin(self.base_url, record_id),
             headers=headers
             )
         return self.parse_result_to_json(result)
@@ -891,7 +872,7 @@ class SFType:
         """
         custom_url = urljoin(self.base_url, f'{custom_id_field}/{custom_id}')
         result = self._call_salesforce(
-            method=HTTPMethod.GET, url=custom_url, headers=headers
+            method='GET', url=custom_url, headers=headers
             )
         return self.parse_result_to_json(result)
 
@@ -907,7 +888,7 @@ class SFType:
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            method=HTTPMethod.POST, url=self.base_url,
+            method='POST', url=self.base_url,
             data=json.dumps(data), headers=headers
             )
         return self.parse_result_to_json(result)
@@ -933,7 +914,7 @@ class SFType:
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            method=HTTPMethod.PATCH, url=urljoin(self.base_url, record_id),
+            method='PATCH', url=urljoin(self.base_url, record_id),
             data=json.dumps(data), headers=headers
             )
         return self._raw_response(result, raw_response)
@@ -958,7 +939,7 @@ class SFType:
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            method=HTTPMethod.PATCH, url=urljoin(self.base_url, record_id),
+            method='PATCH', url=urljoin(self.base_url, record_id),
             data=json.dumps(data), headers=headers
             )
         return self._raw_response(result, raw_response)
@@ -981,7 +962,7 @@ class SFType:
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            method=HTTPMethod.DELETE, url=urljoin(self.base_url, record_id),
+            method='DELETE', url=urljoin(self.base_url, record_id),
             headers=headers
             )
         return self._raw_response(result, raw_response)
@@ -1005,7 +986,7 @@ class SFType:
             self.base_url,
             f'deleted/?start={date_to_iso8601(start)}&end={date_to_iso8601(end)}'
             )
-        result = self._call_salesforce(method=HTTPMethod.GET, url=url, headers=headers)
+        result = self._call_salesforce(method='GET', url=url, headers=headers)
         return self.parse_result_to_json(result)
 
     def updated(
@@ -1027,15 +1008,12 @@ class SFType:
             self.base_url,
             f'updated/?start={date_to_iso8601(start)}&end={date_to_iso8601(end)}'
             )
-        result = self._call_salesforce(
-            method=HTTPMethod.GET,
-            url=url,
-            headers=headers)
+        result = self._call_salesforce(method='GET', url=url, headers=headers)
         return self.parse_result_to_json(result)
 
     def _call_salesforce(
             self,
-            method: HTTPMethod,
+            method: str,
             url: str,
             **kwargs: Any) -> requests.Response:
         """Utility method for performing HTTP call to Salesforce.
@@ -1097,7 +1075,7 @@ class SFType:
         data = {}
         body = base64.b64encode(Path(file_path).read_bytes()).decode()
         data[base64_field] = body
-        result = self._call_salesforce(HTTPMethod.POST, url=self.base_url,
+        result = self._call_salesforce(method='POST', url=self.base_url,
                                        headers=headers, json=data, **kwargs)
 
         return result
@@ -1114,7 +1092,7 @@ class SFType:
         data = {}
         body = base64.b64encode(Path(file_path).read_bytes()).decode()
         data[base64_field] = body
-        result = self._call_salesforce(HTTPMethod.PATCH,
+        result = self._call_salesforce(method='PATCH',
                                        url=urljoin(self.base_url, record_id),
                                        json=data,
                                        headers=headers, **kwargs)
@@ -1136,7 +1114,7 @@ class SFType:
             Example: sobjects/Attachment/ABC123/Body
                      sobjects/ContentVersion/ABC123/VersionData
         """
-        result = self._call_salesforce(HTTPMethod.GET, url=urljoin(
+        result = self._call_salesforce(method='GET', url=urljoin(
             self.base_url, f'{record_id}/{base64_field}'),
                                        data=data,
                                        headers=headers, **kwargs)
