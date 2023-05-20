@@ -21,7 +21,7 @@ from .bulk import SFBulkHandler
 from .exceptions import SalesforceGeneralError
 from .login import SalesforceLogin
 from .metadata import SfdcMetadataApi
-from .util import date_to_iso8601, exception_handler
+from .util import Headers, date_to_iso8601, exception_handler
 
 # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
@@ -798,7 +798,7 @@ class SFType:
             return self.salesforce.session_id
         return self._session_id
 
-    def metadata(self, headers: Optional[Dict[str, Any]] = None) -> Any:
+    def metadata(self, headers: Optional[Headers] = None) -> Any:
         """Returns the result of a GET to `.../{object_name}/` as a dict
         decoded from the JSON payload returned by Salesforce.
         Arguments:
@@ -807,7 +807,7 @@ class SFType:
         result = self._call_salesforce('GET', self.base_url, headers=headers)
         return self.parse_result_to_json(result)
 
-    def describe(self, headers: Optional[Dict[str, Any]] = None) -> Any:
+    def describe(self, headers: Optional[Headers] = None) -> Any:
         """Returns the result of a GET to `.../{object_name}/describe` as a
         dict decoded from the JSON payload returned by Salesforce.
         Arguments:
@@ -822,7 +822,7 @@ class SFType:
     def describe_layout(
             self,
             record_id: str,
-            headers: Optional[Dict[str, Any]] = None) -> Any:
+            headers: Optional[Headers] = None) -> Any:
         """Returns the layout of the object
         Returns the result of a GET to
         `.../{object_name}/describe/layouts/<recordid>` as a dict decoded from
@@ -842,7 +842,7 @@ class SFType:
     def get(
             self,
             record_id: str,
-            headers: Optional[Dict[str, Any]] = None) -> Any:
+            headers: Optional[Headers] = None) -> Any:
         """Returns the result of a GET to `.../{object_name}/{record_id}` as a
         dict decoded from the JSON payload returned by Salesforce.
         Arguments:
@@ -859,7 +859,7 @@ class SFType:
             self,
             custom_id_field: str,
             custom_id: str,
-            headers: Optional[Dict[str, Any]] = None) -> Any:
+            headers: Optional[Headers] = None) -> Any:
         """Return an ``SFType`` by custom ID
         Returns the result of a GET to
         `.../{object_name}/{custom_id_field}/{custom_id}` as a dict decoded
@@ -879,7 +879,7 @@ class SFType:
     def create(
             self,
             data: Dict[str, Any],
-            headers: Optional[Dict[str, Any]] = None) -> Any:
+            headers: Optional[Headers] = None) -> Any:
         """Creates a new SObject using a POST to `.../{object_name}/`.
         Returns a dict decoded from the JSON payload returned by Salesforce.
         Arguments:
@@ -898,7 +898,7 @@ class SFType:
             record_id: str,
             data: Dict[str, Any],
             raw_response: bool = False,
-            headers: Optional[Dict[str, Any]] = None) -> Any:
+            headers: Optional[Headers] = None) -> Any:
         """Creates or updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
         If `raw_response` is false (the default), returns the status code
@@ -924,7 +924,7 @@ class SFType:
             record_id: str,
             data: Dict[str, Any],
             raw_response: bool = False,
-            headers: Optional[Dict[str, Any]] = None) -> Any:
+            headers: Optional[Headers] = None) -> Any:
         """Updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
         If `raw_response` is false (the default), returns the status code
@@ -948,7 +948,7 @@ class SFType:
             self,
             record_id: str,
             raw_response: bool = False,
-            headers: Optional[Dict[str, Any]] = None
+            headers: Optional[Headers] = None
     ) -> Union[int, requests.Response]:
         """Deletes an SObject using a DELETE to
         `.../{object_name}/{record_id}`.
@@ -971,7 +971,7 @@ class SFType:
             self,
             start: datetime,
             end: datetime,
-            headers: Optional[Mapping[str, Any]] = None) -> Any:
+            headers: Optional[Headers] = None) -> Any:
         # pylint: disable=line-too-long
         """Gets a list of deleted records
         Use the SObject Get Deleted resource to get a list of deleted records
@@ -993,7 +993,7 @@ class SFType:
             self,
             start: datetime,
             end: datetime,
-            headers: Optional[Mapping[str, Any]] = None) -> Any:
+            headers: Optional[Headers] = None) -> Any:
         # pylint: disable=line-too-long
         """Gets a list of updated records
         Use the SObject Get Updated resource to get a list of updated
@@ -1069,7 +1069,7 @@ class SFType:
             self,
             file_path: str,
             base64_field: str = 'Body',
-            headers: Optional[Mapping[str, Any]] = None,
+            headers: Optional[Headers] = None,
                       **kwargs: Any) -> requests.Response:
         """Upload base64 encoded file to Salesforce"""
         data = {}
@@ -1085,7 +1085,7 @@ class SFType:
             record_id: str,
             file_path: str,
             base64_field: str = 'Body',
-            headers: Optional[Mapping[str, Any]] = None,
+            headers: Optional[Headers] = None,
             raw_response: bool = False,
             **kwargs: Any) -> Union[int, requests.Response]:
         """Updated base64 image from file to Salesforce"""
@@ -1104,7 +1104,7 @@ class SFType:
             record_id: str,
             base64_field: str = 'Body',
             data: Optional[Any] = None,
-            headers: Optional[Mapping[str, Any]] = None,
+            headers: Optional[Headers] = None,
             **kwargs: Any) -> bytes:
         """Returns binary stream of base64 object at specific path.
 

@@ -12,6 +12,7 @@ from .exceptions import (SalesforceExpiredSession, SalesforceGeneralError,
                          SalesforceMoreThanOneRecord, SalesforceRefusedRequest,
                          SalesforceResourceNotFound)
 
+Headers = MutableMapping[str, str]
 
 # pylint: disable=invalid-name
 def getUniqueElementValueFromXmlString(
@@ -75,7 +76,7 @@ def call_salesforce(
         url: str,
         method: str,
         session: requests.Session,
-        headers: MutableMapping[str, Any],
+        headers: Headers,
         **kwargs: Any) -> requests.Response:
     """Utility method for performing HTTP call to Salesforce.
 

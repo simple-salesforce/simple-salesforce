@@ -12,7 +12,7 @@ import requests
 from zeep.proxy import ServiceProxy
 from zeep.xsd import AnySimpleType, ComplexType, CompoundValue
 
-from .util import call_salesforce
+from .util import Headers, call_salesforce
 from .messages import DEPLOY_MSG, CHECK_DEPLOY_STATUS_MSG, \
     CHECK_RETRIEVE_STATUS_MSG, RETRIEVE_MSG
 from zeep import Client, Settings
@@ -211,7 +211,7 @@ class SfdcMetadataApi:
             session_id: str,
             instance: str,
             metadata_url: str,
-            headers: MutableMapping[str, Any],
+            headers: Headers,
             api_version: Optional[str]):
         """ Initialize and check session """
         self.session = session

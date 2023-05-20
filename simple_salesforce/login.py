@@ -17,7 +17,7 @@ import jwt
 
 from .api import DEFAULT_API_VERSION
 from .exceptions import SalesforceAuthenticationFailed
-from .util import getUniqueElementValueFromXmlString
+from .util import Headers, getUniqueElementValueFromXmlString
 
 
 # pylint: disable=invalid-name,too-many-arguments,too-many-locals
@@ -213,7 +213,7 @@ def SalesforceLogin(
 def soap_login(
         soap_url: str,
         request_body: str,
-        headers: Optional[Dict[str, Any]],
+        headers: Optional[Headers],
         proxies: Any,
         session: Optional[requests.Session] = None) -> Tuple[str, str]:
     """Process SOAP specific login workflow."""
@@ -256,7 +256,7 @@ def token_login(
         token_data: Dict[str, Any],
         domain: str,
         consumer_key: str,
-        headers: Optional[Dict[str, Any]],
+        headers: Optional[Headers],
         proxies: Optional[MutableMapping[str, str]],
         session: Optional[requests.Session] = None) -> Tuple[Any, Any]:
     """Process OAuth 2.0 JWT Bearer Token Flow."""

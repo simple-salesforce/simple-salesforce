@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, MutableMapping, Optional, Union, \
 
 import requests
 
-from .util import call_salesforce, list_from_generator
+from .util import Headers, call_salesforce, list_from_generator
 from .exceptions import SalesforceGeneralError
 
 
@@ -66,7 +66,7 @@ class SFBulkType:
             self,
             object_name: str,
             bulk_url: str,
-            headers: MutableMapping[str, str],
+            headers: Headers,
             session: requests.Session):
         """Initialize the instance with the given parameters.
 
