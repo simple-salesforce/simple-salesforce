@@ -21,10 +21,12 @@ BulkDataStr = List[Mapping[str, str]]
 T = TypeVar('T')
 
 class Usage(NamedTuple):
+    """Usage information for a Salesforce org"""
     used: int
     total: int
 
 class PerAppUsage(NamedTuple):
+    """Per App Usage information for a Salesforce org"""
     used: int
     total: int
     name: str
