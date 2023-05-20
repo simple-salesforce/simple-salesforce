@@ -10,7 +10,7 @@ import re
 from typing import Any, Callable, Dict, IO, Iterator, List, Mapping, \
     MutableMapping, \
     Optional, Tuple, Union, cast
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 from functools import partial
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
@@ -21,13 +21,11 @@ from .bulk import SFBulkHandler
 from .exceptions import SalesforceGeneralError
 from .login import SalesforceLogin
 from .metadata import SfdcMetadataApi
-from .util import Headers, Proxies, date_to_iso8601, exception_handler
+from .util import Headers, PerAppUsage, Proxies, Usage, date_to_iso8601, \
+    exception_handler
 
 # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
-
-Usage = namedtuple('Usage', 'used total')
-PerAppUsage = namedtuple('PerAppUsage', 'used total name')
 
 
 # pylint: disable=too-many-instance-attributes

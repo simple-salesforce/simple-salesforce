@@ -2,7 +2,8 @@
 
 import datetime
 import xml.dom.minidom
-from typing import Any, Iterable, List, Mapping, MutableMapping, NoReturn, \
+from typing import Any, Iterable, List, Mapping, MutableMapping, NamedTuple, \
+    NoReturn, \
     Optional, \
     TypeVar, Union
 
@@ -18,6 +19,15 @@ Proxies = MutableMapping[str, str]
 BulkDataAny = List[Mapping[str, Any]]
 BulkDataStr = List[Mapping[str, str]]
 T = TypeVar('T')
+
+class Usage(NamedTuple):
+    used: int
+    total: int
+
+class PerAppUsage(NamedTuple):
+    used: int
+    total: int
+    name: str
 
 # pylint: disable=invalid-name
 def getUniqueElementValueFromXmlString(
