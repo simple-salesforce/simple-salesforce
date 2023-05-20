@@ -24,7 +24,7 @@ setup(
     long_description=textwrap.dedent((here / 'README.rst').read_text()),
     long_description_content_type='text/x-rst',
     package_data={
-        'simple_salesforce': ['metadata.wsdl'],
+        'simple_salesforce': ['metadata.wsdl', 'py.typed'],
         },
     install_requires = [
         'requests>=2.22.0',
@@ -54,5 +54,6 @@ setup(
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: Implementation :: PyPy'
-        ]
+        ],
+    zip_safe=False,
 )
