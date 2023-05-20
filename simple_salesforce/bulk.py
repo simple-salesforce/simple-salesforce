@@ -2,7 +2,6 @@
 
 import json
 from collections import OrderedDict
-from http import HTTPMethod
 from time import sleep
 import concurrent.futures
 from functools import partial
@@ -111,12 +110,9 @@ class SFBulkType:
 
         url = f'{self.bulk_url}job'
 
-        result = call_salesforce(
-            url=url,
-            method=HTTPMethod.POST,
-            session=self.session,
-            headers=self.headers,
-            data=json.dumps(payload, allow_nan=False))
+        result = call_salesforce(url=url, method='POST', session=self.session,
+                                 headers=self.headers,
+                                 data=json.dumps(payload, allow_nan=False))
         return result.json(object_pairs_hook=OrderedDict)
 
     def _close_job(self, job_id: str) -> Any:
@@ -127,23 +123,17 @@ class SFBulkType:
 
         url = f'{self.bulk_url}job/{job_id}'
 
-        result = call_salesforce(
-            url=url,
-            method=HTTPMethod.POST,
-            session=self.session,
-            headers=self.headers,
-            data=json.dumps(payload, allow_nan=False))
+        result = call_salesforce(url=url, method='POST', session=self.session,
+                                 headers=self.headers,
+                                 data=json.dumps(payload, allow_nan=False))
         return result.json(object_pairs_hook=OrderedDict)
 
     def _get_job(self, job_id: str) -> Any:
         """ Get an existing job to check the status """
         url = f'{self.bulk_url}job/{job_id}'
 
-        result = call_salesforce(
-            url=url,
-            method=HTTPMethod.GET,
-            session=self.session,
-            headers=self.headers)
+        result = call_salesforce(url=url, method='GET', session=self.session,
+                                 headers=self.headers)
         return result.json(object_pairs_hook=OrderedDict)
 
     def _add_batch(
@@ -164,11 +154,8 @@ class SFBulkType:
         else:
             data_ = data
 
-        result = call_salesforce(
-            url=url,
-            method=HTTPMethod.POST,
-            session=self.session,
-            headers=self.headers, data=data_)
+        result = call_salesforce(url=url, method='POST', session=self.session,
+                                 headers=self.headers, data=data_)
         return result.json(object_pairs_hook=OrderedDict)
 
     def _get_batch(self, job_id: str, batch_id: str) -> Any:
@@ -176,11 +163,8 @@ class SFBulkType:
 
         url = f'{self.bulk_url}job/{job_id}/batch/{batch_id}'
 
-        result = call_salesforce(
-            url=url,
-            method=HTTPMethod.GET,
-            session=self.session,
-            headers=self.headers)
+        result = call_salesforce(url=url, method='GET', session=self.session,
+                                 headers=self.headers)
         return result.json(object_pairs_hook=OrderedDict)
 
     def _get_batch_results(
@@ -192,21 +176,17 @@ class SFBulkType:
 
         url = f'{self.bulk_url}job/{job_id}/batch/{batch_id}/result'
 
-        result = call_salesforce(
-            url=url,
-            method=HTTPMethod.GET,
-            session=self.session,
-            headers=self.headers)
+        result = call_salesforce(url=url, method='GET', session=self.session,
+                                 headers=self.headers)
 
         if operation in ('query', 'queryAll'):
             for batch_result in result.json():
                 url_query_results = f'{url}/{batch_result}'
-                batch_query_result = call_salesforce(
-                    url=url_query_results,
-                    method=HTTPMethod.GET,
-                    session=self.session,
-                    headers=self.headers
-                ).json()
+                batch_query_result = call_salesforce(url=url_query_results,
+                                                     method='GET',
+                                                     session=self.session,
+                                                     headers=self.headers
+                                                     ).json()
                 yield batch_query_result
         else:
             yield result.json()

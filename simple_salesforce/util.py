@@ -2,7 +2,6 @@
 
 import datetime
 import xml.dom.minidom
-from http import HTTPMethod
 from typing import Any, Iterable, List, Mapping, MutableMapping, NoReturn, \
     Optional, \
     TypeVar, Union
@@ -80,7 +79,7 @@ def exception_handler(
 
 def call_salesforce(
         url: str,
-        method: Union[str, HTTPMethod],
+        method: str,
         session: requests.Session,
         headers: Headers,
         **kwargs: Any) -> requests.Response:

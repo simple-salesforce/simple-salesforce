@@ -1,7 +1,6 @@
 """ Class to work with Salesforce Metadata API """
 
 from base64 import b64encode, b64decode
-from http import HTTPMethod
 from pathlib import Path
 from typing import Any, Dict, IO, List, Mapping, Optional, Tuple, Union
 from xml.etree import ElementTree as ET
@@ -329,7 +328,7 @@ class SfdcMetadataApi:
 
         headers = {'Content-Type': 'text/xml', 'SOAPAction': 'deploy'}
         result = call_salesforce(url=self.metadata_url + 'deployRequest',
-                                 method=HTTPMethod.POST,
+                                 method='POST',
                                  session=self.session,
                                  headers=self.headers,
                                  additional_headers=headers,
@@ -390,7 +389,7 @@ class SfdcMetadataApi:
 
         res = call_salesforce(
             url=self.metadata_url + 'deployRequest/' + async_process_id,
-            method=HTTPMethod.POST,
+            method='POST',
             session=self.session,
             headers=self.headers,
             additional_headers=headers,
@@ -545,7 +544,7 @@ class SfdcMetadataApi:
 
         res = call_salesforce(
             url=self.metadata_url + 'deployRequest/' + async_process_id,
-            method=HTTPMethod.POST,
+            method='POST',
             session=self.session,
             headers=self.headers,
             additional_headers=headers,
@@ -583,7 +582,7 @@ class SfdcMetadataApi:
             }
         res = call_salesforce(
             url=self.metadata_url + 'deployRequest/' + async_process_id,
-            method=HTTPMethod.POST,
+            method='POST',
             session=self.session,
             headers=self.headers,
             additional_headers=headers,
