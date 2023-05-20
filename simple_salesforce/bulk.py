@@ -278,7 +278,7 @@ class SFBulkType:
             external_id_field: Optional[str] = None,
             batch_size: Union[int, str] = 10000,
             wait: int = 5,
-            bypass_results: bool = False) -> Iterable[Any]:
+            bypass_results: bool = False) -> Iterable[Iterable[Any]]:
         """ String together helper functions to create a complete
         end-to-end bulk API request
         Arguments:
@@ -294,7 +294,7 @@ class SFBulkType:
         # & the string `auto`
         if not (isinstance(batch_size, int) or batch_size == 'auto'):
             raise ValueError('batch size should be auto or an integer')
-        results: Iterable[Any]
+        results: Iterable[Iterable[Any]]
         if operation not in ('query', 'queryAll'):
             # Checks if data is present
             if not data:

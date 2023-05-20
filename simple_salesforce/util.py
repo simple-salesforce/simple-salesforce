@@ -2,8 +2,9 @@
 
 import datetime
 import xml.dom.minidom
-from typing import Any, Iterable, List, MutableMapping, NoReturn, Optional, \
-    Union
+from typing import Any, Iterable, List, MutableMapping, NoReturn, \
+    Optional, \
+    TypeVar, Union
 
 import requests
 
@@ -14,6 +15,7 @@ from .exceptions import (SalesforceExpiredSession, SalesforceGeneralError,
 
 Headers = MutableMapping[str, str]
 Proxies = MutableMapping[str, str]
+T = TypeVar('T')
 
 # pylint: disable=invalid-name
 def getUniqueElementValueFromXmlString(
@@ -93,9 +95,11 @@ def call_salesforce(
 
     return result
 
-def list_from_generator(generator_function: Iterable[Any]) -> List[Any]:
+def list_from_generator(
+        generator_function: Iterable[Iterable[T]]
+) -> List[T]:
     """Utility method for constructing a list from a generator function"""
-    ret_val = []
+    ret_val: List[T] = []
     for list_results in generator_function:
         ret_val.extend(list_results)
     return ret_val
