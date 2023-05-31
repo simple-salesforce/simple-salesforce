@@ -20,10 +20,12 @@ class SfdcMetadataApi:
         self._session = session
         self._deploy_zip = None
 
-    def _get_api_url(self):
+    def _get_api_url(self, api_version=None):
+        if not api_version:
+            api_version = self._session.get_api_version()
         return "%s%s" % (
             self._session.get_server_url(),
-            self._METADATA_API_BASE_URI.format(**{"version": self._session.get_api_version()}),
+            self._METADATA_API_BASE_URI.format(**{"version": api_version}),
         )
 
     def deploy(self, zipfile, options):
@@ -41,6 +43,10 @@ class SfdcMetadataApi:
             for test in options["tests"]:
                 tests_tag += "<met:runTests>%s</met:runTests>\n" % test
 
+        api_version = None
+        if "apiversion" in options:
+            api_version = options["apiversion"]
+
         attributes = {
             "client": "Metahelper",
             "checkOnly": check_only,
@@ -53,7 +59,11 @@ class SfdcMetadataApi:
         request = msg.DEPLOY_MSG.format(**attributes)
 
         headers = {"Content-type": "text/xml", "SOAPAction": "deploy"}
-        res = self._session.post(self._get_api_url(), headers=headers, data=request)
+        url = self._get_api_url(api_version)
+        print("Submitting Deploy Request")
+        print(f"Deploy Request Url: {url}")
+        print(f"Deploy Request Headers: {headers}")
+        res = self._session.post(url, headers=headers, data=request)
         if res.status_code != 200:
             raise Exception("Request failed with %d code and error [%s]" % (res.status_code, res.text))
 
