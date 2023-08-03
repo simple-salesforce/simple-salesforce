@@ -9,7 +9,7 @@ from json.decoder import JSONDecodeError
 import typing
 import warnings
 
-from authlib.jose import jwt
+import jwt
 import httpx
 
 from simple_salesforce.api import DEFAULT_API_VERSION
@@ -168,7 +168,6 @@ async def AsyncSalesforceLogin(
         and consumer_key is not None
         and (privatekey_file is not None or privatekey is not None)
     ):
-        header = {"alg": "RS256"}
         expiration = datetime.now(timezone.utc) + timedelta(minutes=3)
         payload = {
             "iss": consumer_key,
@@ -182,11 +181,11 @@ async def AsyncSalesforceLogin(
         else:
             key = privatekey
 
-        assertion = jwt.encode(header, payload, key)
+        assertion = jwt.encode(payload, key, algorithm='RS256')
 
         login_token_request_data = {
             "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer",
-            "assertion": assertion.decode(),
+            "assertion": assertion,
         }
 
         return await token_login(
