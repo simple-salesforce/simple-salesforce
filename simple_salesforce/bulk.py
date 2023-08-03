@@ -98,7 +98,7 @@ class SFBulkType:
         if operation == 'upsert':
             payload['externalIdFieldName'] = external_id_field
 
-        url = "{}{}".format(self.bulk_url, 'job')
+        url = f'{self.bulk_url}job'
 
         result = call_salesforce(url=url, method='POST', session=self.session,
                                  headers=self.headers,
@@ -111,7 +111,7 @@ class SFBulkType:
             'state': 'Closed'
             }
 
-        url = "{}{}{}".format(self.bulk_url, 'job/', job_id)
+        url = f'{self.bulk_url}job/{job_id}'
 
         result = call_salesforce(url=url, method='POST', session=self.session,
                                  headers=self.headers,
@@ -120,7 +120,7 @@ class SFBulkType:
 
     def _get_job(self, job_id):
         """ Get an existing job to check the status """
-        url = "{}{}{}".format(self.bulk_url, 'job/', job_id)
+        url = f'{self.bulk_url}job/{job_id}'
 
         result = call_salesforce(url=url, method='GET', session=self.session,
                                  headers=self.headers)
@@ -132,7 +132,7 @@ class SFBulkType:
         implementations involving multiple batches
         """
 
-        url = "{}{}{}{}".format(self.bulk_url, 'job/', job_id, '/batch')
+        url = f'{self.bulk_url}job/{job_id}/batch'
 
         if operation not in ('query', 'queryAll'):
             data = json.dumps(data, allow_nan=False)
@@ -144,8 +144,7 @@ class SFBulkType:
     def _get_batch(self, job_id, batch_id):
         """ Get an existing batch to check the status """
 
-        url = "{}{}{}{}{}".format(self.bulk_url, 'job/',
-                                  job_id, '/batch/', batch_id)
+        url = f'{self.bulk_url}job/{job_id}/batch/{batch_id}'
 
         result = call_salesforce(url=url, method='GET', session=self.session,
                                  headers=self.headers)
@@ -154,15 +153,14 @@ class SFBulkType:
     def _get_batch_results(self, job_id, batch_id, operation):
         """ retrieve a set of results from a completed job """
 
-        url = "{}{}{}{}{}{}".format(self.bulk_url, 'job/', job_id, '/batch/',
-                                    batch_id, '/result')
+        url = f'{self.bulk_url}job/{job_id}/batch/{batch_id}/result'
 
         result = call_salesforce(url=url, method='GET', session=self.session,
                                  headers=self.headers)
 
         if operation in ('query', 'queryAll'):
             for batch_result in result.json():
-                url_query_results = "{}{}{}".format(url, '/', batch_result)
+                url_query_results = f'{url}/{batch_result}'
                 batch_query_result = call_salesforce(url=url_query_results,
                                                      method='GET',
                                                      session=self.session,
@@ -172,28 +170,33 @@ class SFBulkType:
         else:
             yield result.json()
 
-    def worker(self, batch, operation, wait=5):
+    def worker(self, batch, operation, wait=5, bypass_results=False):
         """ Gets batches from concurrent worker threads.
         self._bulk_operation passes batch jobs.
         The worker function checks each batch job waiting for it complete
         and appends the results.
         """
-
-        batch_status = self._get_batch(job_id=batch['jobId'],
-                                       batch_id=batch['id'])['state']
-
-        while batch_status not in ['Completed', 'Failed', 'NotProcessed']:
-            sleep(wait)
+        if not bypass_results:
             batch_status = self._get_batch(job_id=batch['jobId'],
                                            batch_id=batch['id'])['state']
 
-        batch_results = self._get_batch_results(job_id=batch['jobId'],
-                                                batch_id=batch['id'],
-                                                operation=operation)
-        result = batch_results
+            while batch_status not in ['Completed', 'Failed', 'NotProcessed']:
+                sleep(wait)
+                batch_status = self._get_batch(job_id=batch['jobId'],
+                                               batch_id=batch['id'])['state']
+
+            batch_results = self._get_batch_results(job_id=batch['jobId'],
+                                                    batch_id=batch['id'],
+                                                    operation=operation)
+            result = batch_results
+        else:
+            result = [{
+                          'bypass_results': bypass_results,
+                          'job_id': batch['jobId']
+                          }]
         return result
 
-    def _add_autosized_batches(self, operation, data, job):
+    def _add_autosized_batches(self, data, operation, job):
         """
         Auto-create batches that respect bulk api V1 limits.
 
@@ -204,10 +207,12 @@ class SFBulkType:
         AND
         number_of_character_limit <= 10000000
 
-        testing for number of characters ensures that file size limit is
-        respected.
+        Documentation on limits can be found at:
+        https://developer.salesforce.com/docs/atlas.en-us.salesforce_app_limits_cheatsheet.meta/salesforce_app_limits_cheatsheet/salesforce_app_limits_platform_bulkapi.htm#ingest_jobs
 
-        this is due to json serialization of multibyte characters.
+        Our JSON serialization uses the default `ensure_ascii=True`, so the
+        character and byte lengths will be the same. Therefore we only need
+        to adhere to a single length limit of 10,000,000 characters.
 
         TODO: In future when simple-salesforce supports bulk api V2
         we should detect api version and set max file size accordingly. V2
@@ -219,45 +224,35 @@ class SFBulkType:
         * Maximum number of characters in a record: 400,000
         * Maximum number of characters in a field: 131,072
         """
-        file_limit = 1024 * 1024 * 10 # 10MB in bytes
-        rec_limit = 10000
-        char_limit = 10000000
+        record_limit = 10_000
+        char_limit = 10_000_000
 
         batches = []
         last_break = 0
-        nrecs, outsize, outchars = 0, 0, 0
-        for i, rec in enumerate(data):
-            # 2 is added to account for the enclosing `[]`
-            # and the separator `, ` between records.
-            recsize = len(json.dumps(rec, default=str)) + 2
-            recchars = str(rec) + 2
+        record_count, char_count = 0, 0
+        for i, record in enumerate(data):
+            # 2 is added to account for the enclosing `[]` for the first record
+            # and the separator `, ` between records for subsequent records.
+            additional_chars = len(json.dumps(record, default=str)) + 2
             if any([
-                outsize + recsize > file_limit,
-                outchars + recchars > char_limit,
-                nrecs > rec_limit
+                char_count + additional_chars > char_limit,
+                record_count == record_limit
             ]):
-                batches.append(
-                    self._add_batch(
-                        job_id=job['id'],
-                        data=data[last_break:i],
-                        operation=operation
-                    )
-                )
+                batches.append(data[last_break:i])
                 last_break = i
-                nrecs, outsize, outchars = 0, 0, 0
-        if last_break < len(data):
-            batches.append(
-                self._add_batch(
-                    job_id=job['id'],
-                    data=data[last_break:len(data)],
-                    operation=operation
-                )
-            )
-        return batches
+                record_count, char_count = 0, 0
+            char_count += additional_chars
+            record_count += 1
+        if last_break < len(data) - 1:
+            batches.append(data[last_break:])
+
+        return [self._add_batch(job_id=job, data=i,
+                                operation=operation) for i in batches]
 
     # pylint: disable=R0913
     def _bulk_operation(self, operation, data, use_serial=False,
-                        external_id_field=None, batch_size=10000, wait=5):
+                        external_id_field=None, batch_size=10000, wait=5,
+                        bypass_results=False):
         """ String together helper functions to create a complete
         end-to-end bulk API request
         Arguments:
@@ -275,6 +270,10 @@ class SFBulkType:
             raise ValueError('batch size should be auto or an integer')
 
         if operation not in ('query', 'queryAll'):
+            # Checks if data is present
+            if not data:
+                raise ValueError(f'data should not be empty for {operation}')
+
             # Checks to prevent batch limit
             if batch_size != 'auto':
                 batch_size = min(batch_size, len(data), 10000)
@@ -285,22 +284,27 @@ class SFBulkType:
                                        use_serial=use_serial,
                                        external_id_field=external_id_field)
                 if batch_size == 'auto':
-                    batches = self._add_autosized_batches(operation, data, job)
+                    batches = self._add_autosized_batches(job=job['id'],
+                                                          data=data,
+                                                          operation=operation)
                 else:
                     batches = [
                         self._add_batch(job_id=job['id'], data=i,
                                         operation=operation)
                         for i in
                         [data[i * batch_size:(i + 1) * batch_size]
-                        for i in range((len(data) // batch_size + 1))] if i]
+                        for i in range(len(data) // batch_size + 1)] if i]
 
                 multi_thread_worker = partial(self.worker,
                                               operation=operation,
-                                              wait=wait)
+                                              wait=wait,
+                                              bypass_results=bypass_results)
                 list_of_results = pool.map(multi_thread_worker, batches)
 
                 results = [x for sublist in list_of_results for i in
-                           sublist for x in i]
+                           sublist for x in i] if not bypass_results else \
+                    [{k: v} for sublist in list_of_results for i in
+                     sublist for k, v in i.items()]
 
                 self._close_job(job_id=job['id'])
 
@@ -335,7 +339,8 @@ class SFBulkType:
         return results
 
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
-    def delete(self, data, batch_size=10000, use_serial=False):
+    def delete(self, data, batch_size=10000, use_serial=False,
+               bypass_results=False):
         """ soft delete records
 
         Data is batched by 10,000 records by default. To pick a lower size
@@ -344,11 +349,12 @@ class SFBulkType:
         """
         results = self._bulk_operation(use_serial=use_serial,
                                        operation='delete', data=data,
-                                       batch_size=batch_size)
+                                       batch_size=batch_size,
+                                       bypass_results=bypass_results)
         return results
 
     def insert(self, data, batch_size=10000,
-               use_serial=False):
+               use_serial=False, bypass_results=False):
         """ insert records
 
         Data is batched by 10,000 records by default. To pick a lower size
@@ -357,11 +363,12 @@ class SFBulkType:
         """
         results = self._bulk_operation(use_serial=use_serial,
                                        operation='insert', data=data,
-                                       batch_size=batch_size)
+                                       batch_size=batch_size,
+                                       bypass_results=bypass_results)
         return results
 
     def upsert(self, data, external_id_field, batch_size=10000,
-               use_serial=False):
+               use_serial=False, bypass_results=False):
         """ upsert records based on a unique identifier
 
         Data is batched by 10,000 records by default. To pick a lower size
@@ -371,10 +378,12 @@ class SFBulkType:
         results = self._bulk_operation(use_serial=use_serial,
                                        operation='upsert',
                                        external_id_field=external_id_field,
-                                       data=data, batch_size=batch_size)
+                                       data=data, batch_size=batch_size,
+                                       bypass_results=bypass_results)
         return results
 
-    def update(self, data, batch_size=10000, use_serial=False):
+    def update(self, data, batch_size=10000, use_serial=False,
+               bypass_results=False):
         """ update records
 
         Data is batched by 10,000 records by default. To pick a lower size
@@ -383,10 +392,12 @@ class SFBulkType:
         """
         results = self._bulk_operation(use_serial=use_serial,
                                        operation='update', data=data,
-                                       batch_size=batch_size)
+                                       batch_size=batch_size,
+                                       bypass_results=bypass_results)
         return results
 
-    def hard_delete(self, data, batch_size=10000, use_serial=False):
+    def hard_delete(self, data, batch_size=10000, use_serial=False,
+                    bypass_results=False):
         """ hard delete records
 
         Data is batched by 10,000 records by default. To pick a lower size
@@ -395,21 +406,23 @@ class SFBulkType:
         """
         results = self._bulk_operation(use_serial=use_serial,
                                        operation='hardDelete', data=data,
-                                       batch_size=batch_size)
+                                       batch_size=batch_size,
+                                       bypass_results=bypass_results)
         return results
 
-    def query(self, data, lazy_operation=False):
+    def query(self, data, lazy_operation=False, wait=5):
         """ bulk query """
-        results = self._bulk_operation(operation='query', data=data)
+        results = self._bulk_operation(operation='query', data=data, wait=wait)
 
         if lazy_operation:
             return results
 
         return list_from_generator(results)
 
-    def query_all(self, data, lazy_operation=False):
+    def query_all(self, data, lazy_operation=False, wait=5):
         """ bulk queryAll """
-        results = self._bulk_operation(operation='queryAll', data=data)
+        results = self._bulk_operation(operation='queryAll', data=data,
+            wait=wait)
 
         if lazy_operation:
             return results

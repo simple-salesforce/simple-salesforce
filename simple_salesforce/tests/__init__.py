@@ -11,16 +11,16 @@ PROXIES = {
     "https": "http://10.10.1.10:1080",
 }
 
-LOGIN_RESPONSE_SUCCESS = """<?xml version="1.0" encoding="UTF-8"?>
+LOGIN_RESPONSE_SUCCESS = f"""<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns="urn:enterprise.soap.sforce.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <soapenv:Body>
       <loginResponse>
          <result>
-            <metadataServerUrl>%s</metadataServerUrl>
+            <metadataServerUrl>{METADATA_URL}</metadataServerUrl>
             <passwordExpired>false</passwordExpired>
             <sandbox>false</sandbox>
-            <serverUrl>%s</serverUrl>
-            <sessionId>%s</sessionId>
+            <serverUrl>{SERVER_URL}</serverUrl>
+            <sessionId>{SESSION_ID}</sessionId>
             <userId>005i0000002MUqLAAW</userId>
             <userInfo>
                <accessibilityMode>false</accessibilityMode>
@@ -50,15 +50,15 @@ LOGIN_RESPONSE_SUCCESS = """<?xml version="1.0" encoding="UTF-8"?>
       </loginResponse>
    </soapenv:Body>
 </soapenv:Envelope>
-""" % (METADATA_URL, SERVER_URL, SESSION_ID)
+"""
 
-TOKEN_LOGIN_RESPONSE_SUCCESS = """{
-    "access_token": "%s",
+TOKEN_LOGIN_RESPONSE_SUCCESS = f"""{{
+    "access_token": "{SESSION_ID}",
     "scope": "web api",
-    "instance_url": "%s",
-    "id": "%s",
+    "instance_url": "{INSTANCE_URL}",
+    "id": "{TOKEN_ID}",
     "token_type": "Bearer"
-}""" % (SESSION_ID, INSTANCE_URL, TOKEN_ID)
+}}"""
 
 TOKEN_WARNING = """
     If your connected app policy is set to "All users may
@@ -96,6 +96,6 @@ ORGANIZATION_LIMITS_RESPONSE = {
 
 BULK_HEADERS = {
     'Content-Type': 'application/json',
-    'X-SFDC-Session': "%s" % SESSION_ID,
+    'X-SFDC-Session': SESSION_ID,
     'X-PrettyPrint': '1'
 }

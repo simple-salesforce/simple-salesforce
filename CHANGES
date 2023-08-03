@@ -1,3 +1,42 @@
+v1.12.4
+======
+Bug Fixes
+--------
+- [#612] Fix unescaped username for JWT claim
+
+Other
+--------
+- [#636] Fix README typos
+- [#634] Added object_pairs_hook to SFType
+- [#618] Fixed indentation in setup.py
+- [#614] Updated README with tutorial video
+- [#607] Fixed misspellings
+
+v1.12.3
+======
+Bug Fixes
+--------
+- [#594] Fix infinite refresh session issue
+- [#603] Fix upsert metadata
+- [#604] Fix escaped username and password in connected app
+
+Other
+--------
+- [#585] Additional documentation (README) on using package with Process Approvals rest API
+- [#597] Use f-strings
+- [#599] Use replace os.path with pathlib
+
+v1.12.2
+======
+Features
+--------
+- Add support for OAuth connected app & update default_client_id_prefix to 'simple_salesforce'
+- [#565] Add wait arguement for bulk
+
+Other
+--------
+- [#563] Remove leftover reference to Python 3.5 support
+
 v1.12.1
 ======
 Fix pylint errors and build errors on Travis-CI
