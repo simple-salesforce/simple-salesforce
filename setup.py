@@ -1,16 +1,14 @@
 """Simple-Salesforce Package Setup"""
 
-import os
-import sys
 import textwrap
+from pathlib import Path
 
 from setuptools import setup
 
-here = os.path.abspath(os.path.dirname(__file__))
+here = Path(__file__).parent
 
 about = {}
-with open(os.path.join(here, 'simple_salesforce', '__version__.py'), 'r') as f:
-    exec(f.read(), about)
+exec((here / 'simple_salesforce' / '__version__.py').read_text(), about)
 
 setup(
     name=about['__title__'],
@@ -23,37 +21,40 @@ setup(
     url=about['__url__'],
     license=about['__license__'],
     description=about['__description__'],
-    long_description=textwrap.dedent(open('README.rst', 'r').read()),
+    long_description=textwrap.dedent((here / 'README.rst').read_text()),
     long_description_content_type='text/x-rst',
     package_data={
         'simple_salesforce': ['metadata.wsdl'],
         },
     install_requires = [
         'requests>=2.22.0',
-        'authlib',
+        'cryptography',
         'zeep',
+        'pyjwt',
         'httpx>=0.20.0,<1.0',
         'aiofiles>=0.7.0'
-    ],
-                   tests_require = [
-                                       'nose>=1.3.0',
-                                       'pytz>=2014.1.1',
-                                       'responses>=0.5.1',
-                                       'cryptography<3.4',
-                                       ],
-                                   test_suite = 'nose.collector',
-                                                keywords = about[
-                                                               '__keywords__'],
-                                                           classifiers = [
-    'Development Status :: 5 - Production/Stable',
-    'License :: OSI Approved :: Apache Software License',
-    'Intended Audience :: Developers',
-    'Intended Audience :: System Administrators',
-    'Operating System :: OS Independent',
-    'Topic :: Internet :: WWW/HTTP',
-    'Programming Language :: Python :: 3.6',
-    'Programming Language :: Python :: 3.7',
-    'Programming Language :: Python :: 3.8',
-    'Programming Language :: Python :: Implementation :: PyPy'
-    ]
+        ],
+    tests_require = [
+        'pytest',
+        'pytz>=2014.1.1',
+        'responses>=0.5.1',
+        'cryptography<3.4',
+        ],
+    test_suite = 'simple_salesforce.tests',
+    keywords = about['__keywords__'],
+    classifiers = [
+        'Development Status :: 5 - Production/Stable',
+        'License :: OSI Approved :: Apache Software License',
+        'Intended Audience :: Developers',
+        'Intended Audience :: System Administrators',
+        'Operating System :: OS Independent',
+        'Topic :: Internet :: WWW/HTTP',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: Implementation :: PyPy'
+        ]
 )

@@ -6,6 +6,7 @@ import unittest
 import decimal
 from collections import OrderedDict
 from datetime import datetime
+from pathlib import Path
 from unittest.mock import patch
 
 import requests
@@ -534,7 +535,7 @@ class TestSalesforce(unittest.TestCase):
             version=expected_version)
 
         self.assertEqual(
-            client.base_url.split('/')[-2], 'v%s' % expected_version)
+            client.base_url.split('/')[-2], f'v{expected_version}')
 
     def test_shared_session_to_sftype(self):
         """Test Salesforce and SFType instances share default `Session`"""
@@ -811,8 +812,7 @@ class TestSalesforce(unittest.TestCase):
         self.assertEqual(result, tests.ORGANIZATION_LIMITS_RESPONSE)
 
     @responses.activate
-    @patch("simple_salesforce.metadata.SfdcMetadataApi._read_deploy_zip")
-    def test_md_deploy_success(self, mock_read_zip):
+    def test_md_deploy_success(self):
         """"
         Test method for metadata deployment
         """
@@ -837,13 +837,44 @@ class TestSalesforce(unittest.TestCase):
         client = Salesforce(session_id=tests.SESSION_ID,
                             instance=tests.INSTANCE_URL,
                             session=session)
-        result = client.deploy("path/to/fake/zip.zip", sandbox=False)
+        zip_path = Path(__file__).parent / 'sample.zip'
+        result = client.deploy(str(zip_path), sandbox=False)
         self.assertEqual(result.get('asyncId'), "0Af3B00001CMyfASAT")
         self.assertEqual(result.get('state'), "Queued")
 
     @responses.activate
-    @patch("simple_salesforce.metadata.SfdcMetadataApi._read_deploy_zip")
-    def test_md_deploy_failed_status_code(self, mock_read_zip):
+    def test_md_deploy_success_open(self):
+        """"
+        Test method for metadata deployment
+        """
+        #pylint: disable=unused-argument
+        mock_response = '<?xml version="1.0" ' \
+                        'encoding="UTF-8"?><soapenv:Envelope ' \
+                        'xmlns:soapenv="http://schemas.xmlsoap.org/soap' \
+                        '/envelope/" ' \
+                        'xmlns="http://soap.sforce.com/2006/04/metadata' \
+                        '"><soapenv:Body><deployResponse><result><done' \
+                        '>false</done><id>0Af3B00001CMyfASAT</id><state' \
+                        '>Queued</state></result></deployResponse></soapenv' \
+                        ':Body></soapenv:Envelope>'
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://.*/deployRequest'),
+            body=mock_response,
+            status=200
+            )
+
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.INSTANCE_URL,
+                            session=session)
+        zip_path = Path(__file__).parent / 'sample.zip'
+        with zip_path.open('rb') as zipfile:
+            client.deploy(zipfile, sandbox=False)
+            self.assertFalse(zipfile.closed)
+
+    @responses.activate
+    def test_md_deploy_failed_status_code(self):
         """"
         Test method for metadata deployment
         """
@@ -859,8 +890,9 @@ class TestSalesforce(unittest.TestCase):
         client = Salesforce(session_id=tests.SESSION_ID,
                             instance=tests.INSTANCE_URL,
                             session=session)
+        zip_path = Path(__file__).parent / 'sample.zip'
         with self.assertRaises(Exception):
-            client.deploy("path/to/fake/zip.zip", sandbox=False)
+            client.deploy(str(zip_path), sandbox=False)
 
     @responses.activate
     def test_check_status_pending(self):
@@ -1182,7 +1214,7 @@ class TestSalesforce(unittest.TestCase):
         """Test oauth2 endpoint returns no result"""
         responses.add(
             responses.POST,
-            re.compile(r'^https://.*/services/oauth2/revoke\?token=.+$$'),
+            re.compile(r'^https://.*/services/oauth2/revoke\?token=.+$'),
             body='{}',
             status=http.OK,
             content_type='')
