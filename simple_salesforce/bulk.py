@@ -1,15 +1,15 @@
 """ Classes for interacting with Salesforce Bulk API """
 
+import concurrent.futures
 import json
 from collections import OrderedDict
-from time import sleep
-import concurrent.futures
 from functools import partial
+from time import sleep
 
 import requests
 
-from .util import call_salesforce, list_from_generator
 from .exceptions import SalesforceGeneralError
+from .util import call_salesforce, list_from_generator
 
 
 class SFBulkHandler:
@@ -45,7 +45,7 @@ class SFBulkHandler:
             'Content-Type': 'application/json',
             'X-SFDC-Session': self.session_id,
             'X-PrettyPrint': '1'
-            }
+        }
 
     def __getattr__(self, name):
         return SFBulkType(object_name=name, bulk_url=self.bulk_url,
@@ -74,7 +74,7 @@ class SFBulkType:
         self.headers = headers
 
     def _create_job(self, operation, use_serial,
-                    external_id_field=None):
+                    external_id_field=None, add_salesforce_job_callback=None):
         """ Create a bulk job
 
         Arguments:
@@ -93,7 +93,7 @@ class SFBulkType:
             'object': self.object_name,
             'concurrencyMode': use_serial,
             'contentType': 'JSON'
-            }
+        }
 
         if operation == 'upsert':
             payload['externalIdFieldName'] = external_id_field
@@ -103,13 +103,15 @@ class SFBulkType:
         result = call_salesforce(url=url, method='POST', session=self.session,
                                  headers=self.headers,
                                  data=json.dumps(payload, allow_nan=False))
-        return result.json(object_pairs_hook=OrderedDict)
+        job = result.json(object_pairs_hook=OrderedDict)
+        add_salesforce_job_callback(job['id'])
+        return job
 
     def _close_job(self, job_id):
         """ Close a bulk job """
         payload = {
             'state': 'Closed'
-            }
+        }
 
         url = f'{self.bulk_url}job/{job_id}'
 
@@ -124,7 +126,11 @@ class SFBulkType:
 
         result = call_salesforce(url=url, method='GET', session=self.session,
                                  headers=self.headers)
-        return result.json(object_pairs_hook=OrderedDict)
+
+        job = result.json(object_pairs_hook=OrderedDict)
+        print(
+            f'job id {job["id"]}. concurrencyMode {job["concurrencyMode"]}. state {job["state"]}. numberRecordsProcessed {job["numberRecordsProcessed"]}. numberBatchesTotal {job["numberBatchesTotal"]}. numberBatchesCompleted {job["numberBatchesCompleted"]}. numberRecordsFailed {job["numberRecordsFailed"]}. ')
+        return job
 
     def _add_batch(self, job_id, data, operation):
         """ Add a set of data as a batch to an existing job
@@ -141,14 +147,27 @@ class SFBulkType:
                                  headers=self.headers, data=data)
         return result.json(object_pairs_hook=OrderedDict)
 
+    def _get_job_batches(self, job_id):
+        """ Get the batches of a given job by job_id """
+
+        url = f'{self.bulk_url}job/{job_id}/batch'
+
+        result = call_salesforce(url=url, method='GET', session=self.session, headers=self.headers)
+        return result.json(object_pairs_hook=OrderedDict)['batchInfo']
+
     def _get_batch(self, job_id, batch_id):
         """ Get an existing batch to check the status """
 
         url = f'{self.bulk_url}job/{job_id}/batch/{batch_id}'
 
+        self._get_job(job_id=job_id)
+
         result = call_salesforce(url=url, method='GET', session=self.session,
                                  headers=self.headers)
-        return result.json(object_pairs_hook=OrderedDict)
+        batch = result.json(object_pairs_hook=OrderedDict)
+        print(
+            f'batch id {batch["id"]}. job id {batch["jobId"]}. batch state {batch["state"]}. records completed {batch["numberRecordsProcessed"]}. records failed {batch["numberRecordsFailed"]}')
+        return batch
 
     def _get_batch_results(self, job_id, batch_id, operation):
         """ retrieve a set of results from a completed job """
@@ -191,9 +210,9 @@ class SFBulkType:
             result = batch_results
         else:
             result = [{
-                          'bypass_results': bypass_results,
-                          'job_id': batch['jobId']
-                          }]
+                'bypass_results': bypass_results,
+                'job_id': batch['jobId']
+            }]
         return result
 
     def _add_autosized_batches(self, data, operation, job):
@@ -252,7 +271,7 @@ class SFBulkType:
     # pylint: disable=R0913
     def _bulk_operation(self, operation, data, use_serial=False,
                         external_id_field=None, batch_size=10000, wait=5,
-                        bypass_results=False):
+                        bypass_results=False, add_salesforce_job_callback=None):
         """ String together helper functions to create a complete
         end-to-end bulk API request
         Arguments:
@@ -278,40 +297,30 @@ class SFBulkType:
             if batch_size != 'auto':
                 batch_size = min(batch_size, len(data), 10000)
 
-            with concurrent.futures.ThreadPoolExecutor() as pool:
+            job = self._create_job(operation=operation,
+                                   use_serial=use_serial,
+                                   external_id_field=external_id_field,
+                                   add_salesforce_job_callback=add_salesforce_job_callback)
+            if batch_size == 'auto':
+                batches = self._add_autosized_batches(job=job['id'],
+                                                      data=data,
+                                                      operation=operation)
+            else:
+                batches = [
+                    self._add_batch(job_id=job['id'], data=i,
+                                    operation=operation)
+                    for i in
+                    [data[i * batch_size:(i + 1) * batch_size]
+                     for i in range(len(data) // batch_size + 1)] if i]
 
-                job = self._create_job(operation=operation,
-                                       use_serial=use_serial,
-                                       external_id_field=external_id_field)
-                if batch_size == 'auto':
-                    batches = self._add_autosized_batches(job=job['id'],
-                                                          data=data,
-                                                          operation=operation)
-                else:
-                    batches = [
-                        self._add_batch(job_id=job['id'], data=i,
-                                        operation=operation)
-                        for i in
-                        [data[i * batch_size:(i + 1) * batch_size]
-                        for i in range(len(data) // batch_size + 1)] if i]
-
-                multi_thread_worker = partial(self.worker,
-                                              operation=operation,
-                                              wait=wait,
-                                              bypass_results=bypass_results)
-                list_of_results = pool.map(multi_thread_worker, batches)
-
-                results = [x for sublist in list_of_results for i in
-                           sublist for x in i] if not bypass_results else \
-                    [{k: v} for sublist in list_of_results for i in
-                     sublist for k, v in i.items()]
-
-                self._close_job(job_id=job['id'])
+            results = self._track_batches_and_close_job(batches=batches, job_id=job['id'], operation=operation,
+                                                        bypass_results=bypass_results, wait=wait)
 
         elif operation in ('query', 'queryAll'):
             job = self._create_job(operation=operation,
                                    use_serial=use_serial,
-                                   external_id_field=external_id_field)
+                                   external_id_field=external_id_field,
+                                   add_salesforce_job_callback=add_salesforce_job_callback)
 
             batch = self._add_batch(job_id=job['id'], data=data,
                                     operation=operation)
@@ -323,7 +332,7 @@ class SFBulkType:
 
             while batch_status['state'] not in [
                 'Completed', 'Failed', 'NotProcessed'
-                ]:
+            ]:
                 sleep(wait)
                 batch_status = self._get_batch(job_id=batch['jobId'],
                                                batch_id=batch['id'])
@@ -338,7 +347,32 @@ class SFBulkType:
                                               operation=operation)
         return results
 
-    # _bulk_operation wrappers to expose supported Salesforce bulk operations
+    def _track_batches_and_close_job(self, batches, job_id, operation, bypass_results=False, wait=5):
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            multi_thread_worker = partial(self.worker,
+                                          operation=operation,
+                                          wait=wait,
+                                          bypass_results=bypass_results)
+
+            list_of_results = pool.map(multi_thread_worker, batches)
+
+            results = [x for sublist in list_of_results for i in
+                       sublist for x in i] if not bypass_results else \
+                [{k: v} for sublist in list_of_results for i in
+                 sublist for k, v in i.items()]
+
+            self._close_job(job_id=job_id)
+
+            return results
+
+    def track_job(self, job_id, operation, bypass_results=False, wait=5):
+        batches = self._get_job_batches(job_id=job_id)
+        return self._track_batches_and_close_job(batches=batches,
+                                                 job_id=job_id,
+                                                 operation=operation,
+                                                 bypass_results=bypass_results,
+                                                 wait=wait)
+
     def delete(self, data, batch_size=10000, use_serial=False,
                bypass_results=False):
         """ soft delete records
@@ -354,7 +388,7 @@ class SFBulkType:
         return results
 
     def insert(self, data, batch_size=10000,
-               use_serial=False, bypass_results=False):
+               use_serial=False, bypass_results=False, add_salesforce_job_callback=None):
         """ insert records
 
         Data is batched by 10,000 records by default. To pick a lower size
@@ -364,7 +398,8 @@ class SFBulkType:
         results = self._bulk_operation(use_serial=use_serial,
                                        operation='insert', data=data,
                                        batch_size=batch_size,
-                                       bypass_results=bypass_results)
+                                       bypass_results=bypass_results,
+                                       add_salesforce_job_callback=add_salesforce_job_callback)
         return results
 
     def upsert(self, data, external_id_field, batch_size=10000,
@@ -422,7 +457,7 @@ class SFBulkType:
     def query_all(self, data, lazy_operation=False, wait=5):
         """ bulk queryAll """
         results = self._bulk_operation(operation='queryAll', data=data,
-            wait=wait)
+                                       wait=wait)
 
         if lazy_operation:
             return results
