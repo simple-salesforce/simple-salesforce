@@ -2,6 +2,7 @@
 
 import concurrent.futures
 import json
+import logging
 from collections import OrderedDict
 from functools import partial
 from time import sleep
@@ -10,6 +11,8 @@ import requests
 
 from .exceptions import SalesforceGeneralError
 from .util import call_salesforce, list_from_generator
+
+logger = logging.getLogger(__name__)
 
 
 class SFBulkHandler:
@@ -128,7 +131,7 @@ class SFBulkType:
                                  headers=self.headers)
 
         job = result.json(object_pairs_hook=OrderedDict)
-        print(
+        logger.info(
             f'job id {job["id"]}. concurrencyMode {job["concurrencyMode"]}. state {job["state"]}. numberRecordsProcessed {job["numberRecordsProcessed"]}. numberBatchesTotal {job["numberBatchesTotal"]}. numberBatchesCompleted {job["numberBatchesCompleted"]}. numberRecordsFailed {job["numberRecordsFailed"]}. ')
         return job
 
@@ -165,7 +168,7 @@ class SFBulkType:
         result = call_salesforce(url=url, method='GET', session=self.session,
                                  headers=self.headers)
         batch = result.json(object_pairs_hook=OrderedDict)
-        print(
+        logger.info(
             f'batch id {batch["id"]}. job id {batch["jobId"]}. batch state {batch["state"]}. records completed {batch["numberRecordsProcessed"]}. records failed {batch["numberRecordsFailed"]}')
         return batch
 
