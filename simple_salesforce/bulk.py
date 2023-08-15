@@ -130,7 +130,7 @@ class SFBulkType:
         result = call_salesforce(url=url, method='GET', session=self.session,
                                  headers=self.headers)
 
-        job = result.json(object_pairs_hook=OrderedDict)
+        job = result.json()
         logger.info(
             f'job id {job["id"]}. concurrencyMode {job["concurrencyMode"]}. state {job["state"]}. numberRecordsProcessed {job["numberRecordsProcessed"]}. numberBatchesTotal {job["numberBatchesTotal"]}. numberBatchesCompleted {job["numberBatchesCompleted"]}. numberRecordsFailed {job["numberRecordsFailed"]}. ')
         return job
@@ -156,7 +156,7 @@ class SFBulkType:
         url = f'{self.bulk_url}job/{job_id}/batch'
 
         result = call_salesforce(url=url, method='GET', session=self.session, headers=self.headers)
-        return result.json(object_pairs_hook=OrderedDict)['batchInfo']
+        return result.json()
 
     def _get_batch(self, job_id, batch_id):
         """ Get an existing batch to check the status """
@@ -364,17 +364,23 @@ class SFBulkType:
                 [{k: v} for sublist in list_of_results for i in
                  sublist for k, v in i.items()]
 
-            self._close_job(job_id=job_id)
+            if self._get_job(job_id=job_id)['state'] not in ['Closed', 'Aborted']:
+                self._close_job(job_id=job_id)
 
             return results
 
-    def track_job(self, job_id, operation, bypass_results=False, wait=5):
+    def continue_job(self, job_id, operation, bypass_results=False, wait=5):
         batches = self._get_job_batches(job_id=job_id)
         return self._track_batches_and_close_job(batches=batches,
                                                  job_id=job_id,
                                                  operation=operation,
                                                  bypass_results=bypass_results,
                                                  wait=wait)
+
+    def track_job(self, job_id: str) -> dict:
+        job = self._get_job(job_id=job_id)
+        batches = self._get_job_batches(job_id=job_id)
+        return {**job, **batches}
 
     def delete(self, data, batch_size=10000, use_serial=False,
                bypass_results=False):
