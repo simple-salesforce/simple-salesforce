@@ -364,7 +364,7 @@ class SFBulkType:
                 [{k: v} for sublist in list_of_results for i in
                  sublist for k, v in i.items()]
 
-            if self._get_job(job_id=job_id)['state'] not in ['Closed', 'Aborted']:
+            if self._get_job(job_id=job_id)['state'] not in ['Closed', 'Aborted', 'Failed']:
                 self._close_job(job_id=job_id)
 
             return results
