@@ -22,6 +22,7 @@ import pendulum
 import requests
 from more_itertools import chunked
 from pendulum import DateTime
+from datetime import date, timedelta, datetime
 
 from .exceptions import (
     SalesforceBulkV2ExtractError,
@@ -176,10 +177,11 @@ def _convert_dict_to_csv(data, column_delimiter=',', line_ending=LineEnding.LF):
         dict_to_csv_file = io.StringIO()
         writer = csv.DictWriter(dict_to_csv_file, fieldnames=keys,
                                 delimiter=column_delimiter,
-                                lineterminator=line_ending)
+                                lineterminator=line_ending
+                                )
         writer.writeheader()
-        for row in data:
-            writer.writerow(row)
+        writer.writerows(data)
+        
     return dict_to_csv_file.getvalue() if data else None
 
 
@@ -326,14 +328,16 @@ class _Bulk2Client:
 
     def wait_for_job(self, job_id, is_query: bool, wait=0.5):
         """Wait for job completion or timeout"""
-        expiration_time: DateTime = pendulum.now().add(
-            seconds=self.DEFAULT_WAIT_TIMEOUT_SECONDS
-            )
+        # expiration_time: DateTime = pendulum.now().add(
+        #     seconds=self.DEFAULT_WAIT_TIMEOUT_SECONDS
+        #     )
+        expiration_time = datetime.now().replace(microsecond=0) + \
+            timedelta(seconds=self.DEFAULT_WAIT_TIMEOUT_SECONDS)
         job_status = JobState.in_progress if is_query else JobState.open
         delay_timeout = 0.0
         delay_cnt = 0
         sleep(wait)
-        while pendulum.now() < expiration_time:
+        while datetime.now() < expiration_time:
             job_info = self.get_job(job_id, is_query)
             job_status = job_info["state"]
             if job_status in [
@@ -508,7 +512,8 @@ class _Bulk2Client:
             method="PUT",
             session=self.session,
             headers=headers,
-            data=data,
+            # data=data
+            data=data.encode('utf-8'),
             )
         if result.status_code != http.CREATED:
             raise SalesforceBulkV2LoadError(
@@ -657,35 +662,44 @@ class SFBulk2Type:
 
         results = []
         workers = min(concurrency, MAX_INGEST_JOB_PARALLELISM)
-        split_data = _split_csv(filename=csv_file, max_records=batch_size) \
-            if \
-            csv_file else _split_csv(records=records, max_records=batch_size)
-        if workers == 1:
-            for data in split_data:
-                result = self._upload_data(
-                    operation,
-                    data,
-                    column_delimiter,
-                    line_ending,
-                    external_id_field,
-                    wait,
-                    )
-                results.append(result)
-        else:
-            # OOM is possible if the file is too large
-            for chunks in chunked(split_data, n=workers):
-                workers = min(workers, len(chunks))
-                with ThreadPoolExecutor(max_workers=workers) as pool:
-                    multi_thread_worker = partial(
-                        self._upload_data,
-                        operation,
-                        column_delimiter=column_delimiter,
-                        line_ending=line_ending,
-                        external_id_field=external_id_field,
-                        wait=wait,
-                        )
-                    _results = pool.map(multi_thread_worker, chunks)
-                results.extend(list(_results))
+        # split_data = _split_csv(filename=csv_file, max_records=batch_size) \
+        #     if \
+        #     csv_file else _split_csv(records=records, max_records=batch_size)
+        # if workers == 1:
+        #     for data in split_data:
+        #         result = self._upload_data(
+        #             operation,
+        #             data,
+        #             column_delimiter,
+        #             line_ending,
+        #             external_id_field,
+        #             wait,
+        #             )
+        #         results.append(result)
+        # else:
+        #     # OOM is possible if the file is too large
+        #     for chunks in chunked(split_data, n=workers):
+        #         workers = min(workers, len(chunks))
+        #         with ThreadPoolExecutor(max_workers=workers) as pool:
+        #             multi_thread_worker = partial(
+        #                 self._upload_data,
+        #                 operation,
+        #                 column_delimiter=column_delimiter,
+        #                 line_ending=line_ending,
+        #                 external_id_field=external_id_field,
+        #                 wait=wait,
+        #                 )
+        #             _results = pool.map(multi_thread_worker, chunks)
+        #         results.extend(list(_results))
+        result = self._upload_data(
+            operation,
+            records,
+            column_delimiter,
+            line_ending,
+            external_id_field,
+            wait,
+            )
+        results.append(result)
         return results
 
     def delete(
