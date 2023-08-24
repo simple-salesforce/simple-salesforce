@@ -211,7 +211,18 @@ class Salesforce:
                 proxies=self.proxies,
                 domain=self.domain)
             self._refresh_session()
-
+        elif all(arg is not None for arg in(
+            consumer_key, consumer_secret, domain
+        )):
+            self.auth_type = "client-credentials"
+            self._salesforce_login_partial = partial(
+                SalesforceLogin,
+                session=self.session,
+                consumer_key=consumer_key,
+                consumer_secret=consumer_secret,
+                proxies=self.proxies,
+                domain=self.domain)
+            self._refresh_session()
         else:
             raise TypeError(
                 'You must provide login information or an instance and token'
