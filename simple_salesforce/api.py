@@ -1,7 +1,7 @@
 """Core classes and exceptions for Simple-Salesforce"""
 
 # has to be defined prior to login import
-DEFAULT_API_VERSION = '52.0'
+DEFAULT_API_VERSION = '57.0'
 import base64
 import json
 import logging
