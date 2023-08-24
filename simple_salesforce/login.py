@@ -2,6 +2,7 @@
 
 Heavily Modified from RestForce 1.0.0
 """
+import base64
 
 DEFAULT_CLIENT_ID_PREFIX = 'simple-salesforce'
 
@@ -19,7 +20,7 @@ from .exceptions import SalesforceAuthenticationFailed
 from .util import getUniqueElementValueFromXmlString
 
 
-# pylint: disable=invalid-name,too-many-arguments,too-many-locals
+# pylint: disable=invalid-name,too-many-arguments,too-many-locals,too-many-branches
 def SalesforceLogin(
         username=None,
         password=None,
@@ -190,6 +191,18 @@ def SalesforceLogin(
             f'https://{domain}.salesforce.com/services/oauth2/token',
             token_data, domain, consumer_key,
             None, proxies, session)
+    elif consumer_key is not None and consumer_secret is not None and \
+            domain is not None and domain not in ('login', 'test'):
+        token_data = {'grant_type': 'client_credentials'}
+        authorization = f'{consumer_key}:{consumer_secret}'
+        encoded = base64.b64encode(authorization.encode()).decode()
+        headers = {
+            'Authorization': f'Basic {encoded}'
+        }
+        return token_login(
+            f'https://{domain}.salesforce.com/services/oauth2/token',
+            token_data, domain, consumer_key,
+            headers, proxies, session)
     else:
         except_code = 'INVALID AUTH'
         except_msg = (

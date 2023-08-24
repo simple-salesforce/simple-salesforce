@@ -2,7 +2,7 @@
 Simple Salesforce
 *****************
 
-.. image:: https://api.travis-ci.org/simple-salesforce/simple-salesforce.svg?branch=master
+.. image:: https://app.travis-ci.com/simple-salesforce/simple-salesforce.svg?branch=master
    :target: https://travis-ci.org/simple-salesforce/simple-salesforce
 
 .. image:: https://readthedocs.org/projects/simple-salesforce/badge/?version=latest
@@ -10,12 +10,19 @@ Simple Salesforce
    :alt: Documentation Status
 
 Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.6, 3.7 3.8, 3.9, 3.10, and 3.11. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
-
-=============
-
 You can find out more regarding the format of the results in the `Official Salesforce.com REST API Documentation`_
 
 .. _Official Salesforce.com REST API Documentation: http://www.salesforce.com/us/developer/docs/api_rest/index.htm
+
+
+
+=============
+
+Documentation
+--------------------------------
+
+.. _Official Simple Salesforce documentation: http://simple-salesforce.readthedocs.io/en/latest/
+`Official Simple Salesforce documentation`_
 
 Examples
 --------------------------
@@ -59,7 +66,7 @@ To login using the JWT method, use your Salesforce username, consumer key from y
 
     from simple_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com', consumer_key='XYZ', privatekey_file='filename.key')
-    
+
 To login using a connected app, simply include the Salesforce method and pass in your Salesforce username, password, consumer_key and consumer_secret (the consumer key and consumer secret are provided when you setup your connected app):
 
 .. code-block:: python
@@ -442,7 +449,7 @@ Update existing records:
         ]
 
     sf.bulk.Contact.update(data,batch_size=10000,use_serial=True)
-    
+
 Update existing records and update lookup fields from an external id field:
 
 .. code-block:: python
@@ -474,7 +481,7 @@ Query records:
 
     sf.bulk.Account.query(query)
 
-To retrieve large amounts of data, use 
+To retrieve large amounts of data, use
 
 .. code-block:: python
 
@@ -498,7 +505,7 @@ QueryAll will return records that have been deleted because of a merge or delete
 
     sf.bulk.Account.query_all(query)
 
-To retrieve large amounts of data, use 
+To retrieve large amounts of data, use
 
 .. code-block:: python
 
@@ -527,6 +534,121 @@ Hard deletion:
     data = [{'Id': '0000000000BBBBB'}]
 
     sf.bulk.Contact.hard_delete(data,batch_size=10000,use_serial=True)
+
+
+Using Bulk 2.0
+--------------------------
+
+You can use this library to access Bulk 2.0 API functions.
+
+Create new records:
+
+.. code-block:: text
+
+    "Custom_Id__c","AccountId","Email","FirstName","LastName"
+    "CustomID1","ID-13","contact1@example.com","Bob","x"
+    "CustomID2","ID-24","contact2@example.com","Alice","y"
+    ...
+
+.. code-block:: python
+
+    sf.bulk2.Contact.insert("./sample.csv", batch_size=10000)
+
+
+Create new records concurrently:
+
+.. code-block:: python
+
+    sf.bulk2.Contact.insert("./sample.csv", batch_size=10000, concurrency=10)
+
+
+Update existing records:
+
+.. code-block:: text
+
+    "Custom_Id__c","AccountId","Email","FirstName","LastName"
+    "CustomID1","ID-13","contact1@example.com","Bob","X"
+    "CustomID2","ID-24","contact2@example.com","Alice","Y"
+    ...
+
+.. code-block:: python
+
+    sf.bulk2.Contact.update("./sample.csv")
+
+
+Upsert records:
+
+.. code-block:: text
+
+    "Custom_Id__c","LastName"
+    "CustomID1","X"
+    "CustomID2","Y"
+    ...
+
+.. code-block:: python
+
+    sf.bulk2.Contact.upsert("./sample.csv", 'Custom_Id__c')
+
+
+Query records:
+
+.. code-block:: python
+
+    query = 'SELECT Id, Name FROM Account LIMIT 100000'
+
+    results = sf.bulk2.Account.query(
+        query, max_records=50000, column_delimiter="COMM", line_ending="LF"
+    )
+    for i, data in enumerate(results):
+        with open(f"results/part-{1}.csv", "w") as bos:
+            bos.write(data)
+
+
+Download records(low memory usage):
+
+.. code-block:: python
+
+    query = 'SELECT Id, Name FROM Account'
+
+    sf.bulk2.Account.download(
+        query, path="results/", max_records=200000
+    )
+
+
+Delete records (soft deletion):
+
+.. code-block:: text
+
+    "Id"
+    "0000000000AAAAA"
+    "0000000000BBBBB"
+    ...
+
+
+.. code-block:: python
+
+    sf.bulk2.Contact.delete("./sample.csv")
+
+
+Hard deletion:
+
+.. code-block:: python
+
+    sf.bulk2.Contact.hard_delete("./sample.csv")
+
+
+Retrieve failed/successful/unprocessed records for ingest(insert,update...) job:
+
+.. code-block:: python
+
+    results = sf.bulk2.Contact.insert("./sample.csv")
+    # [{"numberRecordsFailed": 123, "numberRecordsProcessed": 2000, "numberRecordsTotal": 2000, "job_id": "Job-1"}, ...]
+    for result in results:
+        job_id = result['job_id']
+        # also available: get_unprocessed_records, get_successful_records
+        data = sf.bulk2.Contact.get_failed_records(job_id)
+        # or save to file
+        sf.bulk2.Contact.get_failed_records(job_id, file=f'{job_id}.csv')
 
 
 Using Apex
@@ -603,10 +725,10 @@ Convert SFDC Datetime to Datetime or Date object
     import datetime
     # Formatting to SFDC datetime
     formatted_datetime =  datetime.datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z")
-    
+
     #Formatting to SFDC date
     formatted_date = datetime.strptime(x, "%Y-%m-%d")
-    
+
 Helpful Pandas Resources
 --------------------------
 A list of helpful resources when working with Pandas and simple-salesforce
@@ -614,34 +736,34 @@ A list of helpful resources when working with Pandas and simple-salesforce
 Generate list for SFDC Query "IN" operations from a Pandas Dataframe
 
 .. code-block:: python
- 
+
  import pandas as pd
- 
+
  df = pd.DataFrame([{'Id':1},{'Id':2},{'Id':3}])
     def dataframe_to_sfdc_list(df,column):
       df_list = df[column].unique()
       df_list = [str(x) for x in df_list]
       df_list = ','.join("'"+item+"'" for item in df_list)
       return df_list
-      
+
    sf.query(format_soql("SELECT Id, Email FROM Contact WHERE Id IN ({})", dataframe_to_sfdc_list(df,column)))
-   
+
 Generate Pandas Dataframe from SFDC API Query (ex.query,query_all)
 
 .. code-block:: python
-   
+
    import pandas as pd
-   
+
    sf.query("SELECT Id, Email FROM Contact")
-   
+
    df = pd.DataFrame(data['records']).drop(['attributes'],axis=1)
-   
+
 Generate Pandas Dataframe from SFDC API Query (ex.query,query_all) and append related fields from query to data frame
 
 .. code-block:: python
-   
+
    import pandas as pd
-   
+
    def sf_api_query(data):
     df = pd.DataFrame(data['records']).drop('attributes', axis=1)
     listColumns = list(df.columns)
@@ -652,22 +774,22 @@ Generate Pandas Dataframe from SFDC API Query (ex.query,query_all) and append re
             for i in new_columns:
                 listColumns.append(i)
     return df
-   
+
    df = sf_api_query(sf.query("SELECT Id, Email,ParentAccount.Name FROM Contact"))
-      
+
 Generate Pandas Dataframe from SFDC Bulk API Query (ex.bulk.Account.query)
 
 .. code-block:: python
-   
+
    import pandas as pd
-   
-   sf.bulk.Account.query("SELECT Id, Email FROM Contact")   
+
+   sf.bulk.Account.query("SELECT Id, Email FROM Contact")
    df = pd.DataFrame.from_dict(data,orient='columns').drop('attributes',axis=1)
-      
+
 
 YouTube Tutorial
 --------------------------
-Here is a helpful  `YouTube tutorial`_  which shows how you can manage records in bulk using a jupyter notebook, simple-salesforce and pandas. 
+Here is a helpful  `YouTube tutorial`_  which shows how you can manage records in bulk using a jupyter notebook, simple-salesforce and pandas.
 
 This can be a effective way to manage records, and perform simple operations like reassigning accounts, deleting test records, inserting new records, etc...
 
