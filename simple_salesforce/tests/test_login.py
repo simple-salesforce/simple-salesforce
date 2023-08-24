@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 
 import requests
 import responses
+
 from simple_salesforce import tests
 from simple_salesforce.exceptions import SalesforceAuthenticationFailed
 from simple_salesforce.login import SalesforceLogin
@@ -264,7 +265,8 @@ class TestSalesforceLogin(unittest.TestCase):
         login_args = {
             'consumer_key': '12345.abcde',
             'consumer_secret': '12345.abcde',
-            'domain': urlparse(tests.INSTANCE_URL).netloc.removesuffix('.salesforce.com'),
+            'domain': urlparse(tests.INSTANCE_URL).netloc.removesuffix(
+                '.salesforce.com'),
             }
         self._test_login_success(
             re.compile(rf'^{tests.INSTANCE_URL}/.*$'), login_args,
