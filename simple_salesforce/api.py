@@ -10,9 +10,7 @@ from collections import OrderedDict, namedtuple
 from functools import partial
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
-
 import requests
-
 from .bulk import SFBulkHandler
 from .bulk2 import SFBulk2Handler
 from .exceptions import SalesforceGeneralError
@@ -326,7 +324,8 @@ class Salesforce:
 
         return SFType(
             name, self.session_id, self.sf_instance, sf_version=self.sf_version,
-            proxies=self.proxies, session=self.session, salesforce=self)
+            proxies=self.proxies, session=self.session, salesforce=self,
+            object_pairs_hook=self._object_pairs_hook)
 
     # User utility methods
     def set_password(self, user, password):
