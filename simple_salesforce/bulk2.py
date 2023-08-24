@@ -928,3 +928,25 @@ class SFBulk2Type:
         return self._retrieve_ingest_records(
             job_id, ResultsType.successful, file
             )
+
+    def get_all_ingest_records(self, job_id, file=None):
+        """Get all ingest record results for job
+
+        Results Property:
+            sf__Id:	[string] ID of the record
+            sf__Created: [boolean] Indicates if the record was created
+            Fields from the original CSV request data:	[various]
+            Fields: [various] Fields from the original CSV request data
+        """
+        successful_records = csv.DictReader(self.get_successful_records(
+            job_id=job_id,file=file).splitlines(),delimiter=',',
+            lineterminator='\n',)
+        failed_records = csv.DictReader(self.get_failed_records(
+            job_id=job_id,file=file).splitlines(),delimiter=',',
+            lineterminator='\n',)
+        unprocessed_records = csv.DictReader(self.get_unprocessed_records(
+            job_id=job_id,file=file).splitlines(),delimiter=',',
+            lineterminator='\n',)
+        return {'successfulRecords':list(successful_records),
+                'failedRecords':list(failed_records),
+                'unprocessedRecords':list(unprocessed_records)}
