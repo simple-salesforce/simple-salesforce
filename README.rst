@@ -22,6 +22,7 @@ Documentation
 --------------------------------
 
 .. _Official Simple Salesforce documentation: http://simple-salesforce.readthedocs.io/en/latest/
+
 `Official Simple Salesforce documentation`_
 
 Examples
