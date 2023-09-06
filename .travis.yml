@@ -35,6 +35,6 @@ deploy:
   skip_existing: true
   cleanup: true
   on:
-    tags: false
+    tags: true
     all_branches: true
     repo: simple-salesforce/simple-salesforce
