@@ -508,7 +508,7 @@ class _Bulk2Client:
             method="PUT",
             session=self.session,
             headers=headers,
-            data=data,
+            data=data.encode("utf-8"),
             )
         if result.status_code != http.CREATED:
             raise SalesforceBulkV2LoadError(
