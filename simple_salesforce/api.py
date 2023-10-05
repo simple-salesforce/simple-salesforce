@@ -1,7 +1,7 @@
 """Core classes and exceptions for Simple-Salesforce"""
 
 # has to be defined prior to login import
-DEFAULT_API_VERSION = '52.0'
+DEFAULT_API_VERSION = '57.0'
 import base64
 import json
 import csv
@@ -11,10 +11,9 @@ from collections import OrderedDict, namedtuple
 from functools import partial
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
-
 import requests
-
 from .bulk import SFBulkHandler
+from .bulk2 import SFBulk2Handler
 from .exceptions import SalesforceGeneralError
 from .login import SalesforceLogin
 from .metadata import SfdcMetadataApi
@@ -213,7 +212,18 @@ class Salesforce:
                 proxies=self.proxies,
                 domain=self.domain)
             self._refresh_session()
-
+        elif all(arg is not None for arg in(
+            consumer_key, consumer_secret, domain
+        )):
+            self.auth_type = "client-credentials"
+            self._salesforce_login_partial = partial(
+                SalesforceLogin,
+                session=self.session,
+                consumer_key=consumer_key,
+                consumer_secret=consumer_secret,
+                proxies=self.proxies,
+                domain=self.domain)
+            self._refresh_session()
         else:
             raise TypeError(
                 'You must provide login information or an instance and token'
@@ -232,6 +242,9 @@ class Salesforce:
         self.apex_url = f'https://{self.sf_instance}/services/apexrest/'
         self.bulk_url = (
             f'https://{self.sf_instance}/services/async/{self.sf_version}/')
+        self.bulk2_url = (
+            f'https://{self.sf_instance}/services/data/v{self.sf_version}/jobs/'
+        )
         self.metadata_url = (
             f'https://{self.sf_instance}/services/Soap/m/{self.sf_version}/')
         self.tooling_url = f'{self.base_url}tooling/'
@@ -317,10 +330,14 @@ class Salesforce:
             # Deal with bulk API functions
             return SFBulkHandler(self.session_id, self.bulk_url, self.proxies,
                                  self.session)
+        if name == 'bulk2':
+            return SFBulk2Handler(self.session_id, self.bulk2_url, self.proxies,
+                                  self.session)
 
         return SFType(
             name, self.session_id, self.sf_instance, sf_version=self.sf_version,
-            proxies=self.proxies, session=self.session, salesforce=self)
+            proxies=self.proxies, session=self.session, salesforce=self,
+            object_pairs_hook=self._object_pairs_hook)
 
     # User utility methods
     def set_password(self, user, password):
