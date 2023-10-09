@@ -231,7 +231,7 @@ class _Bulk2Client:
     """Bulk 2.0 API client"""
 
     JSON_CONTENT_TYPE = "application/json"
-    CSV_CONTENT_TYPE = "text/csv"
+    CSV_CONTENT_TYPE = "text/csv; charset=UTF-8"
 
     DEFAULT_WAIT_TIMEOUT_SECONDS = 86400  # 24-hour bulk job running time
     MAX_CHECK_INTERVAL_SECONDS = 2.0
@@ -429,7 +429,7 @@ class _Bulk2Client:
         return {
             "locator": locator,
             "number_of_records": number_of_records,
-            "records": self.filter_null_bytes(result.text),
+            "records": self.filter_null_bytes(result.content.decode('utf-8')),
             }
 
     def download_job_data(
@@ -508,7 +508,7 @@ class _Bulk2Client:
             method="PUT",
             session=self.session,
             headers=headers,
-            data=data,
+            data=data.encode("utf-8"),
             )
         if result.status_code != http.CREATED:
             raise SalesforceBulkV2LoadError(

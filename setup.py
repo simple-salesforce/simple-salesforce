@@ -38,7 +38,7 @@ setup(
         'pytest',
         'pytz>=2014.1.1',
         'responses>=0.5.1',
-        'cryptography<3.4',
+        'cryptography>4.0.0',
         ],
     test_suite='simple_salesforce.tests',
     keywords=about['__keywords__'],
