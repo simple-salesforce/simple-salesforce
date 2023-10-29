@@ -312,7 +312,7 @@ class Salesforce:
         return is_sandbox
 
     # SObject Handler
-    def __getattr__(self, name: str) -> Union[SFBulkHandler, "SFType"]:
+    def __getattr__(self, name: str) -> Union[SFBulkHandler, SFBulk2Handler, "SFType"]:
         """Returns an `SFType` instance for the given Salesforce object type
         (given in `name`).
         The magic part of the SalesforceAPI, this function translates
