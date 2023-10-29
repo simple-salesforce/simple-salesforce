@@ -16,12 +16,13 @@ from contextlib import closing
 from enum import Enum
 from functools import partial
 from time import sleep
-from typing import Generator, List, Literal, Any, AnyStr, TypedDict, NotRequired
+from typing import Generator, List, Literal, Any, AnyStr, TypedDict, NotRequired, MutableMapping, Dict
 
 import math
 import pendulum
 import requests
 from more_itertools import chunked
+from requests import Session
 
 from .exceptions import (
     SalesforceBulkV2ExtractError,
@@ -106,7 +107,11 @@ MAX_INGEST_JOB_PARALLELISM = 10  # TODO: ? Salesforce limits
 DEFAULT_QUERY_PAGE_SIZE = 50000
 
 
-def _split_csv(filename: str | None = None, records: str | None = None, max_records: int | None = None) -> Generator[tuple[int, str], None, None]:
+def _split_csv(
+        filename: str | None = None,
+        records: str | None = None,
+        max_records: int | None = None
+        ) -> Generator[tuple[int, str], None, None]:
     """Split a CSV file into chunks to avoid exceeding the Salesforce
     bulk 2.0 API limits.
 
@@ -162,8 +167,11 @@ def _split_csv(filename: str | None = None, records: str | None = None, max_reco
 
 
 def _count_csv(
-        filename=None, data=None, skip_header=False, line_ending=LineEnding.LF
-        ):
+        filename: str | None = None,
+        data: str | None = None,
+        skip_header: bool = False,
+        line_ending: LineEnding = LineEnding.LF
+        ) -> int:
     """Count the number of records in a CSV file."""
     if filename:
         with open(filename, encoding="utf-8") as bis:
@@ -179,18 +187,23 @@ def _count_csv(
     return count
 
 
-def _convert_dict_to_csv(data, column_delimiter=',', line_ending=LineEnding.LF):
+def _convert_dict_to_csv(
+        data: list[dict[str, str]] | None,
+        column_delimiter: ColumnDelimiter | str = ColumnDelimiter.COMMA,
+        line_ending: LineEnding | str = LineEnding.LF
+        ) -> str | None:
     """Converts list of dicts to CSV like object."""
-    if data:
-        keys = set(i for s in [d.keys() for d in data] for i in s)
-        dict_to_csv_file = io.StringIO()
-        writer = csv.DictWriter(dict_to_csv_file, fieldnames=keys,
-                                delimiter=column_delimiter,
-                                lineterminator=line_ending)
-        writer.writeheader()
-        for row in data:
-            writer.writerow(row)
-    return dict_to_csv_file.getvalue() if data else None
+    if not data:
+        return None
+    keys = set(i for s in [d.keys() for d in data] for i in s)
+    dict_to_csv_file = io.StringIO()
+    writer = csv.DictWriter(dict_to_csv_file, fieldnames=keys,
+                            delimiter=column_delimiter,
+                            lineterminator=line_ending)
+    writer.writeheader()
+    for row in data:
+        writer.writerow(row)
+    return dict_to_csv_file.getvalue()
 
 
 class SFBulk2Handler:
@@ -201,7 +214,7 @@ class SFBulk2Handler:
     to allow the above syntax
     """
 
-    def __init__(self, session_id, bulk2_url, proxies=None, session=None):
+    def __init__(self, session_id: str, bulk2_url: str, proxies: MutableMapping[str, str] | None = None, session: Session | None = None):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -228,7 +241,7 @@ class SFBulk2Handler:
             "X-PrettyPrint": "1",
             }
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> SFBulk2Type:
         return SFBulk2Type(
             object_name=name,
             bulk2_url=self.bulk2_url,
@@ -246,7 +259,7 @@ class _Bulk2Client:
     DEFAULT_WAIT_TIMEOUT_SECONDS = 86400  # 24-hour bulk job running time
     MAX_CHECK_INTERVAL_SECONDS = 2.0
 
-    def __init__(self, object_name, bulk2_url, headers, session):
+    def __init__(self, object_name: str, bulk2_url: str, headers: dict[str, str], session: Session):
         """
         Arguments:
 
@@ -263,7 +276,7 @@ class _Bulk2Client:
         self.session = session
         self.headers = headers
 
-    def _get_headers(self, request_content_type=None, accept_content_type=None):
+    def _get_headers(self, request_content_type: str | None = None, accept_content_type: str | None = None) -> dict[str, str]:
         """Get headers for bulk 2.0 API request"""
         headers = copy.deepcopy(self.headers)
         headers["Content-Type"] = request_content_type or self.JSON_CONTENT_TYPE
@@ -285,12 +298,12 @@ class _Bulk2Client:
 
     def create_job(
             self,
-            operation,
-            query=None,
-            column_delimiter=ColumnDelimiter.COMMA,
-            line_ending=LineEnding.LF,
-            external_id_field=None,
-            ):
+            operation: Operation,
+            query: str | None = None,
+            column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
+            line_ending: LineEnding = LineEnding.LF,
+            external_id_field: str | None = None,
+            ) -> Any:
         """Create job
 
         Arguments:
@@ -527,7 +540,7 @@ class _Bulk2Client:
                 f"Response content: {result.content.decode()}"
                 )
 
-    def get_ingest_results(self, job_id, results_type):
+    def get_ingest_results(self, job_id: str, results_type: str) -> str:
         """Get record results"""
         url = self._construct_request_url(job_id, False) + "/" + results_type
         headers = self._get_headers(
@@ -539,8 +552,8 @@ class _Bulk2Client:
         return result.text
 
     def download_ingest_results(
-            self, file, job_id, results_type, chunk_size=1024
-            ):
+            self, file: str, job_id: str, results_type: str, chunk_size: int = 1024
+            ) -> None:
         """Download record results to a file"""
         url = self._construct_request_url(job_id, False) + "/" + results_type
         headers = self._get_headers(
@@ -564,7 +577,7 @@ class _Bulk2Client:
 class SFBulk2Type:
     """Interface to Bulk 2.0 API functions"""
 
-    def __init__(self, object_name, bulk2_url, headers, session):
+    def __init__(self, object_name: str, bulk2_url: str, headers: dict[str, str], session: Session):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -705,7 +718,7 @@ class SFBulk2Type:
     def delete(
             self,
             csv_file: str | None = None,
-            records: str | None = None,
+            records: list[dict[str, str]] | None = None,
             batch_size: int | None = None,
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
@@ -718,9 +731,9 @@ class SFBulk2Type:
             csv_file=csv_file,
             records=_convert_dict_to_csv(records,
                                          column_delimiter=_delimiter_char.get(
-                                             column_delimiter),
+                                             column_delimiter, ColumnDelimiter.COMMA),
                                          line_ending=_line_ending_char.get(
-                                             line_ending)),
+                                             line_ending, LineEnding.LF)),
             batch_size=batch_size,
             column_delimiter=column_delimiter,
             line_ending=line_ending,
@@ -731,7 +744,7 @@ class SFBulk2Type:
     def insert(
             self,
             csv_file: str | None = None,
-            records: str | None = None,
+            records: list[dict[str, str]] | None = None,
             batch_size: int | None = None,
             concurrency: int = 1,
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
@@ -744,9 +757,9 @@ class SFBulk2Type:
             csv_file=csv_file,
             records=_convert_dict_to_csv(records,
                                          column_delimiter=_delimiter_char.get(
-                                             column_delimiter),
+                                             column_delimiter, ColumnDelimiter.COMMA),
                                          line_ending=_line_ending_char.get(
-                                             line_ending)),
+                                             line_ending, LineEnding.LF)),
             batch_size=batch_size,
             column_delimiter=column_delimiter,
             line_ending=line_ending,
@@ -757,7 +770,7 @@ class SFBulk2Type:
     def upsert(
             self,
             csv_file: str | None = None,
-            records: str | None = None,
+            records: list[dict[str, str]] | None = None,
             external_id_field: str = 'Id',
             batch_size: int | None = None,
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
@@ -770,9 +783,9 @@ class SFBulk2Type:
             csv_file=csv_file,
             records=_convert_dict_to_csv(records,
                                          column_delimiter=_delimiter_char.get(
-                                             column_delimiter),
+                                             column_delimiter, ColumnDelimiter.COMMA),
                                          line_ending=_line_ending_char.get(
-                                             line_ending)),
+                                             line_ending, LineEnding.LF)),
             batch_size=batch_size,
             column_delimiter=column_delimiter,
             line_ending=line_ending,
@@ -783,7 +796,7 @@ class SFBulk2Type:
     def update(
             self,
             csv_file: str | None = None,
-            records: str | None = None,
+            records: list[dict[str, str]] | None = None,
             batch_size: int | None = None,
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
@@ -795,9 +808,9 @@ class SFBulk2Type:
             csv_file=csv_file,
             records=_convert_dict_to_csv(records,
                                          column_delimiter=_delimiter_char.get(
-                                             column_delimiter),
+                                             column_delimiter, ColumnDelimiter.COMMA),
                                          line_ending=_line_ending_char.get(
-                                             line_ending)),
+                                             line_ending, LineEnding.LF)),
             batch_size=batch_size,
             column_delimiter=column_delimiter,
             line_ending=line_ending,
@@ -807,7 +820,7 @@ class SFBulk2Type:
     def hard_delete(
             self,
             csv_file: str | None = None,
-            records: str | None = None,
+            records: list[dict[str, str]] | None = None,
             batch_size: int | None = None,
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
@@ -819,9 +832,9 @@ class SFBulk2Type:
             csv_file=csv_file,
             records=_convert_dict_to_csv(records,
                                          column_delimiter=_delimiter_char.get(
-                                             column_delimiter),
+                                             column_delimiter, ColumnDelimiter.COMMA),
                                          line_ending=_line_ending_char.get(
-                                             line_ending)),
+                                             line_ending, LineEnding.LF)),
             batch_size=batch_size,
             column_delimiter=column_delimiter,
             line_ending=line_ending,
@@ -904,14 +917,14 @@ class SFBulk2Type:
             results.append(result)
         return results
 
-    def _retrieve_ingest_records(self, job_id, results_type, file=None):
+    def _retrieve_ingest_records(self, job_id: str, results_type: str, file: str | None = None) -> str:
         """Retrieve the results of an ingest job"""
         if not file:
             return self._client.get_ingest_results(job_id, results_type)
         self._client.download_ingest_results(file, job_id, results_type)
         return ""
 
-    def get_failed_records(self, job_id, file=None):
+    def get_failed_records(self, job_id: str, file: str | None = None) -> str:
         """Get failed record results
 
         Results Property:
@@ -921,7 +934,7 @@ class SFBulk2Type:
         """
         return self._retrieve_ingest_records(job_id, ResultsType.failed, file)
 
-    def get_unprocessed_records(self, job_id, file=None):
+    def get_unprocessed_records(self, job_id: str, file: str | None = None) -> str:
         """Get unprocessed record results
 
         Results Property:
@@ -931,7 +944,7 @@ class SFBulk2Type:
             job_id, ResultsType.unprocessed, file
             )
 
-    def get_successful_records(self, job_id, file=None):
+    def get_successful_records(self, job_id: str, file: str | None = None) -> str:
         """Get successful record results.
 
         Results Property:
@@ -943,7 +956,7 @@ class SFBulk2Type:
             job_id, ResultsType.successful, file
             )
 
-    def get_all_ingest_records(self, job_id, file=None):
+    def get_all_ingest_records(self, job_id: str, file: str | None = None) -> dict[str, list[Any]]:
         """Get all ingest record results for job
 
         Results Property:
