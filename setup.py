@@ -13,7 +13,7 @@ exec((here / 'simple_salesforce' / '__version__.py').read_text(), about)
 setup(
     name=about['__title__'],
     version=about['__version__'],
-    author=about['__author__'],
+    author=about['__author_name__'],
     author_email=about['__author_email__'],
     maintainer=about['__maintainer__'],
     maintainer_email=about['__maintainer_email__'],
