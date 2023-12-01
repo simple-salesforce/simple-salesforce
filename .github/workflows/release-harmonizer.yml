@@ -1,0 +1,33 @@
+# Invoked when a release is published. Updates/creates the major version tag
+# (v*) and maintenance branch (releases/v*) to point to the head commit of the
+# newly published release. The release tag must be formatted as v#.#.#.
+name: Release Harmonizer
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  sync-refs:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - ref-type: tag
+            sync-to: major
+            prefix: v
+          - ref-type: branch
+            sync-to: major
+            prefix: releases/v
+    steps:
+      - name: ��️ Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔄 Sync Refs
+        uses: ncino/action-release-harmonizer@v1
+        with:
+          github-token: ${{ secrets.CI_USER_REPO_ACCESS_TOKEN }}
+          ref-type: ${{ matrix.ref-type }}
+          sync-to: ${{ matrix.sync-to }}
+          prefix: ${{ matrix.prefix }}
