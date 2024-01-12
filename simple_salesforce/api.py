@@ -819,7 +819,8 @@ class SFType:
             )
         return self.parse_result_to_json(result)
 
-    def get_by_custom_id(self, custom_id_field, custom_id, headers=None, fields=None):
+    def get_by_custom_id(self, custom_id_field, custom_id, headers=None,
+                          fields=None):
         """Return an ``SFType`` by custom ID
         Returns the result of a GET to
         `.../{object_name}/{custom_id_field}/{custom_id}` as a dict decoded
