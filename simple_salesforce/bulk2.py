@@ -849,6 +849,41 @@ class SFBulk2Type:
             locator = result["locator"]
             yield result["records"]
 
+    def query_all(
+        self,
+        query,
+        max_records=DEFAULT_QUERY_PAGE_SIZE,
+        column_delimiter=ColumnDelimiter.COMMA,
+        line_ending=LineEnding.LF,
+        wait=5,
+        ) -> Generator[str, None, None]:
+        """bulk 2.0 query_all
+
+        Arguments:
+        * query -- SOQL query
+        * max_records -- max records to retrieve per batch, default 50000
+
+        Returns:
+        * locator  -- the locator for the next set of results
+        * number_of_records -- the number of records in this set
+        * records -- records in this set
+        """
+        res = self._client.create_job(
+            Operation.query_all, query, column_delimiter, line_ending
+            )
+        job_id = res["id"]
+        self._client.wait_for_job(job_id, True, wait)
+
+        locator = "INIT"
+        while locator:
+            if locator == "INIT":
+                locator = ""
+            result = self._client.get_query_results(
+                job_id, locator, max_records
+                )
+            locator = result["locator"]
+            yield result["records"]
+
     def download(
             self,
             query,
