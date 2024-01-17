@@ -170,7 +170,34 @@ class SFBulkType:
         else:
             yield result.json()
 
-    def worker(self, batch, operation, wait=5, bypass_results=False):
+    def _get_batch_request_with_batch_results(self, job_id, batch_id,
+                                              operation):
+        """ retrieve a set of results from a completed job """
+
+        url = f'{self.bulk_url}job/{job_id}/batch/{batch_id}/request'
+
+        batch_request = call_salesforce(url=url, method='GET',
+                                        session=self.session,
+                                        headers=self.headers)
+
+        batch_result = self._get_batch_results(job_id, batch_id,
+                                               operation='batch_results')
+
+        results = []
+        for idx, i in enumerate(batch_result.json()):
+            flattened_request_dict = [{
+                                          k + '.' + list(v.keys())[0]: v.get(
+                                              list(v.keys())[0])
+                                          } if isinstance(v, dict) else {k: v}
+                                      for k, v in
+                                      batch_request.json()[idx].items()]
+            for request_field in flattened_request_dict:
+                i.update(request_field)
+            results.append(i)
+        yield results
+
+    def worker(self, batch, operation, wait=5, bypass_results=False,
+               include_detailed_results=False):
         """ Gets batches from concurrent worker threads.
         self._bulk_operation passes batch jobs.
         The worker function checks each batch job waiting for it complete
@@ -185,10 +212,17 @@ class SFBulkType:
                 batch_status = self._get_batch(job_id=batch['jobId'],
                                                batch_id=batch['id'])['state']
 
-            batch_results = self._get_batch_results(job_id=batch['jobId'],
-                                                    batch_id=batch['id'],
-                                                    operation=operation)
-            result = batch_results
+            if include_detailed_results:
+                batch_results = self._get_batch_request_with_batch_results(
+                    job_id=batch['jobId'],
+                    batch_id=batch['id'],
+                    operation=operation)
+                result = batch_results
+            else:
+                batch_results = self._get_batch_results(job_id=batch['jobId'],
+                                                        batch_id=batch['id'],
+                                                        operation=operation)
+                result = batch_results
         else:
             result = [{
                           'bypass_results': bypass_results,
