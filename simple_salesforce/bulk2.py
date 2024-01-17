@@ -18,10 +18,9 @@ from time import sleep
 from typing import Dict, Tuple, Union, Generator, List
 
 import math
-import pendulum
+import datetime
 import requests
 from more_itertools import chunked
-from pendulum import DateTime
 
 from .exceptions import (
     SalesforceBulkV2ExtractError,
@@ -326,14 +325,15 @@ class _Bulk2Client:
 
     def wait_for_job(self, job_id, is_query: bool, wait=0.5):
         """Wait for job completion or timeout"""
-        expiration_time: DateTime = pendulum.now().add(
-            seconds=self.DEFAULT_WAIT_TIMEOUT_SECONDS
-            )
+        expiration_time: DateTime = datetime.datetime.now() +
+        datetime.timedelta(
+            seconds=
+            seconds = self.DEFAULT_WAIT_TIMEOUT_SECONDS)
         job_status = JobState.in_progress if is_query else JobState.open
         delay_timeout = 0.0
         delay_cnt = 0
         sleep(wait)
-        while pendulum.now() < expiration_time:
+        while datetime.datetime.now() < expiration_time:
             job_info = self.get_job(job_id, is_query)
             job_status = job_info["state"]
             if job_status in [
