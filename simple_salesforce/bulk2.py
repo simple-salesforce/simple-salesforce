@@ -16,7 +16,8 @@ from contextlib import closing
 from enum import Enum
 from functools import partial
 from time import sleep
-from typing import Generator, List, Literal, Any, AnyStr, TypedDict, NotRequired, MutableMapping
+from typing import Generator, List, Any, AnyStr, TypedDict, MutableMapping
+from typing_extensions import Literal, NotRequired
 
 import math
 import datetime

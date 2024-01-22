@@ -3,3 +3,4 @@ coverage
 mypy
 types-requests
 types-pytz
+typing-extensions
