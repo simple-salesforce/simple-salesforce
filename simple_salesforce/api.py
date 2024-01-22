@@ -312,7 +312,10 @@ class Salesforce:
         return is_sandbox
 
     # SObject Handler
-    def __getattr__(self, name: str) -> Union[SFBulkHandler, SFBulk2Handler, "SFType"]:
+    def __getattr__(
+        self,
+        name: str
+    ) -> Union[SFBulkHandler, SFBulk2Handler, "SFType"]:
         """Returns an `SFType` instance for the given Salesforce object type
         (given in `name`).
         The magic part of the SalesforceAPI, this function translates
@@ -657,7 +660,8 @@ class Salesforce:
                 retries += 1
                 if retries > max_retries:
                     exception_handler(result, name=name)
-                return self._call_salesforce(method, url, name, retries=retries, **kwargs)
+                return self._call_salesforce(
+                    method, url, name, retries=retries, **kwargs)
 
         if result.status_code >= 300:
             exception_handler(result, name=name)
@@ -1035,7 +1039,7 @@ class SFType:
             method: str,
             url: str,
             retries: int = 0,
-            max_retries: int = 3, 
+            max_retries: int = 3,
             **kwargs: Any) -> requests.Response:
         """Utility method for performing HTTP call to Salesforce.
 
@@ -1059,7 +1063,7 @@ class SFType:
                 retries += 1
                 if retries > max_retries:
                     exception_handler(result, name=self.name)
-                
+
                 return self._call_salesforce(method, url, **kwargs)
 
         if result.status_code >= 300:
