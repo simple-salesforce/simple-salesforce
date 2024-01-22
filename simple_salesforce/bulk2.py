@@ -990,7 +990,7 @@ class SFBulk2Type:
             job_id, ResultsType.successful, file
             )
 
-    def get_all_ingest_records(self, job_id: str, file: Optional[str] = None) -> dict[str, list[Any]]:
+    def get_all_ingest_records(self, job_id: str, file: Optional[str] = None) -> Dict[str, List[Any]]:
         """Get all ingest record results for job
 
         Results Property:
