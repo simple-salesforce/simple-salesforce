@@ -31,15 +31,8 @@ setup(
        'cryptography',
        'zeep',
        'pyjwt',
-       'more-itertools',
-       'pendulum'
+       'more-itertools'
        ],
-    tests_require=[
-        'pytest',
-        'pytz>=2014.1.1',
-        'responses>=0.5.1',
-        'cryptography>4.0.0',
-        ],
     test_suite='simple_salesforce.tests',
     keywords=about['__keywords__'],
     classifiers=[
