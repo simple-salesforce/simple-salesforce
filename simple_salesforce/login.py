@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 from html import escape, unescape
 from json.decoder import JSONDecodeError
 from pathlib import Path
+from xml.parsers.expat import ExpatError
 
 import requests
 import jwt
@@ -234,12 +235,14 @@ def soap_login(
         soap_url, request_body, headers=headers, proxies=proxies)
 
     if response.status_code != 200:
-        except_code = getUniqueElementValueFromXmlString(
-            response.content, 'sf:exceptionCode'
-        ) or 'UNKNOWN_EXCEPTION_CODE'
-        except_msg = getUniqueElementValueFromXmlString(
-            response.content, 'sf:exceptionMessage'
-        ) or 'UNKNOWN_EXCEPTION_MESSAGE'
+        try:
+            except_code = getUniqueElementValueFromXmlString(
+                response.content, 'sf:exceptionCode')
+            except_msg = getUniqueElementValueFromXmlString(
+                response.content, 'sf:exceptionMessage')
+        except ExpatError:
+            except_code = response.status_code
+            except_msg = response.content
         raise SalesforceAuthenticationFailed(except_code, except_msg)
 
     session_id = getUniqueElementValueFromXmlString(

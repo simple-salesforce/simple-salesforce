@@ -636,6 +636,8 @@ class Salesforce:
             method: str,
             url: str,
             name: str = "",
+            retries: int = 0,
+            max_retries: int = 3,
             **kwargs: Any) -> requests.Response:
         """Utility method for performing HTTP call to Salesforce.
         Returns a `requests.result` object.
@@ -652,7 +654,10 @@ class Salesforce:
             error_details = result.json()[0]
             if error_details['errorCode'] == 'INVALID_SESSION_ID':
                 self._refresh_session()
-                return self._call_salesforce(method, url, name, **kwargs)
+                retries += 1
+                if retries > max_retries:
+                    exception_handler(result, name=name)
+                return self._call_salesforce(method, url, name, retries=retries, **kwargs)
 
         if result.status_code >= 300:
             exception_handler(result, name=name)
@@ -1029,6 +1034,8 @@ class SFType:
             self,
             method: str,
             url: str,
+            retries: int = 0,
+            max_retries: int = 3, 
             **kwargs: Any) -> requests.Response:
         """Utility method for performing HTTP call to Salesforce.
 
@@ -1047,8 +1054,12 @@ class SFType:
                 and self.salesforce._salesforce_login_partial is not None
                 and result.status_code == 401):
             error_details = result.json()[0]
-            if error_details['errorCode'] == 'INVALID_SESSION_ID':
+            if error_details['errorCode'] == 'INVALID_SESSION_ID' :
                 self.salesforce._refresh_session()
+                retries += 1
+                if retries > max_retries:
+                    exception_handler(result, name=self.name)
+                
                 return self._call_salesforce(method, url, **kwargs)
 
         if result.status_code >= 300:
