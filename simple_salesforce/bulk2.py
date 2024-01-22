@@ -259,7 +259,7 @@ class _Bulk2Client:
     DEFAULT_WAIT_TIMEOUT_SECONDS = 86400  # 24-hour bulk job running time
     MAX_CHECK_INTERVAL_SECONDS = 2.0
 
-    def __init__(self, object_name: str, bulk2_url: str, headers: dict[str, str], session: Session):
+    def __init__(self, object_name: str, bulk2_url: str, headers: Dict[str, str], session: Session):
         """
         Arguments:
 
@@ -576,7 +576,7 @@ class _Bulk2Client:
 class SFBulk2Type:
     """Interface to Bulk 2.0 API functions"""
 
-    def __init__(self, object_name: str, bulk2_url: str, headers: dict[str, str], session: Session):
+    def __init__(self, object_name: str, bulk2_url: str, headers: Dict[str, str], session: Session):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -603,7 +603,7 @@ class SFBulk2Type:
             line_ending: LineEnding = LineEnding.LF,
             external_id_field: Optional[str] = None,
             wait: int = 5,
-            ) -> dict[str, int]:
+            ) -> Dict[str, int]:
         """Upload data to Salesforce"""
         unpacked_data: str
         if isinstance(data, tuple):
@@ -658,7 +658,7 @@ class SFBulk2Type:
             external_id_field: Optional[str] = None,
             concurrency: int = 1,
             wait: int = 5,
-            ) -> list[dict[str, int]]:
+            ) -> List[Dict[str, int]]:
         """Upload csv file to Salesforce"""
         if csv_file and records:
             raise SalesforceBulkV2LoadError("Cannot include both file and "
@@ -723,7 +723,7 @@ class SFBulk2Type:
             line_ending: LineEnding = LineEnding.LF,
             external_id_field: Optional[str] = None,
             wait: int = 5,
-            ) -> list[dict[str, int]]:
+            ) -> List[Dict[str, int]]:
         """soft delete records"""
         return self._upload_file(
             Operation.delete,
@@ -749,7 +749,7 @@ class SFBulk2Type:
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
             wait: int = 5,
-            ) -> list[dict[str, int]]:
+            ) -> List[Dict[str, int]]:
         """insert records"""
         return self._upload_file(
             Operation.insert,
@@ -775,7 +775,7 @@ class SFBulk2Type:
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
             wait: int = 5,
-            ) -> list[dict[str, int]]:
+            ) -> List[Dict[str, int]]:
         """upsert records based on a unique identifier"""
         return self._upload_file(
             Operation.upsert,
@@ -800,7 +800,7 @@ class SFBulk2Type:
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
             wait: int = 5,
-            ) -> list[dict[str, int]]:
+            ) -> List[Dict[str, int]]:
         """update records"""
         return self._upload_file(
             Operation.update,
@@ -824,7 +824,7 @@ class SFBulk2Type:
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
             wait: int = 5,
-            ) -> list[dict[str, int]]:
+            ) -> List[Dict[str, int]]:
         """hard delete records"""
         return self._upload_file(
             Operation.hard_delete,
