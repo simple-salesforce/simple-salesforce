@@ -1,12 +1,12 @@
 """ Classes for interacting with Salesforce Bulk API """
+from __future__ import annotations
 
 import json
 from collections import OrderedDict
 from time import sleep
 import concurrent.futures
 from functools import partial
-from typing import Any, Dict, Iterable, List, Optional, Union, \
-    cast
+from typing import Any, Dict, Iterable, List, Optional, Union, cast
 
 import requests
 

@@ -16,7 +16,7 @@ from contextlib import closing
 from enum import Enum
 from functools import partial
 from time import sleep
-from typing import Generator, List, Literal, Any, AnyStr, TypedDict, NotRequired, MutableMapping, Dict
+from typing import Generator, List, Literal, Any, AnyStr, TypedDict, NotRequired, MutableMapping
 
 import math
 import datetime
@@ -350,7 +350,7 @@ class _Bulk2Client:
 
     def wait_for_job(self, job_id: str, is_query: bool, wait: float = 0.5) -> Literal[JobState.job_complete]:
         """Wait for job completion or timeout"""
-        expiration_time: DateTime = datetime.datetime.now() + \
+        expiration_time: datetime.datetime = datetime.datetime.now() + \
             datetime.timedelta(seconds = self.DEFAULT_WAIT_TIMEOUT_SECONDS)
         job_status = JobState.in_progress if is_query else JobState.open
         delay_timeout = 0.0

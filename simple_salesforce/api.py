@@ -1,4 +1,6 @@
 """Core classes and exceptions for Simple-Salesforce"""
+from __future__ import annotations
+
 from datetime import datetime
 
 # has to be defined prior to login import
