@@ -4,3 +4,4 @@ mypy
 types-requests
 types-pytz
 typing-extensions
+future-annotations
