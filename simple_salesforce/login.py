@@ -235,14 +235,17 @@ def soap_login(
         soap_url, request_body, headers=headers, proxies=proxies)
 
     if response.status_code != 200:
+        except_code: Union[str, int, None]
+        except_msg: str
         try:
             except_code = getUniqueElementValueFromXmlString(
                 response.content, 'sf:exceptionCode')
-            except_msg = getUniqueElementValueFromXmlString(
+            except_msg = (getUniqueElementValueFromXmlString(
                 response.content, 'sf:exceptionMessage')
+                or response.content.decode())
         except ExpatError:
             except_code = response.status_code
-            except_msg = response.content
+            except_msg = response.content.decode()
         raise SalesforceAuthenticationFailed(except_code, except_msg)
 
     session_id = getUniqueElementValueFromXmlString(

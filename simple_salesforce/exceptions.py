@@ -98,7 +98,11 @@ class SalesforceAuthenticationFailed(SalesforceError):
     Thrown to indicate that authentication with Salesforce failed.
     """
 
-    def __init__(self, code: Union[str, int, None], message: str):
+    def __init__(
+        self,
+        code: Union[str, int, None],
+        message: str
+        ):
         # TODO exceptions don't seem to be using parent constructors at all.
         # this should be fixed.
         # pylint: disable=super-init-not-called

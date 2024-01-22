@@ -929,11 +929,11 @@ class SFBulk2Type:
 
     def query_all(
         self,
-        query,
-        max_records=DEFAULT_QUERY_PAGE_SIZE,
-        column_delimiter=ColumnDelimiter.COMMA,
-        line_ending=LineEnding.LF,
-        wait=5,
+        query: str,
+        max_records: int = DEFAULT_QUERY_PAGE_SIZE,
+        column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
+        line_ending: LineEnding = LineEnding.LF,
+        wait: int = 5,
         ) -> Generator[str, None, None]:
         """bulk 2.0 query_all
 
