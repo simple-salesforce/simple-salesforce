@@ -1,5 +1,4 @@
 """ Classes for interacting with Salesforce Bulk API """
-from __future__ import annotations
 
 import json
 from collections import OrderedDict

@@ -1,5 +1,4 @@
 """ Classes for interacting with Salesforce Bulk 2.0 API """
-from __future__ import annotations
 
 import copy
 import csv
