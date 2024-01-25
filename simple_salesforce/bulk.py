@@ -213,16 +213,14 @@ class SFBulkType:
                                                batch_id=batch['id'])['state']
 
             if include_detailed_results:
-                batch_results = self._get_batch_request_with_batch_results(
+                result = self._get_batch_request_with_batch_results(
                     job_id=batch['jobId'],
                     batch_id=batch['id'],
                     operation=operation)
-                result = batch_results
             else:
-                batch_results = self._get_batch_results(job_id=batch['jobId'],
+                result = self._get_batch_results(job_id=batch['jobId'],
                                                         batch_id=batch['id'],
                                                         operation=operation)
-                result = batch_results
         else:
             result = [{
                           'bypass_results': bypass_results,
