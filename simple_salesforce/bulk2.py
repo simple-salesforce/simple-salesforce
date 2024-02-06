@@ -18,10 +18,9 @@ from time import sleep
 from typing import Dict, Tuple, Union, Generator, List
 
 import math
-import pendulum
+import datetime
 import requests
 from more_itertools import chunked
-from pendulum import DateTime
 
 from .exceptions import (
     SalesforceBulkV2ExtractError,
@@ -231,7 +230,7 @@ class _Bulk2Client:
     """Bulk 2.0 API client"""
 
     JSON_CONTENT_TYPE = "application/json"
-    CSV_CONTENT_TYPE = "text/csv"
+    CSV_CONTENT_TYPE = "text/csv; charset=UTF-8"
 
     DEFAULT_WAIT_TIMEOUT_SECONDS = 86400  # 24-hour bulk job running time
     MAX_CHECK_INTERVAL_SECONDS = 2.0
@@ -326,14 +325,15 @@ class _Bulk2Client:
 
     def wait_for_job(self, job_id, is_query: bool, wait=0.5):
         """Wait for job completion or timeout"""
-        expiration_time: DateTime = pendulum.now().add(
-            seconds=self.DEFAULT_WAIT_TIMEOUT_SECONDS
-            )
+        expiration_time: DateTime = datetime.datetime.now() +
+        datetime.timedelta(
+            seconds=
+            seconds = self.DEFAULT_WAIT_TIMEOUT_SECONDS)
         job_status = JobState.in_progress if is_query else JobState.open
         delay_timeout = 0.0
         delay_cnt = 0
         sleep(wait)
-        while pendulum.now() < expiration_time:
+        while datetime.datetime.now() < expiration_time:
             job_info = self.get_job(job_id, is_query)
             job_status = job_info["state"]
             if job_status in [
@@ -429,7 +429,7 @@ class _Bulk2Client:
         return {
             "locator": locator,
             "number_of_records": number_of_records,
-            "records": self.filter_null_bytes(result.text),
+            "records": self.filter_null_bytes(result.content.decode('utf-8')),
             }
 
     def download_job_data(
@@ -508,7 +508,7 @@ class _Bulk2Client:
             method="PUT",
             session=self.session,
             headers=headers,
-            data=data,
+            data=data.encode("utf-8"),
             )
         if result.status_code != http.CREATED:
             raise SalesforceBulkV2LoadError(
@@ -835,6 +835,41 @@ class SFBulk2Type:
         """
         res = self._client.create_job(
             Operation.query, query, column_delimiter, line_ending
+            )
+        job_id = res["id"]
+        self._client.wait_for_job(job_id, True, wait)
+
+        locator = "INIT"
+        while locator:
+            if locator == "INIT":
+                locator = ""
+            result = self._client.get_query_results(
+                job_id, locator, max_records
+                )
+            locator = result["locator"]
+            yield result["records"]
+
+    def query_all(
+        self,
+        query,
+        max_records=DEFAULT_QUERY_PAGE_SIZE,
+        column_delimiter=ColumnDelimiter.COMMA,
+        line_ending=LineEnding.LF,
+        wait=5,
+        ) -> Generator[str, None, None]:
+        """bulk 2.0 query_all
+
+        Arguments:
+        * query -- SOQL query
+        * max_records -- max records to retrieve per batch, default 50000
+
+        Returns:
+        * locator  -- the locator for the next set of results
+        * number_of_records -- the number of records in this set
+        * records -- records in this set
+        """
+        res = self._client.create_job(
+            Operation.query_all, query, column_delimiter, line_ending
             )
         job_id = res["id"]
         self._client.wait_for_job(job_id, True, wait)

@@ -22,6 +22,7 @@ Documentation
 --------------------------------
 
 .. _Official Simple Salesforce documentation: http://simple-salesforce.readthedocs.io/en/latest/
+
 `Official Simple Salesforce documentation`_
 
 Examples
@@ -769,7 +770,7 @@ Generate Pandas Dataframe from SFDC API Query (ex.query,query_all) and append re
     listColumns = list(df.columns)
     for col in listColumns:
         if any (isinstance (df[col].values[i], dict) for i in range(0, len(df[col].values))):
-            df = pd.concat([df.drop(columns=[col]),df[col].apply(pd.Series).drop('attributes',axis=1).add_prefix(col+'.')],axis=1)
+            df = pd.concat([df.drop(columns=[col]),df[col].apply(pd.Series,dtype=df[col].dtype).drop('attributes',axis=1).add_prefix(col+'.')],axis=1)
             new_columns = np.setdiff1d(df.columns, listColumns)
             for i in new_columns:
                 listColumns.append(i)
