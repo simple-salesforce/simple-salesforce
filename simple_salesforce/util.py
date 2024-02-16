@@ -83,3 +83,6 @@ def list_from_generator(generator_function):
     for list_results in generator_function:
         ret_val.extend(list_results)
     return ret_val
+
+def describe_field():
+    return "done"
