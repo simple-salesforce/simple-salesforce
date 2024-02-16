@@ -84,5 +84,7 @@ def list_from_generator(generator_function):
         ret_val.extend(list_results)
     return ret_val
 
-def describe_field():
+def describe_field(describe_result, list_of_fields):
+    for field in list_of_fields:
+        print(field)
     return "done"
