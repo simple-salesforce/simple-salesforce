@@ -84,7 +84,10 @@ def list_from_generator(generator_function):
         ret_val.extend(list_results)
     return ret_val
 
-def describe_field(describe_result, list_of_fields):
-    for field in list_of_fields:
-        print(field)
-    return "done"
+def describe_picklist_field(describe_result, field_name):
+    """Utility method for returing all the values of a picklist field"""
+    ret_val={}
+    for field in describe_result['fields']:
+        if field['name']==field_name and field['type']=="picklist":
+            ret_val[field['name']]=field['picklistValues']
+    return ret_val
