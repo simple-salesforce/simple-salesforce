@@ -538,32 +538,13 @@ class SfdcMetadataApi:
 
     def retrieve_zip(self, async_process_id, **kwargs):
         """ Retrieves ZIP file """
-        result = self.retrieve_retrieve_result(async_process_id, 'true',
-                                               **kwargs)
-        state = result.find('mt:status', self._XML_NAMESPACES).text
-        error_message = result.find('mt:errorMessage', self._XML_NAMESPACES)
-        if error_message is not None:
-            error_message = error_message.text
+        return self.check_retrieve_status(
+            async_process_id, include_zip='true', **kwargs)
 
-        # Check if there are any messages
-        messages = []
-        message_list = result.findall('mt:details/mt:messages',
-                                      self._XML_NAMESPACES)
-        for message in message_list:
-            messages.append({
-                'file': message.find('mt:fileName', self._XML_NAMESPACES).text,
-                'message': message.find('mt:problem', self._XML_NAMESPACES).text
-                })
-
-        # Retrieve base64 encoded ZIP file
-        zipfile_base64 = result.find('mt:zipFile', self._XML_NAMESPACES).text
-        zipfile = b64decode(zipfile_base64)
-
-        return state, error_message, messages, zipfile
-
-    def check_retrieve_status(self, async_process_id, **kwargs):
+    def check_retrieve_status(
+            self, async_process_id, include_zip='false', **kwargs):
         """ Checks whether retrieval succeeded """
-        result = self.retrieve_retrieve_result(async_process_id, 'false',
+        result = self.retrieve_retrieve_result(async_process_id, include_zip,
                                                **kwargs)
         state = result.find('mt:status', self._XML_NAMESPACES).text
         error_message = result.find('mt:errorMessage', self._XML_NAMESPACES)
@@ -579,5 +560,11 @@ class SfdcMetadataApi:
                 'file': message.find('mt:fileName', self._XML_NAMESPACES).text,
                 'message': message.find('mt:problem', self._XML_NAMESPACES).text
                 })
+        if include_zip == 'true':
+            # Retrieve base64 encoded ZIP file
+            zip_base64 = result.find('mt:zipFile', self._XML_NAMESPACES).text
+            zip_bytes = b64decode(zip_base64)
+
+            return state, error_message, messages, zip_bytes
 
         return state, error_message, messages
