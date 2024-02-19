@@ -460,6 +460,7 @@ class Salesforce:
         * query -- the SOQL query to send to Salesforce, e.g.
                    SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
         * include_deleted -- True if deleted records should be included
+        * other arguments supported by requests.request (e.g. json, timeout)
         """
         url = self.base_url + ('queryAll/' if include_deleted else 'query/')
         params = {'q': query}
@@ -486,6 +487,7 @@ class Salesforce:
         * include_deleted -- True if the `next_records_identifier` refers to a
                              query that includes deleted records. Only used if
                              `identifier_is_url` is False
+        * other arguments supported by requests.request (e.g. json, timeout)
         """
         if identifier_is_url:
             # Don't use `self.base_url` here because the full URI is provided
@@ -511,6 +513,7 @@ class Salesforce:
         * query -- the SOQL query to send to Salesforce, e.g.
                    SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
         * include_deleted -- True if the query should include deleted records.
+        * other arguments supported by requests.request (e.g. json, timeout)
         """
 
         result = self.query(query, include_deleted=include_deleted, **kwargs)
@@ -536,6 +539,7 @@ class Salesforce:
         * query -- the SOQL query to send to Salesforce, e.g.
                    SELECT Id FROM Lead WHERE Email = "waldo@somewhere.com"
         * include_deleted -- True if the query should include deleted records.
+        * other arguments supported by requests.request (e.g. json, timeout)
         """
 
         records = self.query_all_iter(query, include_deleted=include_deleted,
@@ -765,58 +769,58 @@ class SFType:
             return self.salesforce.session_id
         return self._session_id
 
-    def metadata(self, headers=None):
+    def metadata(self, **kwargs):
         """Returns the result of a GET to `.../{object_name}/` as a dict
         decoded from the JSON payload returned by Salesforce.
         Arguments:
-        * headers -- a dict with additional request headers.
+        * arguments supported by requests.request (e.g. json, timeout)
         """
-        result = self._call_salesforce('GET', self.base_url, headers=headers)
+        result = self._call_salesforce('GET', self.base_url, **kwargs)
         return self.parse_result_to_json(result)
 
-    def describe(self, headers=None):
+    def describe(self, **kwargs):
         """Returns the result of a GET to `.../{object_name}/describe` as a
         dict decoded from the JSON payload returned by Salesforce.
         Arguments:
-        * headers -- a dict with additional request headers.
+        * arguments supported by requests.request (e.g. json, timeout)
         """
         result = self._call_salesforce(
             method='GET', url=urljoin(self.base_url, 'describe'),
-            headers=headers
+            **kwargs
             )
         return self.parse_result_to_json(result)
 
-    def describe_layout(self, record_id, headers=None):
+    def describe_layout(self, record_id, **kwargs):
         """Returns the layout of the object
         Returns the result of a GET to
         `.../{object_name}/describe/layouts/<recordid>` as a dict decoded from
         the JSON payload returned by Salesforce.
         Arguments:
         * record_id -- the Id of the SObject to get
-        * headers -- a dict with additional request headers.
+        * other arguments supported by requests.request (e.g. json, timeout)
         """
         custom_url_part = f'describe/layouts/{record_id}'
         result = self._call_salesforce(
             method='GET',
             url=urljoin(self.base_url, custom_url_part),
-            headers=headers
+            **kwargs
             )
         return self.parse_result_to_json(result)
 
-    def get(self, record_id, headers=None):
+    def get(self, record_id, **kwargs):
         """Returns the result of a GET to `.../{object_name}/{record_id}` as a
         dict decoded from the JSON payload returned by Salesforce.
         Arguments:
         * record_id -- the Id of the SObject to get
-        * headers -- a dict with additional request headers.
+        * other arguments supported by requests.request (e.g. json, timeout)
         """
         result = self._call_salesforce(
             method='GET', url=urljoin(self.base_url, record_id),
-            headers=headers
+            **kwargs
             )
         return self.parse_result_to_json(result)
 
-    def get_by_custom_id(self, custom_id_field, custom_id, headers=None):
+    def get_by_custom_id(self, custom_id_field, custom_id, **kwargs):
         """Return an ``SFType`` by custom ID
         Returns the result of a GET to
         `.../{object_name}/{custom_id_field}/{custom_id}` as a dict decoded
@@ -825,29 +829,29 @@ class SFType:
         * custom_id_field -- the API name of a custom field that was defined
                              as an External ID
         * custom_id - the External ID value of the SObject to get
-        * headers -- a dict with additional request headers.
+        * other arguments supported by requests.request (e.g. json, timeout)
         """
         custom_url = urljoin(self.base_url, f'{custom_id_field}/{custom_id}')
         result = self._call_salesforce(
-            method='GET', url=custom_url, headers=headers
+            method='GET', url=custom_url, **kwargs
             )
         return self.parse_result_to_json(result)
 
-    def create(self, data, headers=None):
+    def create(self, data, **kwargs):
         """Creates a new SObject using a POST to `.../{object_name}/`.
         Returns a dict decoded from the JSON payload returned by Salesforce.
         Arguments:
         * data -- a dict of the data to create the SObject from. It will be
                   JSON-encoded before being transmitted.
-        * headers -- a dict with additional request headers.
+        * other arguments supported by requests.request (e.g. json, timeout)
         """
         result = self._call_salesforce(
             method='POST', url=self.base_url,
-            data=json.dumps(data), headers=headers
+            data=json.dumps(data), **kwargs
             )
         return self.parse_result_to_json(result)
 
-    def upsert(self, record_id, data, raw_response=False, headers=None):
+    def upsert(self, record_id, data, raw_response=False, **kwargs):
         """Creates or updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
         If `raw_response` is false (the default), returns the status code
@@ -860,15 +864,15 @@ class SFType:
                   will be JSON-encoded before being transmitted.
         * raw_response -- a boolean indicating whether to return the response
                           directly, instead of the status code.
-        * headers -- a dict with additional request headers.
+        * other arguments supported by requests.request (e.g. json, timeout)
         """
         result = self._call_salesforce(
             method='PATCH', url=urljoin(self.base_url, record_id),
-            data=json.dumps(data), headers=headers
+            data=json.dumps(data), **kwargs
             )
         return self._raw_response(result, raw_response)
 
-    def update(self, record_id, data, raw_response=False, headers=None):
+    def update(self, record_id, data, raw_response=False, **kwargs):
         """Updates an SObject using a PATCH to
         `.../{object_name}/{record_id}`.
         If `raw_response` is false (the default), returns the status code
@@ -880,15 +884,15 @@ class SFType:
                   JSON-encoded before being transmitted.
         * raw_response -- a boolean indicating whether to return the response
                           directly, instead of the status code.
-        * headers -- a dict with additional request headers.
+        * other arguments supported by requests.request (e.g. json, timeout)
         """
         result = self._call_salesforce(
             method='PATCH', url=urljoin(self.base_url, record_id),
-            data=json.dumps(data), headers=headers
+            data=json.dumps(data), **kwargs
             )
         return self._raw_response(result, raw_response)
 
-    def delete(self, record_id, raw_response=False, headers=None):
+    def delete(self, record_id, raw_response=False, **kwargs):
         """Deletes an SObject using a DELETE to
         `.../{object_name}/{record_id}`.
         If `raw_response` is false (the default), returns the status code
@@ -898,15 +902,15 @@ class SFType:
         * record_id -- the Id of the SObject to delete
         * raw_response -- a boolean indicating whether to return the response
                           directly, instead of the status code.
-        * headers -- a dict with additional request headers.
+        * other arguments supported by requests.request (e.g. json, timeout)
         """
         result = self._call_salesforce(
             method='DELETE', url=urljoin(self.base_url, record_id),
-            headers=headers
+            **kwargs
             )
         return self._raw_response(result, raw_response)
 
-    def deleted(self, start, end, headers=None):
+    def deleted(self, start, end, **kwargs):
         # pylint: disable=line-too-long
         """Gets a list of deleted records
         Use the SObject Get Deleted resource to get a list of deleted records
@@ -915,16 +919,16 @@ class SFType:
         +00:00
         * start -- start datetime object
         * end -- end datetime object
-        * headers -- a dict with additional request headers.
+        * other arguments supported by requests.request (e.g. json, timeout)
         """
         url = urljoin(
             self.base_url,
             f'deleted/?start={date_to_iso8601(start)}&end={date_to_iso8601(end)}'
             )
-        result = self._call_salesforce(method='GET', url=url, headers=headers)
+        result = self._call_salesforce(method='GET', url=url, **kwargs)
         return self.parse_result_to_json(result)
 
-    def updated(self, start, end, headers=None):
+    def updated(self, start, end, **kwargs):
         # pylint: disable=line-too-long
         """Gets a list of updated records
         Use the SObject Get Updated resource to get a list of updated
@@ -933,13 +937,13 @@ class SFType:
          +00:00
         * start -- start datetime object
         * end -- end datetime object
-        * headers -- a dict with additional request headers.
+        * other arguments supported by requests.request (e.g. json, timeout)
         """
         url = urljoin(
             self.base_url,
             f'updated/?start={date_to_iso8601(start)}&end={date_to_iso8601(end)}'
             )
-        result = self._call_salesforce(method='GET', url=url, headers=headers)
+        result = self._call_salesforce(method='GET', url=url, **kwargs)
         return self.parse_result_to_json(result)
 
     def _call_salesforce(self, method, url, retries=0, max_retries=3, **kwargs):

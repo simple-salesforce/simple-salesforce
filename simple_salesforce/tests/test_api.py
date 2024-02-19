@@ -72,6 +72,22 @@ class TestSFType(unittest.TestCase):
         self.assertEqual(sf_type.metadata(), {})
 
     @responses.activate
+    def test_metadata_with_timeout(self):
+        """Ensure metadata works with other requests kwargs"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*$'),
+            body='{}',
+            status=http.OK
+            )
+
+        sf_type = _create_sf_type()
+        sf_type.metadata(timeout=3)
+        timeout = responses.calls[0].request.req_kwargs['timeout']
+        self.assertEqual(timeout, 3)
+
+
+    @responses.activate
     def test_describe_with_additional_request_headers(self):
         """Ensure custom headers are used for describe requests"""
         responses.add(
@@ -104,6 +120,22 @@ class TestSFType(unittest.TestCase):
         sf_type = _create_sf_type()
 
         self.assertEqual(sf_type.describe(), {})
+
+    @responses.activate
+    def test_describe_with_timeout(self):
+        """Ensure describe works with other requests kwargs"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/Case/describe$'),
+            body='{}',
+            status=http.OK
+            )
+
+        sf_type = _create_sf_type()
+        sf_type.describe(timeout=1)
+        timeout = responses.calls[0].request.req_kwargs['timeout']
+        self.assertEqual(timeout, 1)
+
 
     @responses.activate
     def test_describe_layout_with_additional_request_headers(self):
@@ -141,6 +173,21 @@ class TestSFType(unittest.TestCase):
         self.assertEqual(sf_type.describe_layout(record_id='444'), {})
 
     @responses.activate
+    def test_describe_layout_with_timeout(self):
+        """Ensure describe_layout works with other requests kwargs"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/Case/describe/layouts/445$'),
+            body='{}',
+            status=http.OK
+            )
+
+        sf_type = _create_sf_type()
+        sf_type.describe_layout(record_id='445', timeout=10)
+        timeout = responses.calls[0].request.req_kwargs['timeout']
+        self.assertEqual(timeout, 10)
+
+    @responses.activate
     def test_get_with_additional_request_headers(self):
         """Ensure custom headers are used for get requests"""
         responses.add(
@@ -174,6 +221,21 @@ class TestSFType(unittest.TestCase):
         sf_type = _create_sf_type()
 
         self.assertEqual(sf_type.get(record_id='444'), {})
+
+    @responses.activate
+    def test_get_with_timeout(self):
+        """Ensure get works with other requests kwargs"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/Case/445$'),
+            body='{}',
+            status=http.OK
+            )
+
+        sf_type = _create_sf_type()
+        sf_type.get(record_id='445', timeout=8)
+        timeout = responses.calls[0].request.req_kwargs['timeout']
+        self.assertEqual(timeout, 8)
 
     @responses.activate
     def test_get_by_custom_id_with_additional_request_headers(self):
@@ -216,6 +278,25 @@ class TestSFType(unittest.TestCase):
         self.assertEqual(result, {})
 
     @responses.activate
+    def test_get_by_custom_id_with_timeout(self):
+        """Ensure get_by_custom_id works with other requests kwargs"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/Case/some-field/445$'),
+            body='{}',
+            status=http.OK
+            )
+
+        sf_type = _create_sf_type()
+        sf_type.get_by_custom_id(
+            custom_id_field='some-field',
+            custom_id='445',
+            timeout=9
+            )
+        timeout = responses.calls[0].request.req_kwargs['timeout']
+        self.assertEqual(timeout, 9)
+
+    @responses.activate
     def test_create_with_additional_request_headers(self):
         """Ensure custom headers are used for create requests"""
         responses.add(
@@ -250,6 +331,21 @@ class TestSFType(unittest.TestCase):
         result = sf_type.create(data={'some': 'data'})
 
         self.assertEqual(result, {})
+
+    @responses.activate
+    def test_create_with_timeout(self):
+        """Ensure create works with other requests kwargs"""
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://.*/Case/$'),
+            body='{}',
+            status=http.OK
+            )
+
+        sf_type = _create_sf_type()
+        sf_type.create(data={'some': 'data'}, timeout=12)
+        timeout = responses.calls[0].request.req_kwargs['timeout']
+        self.assertEqual(timeout, 12)
 
     @responses.activate
     def test_update_with_additional_request_headers(self):
@@ -292,6 +388,25 @@ class TestSFType(unittest.TestCase):
         self.assertEqual(result, http.OK)
 
     @responses.activate
+    def test_update_with_timeout(self):
+        """Ensure update works with other requests kwargs"""
+        responses.add(
+            responses.PATCH,
+            re.compile(r'^https://.*/Case/some-case-id$'),
+            body='{}',
+            status=http.OK
+            )
+
+        sf_type = _create_sf_type()
+        sf_type.update(
+            record_id='some-case-id',
+            data={'some': 'data'},
+            timeout=11
+            )
+        timeout = responses.calls[0].request.req_kwargs['timeout']
+        self.assertEqual(timeout, 11)
+
+    @responses.activate
     def test_upsert_with_additional_request_headers(self):
         """Ensure custom headers are used for upserts"""
         responses.add(
@@ -332,6 +447,25 @@ class TestSFType(unittest.TestCase):
         self.assertEqual(result, http.OK)
 
     @responses.activate
+    def test_upsert_with_timeout(self):
+        """Ensure upsert works with other requests kwargs"""
+        responses.add(
+            responses.PATCH,
+            re.compile(r'^https://.*/Case/some-case-id$'),
+            body='{}',
+            status=http.OK
+            )
+
+        sf_type = _create_sf_type()
+        sf_type.upsert(
+            record_id='some-case-id',
+            data={'some': 'data'},
+            timeout=13
+            )
+        timeout = responses.calls[0].request.req_kwargs['timeout']
+        self.assertEqual(timeout, 13)
+
+    @responses.activate
     def test_delete_with_additional_request_headers(self):
         """Ensure custom headers are used for deletes"""
         responses.add(
@@ -366,6 +500,21 @@ class TestSFType(unittest.TestCase):
         result = sf_type.delete(record_id='some-case-id')
 
         self.assertEqual(result, http.OK)
+
+    @responses.activate
+    def test_delete_with_timeout(self):
+        """Ensure deleted works with other requests kwargs"""
+        responses.add(
+            responses.DELETE,
+            re.compile(r'^https://.*/Case/some-case-id$'),
+            body='{}',
+            status=http.OK
+            )
+
+        sf_type = _create_sf_type()
+        sf_type.delete(record_id='some-case-id', timeout=5)
+        timeout = responses.calls[0].request.req_kwargs['timeout']
+        self.assertEqual(timeout, 5)
 
     @responses.activate
     def test_deleted_with_additional_request_headers(self):
@@ -405,6 +554,23 @@ class TestSFType(unittest.TestCase):
         self.assertEqual(result, {})
 
     @responses.activate
+    def test_deleted_with_timeout(self):
+        """Ensure deleted works with other requests kwargs"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/Case/deleted/\?start=.+&end=.+$'),
+            body='{}',
+            status=http.OK
+            )
+
+        sf_type = _create_sf_type()
+        sf_type.deleted(
+            start=datetime.now(), end=datetime.now(), timeout=5)
+        timeout = responses.calls[0].request.req_kwargs['timeout']
+        self.assertEqual(timeout, 5)
+
+
+    @responses.activate
     def test_updated_with_additional_request_headers(self):
         """Ensure custom headers are used for updated"""
         responses.add(
@@ -440,6 +606,23 @@ class TestSFType(unittest.TestCase):
             start=datetime.now(), end=datetime.now())
 
         self.assertEqual(result, {})
+
+    @responses.activate
+    def test_updated_with_timeout(self):
+        """Ensure updated works with other requests kwargs"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/Case/updated/\?start=.+&end=.+$'),
+            body='{}',
+            status=http.OK
+            )
+
+        sf_type = _create_sf_type()
+        sf_type.updated(
+            start=datetime.now(), end=datetime.now(), timeout=4)
+        timeout = responses.calls[0].request.req_kwargs['timeout']
+        self.assertEqual(timeout, 4)
+
 
     @responses.activate
     def test_get_parse_float_as_float(self):
