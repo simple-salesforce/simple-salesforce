@@ -1,8 +1,16 @@
 """ Class to work with Salesforce Metadata API """
+
 from base64 import b64encode, b64decode
 from pathlib import Path
+from typing import Any, Dict, IO, List, Mapping, Optional, Tuple, Union
 from xml.etree import ElementTree as ET
-from .util import call_salesforce
+from xml.etree.ElementTree import Element
+
+import requests
+from zeep.proxy import ServiceProxy
+from zeep.xsd import AnySimpleType, ComplexType, CompoundValue
+
+from .util import Headers, call_salesforce
 from .messages import DEPLOY_MSG, CHECK_DEPLOY_STATUS_MSG, \
     CHECK_RETRIEVE_STATUS_MSG, RETRIEVE_MSG
 from zeep import Client, Settings
@@ -12,7 +20,12 @@ class MetadataType:
     """
     Salesforce Metadata Type
     """
-    def __init__(self, name, service, zeep_type, session_header):
+    def __init__(
+            self,
+            name: str,
+            service: ServiceProxy,
+            zeep_type: Union[ComplexType, AnySimpleType],
+            session_header: CompoundValue):
         """
         Initialize metadata type
 
@@ -31,7 +44,7 @@ class MetadataType:
 
     @staticmethod
     # pylint: disable=broad-exception-raised
-    def _handle_api_response(response):
+    def _handle_api_response(response: List[Any]) -> None:
         """
         Parses SaveResult and DeleteResult objects to identify if there was
         an error, and raises exception accordingly
@@ -51,7 +64,7 @@ class MetadataType:
         if err_string:
             raise Exception(err_string)
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """
         Creates a new object of this metadata type
 
@@ -61,7 +74,7 @@ class MetadataType:
         """
         return self._zeep_type(*args, **kwargs)
 
-    def create(self, metadata):
+    def create(self, metadata: List[Any]) -> None:
         """
         Performs a createMetadata call
 
@@ -78,7 +91,7 @@ class MetadataType:
             self._session_header])
         self._handle_api_response(response)
 
-    def read(self, full_names):
+    def read(self, full_names: List[str]) -> Union[List[Any], Any]:
         """
         Performs a readMetadata call
 
@@ -100,7 +113,7 @@ class MetadataType:
             return response[0]
         return response
 
-    def update(self, metadata):
+    def update(self, metadata: List[Any]) -> None:
         """
         Performs an updateMetadata call. All required fields must be passed
         for each component
@@ -118,7 +131,7 @@ class MetadataType:
             self._session_header])
         self._handle_api_response(response)
 
-    def upsert(self, metadata):
+    def upsert(self, metadata: List[Any]) -> None:
         """
         Performs an upsertMetadata call. All required fields must be passed
         for each component
@@ -136,7 +149,7 @@ class MetadataType:
             self._session_header])
         self._handle_api_response(response)
 
-    def delete(self, full_names):
+    def delete(self, full_names: List[Dict[str, Any]]) -> None:
         """
         Performs a deleteMetadata call
 
@@ -154,7 +167,7 @@ class MetadataType:
                                                     self._session_header])
         self._handle_api_response(response)
 
-    def rename(self, old_full_name, new_full_name):
+    def rename(self, old_full_name: str, new_full_name: str) -> None:
         """
         Performs a renameMetadata call
 
@@ -169,7 +182,7 @@ class MetadataType:
                                                   self._session_header])
         self._handle_api_response([result])
 
-    def describe(self):
+    def describe(self) -> Any:
         """
         Performs a describeValueType call
 
@@ -190,8 +203,14 @@ class SfdcMetadataApi:
         }
 
     # pylint: disable=R0913
-    def __init__(self, session, session_id, instance, metadata_url, headers,
-                 api_version):
+    def __init__(
+            self,
+            session: requests.Session,
+            session_id: str,
+            instance: str,
+            metadata_url: str,
+            headers: Headers,
+            api_version: Optional[str]):
         """ Initialize and check session """
         self.session = session
         self._session_id = session_id
@@ -201,21 +220,28 @@ class SfdcMetadataApi:
         self._api_version = api_version
         self._deploy_zip = None
         wsdl_path = Path(__file__).parent / 'metadata.wsdl'
-        self._client = Client(wsdl_path.absolute().as_uri(),
-                              settings=Settings(strict=False,
-                                                xsd_ignore_sequence_order=True))
+        self._client = Client(
+            wsdl_path.absolute().as_uri(),
+            settings=Settings(
+                strict=False,
+                xsd_ignore_sequence_order=True
+            ))  # type: ignore[no-untyped-call]
         self._service = self._client.create_service(
             "{http://soap.sforce.com/2006/04/metadata}MetadataBinding",
-            self.metadata_url)
-        self._session_header = self._client.get_element('ns0:SessionHeader')(
-            sessionId=self._session_id)
+            self.metadata_url)  # type: ignore[no-untyped-call]
+        self._session_header = self._client.get_element(
+            'ns0:SessionHeader'  # type: ignore[no-untyped-call]
+        )(sessionId=self._session_id)
 
-    def __getattr__(self, item):
-        return MetadataType(item, self._service,
-                            self._client.get_type('ns0:' + item),
-                            self._session_header)
+    def __getattr__(self, item: str) -> MetadataType:
+        return MetadataType(
+            item,
+            self._service,
+            self._client.get_type(
+                'ns0:' + item),  # type: ignore[no-untyped-call]
+            self._session_header)
 
-    def describe_metadata(self):
+    def describe_metadata(self) -> Any:
         """
         Performs a describeMetadata call
 
@@ -224,7 +250,7 @@ class SfdcMetadataApi:
         return self._service.describeMetadata(self._api_version, _soapheaders=[
             self._session_header])
 
-    def list_metadata(self, queries):
+    def list_metadata(self, queries: List[Any]) -> List[Any]:
         """
         Performs a listMetadata call
 
@@ -235,12 +261,18 @@ class SfdcMetadataApi:
         :returns: List of zeep.objects.FileProperties objects
         :rtype: list
         """
-        return self._service.listMetadata(queries, self._api_version,
-                                          _soapheaders=[self._session_header])
+        return self._service.listMetadata(  # type: ignore[no-any-return]
+            queries,
+            self._api_version,
+            _soapheaders=[self._session_header])
 
     # pylint: disable=R0914
     # pylint: disable-msg=C0103
-    def deploy(self, zipfile, sandbox, **kwargs):
+    def deploy(
+            self,
+            zipfile: Union[str, IO[bytes]],
+            sandbox: bool,
+            **kwargs: Any) -> Tuple[Optional[str], Optional[str]]:
         """ Kicks off async deployment, returns deployment id
         :param zipfile:
         :type zipfile:
@@ -302,25 +334,27 @@ class SfdcMetadataApi:
                                  additional_headers=headers,
                                  data=request)
 
-        async_process_id = ET.fromstring(result.text).find(
+        async_process_id = ET.fromstring(result.text).findtext(
             'soapenv:Body/mt:deployResponse/mt:result/mt:id',
-            self._XML_NAMESPACES).text
-        state = ET.fromstring(result.text).find(
+            None,
+            self._XML_NAMESPACES) or None
+        state = ET.fromstring(result.text).findtext(
             'soapenv:Body/mt:deployResponse/mt:result/mt:state',
-            self._XML_NAMESPACES).text
+            None,
+            self._XML_NAMESPACES) or None
 
         return async_process_id, state
 
     @staticmethod
     # pylint: disable=R1732
-    def _read_deploy_zip(zipfile):
+    def _read_deploy_zip(zipfile: Union[str, IO[bytes]]) -> str:
         """
         :param zipfile:
         :type zipfile:
         :return:
         :rtype:
         """
-        if hasattr(zipfile, 'read'):
+        if hasattr(zipfile, 'read') and hasattr(zipfile, 'seek'):
             zipfile.seek(0)
             raw = zipfile.read()
         else:
@@ -328,7 +362,10 @@ class SfdcMetadataApi:
         return b64encode(raw).decode()
 
     # pylint: disable=broad-exception-raised
-    def _retrieve_deploy_result(self, async_process_id, **kwargs):
+    def _retrieve_deploy_result(
+            self,
+            async_process_id: str,
+            **kwargs: Any) -> Element:
         """ Retrieves status for specified deployment id
         :param async_process_id:
         :type async_process_id:
@@ -368,14 +405,21 @@ class SfdcMetadataApi:
         return result
 
     @staticmethod
-    def get_component_error_count(value):
+    def get_component_error_count(value: str) -> int:
         """Get component error counts"""
         try:
             return int(value)
         except ValueError:
             return 0
 
-    def check_deploy_status(self, async_process_id, **kwargs):
+    def check_deploy_status(
+            self,
+            async_process_id: str,
+            **kwargs: Any
+    ) -> Tuple[Optional[str],
+                Optional[str],
+                Optional[Mapping[str, Any]],
+                Optional[Mapping[str, Any]]]:
         """
         Checks whether deployment succeeded
         :param async_process_id:
@@ -387,29 +431,30 @@ class SfdcMetadataApi:
         """
         result = self._retrieve_deploy_result(async_process_id, **kwargs)
 
-        state = result.find('mt:status', self._XML_NAMESPACES).text
-        state_detail = result.find('mt:stateDetail', self._XML_NAMESPACES)
-        if state_detail is not None:
-            state_detail = state_detail.text
+        state = result.findtext(
+            'mt:status', None, self._XML_NAMESPACES) or None
+        state_detail = result.findtext(
+            'mt:stateDetail', None, self._XML_NAMESPACES) or None
 
         unit_test_errors = []
         deployment_errors = []
         failed_count = self.get_component_error_count(
-            result.find('mt:numberComponentErrors', self._XML_NAMESPACES).text)
+            result.findtext(
+                'mt:numberComponentErrors', '', self._XML_NAMESPACES))
         if state == 'Failed' or failed_count > 0:
             # Deployment failures
             failures = result.findall('mt:details/mt:componentFailures',
                                       self._XML_NAMESPACES)
             for failure in failures:
                 deployment_errors.append({
-                    'type': failure.find('mt:componentType',
-                                         self._XML_NAMESPACES).text,
-                    'file': failure.find('mt:fileName',
-                                         self._XML_NAMESPACES).text,
-                    'status': failure.find('mt:problemType',
-                                           self._XML_NAMESPACES).text,
-                    'message': failure.find('mt:problem',
-                                            self._XML_NAMESPACES).text
+                    'type': failure.findtext(
+                        'mt:componentType', None, self._XML_NAMESPACES) or None,
+                    'file': failure.findtext(
+                        'mt:fileName', None, self._XML_NAMESPACES) or None,
+                    'status': failure.findtext(
+                        'mt:problemType', None, self._XML_NAMESPACES) or None,
+                    'message': failure.findtext(
+                        'mt:problem', None, self._XML_NAMESPACES) or None
                     })
             # Unit test failures
             failures = result.findall(
@@ -417,44 +462,54 @@ class SfdcMetadataApi:
                 self._XML_NAMESPACES)
             for failure in failures:
                 unit_test_errors.append({
-                    'class': failure.find('mt:name', self._XML_NAMESPACES).text,
-                    'method': failure.find('mt:methodName',
-                                           self._XML_NAMESPACES).text,
-                    'message': failure.find('mt:message',
-                                            self._XML_NAMESPACES).text,
-                    'stack_trace': failure.find('mt:stackTrace',
-                                                self._XML_NAMESPACES).text
+                    'class': failure.findtext(
+                        'mt:name', None, self._XML_NAMESPACES) or None,
+                    'method': failure.findtext(
+                        'mt:methodName', None, self._XML_NAMESPACES) or None,
+                    'message': failure.findtext(
+                        'mt:message', None, self._XML_NAMESPACES) or None,
+                    'stack_trace': failure.findtext(
+                        'mt:stackTrace', None, self._XML_NAMESPACES) or None
                     })
 
         deployment_detail = {
-            'total_count': result.find('mt:numberComponentsTotal',
-                                       self._XML_NAMESPACES).text,
-            'failed_count': result.find('mt:numberComponentErrors',
-                                        self._XML_NAMESPACES).text,
-            'deployed_count': result.find('mt:numberComponentsDeployed',
-                                          self._XML_NAMESPACES).text,
+            'total_count': result.findtext('mt:numberComponentsTotal',
+                                           None,
+                                           self._XML_NAMESPACES) or None,
+            'failed_count': result.findtext('mt:numberComponentErrors',
+                                            None,
+                                            self._XML_NAMESPACES) or None,
+            'deployed_count': result.findtext('mt:numberComponentsDeployed',
+                                              None,
+                                              self._XML_NAMESPACES) or None,
             'errors': deployment_errors
             }
         unit_test_detail = {
-            'total_count': result.find('mt:numberTestsTotal',
-                                       self._XML_NAMESPACES).text,
-            'failed_count': result.find('mt:numberTestErrors',
-                                        self._XML_NAMESPACES).text,
-            'completed_count': result.find('mt:numberTestsCompleted',
-                                           self._XML_NAMESPACES).text,
+            'total_count': result.findtext('mt:numberTestsTotal',
+                                           None,
+                                           self._XML_NAMESPACES) or None,
+            'failed_count': result.findtext('mt:numberTestErrors',
+                                            None,
+                                            self._XML_NAMESPACES) or None,
+            'completed_count': result.findtext('mt:numberTestsCompleted',
+                                               None,
+                                               self._XML_NAMESPACES) or None,
             'errors': unit_test_errors
             }
 
         return state, state_detail, deployment_detail, unit_test_detail
 
-    def download_unit_test_logs(self, async_process_id):
+    def download_unit_test_logs(self, async_process_id: str) -> None:
         """ Downloads Apex logs for unit tests executed during specified
         deployment """
         result = self._retrieve_deploy_result(async_process_id)
         print("response:", ET.tostring(result, encoding="us-ascii",
                                        method="xml"))
 
-    def retrieve(self, async_process_id, **kwargs):
+    def retrieve(
+            self,
+            async_process_id: str,
+            **kwargs: Any) -> Tuple[Optional[str], Optional[str]]:
         """ Submits retrieve request """
         # Compose unpackaged XML
         client = kwargs.get('client', 'simple_salesforce_metahelper')
@@ -465,9 +520,9 @@ class SfdcMetadataApi:
 
         unpackaged = ''
         if kwargs.get('unpackaged'):
-            for metadata_type in kwargs.get('unpackaged'):
+            for metadata_type in kwargs.get('unpackaged', {}):
                 if isinstance(kwargs.get('unpackaged'), dict):
-                    members = kwargs.get('unpackaged')[metadata_type]
+                    members = kwargs.get('unpackaged', {})[metadata_type]
                     unpackaged += '<types>'
                     for member in members:
                         unpackaged += f'<members>{member}</members>'
@@ -496,17 +551,23 @@ class SfdcMetadataApi:
             data=request)
 
         # Parse response to get async Id and status
-        async_process_id = ET.fromstring(res.text).find(
+        async_process_id_ = ET.fromstring(res.text).findtext(
             'soapenv:Body/mt:retrieveResponse/mt:result/mt:id',
-            self._XML_NAMESPACES).text
-        state = ET.fromstring(res.text).find(
+            None,
+            self._XML_NAMESPACES) or None
+        state = ET.fromstring(res.text).findtext(
             'soapenv:Body/mt:retrieveResponse/mt:result/mt:state',
-            self._XML_NAMESPACES).text
+            None,
+            self._XML_NAMESPACES) or None
 
-        return async_process_id, state
+        return async_process_id_, state
 
     # pylint: disable=broad-exception-raised
-    def retrieve_retrieve_result(self, async_process_id, include_zip, **kwargs):
+    def retrieve_retrieve_result(
+            self,
+            async_process_id: str,
+            include_zip: str,
+            **kwargs: Any) -> Element:
         """ Retrieves status for specified retrieval id """
         client = kwargs.get('client', 'simple_salesforce_metahelper')
         attributes = {
@@ -536,14 +597,17 @@ class SfdcMetadataApi:
 
         return result
 
-    def retrieve_zip(self, async_process_id, **kwargs):
+    def retrieve_zip(
+            self,
+            async_process_id: str,
+            **kwargs: Any
+    ) -> Tuple[Optional[str], Optional[str], List[Dict[str, Any]], bytes]:
         """ Retrieves ZIP file """
         result = self.retrieve_retrieve_result(async_process_id, 'true',
                                                **kwargs)
-        state = result.find('mt:status', self._XML_NAMESPACES).text
-        error_message = result.find('mt:errorMessage', self._XML_NAMESPACES)
-        if error_message is not None:
-            error_message = error_message.text
+        state = result.findtext('mt:status', None, self._XML_NAMESPACES) or None
+        error_message = result.findtext(
+            'mt:errorMessage', None, self._XML_NAMESPACES)
 
         # Check if there are any messages
         messages = []
@@ -551,24 +615,31 @@ class SfdcMetadataApi:
                                       self._XML_NAMESPACES)
         for message in message_list:
             messages.append({
-                'file': message.find('mt:fileName', self._XML_NAMESPACES).text,
-                'message': message.find('mt:problem', self._XML_NAMESPACES).text
+                'file': message.findtext(
+                    'mt:fileName', None, self._XML_NAMESPACES) or None,
+                'message': message.findtext(
+                    'mt:problem', None, self._XML_NAMESPACES) or None
                 })
 
         # Retrieve base64 encoded ZIP file
-        zipfile_base64 = result.find('mt:zipFile', self._XML_NAMESPACES).text
-        zipfile = b64decode(zipfile_base64)
+        zipfile_base64 = result.findtext(
+            'mt:zipFile', None, self._XML_NAMESPACES
+        ) or None
+        zipfile = b64decode(zipfile_base64)  # type: ignore[arg-type]
 
         return state, error_message, messages, zipfile
 
-    def check_retrieve_status(self, async_process_id, **kwargs):
+    def check_retrieve_status(
+            self,
+            async_process_id: str,
+            **kwargs: Any
+    ) -> Tuple[Optional[str], Optional[str], List[Dict[str, Optional[str]]]]:
         """ Checks whether retrieval succeeded """
         result = self.retrieve_retrieve_result(async_process_id, 'false',
                                                **kwargs)
-        state = result.find('mt:status', self._XML_NAMESPACES).text
-        error_message = result.find('mt:errorMessage', self._XML_NAMESPACES)
-        if error_message is not None:
-            error_message = error_message.text
+        state = result.findtext('mt:status', None, self._XML_NAMESPACES) or None
+        error_message = result.findtext(
+            'mt:errorMessage', None, self._XML_NAMESPACES)
 
         # Check if there are any messages
         messages = []
@@ -576,8 +647,10 @@ class SfdcMetadataApi:
                                       self._XML_NAMESPACES)
         for message in message_list:
             messages.append({
-                'file': message.find('mt:fileName', self._XML_NAMESPACES).text,
-                'message': message.find('mt:problem', self._XML_NAMESPACES).text
+                'file': message.findtext(
+                    'mt:fileName', None, self._XML_NAMESPACES) or None,
+                'message': message.findtext(
+                    'mt:problem', None, self._XML_NAMESPACES) or None
                 })
 
         return state, error_message, messages
