@@ -32,6 +32,7 @@ def SalesforceLogin(
         session=None,
         client_id=None,
         domain=None,
+        instance_url=None,
         consumer_key=None,
         consumer_secret=None,
         privatekey_file=None,
@@ -170,6 +171,7 @@ def SalesforceLogin(
     elif username is not None and \
             consumer_key is not None and \
             (privatekey_file is not None or privatekey is not None):
+        token_domain = instance_url if instance_url is not None else domain
         expiration = datetime.now(timezone.utc) + timedelta(minutes=3)
         payload = {
             'iss': consumer_key,
@@ -189,7 +191,7 @@ def SalesforceLogin(
             }
 
         return token_login(
-            f'https://{domain}.salesforce.com/services/oauth2/token',
+            f'https://{token_domain}.salesforce.com/services/oauth2/token',
             token_data, domain, consumer_key,
             None, proxies, session)
     elif consumer_key is not None and consumer_secret is not None and \
