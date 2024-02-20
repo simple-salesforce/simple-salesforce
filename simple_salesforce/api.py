@@ -37,8 +37,7 @@ class Salesforce:
     _parse_float = None
     _object_pairs_hook = OrderedDict
 
-    # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,
-    # too-many-statements
+    # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements,line-too-long
     def __init__(
             self,
             username: Optional[str] = None,
@@ -809,7 +808,7 @@ class Salesforce:
             r'[^-]?api-usage=(?P<used>\d+)/(?P<tot>\d+)',
             sforce_limit_info
             )
-        
+
         pau = r'.+per-app-api-usage=(?P<u>\d+)/(?P<t>\d+)\(appName=(?P<n>.+)\)'
         per_app_api_usage = re.match(pau,
                                      sforce_limit_info
