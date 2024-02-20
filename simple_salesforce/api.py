@@ -800,27 +800,23 @@ class SFType:
             )
         return self.parse_result_to_json(result)
 
-    def get(self, record_id, headers=None, fields=None):
+    def get(self, record_id, headers=None, **kwargs):
         """Returns the result of a GET to `.../{object_name}/{record_id}` as a
         dict decoded from the JSON payload returned by Salesforce.
         Arguments:
         * record_id -- the Id of the SObject to get
         * headers -- a dict with additional request headers.
-        * fields -- a string with the specific fields to get
         """
         record_url = urljoin(self.base_url, record_id)
 
-        if fields:
-            record_url += f'?fields={fields}'
-
         result = self._call_salesforce(
             method='GET', url=record_url,
-            headers=headers
+            headers=headers, **kwargs
             )
         return self.parse_result_to_json(result)
 
     def get_by_custom_id(self, custom_id_field, custom_id, headers=None,
-                          fields=None):
+                          **kwargs):
         """Return an ``SFType`` by custom ID
         Returns the result of a GET to
         `.../{object_name}/{custom_id_field}/{custom_id}` as a dict decoded
@@ -830,15 +826,11 @@ class SFType:
                              as an External ID
         * custom_id - the External ID value of the SObject to get
         * headers -- a dict with additional request headers.
-        * fields -- a string with the specific fields to get
-        """
+         """
         custom_url = urljoin(self.base_url, f'{custom_id_field}/{custom_id}')
 
-        if fields:
-            custom_url += f'?fields={fields}'
-
         result = self._call_salesforce(
-            method='GET', url=custom_url, headers=headers
+            method='GET', url=custom_url, headers=headers, **kwargs
             )
         return self.parse_result_to_json(result)
 
