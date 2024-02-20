@@ -9,7 +9,7 @@ Simple Salesforce
    :target: http://simple-salesforce.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.6, 3.7 3.8, 3.9, 3.10, and 3.11. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
+Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.8, 3.9, 3.10, 3.11, and 3.12. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
 You can find out more regarding the format of the results in the `Official Salesforce.com REST API Documentation`_
 
 .. _Official Salesforce.com REST API Documentation: http://www.salesforce.com/us/developer/docs/api_rest/index.htm
@@ -770,7 +770,7 @@ Generate Pandas Dataframe from SFDC API Query (ex.query,query_all) and append re
     listColumns = list(df.columns)
     for col in listColumns:
         if any (isinstance (df[col].values[i], dict) for i in range(0, len(df[col].values))):
-            df = pd.concat([df.drop(columns=[col]),df[col].apply(pd.Series).drop('attributes',axis=1).add_prefix(col+'.')],axis=1)
+            df = pd.concat([df.drop(columns=[col]),df[col].apply(pd.Series,dtype=df[col].dtype).drop('attributes',axis=1).add_prefix(col+'.')],axis=1)
             new_columns = np.setdiff1d(df.columns, listColumns)
             for i in new_columns:
                 listColumns.append(i)

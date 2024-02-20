@@ -1,8 +1,8 @@
 """ Formatting helpers that perform quoting and escaping """
-
 import urllib.parse
 from datetime import date, datetime, timezone
 from string import Formatter
+from typing import Any, Union
 
 # https://developer.salesforce.com/docs/atlas.en-us.soql_sosl.meta/soql_sosl/sforce_api_calls_soql_select_quotedstringescapes.htm
 soql_escapes = str.maketrans({
@@ -25,7 +25,7 @@ soql_like_escapes = str.maketrans({
 class SoqlFormatter(Formatter):
     """ Custom formatter to apply quoting or the :literal format spec """
 
-    def format_field(self, value, format_spec):
+    def format_field(self, value: Any, format_spec: str) -> Any:
         if not format_spec:
             return quote_soql_value(value)
         if format_spec == 'literal':
@@ -40,13 +40,13 @@ class SoqlFormatter(Formatter):
         return super().format_field(value, format_spec)
 
 
-def format_soql(query, *args, **kwargs):
+def format_soql(query: str, *args: Any, **kwargs: Any) -> str:
     """ Insert values quoted for SOQL into a format string """
     return SoqlFormatter().vformat(query, args, kwargs)
 
 
 # pylint: disable=too-many-return-statements
-def quote_soql_value(value):
+def quote_soql_value(value: Any) -> str:
     """ Quote/escape either an individual value or a list of values
     for a SOQL value expression """
     if isinstance(value, str):
@@ -73,6 +73,6 @@ def quote_soql_value(value):
     raise ValueError('unquotable value type')
 
 
-def format_external_id(field, value):
+def format_external_id(field: str, value: Union[str, bytes]) -> str:
     """ Create an external ID string for use with get() or upsert() """
     return field + '/' + urllib.parse.quote(value, safe='')
