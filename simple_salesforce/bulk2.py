@@ -376,8 +376,7 @@ class _Bulk2Client:
         wait: float = 0.5
         ) -> Literal[JobState.job_complete]:
         """Wait for job completion or timeout"""
-        expiration_time: datetime.datetime = datetime.datetime.now() + \
-            datetime.timedelta(seconds = self.DEFAULT_WAIT_TIMEOUT_SECONDS)
+        expiration_time: DateTime = datetime.datetime.now() + datetime.timedelta(seconds = self.DEFAULT_WAIT_TIMEOUT_SECONDS)
         job_status = JobState.in_progress if is_query else JobState.open
         delay_timeout = 0.0
         delay_cnt = 0

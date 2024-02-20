@@ -33,6 +33,7 @@ def SalesforceLogin(
         session: Optional[requests.Session] = None,
         client_id: Optional[str] = None,
         domain: Optional[str] = None,
+        instance_url: Optional[str] =None,
         consumer_key: Optional[str] = None,
         consumer_secret: Optional[str] = None,
         privatekey_file: Optional[str] = None,
@@ -60,6 +61,7 @@ def SalesforceLogin(
                 common domains, such as 'login' or 'test', or
                 Salesforce My domain. If not used, will default to
                 'login'.
+    * instance_url -- Non-standard instance url (instance.my) to be used for connecting to Salesforce with JWT tokens where login.salesforce.com is still required in the aud parameter.
     * consumer_key -- the consumer key generated for the user/app
     * consumer_secret -- the consumer secret generated for the user/app
     * privatekey_file -- the path to the private key file used
@@ -171,6 +173,7 @@ def SalesforceLogin(
     elif username is not None and \
             consumer_key is not None and \
             (privatekey_file is not None or privatekey is not None):
+        token_domain = instance_url if instance_url is not None else domain
         expiration = datetime.now(timezone.utc) + timedelta(minutes=3)
         payload = {
             'iss': consumer_key,
@@ -190,7 +193,7 @@ def SalesforceLogin(
             }
 
         return token_login(
-            f'https://{domain}.salesforce.com/services/oauth2/token',
+            f'https://{token_domain}.salesforce.com/services/oauth2/token',
             token_data, domain, consumer_key,
             None, proxies, session)
     elif consumer_key is not None and consumer_secret is not None and \
