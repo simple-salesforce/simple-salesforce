@@ -297,8 +297,7 @@ class SFBulkType:
             if include_detailed_results:
                 result = self._get_batch_request_with_batch_results(
                     job_id=batch['jobId'],
-                    batch_id=batch['id'],
-                    operation=operation
+                    batch_id=batch['id']
                     )
             else:
                 result = self._get_batch_results(job_id=batch['jobId'],
