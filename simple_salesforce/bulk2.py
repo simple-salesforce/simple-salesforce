@@ -325,10 +325,7 @@ class _Bulk2Client:
 
     def wait_for_job(self, job_id, is_query: bool, wait=0.5):
         """Wait for job completion or timeout"""
-        expiration_time: DateTime = datetime.datetime.now() +
-        datetime.timedelta(
-            seconds=
-            seconds = self.DEFAULT_WAIT_TIMEOUT_SECONDS)
+        expiration_time: DateTime = datetime.datetime.now() + datetime.timedelta(seconds = self.DEFAULT_WAIT_TIMEOUT_SECONDS)
         job_status = JobState.in_progress if is_query else JobState.open
         delay_timeout = 0.0
         delay_cnt = 0
