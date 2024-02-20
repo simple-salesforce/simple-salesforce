@@ -61,7 +61,8 @@ def SalesforceLogin(
                 common domains, such as 'login' or 'test', or
                 Salesforce My domain. If not used, will default to
                 'login'.
-    * instance_url -- Non-standard instance url (instance.my) to be used for connecting to Salesforce with JWT tokens where login.salesforce.com is still required in the aud parameter.
+    * instance_url -- Non-standard instance url (instance.my) used
+                for connecting to Salesforce with JWT tokens.
     * consumer_key -- the consumer key generated for the user/app
     * consumer_secret -- the consumer secret generated for the user/app
     * privatekey_file -- the path to the private key file used
