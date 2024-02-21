@@ -28,6 +28,7 @@ setup(
         },
     install_requires = [
        'requests>=2.22.0',
+       'typing-extensions',
        'zeep',
        'pyjwt[crypto]',
        'more-itertools'
