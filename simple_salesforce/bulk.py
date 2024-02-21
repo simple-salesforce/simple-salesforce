@@ -235,9 +235,9 @@ class SFBulkType:
             yield result.json()
 
     def _get_batch_request_with_batch_results(self,
-                                              job_id,
-                                              batch_id
-                                              ):
+                                              job_id: str,
+                                              batch_id: str,
+                                              ) -> Iterable[Any]:
         """ retrieve a set of results from a completed job """
 
         url = f'{self.bulk_url}job/{job_id}/batch/{batch_id}/request'
@@ -254,7 +254,7 @@ class SFBulkType:
                                                )
 
         results = []
-        for idx, i in enumerate(batch_result.json()):
+        for idx, i in enumerate(batch_result):
             flattened_request_dict = [{
                                           k + '.' + list(v.keys())[0]: v.get(
                                               list(v.keys())[0]
@@ -297,8 +297,7 @@ class SFBulkType:
             if include_detailed_results:
                 result = self._get_batch_request_with_batch_results(
                     job_id=batch['jobId'],
-                    batch_id=batch['id'],
-                    operation=operation
+                    batch_id=batch['id']
                     )
             else:
                 result = self._get_batch_results(job_id=batch['jobId'],
