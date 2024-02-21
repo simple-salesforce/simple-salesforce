@@ -1027,8 +1027,10 @@ class SFType:
         * headers -- a dict with additional request headers.
         """
         result = self._call_salesforce(
-            method='GET', url=urljoin(self.base_url, record_id),
-            headers=headers, **kwargs
+            method='GET',
+            url=urljoin(self.base_url, record_id),
+            headers=headers,
+            **kwargs
             )
         return self.parse_result_to_json(result)
 
