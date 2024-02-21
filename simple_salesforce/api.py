@@ -1026,10 +1026,8 @@ class SFType:
         * record_id -- the Id of the SObject to get
         * headers -- a dict with additional request headers.
         """
-        record_url = urljoin(self.base_url, record_id)
-
         result = self._call_salesforce(
-            method='GET', url=record_url,
+            method='GET', url=urljoin(self.base_url, record_id),
             headers=headers, **kwargs
             )
         return self.parse_result_to_json(result)
@@ -1050,7 +1048,7 @@ class SFType:
                              as an External ID
         * custom_id - the External ID value of the SObject to get
         * headers -- a dict with additional request headers.
-         """
+        """
         custom_url = urljoin(self.base_url,
                              f'{custom_id_field}/{custom_id}'
                              )
