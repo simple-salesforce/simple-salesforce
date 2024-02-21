@@ -387,7 +387,8 @@ class SFBulkType:
             external_id_field: Optional[str] = None,
             batch_size: Union[int, str] = 10000,
             wait: int = 5,
-            bypass_results: bool = False
+            bypass_results: bool = False,
+            include_detailed_results: bool = False
             ) -> Iterable[Iterable[Any]]:
         """ String together helper functions to create a complete
         end-to-end bulk API request
@@ -446,7 +447,8 @@ class SFBulkType:
                 multi_thread_worker = partial(self.worker,
                                               operation=operation,
                                               wait=wait,
-                                              bypass_results=bypass_results
+                                              bypass_results=bypass_results,
+                                              include_detailed_results=include_detailed_results
                                               )
                 list_of_results = pool.map(multi_thread_worker,
                                            batches
@@ -455,9 +457,9 @@ class SFBulkType:
                 results = [x for sublist in list_of_results for i in
                            sublist for x in i] if not bypass_results else \
                     [{
-                         k: v
-                         } for sublist in list_of_results for i in
-                     sublist for k, v in i.items()]
+                        k: v
+                        } for sublist in list_of_results for i in
+                        sublist for k, v in i.items()]
 
                 self._close_job(job_id=job['id'])
 
@@ -504,7 +506,8 @@ class SFBulkType:
             data: BulkDataStr,
             batch_size: int = 10000,
             use_serial: bool = False,
-            bypass_results: bool = False
+            bypass_results: bool = False,
+            include_detailed_results: bool = False
             ) -> Iterable[Any]:
         """ soft delete records
 
@@ -516,7 +519,9 @@ class SFBulkType:
                                        operation='delete',
                                        data=data,
                                        batch_size=batch_size,
-                                       bypass_results=bypass_results
+                                       bypass_results=bypass_results,
+                                       include_detailed_results=
+                                       include_detailed_results
                                        )
         return results
 
@@ -525,7 +530,8 @@ class SFBulkType:
             data: BulkDataAny,
             batch_size: int = 10000,
             use_serial: bool = False,
-            bypass_results: bool = False
+            bypass_results: bool = False,
+            include_detailed_results: bool = False
             ) -> Iterable[Any]:
         """ insert records
 
@@ -537,7 +543,9 @@ class SFBulkType:
                                        operation='insert',
                                        data=data,
                                        batch_size=batch_size,
-                                       bypass_results=bypass_results
+                                       bypass_results=bypass_results,
+                                       include_detailed_results=
+                                       include_detailed_results
                                        )
         return results
 
@@ -547,7 +555,8 @@ class SFBulkType:
             external_id_field: str,
             batch_size: int = 10000,
             use_serial: bool = False,
-            bypass_results: bool = False
+            bypass_results: bool = False,
+            include_detailed_results: bool = False
             ) -> Iterable[Any]:
         """ upsert records based on a unique identifier
 
@@ -560,7 +569,9 @@ class SFBulkType:
                                        external_id_field=external_id_field,
                                        data=data,
                                        batch_size=batch_size,
-                                       bypass_results=bypass_results
+                                       bypass_results=bypass_results,
+                                       include_detailed_results=
+                                       include_detailed_results
                                        )
         return results
 
@@ -569,7 +580,8 @@ class SFBulkType:
             data: BulkDataAny,
             batch_size: int = 10000,
             use_serial: bool = False,
-            bypass_results: bool = False
+            bypass_results: bool = False,
+            include_detailed_results: bool = False
             ) -> Iterable[Any]:
         """ update records
 
@@ -581,7 +593,9 @@ class SFBulkType:
                                        operation='update',
                                        data=data,
                                        batch_size=batch_size,
-                                       bypass_results=bypass_results
+                                       bypass_results=bypass_results,
+                                       include_detailed_results=
+                                       include_detailed_results
                                        )
         return results
 
@@ -590,7 +604,8 @@ class SFBulkType:
             data: BulkDataStr,
             batch_size: int = 10000,
             use_serial: bool = False,
-            bypass_results: bool = False
+            bypass_results: bool = False,
+            include_detailed_results: bool = False
             ) -> Iterable[Any]:
         """ hard delete records
 
@@ -602,7 +617,9 @@ class SFBulkType:
                                        operation='hardDelete',
                                        data=data,
                                        batch_size=batch_size,
-                                       bypass_results=bypass_results
+                                       bypass_results=bypass_results,
+                                       include_detailed_results=
+                                       include_detailed_results
                                        )
         return results
 
