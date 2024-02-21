@@ -1016,7 +1016,8 @@ class SFType:
     def get(
             self,
             record_id: str,
-            headers: Optional[Headers] = None
+            headers: Optional[Headers] = None,
+            **kwargs: Any
             ) -> Any:
         """Returns the result of a GET to `.../{object_name}/{record_id}` as a
         dict decoded from the JSON payload returned by Salesforce.
@@ -1026,10 +1027,9 @@ class SFType:
         """
         result = self._call_salesforce(
             method='GET',
-            url=urljoin(self.base_url,
-                        record_id
-                        ),
-            headers=headers
+            url=urljoin(self.base_url, record_id),
+            headers=headers,
+            **kwargs
             )
         return self.parse_result_to_json(result)
 
@@ -1037,7 +1037,8 @@ class SFType:
             self,
             custom_id_field: str,
             custom_id: str,
-            headers: Optional[Headers] = None
+            headers: Optional[Headers] = None,
+            **kwargs: Any
             ) -> Any:
         """Return an ``SFType`` by custom ID
         Returns the result of a GET to
@@ -1055,7 +1056,8 @@ class SFType:
         result = self._call_salesforce(
             method='GET',
             url=custom_url,
-            headers=headers
+            headers=headers,
+            **kwargs
             )
         return self.parse_result_to_json(result)
 
