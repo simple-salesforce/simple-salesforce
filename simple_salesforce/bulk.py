@@ -378,7 +378,7 @@ class SFBulkType:
                                 operation=operation
                                 ) for i in batches]
 
-    # pylint: disable=R0913
+    # pylint: disable=R0913,line-too-long
     def _bulk_operation(
             self,
             operation: str,
