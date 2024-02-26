@@ -1,3 +1,17 @@
+v1.12.6
+======
+Features
+--------
+- [#771] Add support for Non-Standrad Domain in JWT Token
+- [#705] Allow parameters passed through to _call_salesforce using kwargs
+- [#697] Add support for query_all in bulk2
+- [#660] Add typing annotations
+
+Bug Fixes
+--------
+- [#680] Remove unused dependency crytography
+- [#683] Fix utf-8 encoding in bulk2
+
 v1.12.5
 ======
 Features

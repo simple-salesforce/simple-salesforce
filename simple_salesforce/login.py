@@ -2,6 +2,7 @@
 
 Heavily Modified from RestForce 1.0.0
 """
+from typing import Any, Dict, Optional, Tuple, Union, cast
 import base64
 
 DEFAULT_CLIENT_ID_PREFIX = 'simple-salesforce'
@@ -11,31 +12,33 @@ from datetime import datetime, timedelta, timezone
 from html import escape, unescape
 from json.decoder import JSONDecodeError
 from pathlib import Path
+from xml.parsers.expat import ExpatError
 
 import requests
 import jwt
 
 from .api import DEFAULT_API_VERSION
 from .exceptions import SalesforceAuthenticationFailed
-from .util import getUniqueElementValueFromXmlString
+from .util import Headers, Proxies, getUniqueElementValueFromXmlString
 
 
 # pylint: disable=invalid-name,too-many-arguments,too-many-locals,too-many-branches
 def SalesforceLogin(
-        username=None,
-        password=None,
-        security_token=None,
-        organizationId=None,
-        sf_version=DEFAULT_API_VERSION,
-        proxies=None,
-        session=None,
-        client_id=None,
-        domain=None,
-        consumer_key=None,
-        consumer_secret=None,
-        privatekey_file=None,
-        privatekey=None,
-        ):
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        security_token: Optional[str] = None,
+        organizationId: Optional[str] = None,
+        sf_version: str = DEFAULT_API_VERSION,
+        proxies: Optional[Proxies] = None,
+        session: Optional[requests.Session] = None,
+        client_id: Optional[str] = None,
+        domain: Optional[str] = None,
+        instance_url: Optional[str] =None,
+        consumer_key: Optional[str] = None,
+        consumer_secret: Optional[str] = None,
+        privatekey_file: Optional[str] = None,
+        privatekey: Optional[str] = None,
+        ) -> Tuple[str, str]:
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
     the domain of the instance of Salesforce to use for the session.
@@ -58,6 +61,8 @@ def SalesforceLogin(
                 common domains, such as 'login' or 'test', or
                 Salesforce My domain. If not used, will default to
                 'login'.
+    * instance_url -- Non-standard instance url (instance.my) used
+                for connecting to Salesforce with JWT tokens.
     * consumer_key -- the consumer key generated for the user/app
     * consumer_secret -- the consumer secret generated for the user/app
     * privatekey_file -- the path to the private key file used
@@ -169,6 +174,7 @@ def SalesforceLogin(
     elif username is not None and \
             consumer_key is not None and \
             (privatekey_file is not None or privatekey is not None):
+        token_domain = instance_url if instance_url is not None else domain
         expiration = datetime.now(timezone.utc) + timedelta(minutes=3)
         payload = {
             'iss': consumer_key,
@@ -177,9 +183,9 @@ def SalesforceLogin(
             'exp': f'{expiration.timestamp():.0f}'
             }
         if privatekey_file is not None:
-            key = Path(privatekey_file).read_bytes()
+            key: Union[bytes, str] = Path(privatekey_file).read_bytes()
         else:
-            key = privatekey
+            key = cast(str, privatekey)
         assertion = jwt.encode(payload, key, algorithm='RS256')
 
         token_data = {
@@ -188,7 +194,7 @@ def SalesforceLogin(
             }
 
         return token_login(
-            f'https://{domain}.salesforce.com/services/oauth2/token',
+            f'https://{token_domain}.salesforce.com/services/oauth2/token',
             token_data, domain, consumer_key,
             None, proxies, session)
     elif consumer_key is not None and consumer_secret is not None and \
@@ -222,22 +228,42 @@ def SalesforceLogin(
                       login_soap_request_headers, proxies, session)
 
 
-def soap_login(soap_url, request_body, headers, proxies, session=None):
+def soap_login(
+        soap_url: str,
+        request_body: str,
+        headers: Optional[Headers],
+        proxies: Optional[Proxies],
+        session: Optional[requests.Session] = None) -> Tuple[str, str]:
     """Process SOAP specific login workflow."""
     response = (session or requests).post(
         soap_url, request_body, headers=headers, proxies=proxies)
 
     if response.status_code != 200:
-        except_code = getUniqueElementValueFromXmlString(
-            response.content, 'sf:exceptionCode')
-        except_msg = getUniqueElementValueFromXmlString(
-            response.content, 'sf:exceptionMessage')
+        except_code: Union[str, int, None]
+        except_msg: str
+        try:
+            except_code = getUniqueElementValueFromXmlString(
+                response.content, 'sf:exceptionCode')
+            except_msg = (getUniqueElementValueFromXmlString(
+                response.content, 'sf:exceptionMessage')
+                or response.content.decode())
+        except ExpatError:
+            except_code = response.status_code
+            except_msg = response.content.decode()
         raise SalesforceAuthenticationFailed(except_code, except_msg)
 
     session_id = getUniqueElementValueFromXmlString(
         response.content, 'sessionId')
     server_url = getUniqueElementValueFromXmlString(
         response.content, 'serverUrl')
+    if session_id is None or server_url is None:
+        except_code = getUniqueElementValueFromXmlString(
+            response.content, 'sf:exceptionCode'
+        ) or 'UNKNOWN_EXCEPTION_CODE'
+        except_msg = getUniqueElementValueFromXmlString(
+            response.content, 'sf:exceptionMessage'
+        ) or 'UNKNOWN_EXCEPTION_MESSAGE'
+        raise SalesforceAuthenticationFailed(except_code, except_msg)
 
     sf_instance = (server_url
                    .replace('http://', '')
@@ -248,8 +274,14 @@ def soap_login(soap_url, request_body, headers, proxies, session=None):
     return session_id, sf_instance
 
 
-def token_login(token_url, token_data, domain, consumer_key,
-                headers, proxies, session=None):
+def token_login(
+        token_url: str,
+        token_data: Dict[str, Any],
+        domain: str,
+        consumer_key: str,
+        headers: Optional[Headers],
+        proxies: Optional[Proxies],
+        session: Optional[requests.Session] = None) -> Tuple[Any, Any]:
     """Process OAuth 2.0 JWT Bearer Token Flow."""
     response = (session or requests).post(
         token_url, token_data, headers=headers, proxies=proxies)

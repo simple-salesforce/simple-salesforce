@@ -18,4 +18,5 @@ docs/simple_salesforce*.rst
 docs/modules.rst
 .vscode
 venv
+.mypy_cache
 .python-version
