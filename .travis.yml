@@ -33,7 +33,8 @@ deploy:
   distributions: "sdist bdist_wheel"
   skip_existing: true
   cleanup: true
+  overwrite: true
   on:
-    tags: true
+    tags: false
     all_branches: true
     repo: simple-salesforce/simple-salesforce
