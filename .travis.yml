@@ -18,8 +18,8 @@ before_install:
   - python -m pip install --upgrade virtualenv
 install:
   - pip install -U tox
+  - pip install --force-reinstall setuptools==59.5.0
 script: tox
-cache: false
 notifications:
   email: false
 deploy:
@@ -27,7 +27,7 @@ deploy:
   provider: pypi
   edge:
     branch: v1.8.45
-  username: "__token__"
+  username: simple-salesforce
   password:
     secure: "RdkngWbRCGN5qSOk4babeda3w0jhsxB+zbuPjnFIOCHYz3OOQkIccXsoFPJso/E4k35mRNTU1J6PEBeL9W3KEtSgsl6k3lX8jamgJzkZU/HPoV8OH5tvybd3uiSikKA6EoxS5yfGjgTuSdOo07AzS69X4+FxNkRnTnug37tLjds="
   distributions: "sdist bdist_wheel"
