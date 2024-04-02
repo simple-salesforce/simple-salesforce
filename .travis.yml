@@ -19,7 +19,6 @@ before_install:
 install:
   - pip install -U tox
 script: tox
-cache: false
 notifications:
   email: false
 deploy:
@@ -34,6 +33,6 @@ deploy:
   skip_existing: true
   skip_cleanup: true
   on:
-    tags: false
+    tags: true
     all_branches: true
     repo: simple-salesforce/simple-salesforce
