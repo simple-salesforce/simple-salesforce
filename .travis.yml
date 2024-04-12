@@ -2,12 +2,11 @@ os: linux
 dist: bionic
 language: python
 python:
-  - "3.6"
-  - "3.7"
   - "3.8"
   - "3.9"
   - "3.10"
   - "3.11"
+  - "3.12"
 jobs:
   fast_finish: true
   include:
@@ -19,7 +18,6 @@ before_install:
   - python -m pip install --upgrade virtualenv
 install:
   - pip install -U tox
-  - pip install --force-reinstall setuptools==59.5.0
 script: tox
 notifications:
   email: false
@@ -33,7 +31,7 @@ deploy:
     secure: "RdkngWbRCGN5qSOk4babeda3w0jhsxB+zbuPjnFIOCHYz3OOQkIccXsoFPJso/E4k35mRNTU1J6PEBeL9W3KEtSgsl6k3lX8jamgJzkZU/HPoV8OH5tvybd3uiSikKA6EoxS5yfGjgTuSdOo07AzS69X4+FxNkRnTnug37tLjds="
   distributions: "sdist bdist_wheel"
   skip_existing: true
-  cleanup: true
+  skip_cleanup: true
   on:
     tags: true
     all_branches: true
