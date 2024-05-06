@@ -13,7 +13,8 @@ class SalesforceError(Exception):
             url: str,
             status: int,
             resource_name: str,
-            # `content` is populated by `requests.Response.json()` or `requests.Response.text` as a fallback
+            # `content` is populated by `requests.Response.json()`
+            # or `requests.Response.text` as a fallback
             content: Any):
         """Initialize the SalesforceError exception
 
