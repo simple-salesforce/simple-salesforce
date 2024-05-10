@@ -7,7 +7,7 @@ It is worth noting that the Bulk API is a common resource to build applications 
 Exception Code "InvalidBatch" with message "Records not processed"
 ==================================================================
 
-When processing your Bulk API request, one of the first chings Salesforce does is to check the schema of your payload. If the schema is not correct, you will get an error message with the exception code "InvalidBatch" and the message "Records not processed".
+When processing your Bulk API request, one of the first things Salesforce does is to check the schema of your payload. If the schema is not correct, you will get an error message with the exception code "InvalidBatch" and the message "Records not processed".
 
 A common cause for this error is to have a misrepresented field in your payload (that is: something that shouldn't be there). For example, if you are trying to insert a record with a field that does not exist in the object, you will get this error. Another common cause is to have a field with the *wrong data type*. For example, if you are trying to insert a record with a field that is a number, but you are sending a string, you will get this error.
 
