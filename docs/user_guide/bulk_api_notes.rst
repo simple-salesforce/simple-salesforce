@@ -35,4 +35,14 @@ If you are upserting data that looks up to existing data in Salesforce through a
 
     my_dataframe['Account__r'] = my_dataframe['Account__r'].apply(lambda x: {'AccountNumber': x})
 
-This will convert the `Account__r` column to a dictionary with the external id field that you are using to look up the Account object. This is because of the way relationships work in Salesforce. If you are somewhat familiar with how the platform's database works, you will notice that for the row that is going to be inserted the column that references the lookup object is transformed to an object, in a similar way that in Apex you use the relationship field to access the fields of the related object. This works for standard objects as well, where instead of *ContactId* you would use just *Contact*.
+This will convert the `Account__r` column to a dictionary with the external id field that you are using to look up the Account object, as in:
+
+.. code-block:: python
+
+    # suppose the account record was a simple dictionary like this:
+    account_row = { "Name": "Acme, Inc" } 
+
+    # after applying that lambda specified above, the object looks like this:
+    account_row = { "Name": "Acme, Inc", "Account__r": { "AccountNumber": "1234" }}
+
+This is because of the way relationships work in Salesforce. If you are somewhat familiar with how the platform's database works, you will notice that for the row that is going to be inserted the column that references the lookup field is going to be transformed into an attribute that points to an object, in a similar way that in Apex you use the relationship field to access the fields of the related object. This works for standard objects as well, where instead of *ContactId* you would use just *Contact*.
