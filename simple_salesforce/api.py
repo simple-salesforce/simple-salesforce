@@ -737,6 +737,36 @@ class Salesforce:
 
         return response_content
 
+    def listview_results(
+        self,
+        object: str,
+        listview_id: str,
+        **kwargs: Any
+    ) -> Any:
+        """return results from the given listview ID
+        https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_listviewresults.htm
+        Arguments:
+        * object -- The salesforce object that the listview id is associated with.
+        * listview_id -- the listview id to get results from
+        * kwargs -- Additional kwargs to pass to `requests.request` 
+        """
+        # If data is None, we should send an empty body, not "null", which is
+        # None in json.
+
+        result = self._call_salesforce(
+            'GET',
+            self.base_url + f"/sobjects/{object}/listviews/{listview_id}/results",
+            name="listview_results",
+            **kwargs
+            )
+        try:
+            response_content = result.json()
+        # pylint: disable=broad-except
+        except Exception:
+            response_content = result.text
+
+        return response_content
+
     def _call_salesforce(
             self,
             method: str,
