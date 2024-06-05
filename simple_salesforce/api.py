@@ -739,14 +739,14 @@ class Salesforce:
 
     def listview_results(
         self,
-        object: str,
+        sf_object: str,
         listview_id: str,
         **kwargs: Any
     ) -> Any:
         """return results from the given listview ID
         https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_listviewresults.htm
         Arguments:
-        * object -- The salesforce object that the listview id is associated with.
+        * sf_object -- The salesforce object that the listview id is associated with.
         * listview_id -- the listview id to get results from
         * kwargs -- Additional kwargs to pass to `requests.request` 
         """
@@ -755,7 +755,7 @@ class Salesforce:
 
         result = self._call_salesforce(
             'GET',
-            self.base_url + f"/sobjects/{object}/listviews/{listview_id}/results",
+            self.base_url + f"/sobjects/{sf_object}/listviews/{listview_id}/results",
             name="listview_results",
             **kwargs
             )
