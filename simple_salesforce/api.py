@@ -741,6 +741,8 @@ class Salesforce:
         self,
         sf_object: str,
         listview_id: str,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
         **kwargs: Any
     ) -> Any:
         """return results from the given listview ID
@@ -748,14 +750,24 @@ class Salesforce:
         Arguments:
         * sf_object -- The salesforce object that the listview id is associated with.
         * listview_id -- the listview id to get results from
+        * limit -- total number of records to return in one go
+        * offset -- starting record to return data for
         * kwargs -- Additional kwargs to pass to `requests.request` 
         """
         # If data is None, we should send an empty body, not "null", which is
         # None in json.
-
+        params = []
+        if limit is not None:
+            params.append(f'limit={limit}')
+            
+        if offset is not None:
+            params.append(f'offset={offset}')
+        param_string = '?' + '&'.join(params) if params else ''
+        url = self.base_url + f"/sobjects/{sf_object}/listviews/{listview_id}/results{param_string}"
+        print(url)
         result = self._call_salesforce(
             'GET',
-            self.base_url + f"/sobjects/{sf_object}/listviews/{listview_id}/results",
+            url,
             name="listview_results",
             **kwargs
             )
