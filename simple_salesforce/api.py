@@ -760,7 +760,7 @@ class Salesforce:
             **kwargs
             )
         try:
-            response_content = result.json()
+            response_content = self.parse_result_to_json(result)
         # pylint: disable=broad-except
         except Exception:
             response_content = result.text
