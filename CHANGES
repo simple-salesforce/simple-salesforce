@@ -1,3 +1,39 @@
+v1.12.6
+======
+Features
+--------
+- [#771] Add support for Non-Standrad Domain in JWT Token
+- [#705] Allow parameters passed through to _call_salesforce using kwargs
+- [#697] Add support for query_all in bulk2
+- [#660] Add typing annotations
+
+Bug Fixes
+--------
+- [#680] Remove unused dependency crytography
+- [#683] Fix utf-8 encoding in bulk2
+
+v1.12.5
+======
+Features
+--------
+- [#648] Add support for bulk2.0
+- [#662] Add OAuth 2.0 client credentials login
+
+v1.12.4
+======
+Bug Fixes
+--------
+- [#612] Fix unescaped username for JWT claim
+
+
+Other
+--------
+- [#636] Fix README typos
+- [#634] Added object_pairs_hook to SFType
+- [#618] Fixed indentation in setup.py
+- [#614] Updated README with tutorial video
+- [#607] Fixed misspellings
+
 v1.12.3
 ======
 Bug Fixes

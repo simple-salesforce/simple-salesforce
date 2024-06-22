@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 
 import requests
 import responses
+
 from simple_salesforce import tests
 from simple_salesforce.exceptions import SalesforceAuthenticationFailed
 from simple_salesforce.login import SalesforceLogin
@@ -257,3 +258,16 @@ class TestSalesforceLogin(unittest.TestCase):
                 consumer_secret='12345.abcde'
                 )
         self.assertTrue(self.mockrequest.post.called)
+
+    @responses.activate
+    def test_connected_app_client_credentials_login_success(self):
+        """Test a successful connected app login with client credentials"""
+        login_args = {
+            'consumer_key': '12345.abcde',
+            'consumer_secret': '12345.abcde',
+            'domain': urlparse(tests.INSTANCE_URL).hostname.split(
+                '.salesforce.com')[0],
+            }
+        self._test_login_success(
+            re.compile(rf'^{tests.INSTANCE_URL}/.*$'), login_args,
+            response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
