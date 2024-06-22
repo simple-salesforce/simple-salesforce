@@ -131,7 +131,10 @@ DEFAULT_QUERY_PAGE_SIZE = 50000
 def _split_csv(
         filename: Optional[str] = None,
         records: Optional[str] = None,
-        max_records: Optional[int] = None
+        max_records: Optional[int] = None,
+        line_ending: LineEnding = LineEnding.LF,
+        column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
+        quoting: int = csv.QUOTE_MINIMAL
         ) -> Generator[Tuple[int, str], None, None]:
     """Split a CSV file into chunks to avoid exceeding the Salesforce
     bulk 2.0 API limits.
@@ -141,11 +144,17 @@ def _split_csv(
         * max_records -- the number of records per chunk, None for auto size
     """
     total_records = _count_csv(filename=filename,
-                               skip_header=True
+                               skip_header=True,
+                               line_ending=line_ending,
+                               column_delimiter=column_delimiter,
+                               quoting=quoting
                                ) if \
         filename else \
         _count_csv(data=records,
-                   skip_header=True
+                   skip_header=True,
+                   line_ending=line_ending,
+                   column_delimiter=column_delimiter,
+                   quoting=quoting
                    )
     csv_data_size = os.path.getsize(filename) if filename else sys.getsizeof(
         records
@@ -158,85 +167,112 @@ def _split_csv(
         csv_data_size,
         MAX_INGEST_JOB_FILE_SIZE - 1 * 1024 * 1024
         )  # -1 MB for sentinel
-    records_size = 0
-    bytes_size = 0
-    buff: List[str] = []
+
+    dl = _delimiter_char[column_delimiter]
+    le = _line_ending_char[line_ending]
+
+    def _flush(header, records):
+        buffer = io.StringIO()
+        writer = csv.writer(
+            buffer,
+            delimiter=dl,
+            lineterminator=le,
+            quoting=quoting,
+        )
+        writer.writerow(header)
+        writer.writerows(records)
+        return buffer
+
+    def _split(csv_reader) -> Generator[Tuple[int, str], None, None]:
+        fieldnames = next(csv_reader)
+        records_size = 0
+        bytes_size = 0
+        buff: List[List[str]] = []
+        for line in csv_reader:
+            line_data_size = len(f"{dl}".join(line).encode("utf-8"))  # rough estimate
+            records_size += 1
+            bytes_size += line_data_size
+            if records_size > _max_records or bytes_size > max_bytes:
+                if buff:
+                    yield records_size - 1, _flush(fieldnames, buff).getvalue()
+                records_size = 1
+                bytes_size = line_data_size
+                buff = [line]
+            else:
+                buff.append(line)
+        if buff:
+            yield records_size, _flush(fieldnames, buff).getvalue()
+
     if filename:
         with open(filename,
                   encoding="utf-8"
                   ) as bis:
-            header = bis.readline()
-            for line in bis:
-                records_size += 1
-                bytes_size += len(line.encode("utf-8"))
-                if records_size > _max_records or bytes_size > max_bytes:
-                    if buff:
-                        yield records_size - 1, header + "".join(buff)
-                    buff = [line]
-                    records_size = 1
-                    bytes_size = len(line.encode("utf-8"))
-                else:
-                    buff.append(line)
-            if buff:
-                yield records_size, header + "".join(buff)
+            reader = csv.reader(
+                bis, delimiter=dl, lineterminator=le, quoting=quoting
+            )
+            yield from _split(reader)
+    elif records:
+        reader = csv.reader(
+            io.StringIO(records), delimiter=dl, lineterminator=le, quoting=quoting
+        )
+        yield from _split(reader)
     else:
-        assert records is not None
-        header = records.splitlines(True)[0]
-        for line in records.splitlines(True)[1:]:
-            records_size += 1
-            bytes_size += len(line.encode("utf-8"))
-            if records_size > _max_records or bytes_size > max_bytes:
-                if buff:
-                    yield records_size - 1, header + "".join(buff)
-                buff = [line]
-                records_size = 1
-                bytes_size = len(line.encode("utf-8"))
-            else:
-                buff.append(line)
-        if buff:
-            yield records_size, header + "".join(buff)
+        raise ValueError("Either filename or records must be provided")
 
 
 def _count_csv(
         filename: Optional[str] = None,
         data: Optional[str] = None,
         skip_header: bool = False,
-        line_ending: LineEnding = LineEnding.LF
+        line_ending: LineEnding = LineEnding.LF,
+        column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
+        quoting: int = csv.QUOTE_MINIMAL
         ) -> int:
     """Count the number of records in a CSV file."""
+    dl = _delimiter_char[column_delimiter]
+    le = _line_ending_char[line_ending]
     if filename:
         with open(filename,
                   encoding="utf-8"
                   ) as bis:
-            count = sum(1 for _ in bis)
+            reader = csv.reader(
+                bis, delimiter=dl, lineterminator=le, quoting=quoting
+            )
+            if skip_header: next(reader)
+            count = sum(1 for _ in reader)
     elif data:
-        pat = repr(_line_ending_char[line_ending])[1:-1]
-        count = sum(1 for _ in re.finditer(pat,
-                                           data
-                                           )
-                    )
+        reader = csv.reader(
+            io.StringIO(data), delimiter=dl, lineterminator=le, quoting=quoting
+        )
+        if skip_header: next(reader)
+        count = sum(1 for _ in reader)
     else:
         raise ValueError("Either filename or data must be provided")
 
-    if skip_header:
-        count -= 1
     return count
 
 
 def _convert_dict_to_csv(
         data: Optional[List[Dict[str, str]]],
         column_delimiter: Union[ColumnDelimiter, str] = ColumnDelimiter.COMMA,
-        line_ending: Union[LineEnding, str] = LineEnding.LF
+        line_ending: Union[LineEnding, str] = LineEnding.LF,
+        quoting: int = csv.QUOTE_MINIMAL,
+        sort_keys=False,
         ) -> Optional[str]:
     """Converts list of dicts to CSV like object."""
     if not data:
         return None
+    dl = _delimiter_char[column_delimiter]
+    le = _line_ending_char[line_ending]
     keys = set(i for s in [d.keys() for d in data] for i in s)
+    if sort_keys:
+        keys = list(sorted(keys))
     dict_to_csv_file = io.StringIO()
     writer = csv.DictWriter(dict_to_csv_file,
                             fieldnames=keys,
-                            delimiter=column_delimiter,
-                            lineterminator=line_ending
+                            delimiter=dl,
+                            lineterminator=le,
+                            quoting=quoting
                             )
     writer.writeheader()
     for row in data:
@@ -855,6 +891,7 @@ class SFBulk2Type:
             batch_size: Optional[int] = None,
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
+            quoting: int = csv.QUOTE_MINIMAL,
             external_id_field: Optional[str] = None,
             concurrency: int = 1,
             wait: int = 5,
@@ -890,11 +927,17 @@ class SFBulk2Type:
                       MAX_INGEST_JOB_PARALLELISM
                       )
         split_data = _split_csv(filename=csv_file,
-                                max_records=batch_size
+                                max_records=batch_size,
+                                line_ending=line_ending,
+                                column_delimiter=column_delimiter,
+                                quoting=quoting
                                 ) \
             if \
             csv_file else _split_csv(records=records,
-                                     max_records=batch_size
+                                     max_records=batch_size,
+                                     line_ending=line_ending,
+                                     column_delimiter=column_delimiter,
+                                     quoting=quoting
                                      )
         if workers == 1:
             for data in split_data:
@@ -937,6 +980,7 @@ class SFBulk2Type:
             batch_size: Optional[int] = None,
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
+            quoting: int = csv.QUOTE_MINIMAL,
             external_id_field: Optional[str] = None,
             wait: int = 5,
             ) -> List[Dict[str, int]]:
@@ -946,18 +990,14 @@ class SFBulk2Type:
             csv_file=csv_file,
             records=_convert_dict_to_csv(
                 records,
-                column_delimiter=_delimiter_char.get(
-                    column_delimiter,
-                    ColumnDelimiter.COMMA
-                    ),
-                line_ending=_line_ending_char.get(
-                    line_ending,
-                    LineEnding.LF
-                    )
+                column_delimiter=column_delimiter,
+                line_ending=line_ending,
+                quoting=quoting
                 ),
             batch_size=batch_size,
             column_delimiter=column_delimiter,
             line_ending=line_ending,
+            quoting=quoting,
             external_id_field=external_id_field,
             wait=wait,
             )
@@ -970,6 +1010,7 @@ class SFBulk2Type:
             concurrency: int = 1,
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
+            quoting: int = csv.QUOTE_MINIMAL,
             wait: int = 5,
             ) -> List[Dict[str, int]]:
         """insert records"""
@@ -978,18 +1019,14 @@ class SFBulk2Type:
             csv_file=csv_file,
             records=_convert_dict_to_csv(
                 records,
-                column_delimiter=_delimiter_char.get(
-                    column_delimiter,
-                    ColumnDelimiter.COMMA
-                    ),
-                line_ending=_line_ending_char.get(
-                    line_ending,
-                    LineEnding.LF
-                    )
+                column_delimiter=column_delimiter,
+                line_ending=line_ending,
+                quoting=quoting
                 ),
             batch_size=batch_size,
             column_delimiter=column_delimiter,
             line_ending=line_ending,
+            quoting=quoting,
             concurrency=concurrency,
             wait=wait,
             )
@@ -1002,6 +1039,7 @@ class SFBulk2Type:
             batch_size: Optional[int] = None,
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
+            quoting: int = csv.QUOTE_MINIMAL,
             wait: int = 5,
             ) -> List[Dict[str, int]]:
         """upsert records based on a unique identifier"""
@@ -1010,18 +1048,14 @@ class SFBulk2Type:
             csv_file=csv_file,
             records=_convert_dict_to_csv(
                 records,
-                column_delimiter=_delimiter_char.get(
-                    column_delimiter,
-                    ColumnDelimiter.COMMA
-                    ),
-                line_ending=_line_ending_char.get(
-                    line_ending,
-                    LineEnding.LF
-                    )
+                column_delimiter=column_delimiter,
+                line_ending=line_ending,
+                quoting=quoting
                 ),
             batch_size=batch_size,
             column_delimiter=column_delimiter,
             line_ending=line_ending,
+            quoting=quoting,
             external_id_field=external_id_field,
             wait=wait,
             )
@@ -1033,6 +1067,7 @@ class SFBulk2Type:
             batch_size: Optional[int] = None,
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
+            quoting: int = csv.QUOTE_MINIMAL,
             wait: int = 5,
             ) -> List[Dict[str, int]]:
         """update records"""
@@ -1041,18 +1076,14 @@ class SFBulk2Type:
             csv_file=csv_file,
             records=_convert_dict_to_csv(
                 records,
-                column_delimiter=_delimiter_char.get(
-                    column_delimiter,
-                    ColumnDelimiter.COMMA
-                    ),
-                line_ending=_line_ending_char.get(
-                    line_ending,
-                    LineEnding.LF
-                    )
+                column_delimiter=column_delimiter,
+                line_ending=line_ending,
+                quoting=quoting
                 ),
             batch_size=batch_size,
             column_delimiter=column_delimiter,
             line_ending=line_ending,
+            quoting=quoting,
             wait=wait,
             )
 
@@ -1063,6 +1094,7 @@ class SFBulk2Type:
             batch_size: Optional[int] = None,
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
+            quoting: int = csv.QUOTE_MINIMAL,
             wait: int = 5,
             ) -> List[Dict[str, int]]:
         """hard delete records"""
@@ -1071,18 +1103,13 @@ class SFBulk2Type:
             csv_file=csv_file,
             records=_convert_dict_to_csv(
                 records,
-                column_delimiter=_delimiter_char.get(
-                    column_delimiter,
-                    ColumnDelimiter.COMMA
-                    ),
-                line_ending=_line_ending_char.get(
-                    line_ending,
-                    LineEnding.LF
-                    )
+                column_delimiter=column_delimiter,
+                line_ending=line_ending
                 ),
             batch_size=batch_size,
             column_delimiter=column_delimiter,
             line_ending=line_ending,
+            quoting=quoting,
             wait=wait,
             )
 
