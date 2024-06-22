@@ -280,6 +280,31 @@ def _convert_dict_to_csv(
     return dict_to_csv_file.getvalue()
 
 
+def _get_csv_fieldnames(
+        filename: Optional[str] = None,
+        records: Optional[List[Dict[str, str]]] = None,
+        line_ending: LineEnding = LineEnding.LF,
+        column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
+        quoting: int = csv.QUOTE_MINIMAL
+) -> List[str]:
+    """Get fieldnames from a CSV file or list of records."""
+    dl = _delimiter_char[column_delimiter]
+    le = _line_ending_char[line_ending]
+    if filename:
+        with open(filename,
+                  encoding="utf-8"
+                  ) as bis:
+            reader = csv.reader(
+                bis, delimiter=dl, lineterminator=le, quoting=quoting
+            )
+            filenames = next(reader)
+    elif records:
+        filenames = list(records[0].keys())
+    else:
+        raise ValueError("Either filename or records must be provided")
+    return filenames
+
+
 class SFBulk2Handler:
     """Bulk 2.0 API request handler
     Intermediate class which allows us to use commands,
@@ -882,6 +907,26 @@ class SFBulk2Type:
                                        )
             raise
 
+    def _constrain_id_only(
+            self,
+            csv_file: Optional[str] = None,
+            records: Optional[List[Dict[str, str]]] = None,
+            **kwargs,
+    ):
+        header = _get_csv_fieldnames(
+            filename=csv_file,
+            records=records,
+            column_delimiter=kwargs["column_delimiter"],
+            line_ending=kwargs["line_ending"],
+            quoting=kwargs["quoting"]
+        )
+        if header != ["Id"]:
+            raise SalesforceBulkV2LoadError(
+                f"InvalidBatch: The 'delete/hard_delete' batch must contain "
+                f"only 'Id', {header}"
+                )
+
+
     # pylint:disable=too-many-locals
     def _upload_file(
             self,
@@ -901,26 +946,13 @@ class SFBulk2Type:
             raise SalesforceBulkV2LoadError("Cannot include both file and "
                                             "records"
                                             )
-        if not records and csv_file:
+        elif csv_file:
             if not os.path.exists(csv_file):
                 raise SalesforceBulkV2LoadError(csv_file + " not found.")
-
-        if operation in (Operation.delete, Operation.hard_delete):
-            assert csv_file is not None
-            with open(csv_file,
-                      "r",
-                      encoding="utf-8"
-                      ) as bis:
-                header = (
-                    bis.readline()
-                    .rstrip()
-                    .split(_delimiter_char[column_delimiter])
-                )
-                if len(header) != 1:
-                    raise SalesforceBulkV2LoadError(
-                        f"InvalidBatch: The '{operation}' batch must contain "
-                        f"only ids, {header}"
-                        )
+        elif records:
+            pass
+        else:
+            raise SalesforceBulkV2LoadError("Must include either file or records")
 
         results = []
         workers = min(concurrency,
@@ -985,6 +1017,13 @@ class SFBulk2Type:
             wait: int = 5,
             ) -> List[Dict[str, int]]:
         """soft delete records"""
+        self._constrain_id_only(
+            csv_file=csv_file,
+            records=records,
+            column_delimiter=column_delimiter,
+            line_ending=line_ending,
+            quoting=quoting,
+        )
         return self._upload_file(
             Operation.delete,
             csv_file=csv_file,
@@ -1098,6 +1137,13 @@ class SFBulk2Type:
             wait: int = 5,
             ) -> List[Dict[str, int]]:
         """hard delete records"""
+        self._constrain_id_only(
+            csv_file=csv_file,
+            records=records,
+            column_delimiter=column_delimiter,
+            line_ending=line_ending,
+            quoting=quoting,
+        )
         return self._upload_file(
             Operation.hard_delete,
             csv_file=csv_file,
