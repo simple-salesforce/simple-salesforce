@@ -577,7 +577,7 @@ Update existing records:
     sf.bulk2.Contact.update("./sample.csv")
 
 
-Upsert records:
+Upsert records from csv:
 
 .. code-block:: text
 
@@ -589,6 +589,19 @@ Upsert records:
 .. code-block:: python
 
     sf.bulk2.Contact.upsert(csv_file="./sample.csv", external_id_field='Custom_Id__c')
+
+
+Upsert records from dict:
+
+
+.. code-block:: python
+
+    data = [
+          {'Custom_Id__c': 'CustomID1', 'LastName': 'X'},
+          {'Custom_Id__c': 'CustomID2', 'LastName': 'Y'}
+        ]
+
+    sf.bulk2.Contact.upsert(records=df.to_dict(orient='records'), external_id_field='Custom_Id__c')
 
 
 Query records:
