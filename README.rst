@@ -588,7 +588,7 @@ Upsert records:
 
 .. code-block:: python
 
-    sf.bulk2.Contact.upsert("./sample.csv", 'Custom_Id__c')
+    sf.bulk2.Contact.upsert(csv_file="./sample.csv", external_id_field='Custom_Id__c')
 
 
 Query records:
