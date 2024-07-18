@@ -611,7 +611,7 @@ Query records:
     query = 'SELECT Id, Name FROM Account LIMIT 100000'
 
     results = sf.bulk2.Account.query(
-        query, max_records=50000, column_delimiter="COMM", line_ending="LF"
+        query, max_records=50000, column_delimiter="COMMA", line_ending="LF"
     )
     for i, data in enumerate(results):
         with open(f"results/part-{1}.csv", "w") as bos:
