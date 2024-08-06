@@ -764,7 +764,7 @@ class Salesforce:
             params.append(f'offset={offset}')
         param_string = '?' + '&'.join(params) if params else ''
         url = self.base_url + f"/sobjects/{sf_object}/listviews/{listview_id}/results{param_string}"
-        print(url)
+
         result = self._call_salesforce(
             'GET',
             url,
