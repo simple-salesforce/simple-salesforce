@@ -29,7 +29,7 @@ from .exceptions import (
     SalesforceBulkV2ExtractError,
     SalesforceBulkV2LoadError,
     SalesforceOperationError,
-    )
+)
 from .util import call_salesforce
 
 
@@ -78,7 +78,7 @@ _delimiter_char = {
     ColumnDelimiter.PIPE: "|",
     ColumnDelimiter.SEMICOLON: ";",
     ColumnDelimiter.TAB: "\t",
-    }
+}
 
 
 class LineEnding(str,
@@ -91,7 +91,7 @@ class LineEnding(str,
 _line_ending_char = {
     LineEnding.LF: "\n",
     LineEnding.CRLF: "\r\n"
-    }
+}
 
 
 class ResultsType(str,
@@ -132,7 +132,7 @@ def _split_csv(
         filename: Optional[str] = None,
         records: Optional[str] = None,
         max_records: Optional[int] = None
-        ) -> Generator[Tuple[int, str], None, None]:
+) -> Generator[Tuple[int, str], None, None]:
     """Split a CSV file into chunks to avoid exceeding the Salesforce
     bulk 2.0 API limits.
 
@@ -149,7 +149,7 @@ def _split_csv(
                    )
     csv_data_size = os.path.getsize(filename) if filename else sys.getsizeof(
         records
-        )
+    )
     _max_records: int = max_records or total_records
     _max_records = min(_max_records,
                        total_records
@@ -157,7 +157,7 @@ def _split_csv(
     max_bytes = min(
         csv_data_size,
         MAX_INGEST_JOB_FILE_SIZE - 1 * 1024 * 1024
-        )  # -1 MB for sentinel
+    )  # -1 MB for sentinel
     records_size = 0
     bytes_size = 0
     buff: List[str] = []
@@ -202,7 +202,7 @@ def _count_csv(
         data: Optional[str] = None,
         skip_header: bool = False,
         line_ending: LineEnding = LineEnding.LF
-        ) -> int:
+) -> int:
     """Count the number of records in a CSV file."""
     if filename:
         with open(filename,
@@ -227,7 +227,7 @@ def _convert_dict_to_csv(
         data: Optional[List[Dict[str, str]]],
         column_delimiter: Union[ColumnDelimiter, str] = ColumnDelimiter.COMMA,
         line_ending: Union[LineEnding, str] = LineEnding.LF
-        ) -> Optional[str]:
+) -> Optional[str]:
     """Converts list of dicts to CSV like object."""
     if not data:
         return None
@@ -258,7 +258,7 @@ class SFBulk2Handler:
             bulk2_url: str,
             proxies: Optional[MutableMapping[str, str]] = None,
             session: Optional[Session] = None
-            ):
+    ):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -283,7 +283,7 @@ class SFBulk2Handler:
             "Content-Type": "application/json",
             "Authorization": "Bearer " + self.session_id,
             "X-PrettyPrint": "1",
-            }
+        }
 
     def __getattr__(self,
                     name: str
@@ -293,7 +293,7 @@ class SFBulk2Handler:
             bulk2_url=self.bulk2_url,
             headers=self.headers,
             session=self.session,
-            )
+        )
 
 
 class _Bulk2Client:
@@ -311,7 +311,7 @@ class _Bulk2Client:
             bulk2_url: str,
             headers: Dict[str, str],
             session: Session
-            ):
+    ):
         """
         Arguments:
 
@@ -332,7 +332,7 @@ class _Bulk2Client:
             self,
             request_content_type: Optional[str] = None,
             accept_content_type: Optional[str] = None
-            ) -> Dict[str, str]:
+    ) -> Dict[str, str]:
         """Get headers for bulk 2.0 API request"""
         headers = copy.deepcopy(self.headers)
         headers["Content-Type"] = request_content_type or self.JSON_CONTENT_TYPE
@@ -343,7 +343,7 @@ class _Bulk2Client:
             self,
             job_id: Optional[str],
             is_query: bool
-            ) -> str:
+    ) -> str:
         """Construct bulk 2.0 API request URL"""
         if not job_id:
             job_id = ""
@@ -363,7 +363,7 @@ class _Bulk2Client:
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
             external_id_field: Optional[str] = None,
-            ) -> Any:
+    ) -> Any:
         """Create job
 
         Arguments:
@@ -378,7 +378,7 @@ class _Bulk2Client:
             "operation": operation,
             "columnDelimiter": column_delimiter,
             "lineEnding": line_ending,
-            }
+        }
         if external_id_field:
             payload["externalIdFieldName"] = external_id_field
 
@@ -390,17 +390,17 @@ class _Bulk2Client:
             headers = self._get_headers(
                 self.JSON_CONTENT_TYPE,
                 self.CSV_CONTENT_TYPE
-                )
+            )
             if not query:
                 raise SalesforceBulkV2ExtractError(
                     "Query is required for query jobs"
-                    )
+                )
             payload["query"] = query
         else:
             headers = self._get_headers(
                 self.JSON_CONTENT_TYPE,
                 self.JSON_CONTENT_TYPE
-                )
+            )
             payload["object"] = self.object_name
             payload["contentType"] = "CSV"
         result = call_salesforce(
@@ -411,7 +411,7 @@ class _Bulk2Client:
             data=json.dumps(payload,
                             allow_nan=False
                             ),
-            )
+        )
         return result.json(object_pairs_hook=OrderedDict)
 
     def wait_for_job(
@@ -419,12 +419,12 @@ class _Bulk2Client:
             job_id: str,
             is_query: bool,
             wait: float = 0.5
-            ) -> Literal[JobState.job_complete]:
+    ) -> Literal[JobState.job_complete]:
         """Wait for job completion or timeout"""
         expiration_time: datetime.datetime = (
             datetime.datetime.now() +
             datetime.timedelta(seconds=self.DEFAULT_WAIT_TIMEOUT_SECONDS)
-            )
+        )
         job_status = JobState.in_progress if is_query else JobState.open
         delay_timeout = 0.0
         delay_cnt = 0
@@ -438,19 +438,20 @@ class _Bulk2Client:
                 JobState.job_complete,
                 JobState.aborted,
                 JobState.failed,
-                ]:
+            ]:
                 if job_status != JobState.job_complete:
                     error_message = job_info.get("errorMessage") or job_info
                     raise SalesforceOperationError(
                         f"Job failure. Response content: {error_message}"
-                        )
+                    )
                 return job_status  # JobComplete
 
             if delay_timeout < self.MAX_CHECK_INTERVAL_SECONDS:
                 delay_timeout = wait + math.exp(delay_cnt) / 1000.0
                 delay_cnt += 1
             sleep(delay_timeout)
-        raise SalesforceOperationError(f"Job timeout. Job status: {job_status}")
+        raise SalesforceOperationError(
+            f"Job timeout. Job status: {job_status}")
 
     def abort_job(self,
                   job_id: str,
@@ -470,7 +471,7 @@ class _Bulk2Client:
             job_id,
             False,
             JobState.upload_complete
-            )
+        )
 
     def delete_job(self,
                    job_id: str,
@@ -486,7 +487,7 @@ class _Bulk2Client:
             method="DELETE",
             session=self.session,
             headers=headers
-            )
+        )
         return result.json(object_pairs_hook=OrderedDict)
 
     def _set_job_state(self,
@@ -501,7 +502,7 @@ class _Bulk2Client:
         headers = self._get_headers()
         payload = {
             "state": state
-            }
+        }
         result = call_salesforce(
             url=url,
             method="PATCH",
@@ -510,7 +511,7 @@ class _Bulk2Client:
             data=json.dumps(payload,
                             allow_nan=False
                             ),
-            )
+        )
         return result.json(object_pairs_hook=OrderedDict)
 
     def get_job(self,
@@ -527,7 +528,7 @@ class _Bulk2Client:
             method="GET",
             session=self.session,
             headers=self.headers
-            )
+        )
         return result.json(object_pairs_hook=OrderedDict)
 
     def filter_null_bytes(self,
@@ -555,27 +556,27 @@ class _Bulk2Client:
             job_id: str,
             locator: str = "",
             max_records: int = DEFAULT_QUERY_PAGE_SIZE
-            ) -> QueryResult:
+    ) -> QueryResult:
         """Get results for a query job"""
         url = self._construct_request_url(job_id,
                                           True
                                           ) + "/results"
         params: QueryParameters = {
             "maxRecords": max_records
-            }
+        }
         if locator and locator != "null":
             params["locator"] = locator
         headers = self._get_headers(
             self.JSON_CONTENT_TYPE,
             self.CSV_CONTENT_TYPE
-            )
+        )
         result = call_salesforce(
             url=url,
             method="GET",
             session=self.session,
             headers=headers,
             params=params,
-            )
+        )
         locator = result.headers.get("Sforce-Locator",
                                      ""
                                      )
@@ -586,7 +587,7 @@ class _Bulk2Client:
             "locator": locator,
             "number_of_records": number_of_records,
             "records": self.filter_null_bytes(result.content.decode('utf-8')),
-            }
+        }
 
     def download_job_data(
             self,
@@ -595,7 +596,7 @@ class _Bulk2Client:
             locator: str = "",
             max_records: int = DEFAULT_QUERY_PAGE_SIZE,
             chunk_size: int = 1024,
-            ) -> QueryResult:
+    ) -> QueryResult:
         """Get results for a query job"""
         if not os.path.exists(path):
             raise SalesforceBulkV2LoadError(f"Path does not exist: {path}")
@@ -605,13 +606,13 @@ class _Bulk2Client:
                                           ) + "/results"
         params: QueryParameters = {
             "maxRecords": max_records
-            }
+        }
         if locator and locator != "null":
             params["locator"] = locator
         headers = self._get_headers(
             self.JSON_CONTENT_TYPE,
             self.CSV_CONTENT_TYPE
-            )
+        )
         with closing(
                 call_salesforce(
                     url=url,
@@ -620,13 +621,13 @@ class _Bulk2Client:
                     headers=headers,
                     params=params,
                     stream=True,
-                    )
-                ) as result, tempfile.NamedTemporaryFile(
+                )
+        ) as result, tempfile.NamedTemporaryFile(
             "wb",
             dir=path,
             suffix=".csv",
             delete=False
-            ) as bos:
+        ) as bos:
             locator = result.headers.get("Sforce-Locator",
                                          ""
                                          )
@@ -634,7 +635,7 @@ class _Bulk2Client:
                 locator = ""
             number_of_records = int(
                 result.headers["Sforce-NumberOfRecords"]
-                )
+            )
             for chunk in result.iter_content(chunk_size=chunk_size):
                 bos.write(self.filter_null_bytes(chunk))
             # check the file exists
@@ -643,18 +644,18 @@ class _Bulk2Client:
                     "locator": locator,
                     "number_of_records": number_of_records,
                     "file": bos.name,
-                    }
+                }
             raise SalesforceBulkV2LoadError(
                 f"The IO/Error occured while verifying binary data. "
                 f"File {bos.name} doesn't exist, url: {url}, "
-                )
+            )
 
     def upload_job_data(
             self,
             job_id: str,
             data: str,
             content_url: Optional[str] = None
-            ) -> None:
+    ) -> None:
         """Upload job data"""
         if not data:
             raise SalesforceBulkV2LoadError("Data is required for ingest jobs")
@@ -665,30 +666,30 @@ class _Bulk2Client:
             raise SalesforceBulkV2LoadError(
                 f"Data size {data_size} exceeds the max file size accepted by "
                 "Bulk V2 (100 MB)"
-                )
+            )
 
         url = (
-                content_url or
-                self._construct_request_url(job_id,
-                                            False
-                                            ) + "/batches"
+            content_url or
+            self._construct_request_url(job_id,
+                                        False
+                                        ) + "/batches"
         )
         headers = self._get_headers(
             self.CSV_CONTENT_TYPE,
             self.JSON_CONTENT_TYPE
-            )
+        )
         result = call_salesforce(
             url=url,
             method="PUT",
             session=self.session,
             headers=headers,
             data=data.encode("utf-8"),
-            )
+        )
         if result.status_code != http.CREATED:
             raise SalesforceBulkV2LoadError(
                 f"Failed to upload job data. Error Code {result.status_code}. "
                 f"Response content: {result.content.decode()}"
-                )
+            )
 
     def get_ingest_results(self,
                            job_id: str,
@@ -698,17 +699,17 @@ class _Bulk2Client:
         url = self._construct_request_url(
             job_id,
             False
-            ) + "/" + results_type
+        ) + "/" + results_type
         headers = self._get_headers(
             self.JSON_CONTENT_TYPE,
             self.CSV_CONTENT_TYPE
-            )
+        )
         result = call_salesforce(
             url=url,
             method="GET",
             session=self.session,
             headers=headers
-            )
+        )
         return result.text
 
     def download_ingest_results(
@@ -717,26 +718,26 @@ class _Bulk2Client:
             job_id: str,
             results_type: str,
             chunk_size: int = 1024
-            ) -> None:
+    ) -> None:
         """Download record results to a file"""
         url = self._construct_request_url(
             job_id,
             False
-            ) + "/" + results_type
+        ) + "/" + results_type
         headers = self._get_headers(
             self.JSON_CONTENT_TYPE,
             self.CSV_CONTENT_TYPE
-            )
+        )
         with closing(
                 call_salesforce(
                     url=url,
                     method="GET",
                     session=self.session,
                     headers=headers
-                    )
-                ) as result, open(file,
-                                  "wb"
-                                  ) as bos:
+                )
+        ) as result, open(file,
+                          "wb"
+                          ) as bos:
             for chunk in result.iter_content(chunk_size=chunk_size):
                 bos.write(self.filter_null_bytes(chunk))
 
@@ -744,7 +745,7 @@ class _Bulk2Client:
             raise SalesforceBulkV2LoadError(
                 f"The IO/Error occured while verifying binary data. "
                 f"File {file} doesn't exist, url: {url}, "
-                )
+            )
 
 
 class SFBulk2Type:
@@ -756,7 +757,7 @@ class SFBulk2Type:
             bulk2_url: str,
             headers: Dict[str, str],
             session: Session
-            ):
+    ):
         """Initialize the instance with the given parameters.
 
         Arguments:
@@ -787,7 +788,7 @@ class SFBulk2Type:
             line_ending: LineEnding = LineEnding.LF,
             external_id_field: Optional[str] = None,
             wait: int = 5,
-            ) -> Dict[str, int]:
+    ) -> Dict[str, int]:
         """Upload data to Salesforce"""
         unpacked_data: str
         if isinstance(data,
@@ -799,14 +800,14 @@ class SFBulk2Type:
                 data=data,
                 line_ending=line_ending,
                 skip_header=True
-                )
+            )
             unpacked_data = data
         res = self._client.create_job(
             operation,
             column_delimiter=column_delimiter,
             line_ending=line_ending,
             external_id_field=external_id_field,
-            )
+        )
         job_id = res["id"]
         try:
             if res["state"] == JobState.open:
@@ -825,13 +826,13 @@ class SFBulk2Type:
                     "numberRecordsFailed": int(res["numberRecordsFailed"]),
                     "numberRecordsProcessed": int(
                         res["numberRecordsProcessed"]
-                        ),
+                    ),
                     "numberRecordsTotal": int(total),
                     "job_id": job_id,
-                    }
+                }
             raise SalesforceBulkV2LoadError(
                 f"Failed to upload job data. Response content: {res}"
-                )
+            )
         except Exception:
             res = self._client.get_job(job_id,
                                        False
@@ -840,7 +841,7 @@ class SFBulk2Type:
                     JobState.upload_complete,
                     JobState.in_progress,
                     JobState.open,
-                    ):
+            ):
                 self._client.abort_job(job_id,
                                        False
                                        )
@@ -858,7 +859,7 @@ class SFBulk2Type:
             external_id_field: Optional[str] = None,
             concurrency: int = 1,
             wait: int = 5,
-            ) -> List[Dict[str, int]]:
+    ) -> List[Dict[str, int]]:
         """Upload csv file to Salesforce"""
         if csv_file and records:
             raise SalesforceBulkV2LoadError("Cannot include both file and "
@@ -883,7 +884,7 @@ class SFBulk2Type:
                     raise SalesforceBulkV2LoadError(
                         f"InvalidBatch: The '{operation}' batch must contain "
                         f"only ids, {header}"
-                        )
+                    )
 
         results = []
         workers = min(concurrency,
@@ -905,7 +906,7 @@ class SFBulk2Type:
                     line_ending,
                     external_id_field,
                     wait,
-                    )
+                )
                 results.append(result)
         else:
             # OOM is possible if the file is too large
@@ -923,7 +924,7 @@ class SFBulk2Type:
                         line_ending=line_ending,
                         external_id_field=external_id_field,
                         wait=wait,
-                        )
+                    )
                     _results = pool.map(multi_thread_worker,
                                         chunks
                                         )
@@ -939,7 +940,7 @@ class SFBulk2Type:
             line_ending: LineEnding = LineEnding.LF,
             external_id_field: Optional[str] = None,
             wait: int = 5,
-            ) -> List[Dict[str, int]]:
+    ) -> List[Dict[str, int]]:
         """soft delete records"""
         return self._upload_file(
             Operation.delete,
@@ -949,18 +950,18 @@ class SFBulk2Type:
                 column_delimiter=_delimiter_char.get(
                     column_delimiter,
                     ColumnDelimiter.COMMA
-                    ),
+                ),
                 line_ending=_line_ending_char.get(
                     line_ending,
                     LineEnding.LF
-                    )
-                ),
+                )
+            ),
             batch_size=batch_size,
             column_delimiter=column_delimiter,
             line_ending=line_ending,
             external_id_field=external_id_field,
             wait=wait,
-            )
+        )
 
     def insert(
             self,
@@ -971,7 +972,7 @@ class SFBulk2Type:
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
             wait: int = 5,
-            ) -> List[Dict[str, int]]:
+    ) -> List[Dict[str, int]]:
         """insert records"""
         return self._upload_file(
             Operation.insert,
@@ -981,18 +982,18 @@ class SFBulk2Type:
                 column_delimiter=_delimiter_char.get(
                     column_delimiter,
                     ColumnDelimiter.COMMA
-                    ),
+                ),
                 line_ending=_line_ending_char.get(
                     line_ending,
                     LineEnding.LF
-                    )
-                ),
+                )
+            ),
             batch_size=batch_size,
             column_delimiter=column_delimiter,
             line_ending=line_ending,
             concurrency=concurrency,
             wait=wait,
-            )
+        )
 
     def upsert(
             self,
@@ -1003,7 +1004,7 @@ class SFBulk2Type:
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
             wait: int = 5,
-            ) -> List[Dict[str, int]]:
+    ) -> List[Dict[str, int]]:
         """upsert records based on a unique identifier"""
         return self._upload_file(
             Operation.upsert,
@@ -1013,18 +1014,18 @@ class SFBulk2Type:
                 column_delimiter=_delimiter_char.get(
                     column_delimiter,
                     ColumnDelimiter.COMMA
-                    ),
+                ),
                 line_ending=_line_ending_char.get(
                     line_ending,
                     LineEnding.LF
-                    )
-                ),
+                )
+            ),
             batch_size=batch_size,
             column_delimiter=column_delimiter,
             line_ending=line_ending,
             external_id_field=external_id_field,
             wait=wait,
-            )
+        )
 
     def update(
             self,
@@ -1034,7 +1035,7 @@ class SFBulk2Type:
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
             wait: int = 5,
-            ) -> List[Dict[str, int]]:
+    ) -> List[Dict[str, int]]:
         """update records"""
         return self._upload_file(
             Operation.update,
@@ -1044,17 +1045,17 @@ class SFBulk2Type:
                 column_delimiter=_delimiter_char.get(
                     column_delimiter,
                     ColumnDelimiter.COMMA
-                    ),
+                ),
                 line_ending=_line_ending_char.get(
                     line_ending,
                     LineEnding.LF
-                    )
-                ),
+                )
+            ),
             batch_size=batch_size,
             column_delimiter=column_delimiter,
             line_ending=line_ending,
             wait=wait,
-            )
+        )
 
     def hard_delete(
             self,
@@ -1064,7 +1065,7 @@ class SFBulk2Type:
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
             wait: int = 5,
-            ) -> List[Dict[str, int]]:
+    ) -> List[Dict[str, int]]:
         """hard delete records"""
         return self._upload_file(
             Operation.hard_delete,
@@ -1074,17 +1075,17 @@ class SFBulk2Type:
                 column_delimiter=_delimiter_char.get(
                     column_delimiter,
                     ColumnDelimiter.COMMA
-                    ),
+                ),
                 line_ending=_line_ending_char.get(
                     line_ending,
                     LineEnding.LF
-                    )
-                ),
+                )
+            ),
             batch_size=batch_size,
             column_delimiter=column_delimiter,
             line_ending=line_ending,
             wait=wait,
-            )
+        )
 
     def query(
             self,
@@ -1093,7 +1094,7 @@ class SFBulk2Type:
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
             wait: int = 5,
-            ) -> Generator[Union[str, int], None, None]:
+    ) -> Generator[Union[str, int], None, None]:
         """bulk 2.0 query
 
         Arguments:
@@ -1110,7 +1111,7 @@ class SFBulk2Type:
             query,
             column_delimiter,
             line_ending
-            )
+        )
         job_id = res["id"]
         self._client.wait_for_job(job_id,
                                   True,
@@ -1125,7 +1126,7 @@ class SFBulk2Type:
                 job_id,
                 locator,
                 max_records
-                )
+            )
             locator = result["locator"]
             yield result["records"]
 
@@ -1136,7 +1137,7 @@ class SFBulk2Type:
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
             wait: int = 5,
-            ) -> Generator[str, None, None]:
+    ) -> Generator[str, None, None]:
         """bulk 2.0 query_all
 
         Arguments:
@@ -1153,7 +1154,7 @@ class SFBulk2Type:
             query,
             column_delimiter,
             line_ending
-            )
+        )
         job_id = res["id"]
         self._client.wait_for_job(job_id,
                                   True,
@@ -1168,7 +1169,7 @@ class SFBulk2Type:
                 job_id,
                 locator,
                 max_records
-                )
+            )
             locator = result["locator"]
             yield result["records"]
 
@@ -1179,13 +1180,15 @@ class SFBulk2Type:
             max_records: int = DEFAULT_QUERY_PAGE_SIZE,
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
+            include_deleted: bool = False,
             wait: int = 5,
-            ) -> List[QueryResult]:
+    ) -> List[QueryResult]:
         """bulk 2.0 query stream to file, avoiding high memory usage
 
         Arguments:
         * query -- SOQL query
         * max_records -- max records to retrieve per batch, default 50000
+        * include_deleted -- includes archived or deleted records in results
 
         Returns:
         * locator  -- the locator for the next set of results
@@ -1196,11 +1199,11 @@ class SFBulk2Type:
             raise SalesforceBulkV2LoadError(f"Path does not exist: {path}")
 
         res = self._client.create_job(
-            Operation.query,
+            Operation.query_all if include_deleted else Operation.query,
             query,
             column_delimiter,
             line_ending
-            )
+        )
         job_id = res["id"]
         self._client.wait_for_job(job_id,
                                   True,
@@ -1217,7 +1220,7 @@ class SFBulk2Type:
                 job_id,
                 locator,
                 max_records
-                )
+            )
             locator = result["locator"]
             results.append(result)
         return results
@@ -1227,7 +1230,7 @@ class SFBulk2Type:
             job_id: str,
             results_type: str,
             file: Optional[str] = None
-            ) -> str:
+    ) -> str:
         """Retrieve the results of an ingest job"""
         if not file:
             return self._client.get_ingest_results(job_id,
@@ -1243,7 +1246,7 @@ class SFBulk2Type:
             self,
             job_id: str,
             file: Optional[str] = None
-            ) -> str:
+    ) -> str:
         """Get failed record results
 
         Results Property:
@@ -1260,7 +1263,7 @@ class SFBulk2Type:
             self,
             job_id: str,
             file: Optional[str] = None
-            ) -> str:
+    ) -> str:
         """Get unprocessed record results
 
         Results Property:
@@ -1270,13 +1273,13 @@ class SFBulk2Type:
             job_id,
             ResultsType.unprocessed,
             file
-            )
+        )
 
     def get_successful_records(
             self,
             job_id: str,
             file: Optional[str] = None
-            ) -> str:
+    ) -> str:
         """Get successful record results.
 
         Results Property:
@@ -1288,13 +1291,13 @@ class SFBulk2Type:
             job_id,
             ResultsType.successful,
             file
-            )
+        )
 
     def get_all_ingest_records(
             self,
             job_id: str,
             file: Optional[str] = None
-            ) -> Dict[str, List[Any]]:
+    ) -> Dict[str, List[Any]]:
         """Get all ingest record results for job
 
         Results Property:
@@ -1306,23 +1309,23 @@ class SFBulk2Type:
         successful_records = csv.DictReader(self.get_successful_records(
             job_id=job_id,
             file=file
-            ).splitlines(),
-                                            delimiter=',',
-                                            lineterminator='\n', )
+        ).splitlines(),
+            delimiter=',',
+            lineterminator='\n', )
         failed_records = csv.DictReader(self.get_failed_records(
             job_id=job_id,
             file=file
-            ).splitlines(),
-                                        delimiter=',',
-                                        lineterminator='\n', )
+        ).splitlines(),
+            delimiter=',',
+            lineterminator='\n', )
         unprocessed_records = csv.DictReader(self.get_unprocessed_records(
             job_id=job_id,
             file=file
-            ).splitlines(),
-                                             delimiter=',',
-                                             lineterminator='\n', )
+        ).splitlines(),
+            delimiter=',',
+            lineterminator='\n', )
         return {
             'successfulRecords': list(successful_records),
             'failedRecords': list(failed_records),
             'unprocessedRecords': list(unprocessed_records)
-            }
+        }
