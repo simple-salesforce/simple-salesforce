@@ -1179,6 +1179,7 @@ class SFBulk2Type:
             max_records: int = DEFAULT_QUERY_PAGE_SIZE,
             column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
             line_ending: LineEnding = LineEnding.LF,
+            include_deleted: bool = False,
             wait: int = 5,
             ) -> List[QueryResult]:
         """bulk 2.0 query stream to file, avoiding high memory usage
@@ -1186,6 +1187,7 @@ class SFBulk2Type:
         Arguments:
         * query -- SOQL query
         * max_records -- max records to retrieve per batch, default 50000
+        * include_deleted -- includes archived or deleted records in results
 
         Returns:
         * locator  -- the locator for the next set of results
@@ -1196,7 +1198,7 @@ class SFBulk2Type:
             raise SalesforceBulkV2LoadError(f"Path does not exist: {path}")
 
         res = self._client.create_job(
-            Operation.query,
+            Operation.query_all if include_deleted else Operation.query,
             query,
             column_delimiter,
             line_ending
