@@ -47,7 +47,7 @@ If you have the full URL of your instance (perhaps including the schema, as is i
 
 There are also four means of authentication, one that uses username, password and security token; one that uses IP filtering, username, password  and organizationId, one that uses a private key to sign a JWT, and one for connected apps that uses username, password, consumer key, and consumer secret;
 
-To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password):
+To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password or go to profile -> settings -> Reset My Security Token):
 
 .. code-block:: python
 
