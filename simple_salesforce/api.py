@@ -745,7 +745,7 @@ class Salesforce:
         offset: Optional[int] = None,
         **kwargs: Any
     ) -> Any:
-        """return results from the given listview ID
+        """Return results from the given listview ID and associated Salesforce object.
         https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_listviewresults.htm
         Arguments:
         * sf_object -- The salesforce object that the listview id is associated with.
