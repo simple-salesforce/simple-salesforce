@@ -118,7 +118,7 @@ def SalesforceLogin(
             consumer_key is not None and \
             consumer_secret is not None:
         token_data = {
-            'grant_type': 'password',
+            'grant_type': 'client_credentials',
             'client_id': consumer_key,
             'client_secret': consumer_secret,
             'username': unescape(username),
