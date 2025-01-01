@@ -1,5 +1,6 @@
 """Core classes and exceptions for Simple-Salesforce"""
 
+from __future__ import annotations
 from datetime import datetime
 
 # has to be defined prior to login import
@@ -345,7 +346,7 @@ class Salesforce:
     def __getattr__(
             self,
             name: str
-            ) -> Union[SFBulkHandler, SFBulk2Handler, "SFType"]:
+            ) -> Union[SFBulkHandler, SFBulk2Handler, SFType]:
         """Returns an `SFType` instance for the given Salesforce object type
         (given in `name`).
         The magic part of the SalesforceAPI, this function translates
