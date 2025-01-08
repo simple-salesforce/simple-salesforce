@@ -7,6 +7,7 @@ from functools import partial
 from time import sleep
 from typing import Any, Dict, Iterable, List, Optional, Union, cast
 
+import ijson
 import requests
 
 from .exceptions import SalesforceGeneralError
@@ -210,7 +211,8 @@ class SFBulkType:
             self,
             job_id: str,
             batch_id: str,
-            operation: str
+            operation: str,
+            lazy_operation: bool = False
             ) -> Iterable[Any]:
         """ retrieve a set of results from a completed job """
 
@@ -228,9 +230,16 @@ class SFBulkType:
                 batch_query_result = call_salesforce(url=url_query_results,
                                                      method='GET',
                                                      session=self.session,
-                                                     headers=self.headers
-                                                     ).json()
-                yield batch_query_result
+                                                     headers=self.headers,
+                                                     stream=lazy_operation
+                                                     )
+
+                if lazy_operation:
+                    # Using ijson to parse the response as JSON stream
+                    yield ijson.items(batch_query_result.raw, 'item')
+                else:
+                    yield batch_query_result.json()
+
         else:
             yield result.json()
 
@@ -388,7 +397,8 @@ class SFBulkType:
             batch_size: Union[int, str] = 10000,
             wait: int = 5,
             bypass_results: bool = False,
-            include_detailed_results: bool = False
+            include_detailed_results: bool = False,
+            lazy_operation: bool = False
             ) -> Iterable[Iterable[Any]]:
         """ String together helper functions to create a complete
         end-to-end bulk API request
@@ -496,7 +506,8 @@ class SFBulkType:
                                              )
             results = self._get_batch_results(job_id=batch['jobId'],
                                               batch_id=batch['id'],
-                                              operation=operation
+                                              operation=operation,
+                                              lazy_operation=lazy_operation
                                               )
         return results
 
@@ -632,7 +643,8 @@ class SFBulkType:
         """ bulk query """
         results = self._bulk_operation(operation='query',
                                        data=data,
-                                       wait=wait
+                                       wait=wait,
+                                       lazy_operation=lazy_operation
                                        )
 
         if lazy_operation:
@@ -649,7 +661,8 @@ class SFBulkType:
         """ bulk queryAll """
         results = self._bulk_operation(operation='queryAll',
                                        data=data,
-                                       wait=wait
+                                       wait=wait,
+                                       lazy_operation=lazy_operation
                                        )
 
         if lazy_operation:
