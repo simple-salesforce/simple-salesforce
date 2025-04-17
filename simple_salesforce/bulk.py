@@ -239,36 +239,36 @@ class SFBulkType:
                                               batch_id: str,
                                               ) -> Iterable[Any]:
         """ retrieve a set of results from a completed job """
-
+ 
         url = f'{self.bulk_url}job/{job_id}/batch/{batch_id}/request'
-
+ 
         batch_request = call_salesforce(url=url,
                                         method='GET',
                                         session=self.session,
                                         headers=self.headers
                                         )
-
-        batch_result = self._get_batch_results(job_id,
+ 
+        batch_results = self._get_batch_results(job_id,
                                                batch_id,
                                                operation='batch_results'
                                                )
-
         results = []
-        for idx, i in enumerate(batch_result):
-            flattened_request_dict = [{
-                                          k + '.' + list(v.keys())[0]: v.get(
-                                              list(v.keys())[0]
-                                              )
-                                          } if isinstance(v,
-                                                          dict
-                                                          ) else {
-                k: v
-                }
-                                      for k, v in
-                                      batch_request.json()[idx].items()]
-            for request_field in flattened_request_dict:
-                i.update(request_field)
-            results.append(i)
+        for batch_result in batch_results:
+            for idx, i in enumerate(batch_result):
+                flattened_request_dict = [{
+                                              k + '.' + list(v.keys())[0]: v.get(
+                                                  list(v.keys())[0]
+                                                  )
+                                              } if isinstance(v,
+                                                              dict
+                                                              ) else {
+                    k: v
+                    }
+                                          for k, v in
+                                          batch_request.json()[idx].items()]
+                for request_field in flattened_request_dict:
+                    i.update(request_field)
+                results.append(i)
         yield results
 
     def worker(self,
