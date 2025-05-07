@@ -23,6 +23,7 @@ from .login import SalesforceLogin
 from .metadata import SfdcMetadataApi
 from .util import Headers, PerAppUsage, Proxies, Usage, date_to_iso8601, \
     exception_handler
+from .wave import WaveHandler
 
 # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
@@ -270,6 +271,7 @@ class Salesforce:
         self.metadata_url = (
             f'https://{self.sf_instance}/services/Soap/m/{self.sf_version}/')
         self.tooling_url = f'{self.base_url}tooling/'
+        self.wave_url = f'{self.base_url}wave/'
         self.oauth2_url = f'https://{self.sf_instance}/services/oauth2/'
         self.api_usage: MutableMapping[str, Union[Usage, PerAppUsage]] = {}
         self._parse_float = parse_float
@@ -374,6 +376,14 @@ class Salesforce:
                                   self.proxies,
                                   self.session
                                   )
+
+        if name == 'wave':
+            # Deal with Wave API functions
+            return WaveHandler(self.headers,
+                               self.wave_url,
+                               self.proxies,
+                               self.session
+                               )
 
         return SFType(
             name,

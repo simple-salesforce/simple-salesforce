@@ -673,6 +673,104 @@ You can read more about Apex on the `Force.com Apex Code Developer's Guide`_
 
 .. _Force.com Apex Code Developer's Guide: https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_dev_guide.htm
 
+Using Tooling API
+-----------------
+
+You can also use this library to call custom Tooling methods:
+
+Retrieve objects:
+.. code-block:: python
+
+
+    result = sf.toolingexecute('sobjects/GlobalValueSet/ABCDEFG')
+
+This would retrieve data from the endpoint ``https://<instance>.salesforce.com/data/v{version}}/tooling/sobjects/GlobalValueSet``
+
+Patch objects:
+.. code-block:: python
+
+    payload = {
+      "Metadata": {
+
+        'customValue' : [
+            {'color': None,
+            'default': False,
+            'description': None,
+            'isActive': None,
+            'label': 'ABC',
+            'urls': None,
+            'valueName': 'ABC'
+            }
+
+        ]
+
+      },
+
+    'FullName': 'ABCDEFG'
+    }
+    result = sf.toolingexecute('sobjects/GlobalValueSet/ABCDEFG', method='PATCH', data=payload)
+
+This would call the endpoint ``https://<instance>.salesforce.com/data/v{version}}/tooling/sobjects/GlobalValueSet`` with ``data=`` as
+the body content encoded with ``json.dumps``
+
+You can read more about Tooling API on the `Force.com Tooling API Code Developer's Guide`_
+
+.. _Force.com Tooling API Code Developer's Guide: https://developer.salesforce.com/docs/atlas.en-us.api_tooling.meta/api_tooling/intro_api_tooling.htm
+
+Using Tableau CRM (Einstein Analytics/ Wave Analytics API)
+-----------------
+You can also use this library to interact with Tableau CRM (Einstein Analytics/ Wave Analytics) API:
+
+List Resources: list_resource function return the JSON response of the spcified resource. The following resources are supported:
+
+- **annotations:** Returns a list of annotations.
+- **collections:** Returns a list of collections or creates a collection. Each collection contains Tableau CRM resource items.
+- **dashboards:** Returns a list of Tableau CRM dashboards or creates a dashboard.
+- **dataConnectors:** Returns a collection of Tableau CRM connectors and creates a Tableau CRM connector.
+- **dataflowjobs:** Returns a list of dataflow jobs and starts a new dataflow job. Includes standard dataflows and recipes.
+- **dataflows:** Returns a collection of dataflows.
+- **datasets:** Returns a collection of Tableau CRM datasets and creates a new dataset.
+- **folders:** Returns a collection of applications or folders and creates an Tableau CRM application, which is a folder that contains Tableau CRM datasets, lenses, and dashboards.
+- **lenses:** Returns a list of Tableau CRM lenses or creates a lens.
+- **recipes:** Returns a collection of Data Prep recipes and creates a recipe.
+- **replicatedDatasets:** Returns a list of replicated datasets, also know as connected objects.
+- **subscriptions:** Returns a list of subscriptions or creates a subscription schedule.
+- **templates:** Returns a list of Tableau CRM templates, or creates a template.
+- **watchlist:** Return, create, and update a watchlist.
+
+For example, retrieve all recipes
+
+.. code-block:: python
+
+   sf.wave.list_resource("recipes")
+
+You can also retrieve the details for one specific resource id by passing resource_id parameter:
+
+.. code-block:: python
+
+   sf.wave.list_resource("recipes", resource_id = 'your_resource_id')
+
+Run Resource: Data Connectors, Dataflows and Recipes can be trigger manually. You can use this method to trigger the job. Please note that the api expects target_dataflow_id when you trigger recipe jobs. You can set is_target_dataflow to False, then the method will automatically convert your recipe id to target dataflow id.
+
+Trigger a data connector:
+.. code-block:: python
+
+   sf.wave.run_resource(resource_name='dataConnectors', resource_id='your_data_connector_id')
+
+Trigger a recipe (using recipe id):
+.. code-block:: python
+
+   sf.wave.run_resource(resource_name='recipes', resource_id='your_recipe_id', is_target_dataflow=False)
+
+Trigger a recipe (using target dataflow id):
+.. code-block:: python
+
+   sf.wave.run_resource(resource_name='recipes', resource_id='your_target_dataflow_id', is_target_dataflow=True)
+
+You can read more about Tooling API on the `Force.com Tooling API Code Developer's Guide`_
+
+.. _Force.com Tooling API Code Developer's Guide: https://developer.salesforce.com/docs/atlas.en-us.bi_dev_guide_rest.meta/bi_dev_guide_rest/bi_rest_overview.htm
+
 Additional Features
 --------------------------
 
