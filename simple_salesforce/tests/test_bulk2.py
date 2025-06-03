@@ -16,7 +16,7 @@ import responses
 
 from simple_salesforce import tests
 from simple_salesforce.api import Salesforce
-from simple_salesforce.bulk2 import JobState, Operation
+from simple_salesforce.bulk2 import JobState, Operation, SalesforceBulkV2LoadError
 
 # pylint: disable=line-too-long,missing-docstring
 
@@ -155,19 +155,20 @@ def ingest_responses(operation, processed, failed=0):
     )
 
 
-def ingest_data(operation, data, **kwargs):
+def ingest_data(operation, data, from_records=False, **kwargs):
     """Upload data into Salesforce"""
     operation = (
         "hard_delete" if operation == Operation.hard_delete else operation
     )
+    client = Salesforce(
+        session_id=tests.SESSION_ID,
+        instance_url=tests.SERVER_URL,
+        session=requests.Session(),
+    )
+    if from_records:
+        return getattr(client.bulk2.Contact, operation)(records=data, **kwargs)
     with to_csv_file(data) as csv_file:
-        client = Salesforce(
-            session_id=tests.SESSION_ID,
-            instance_url=tests.SERVER_URL,
-            session=requests.Session(),
-        )
-        results = getattr(client.bulk2.Contact, operation)(csv_file, **kwargs)
-    return results
+        return getattr(client.bulk2.Contact, operation)(csv_file=csv_file, **kwargs)
 
 
 class TestSFBulk2Type(unittest.TestCase):
@@ -355,6 +356,47 @@ class TestSFBulk2Type(unittest.TestCase):
             ),
             results,
         )
+
+    @responses.activate
+    def test_hard_delete_error(self):
+        """Test bulk2 hardDelete records raise SalesforceBulkV2LoadError"""
+        operation = Operation.hard_delete
+
+        # unexpected fieldnames number
+        delete_data_multiple_fields = [
+            {"Name": "Alice", "Id": "a011s00000DTU9zAAH"},
+            {"Name": "Bob", "Id": "a011s00000DTUA0AAP"},
+        ]
+        header = ["Name", "Id"]
+        total = len(delete_data_multiple_fields)
+        ingest_responses(operation, processed=total, failed=total)
+        with self.assertRaises(SalesforceBulkV2LoadError) as e:
+            ingest_data(operation, delete_data_multiple_fields, from_records=True)
+            self.assertEqual(
+                str(e.exception),
+                (
+                    f"InvalidBatch: The 'delete/hard_delete' batch must contain "
+                    f"only 'Id', {header}"
+                )
+            )
+
+        # not only 'Id' field
+        delete_data_without_id = [
+            {"Name": "Alice"},
+            {"Name": "Bob"},
+        ]
+        header = ["Name"]
+        total = len(delete_data_without_id)
+        ingest_responses(operation, processed=total, failed=total)
+        with self.assertRaises(SalesforceBulkV2LoadError) as e:
+            ingest_data(operation, delete_data_without_id, from_records=True)
+            self.assertEqual(
+                str(e.exception),
+                (
+                    f"InvalidBatch: The 'delete/hard_delete' batch must contain "
+                    f"only 'Id', {header}"
+                )
+            )
 
     @responses.activate
     def test_query(self):
