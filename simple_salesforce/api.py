@@ -14,7 +14,7 @@ from typing import Any, Callable, Dict, IO, Iterator, List, Mapping, \
 from collections import OrderedDict
 from functools import partial
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, quote_plus
 import requests
 from .bulk import SFBulkHandler
 from .bulk2 import SFBulk2Handler
@@ -1051,7 +1051,7 @@ class SFType:
         * headers -- a dict with additional request headers.
         """
         custom_url = urljoin(self.base_url,
-                             f'{custom_id_field}/{custom_id}'
+                             f'{custom_id_field}/{quote_plus(custom_id)}'
                              )
         result = self._call_salesforce(
             method='GET',
