@@ -65,6 +65,34 @@ class SFBulkHandler:
                           session=self.session
                           )
 
+    def submit_dml(self,
+                   object_name: str,
+                   dml: str,
+                   data: BulkDataAny,
+                   external_id_field: str = None
+                   ):
+        """ Perform any DML operation on any custom or
+            standard object in Salesforce
+            i.e. insert/upsert/update/delete
+
+            The main purpose of this function is to
+            build customizable reporting functions and reduce code reuse
+            while reducing code in indivual execution scripts mainly with pandas
+
+        Arguments:
+
+        * object_name       -- SF object
+        * dml               -- insert, upsert, update, delete, query, etc.
+        * data              -- JSON formatted salesforce records.
+        * external_id_field -- unique identifier field for upsert operations.
+        """
+        return SFBulkType(object_name=object_name,
+                          bulk_url=self.bulk_url,
+                          headers=self.headers,
+                          session=self.session).submit_dml(dml,
+                                                           data,
+                                                           external_id_field)
+
 
 class SFBulkType:
     """ Interface to Bulk/Async API functions"""
@@ -481,8 +509,8 @@ class SFBulkType:
                                            )
 
             while batch_status['state'] not in [
-                'Completed', 'Failed', 'NotProcessed'
-                ]:
+                    'Completed', 'Failed', 'NotProcessed'
+                    ]:
                 sleep(wait)
                 batch_status = self._get_batch(job_id=batch['jobId'],
                                                batch_id=batch['id']
@@ -520,8 +548,7 @@ class SFBulkType:
                                        data=data,
                                        batch_size=batch_size,
                                        bypass_results=bypass_results,
-                                       include_detailed_results=
-                                       include_detailed_results
+                                       include_detailed_results=include_detailed_results
                                        )
         return results
 
@@ -544,8 +571,7 @@ class SFBulkType:
                                        data=data,
                                        batch_size=batch_size,
                                        bypass_results=bypass_results,
-                                       include_detailed_results=
-                                       include_detailed_results
+                                       include_detailed_results=include_detailed_results
                                        )
         return results
 
@@ -570,8 +596,7 @@ class SFBulkType:
                                        data=data,
                                        batch_size=batch_size,
                                        bypass_results=bypass_results,
-                                       include_detailed_results=
-                                       include_detailed_results
+                                       include_detailed_results=include_detailed_results
                                        )
         return results
 
@@ -594,8 +619,7 @@ class SFBulkType:
                                        data=data,
                                        batch_size=batch_size,
                                        bypass_results=bypass_results,
-                                       include_detailed_results=
-                                       include_detailed_results
+                                       include_detailed_results=include_detailed_results
                                        )
         return results
 
@@ -618,8 +642,7 @@ class SFBulkType:
                                        data=data,
                                        batch_size=batch_size,
                                        bypass_results=bypass_results,
-                                       include_detailed_results=
-                                       include_detailed_results
+                                       include_detailed_results=include_detailed_results
                                        )
         return results
 
@@ -655,3 +678,17 @@ class SFBulkType:
         if lazy_operation:
             return results
         return list_from_generator(results)
+
+    def submit_dml(
+                self,
+                function_name: str,
+                data: BulkDataAny,
+                external_id_field: str = None
+                ):
+        """ modular bulk dml operations -
+            perform insert/upsert/update/delete
+            on any standard and custom objects in Salesforce."""
+        if function_name == 'upsert' and external_id_field != None:
+            return getattr(self, self.functions[function_name])(data, external_id_field)
+        else:
+            return getattr(self, self.functions[function_name])(data)
