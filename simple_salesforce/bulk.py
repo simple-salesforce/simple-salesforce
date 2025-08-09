@@ -69,6 +69,10 @@ class SFBulkHandler:
                    object_name: str,
                    dml: str,
                    data: BulkDataAny,
+                   batch_size: int = 10000,
+                   use_serial: bool = False,
+                   bypass_results: bool = False,
+                   include_detailed_results: bool = False,
                    external_id_field: str = None
                    ):
         """ Perform any DML operation on any custom or
@@ -82,8 +86,17 @@ class SFBulkHandler:
         Arguments:
 
         * object_name       -- SF object
-        * dml               -- insert, upsert, update, delete, query, etc.
+        * dml               -- insert, upsert, update, delete
         * data              -- JSON formatted salesforce records.
+
+        Data is batched by 10,000 records by default. To pick a lower size
+        pass smaller integer to `batch_size`. to let simple-salesforce pick
+        the appropriate limit dynamically, enter `batch_size='auto'`
+
+        * batch_size        -- default to 10,000
+        * use_serial        -- default: bool = False
+        * bypass_results    -- default: bool = False,
+        * include_detailed_results  --default: bool = False,
         * external_id_field -- unique identifier field for upsert operations.
         """
         return SFBulkType(object_name=object_name,
@@ -91,6 +104,10 @@ class SFBulkHandler:
                           headers=self.headers,
                           session=self.session).submit_dml(dml,
                                                            data,
+                                                           batch_size,
+                                                           use_serial,
+                                                           bypass_results,
+                                                           include_detailed_results,
                                                            external_id_field)
 
 
@@ -683,12 +700,25 @@ class SFBulkType:
                 self,
                 function_name: str,
                 data: BulkDataAny,
+                batch_size: int = 10000,
+                use_serial: bool = False,
+                bypass_results: bool = False,
+                include_detailed_results: bool = False,
                 external_id_field: str = None
                 ):
         """ modular bulk dml operations -
             perform insert/upsert/update/delete
             on any standard and custom objects in Salesforce."""
         if function_name == 'upsert' and external_id_field != None:
-            return getattr(self, self.functions[function_name])(data, external_id_field)
+            return getattr(self, self.functions[function_name])(data,
+                                                                batch_size,
+                                                                use_serial,
+                                                                bypass_results,
+                                                                include_detailed_results,
+                                                                external_id_field)
         else:
-            return getattr(self, self.functions[function_name])(data)
+            return getattr(self, self.functions[function_name])(data,
+                                                                batch_size,
+                                                                use_serial,
+                                                                bypass_results,
+                                                                include_detailed_results)
