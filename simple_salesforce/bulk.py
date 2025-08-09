@@ -69,11 +69,11 @@ class SFBulkHandler:
                    object_name: str,
                    dml: str,
                    data: BulkDataAny,
+                   external_id_field: str = None,
                    batch_size: int = 10000,
                    use_serial: bool = False,
                    bypass_results: bool = False,
-                   include_detailed_results: bool = False,
-                   external_id_field: str = None
+                   include_detailed_results: bool = False
                    ):
         """ Perform any DML operation on any custom or
             standard object in Salesforce
@@ -104,11 +104,12 @@ class SFBulkHandler:
                           headers=self.headers,
                           session=self.session).submit_dml(dml,
                                                            data,
+                                                           external_id_field,
                                                            batch_size,
                                                            use_serial,
                                                            bypass_results,
-                                                           include_detailed_results,
-                                                           external_id_field)
+                                                           include_detailed_results
+                                                           )
 
 
 class SFBulkType:
@@ -700,11 +701,11 @@ class SFBulkType:
                 self,
                 function_name: str,
                 data: BulkDataAny,
+                external_id_field: str = None,
                 batch_size: int = 10000,
                 use_serial: bool = False,
                 bypass_results: bool = False,
-                include_detailed_results: bool = False,
-                external_id_field: str = None
+                include_detailed_results: bool = False
                 ):
         """ modular bulk dml operations -
             perform insert/upsert/update/delete
