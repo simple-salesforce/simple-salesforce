@@ -563,9 +563,9 @@ Python psuedo-code below, with actual code example  at the bottom of this file:
         #add post process reporting: add suffic to the error logging columns appended to the end of the file
         results_df = pd.DataFrame(results).add_prefix('RESULTS_')
         #separate the uploaded data results based on success value
-        passing_df = passing + len(results_df[results_df['RESULTS_success'] == True])
+        passing_df = results_df[results_df['RESULTS_success'] == True]
         #separate the uploaded data results based on success value
-        fallout_df = fallout + len(results_df[results_df['RESULTS_success'] == False])
+        fallout_df = results_df[results_df['RESULTS_success'] == False]
 
 submit_dml - Insert records:
 
