@@ -79,6 +79,10 @@ class SFBulkHandler:
             standard object in Salesforce
             i.e. insert/upsert/update/delete
 
+            Required to put this function in this class due to error:
+            TypeError: 'SFBulkType' object is not callable
+            - this makes SFBulkType callable for this specific function
+
             The main purpose of this function is to
             build customizable reporting functions and reduce code reuse
             while reducing code in indivual execution scripts mainly with pandas
@@ -109,6 +113,7 @@ class SFBulkHandler:
                                                            use_serial,
                                                            bypass_results,
                                                            include_detailed_results)
+
 
 class SFBulkType:
     """ Interface to Bulk/Async API functions"""
