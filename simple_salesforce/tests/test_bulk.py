@@ -273,7 +273,7 @@ class TestSFBulkType(unittest.TestCase):
     @responses.activate
     def test_update(self):
         """Test bulk update records"""
-        operation = 'upsert'
+        operation = 'update'
         responses.add(
             responses.POST,
             re.compile(r'^https://[^/job].*/job$'),
