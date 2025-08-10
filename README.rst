@@ -564,7 +564,7 @@ submit_dml - Update existing records:
           {'Id': '0000000000BBBBB', 'Email': 'testnew@test.com'}
         ]
 
-    sf.bulk.Contact.update(data,batch_size=10000,use_serial=True)
+    sf.bulk.submit_dml('Contact','update',data,batch_size=10000,use_serial=True)
 
 submit_dml - Update existing records and update lookup fields from an external id field:
 
