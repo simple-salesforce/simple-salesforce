@@ -543,7 +543,20 @@ Hard deletion:
 
     sf.bulk.Contact.hard_delete(data,batch_size=10000,use_serial=True)
 
+The main use of the function submit_dml is to modularize
+the usage of the existing insert/upsert/update/delete operations.
 
+This helps enables customizable pre-processing and post-load results analysis
+Python psuedo-code below, with actual code example  at the bottom of this file:
+
+  .. code-block:: python
+    class SF_Utils:
+      def commit_records(self, sf, df, object, dml, success_filename = None, fallout_filename = None, batch_size = 10000, external_id_field=None):
+        records_to_submit = self.reformat_df_to_SF_records(df)#format df records to sf json compatible format
+        results = sf.bulk.commit_dml_operation(object_name, dml_operation, data, external_id_field)#upload records to salesforce
+        results_df = pd.DataFrame(results).add_prefix('RESULTS_') #add suffic to the error logging columns appended to the end of the file
+        passing_df = passing + len(results_df[results_df['RESULTS_success'] == True]) #separate the uploaded data results based on success value
+        fallout_df = fallout + len(results_df[results_df['RESULTS_success'] == False]) #separate the uploaded data results based on success value
 submit_dml - Insert records:
 
   .. code-block:: python
