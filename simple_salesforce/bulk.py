@@ -108,9 +108,7 @@ class SFBulkHandler:
                                                            batch_size,
                                                            use_serial,
                                                            bypass_results,
-                                                           include_detailed_results
-                                                           )
-
+                                                           include_detailed_results)
 
 class SFBulkType:
     """ Interface to Bulk/Async API functions"""
@@ -711,15 +709,15 @@ class SFBulkType:
             perform insert/upsert/update/delete
             on any standard and custom objects in Salesforce."""
         if function_name == 'upsert' and external_id_field != None:
-            return getattr(self, self.functions[function_name])(data,
-                                                                batch_size,
-                                                                use_serial,
-                                                                bypass_results,
-                                                                include_detailed_results,
-                                                                external_id_field)
+            return getattr(self, function_name)(data,
+                                                batch_size,
+                                                use_serial,
+                                                bypass_results,
+                                                include_detailed_results,
+                                                external_id_field)
         else:
-            return getattr(self, self.functions[function_name])(data,
-                                                                batch_size,
-                                                                use_serial,
-                                                                bypass_results,
-                                                                include_detailed_results)
+            return getattr(self, function_name)(data,
+                                                batch_size,
+                                                use_serial,
+                                                bypass_results,
+                                                include_detailed_results)
