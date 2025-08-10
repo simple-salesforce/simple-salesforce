@@ -559,7 +559,7 @@ Python psuedo-code below, with actual code example  at the bottom of this file:
         #preprocess data: format df records to sf json compatible format
         records_to_submit = self.reformat_df_to_SF_records(df)
         #upload records to salesforce
-        results = sf.bulk.submit_dml(object, dml, data, external_id_field)
+        results = sf.bulk.submit_dml(object, dml, records_to_submit, external_id_field)
         #add post process reporting: add suffic to the error logging columns appended to the end of the file
         results_df = pd.DataFrame(results).add_prefix('RESULTS_')
         #separate the uploaded data results based on success value
