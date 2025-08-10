@@ -546,22 +546,23 @@ Hard deletion:
 The main use of the function submit_dml is to modularize
 the usage of the existing insert/upsert/update/delete operations.
 
-This helps enables customizable pre-processing and post-load results analysis
+This helps enables customizable pre-processing and post-load results analysis.
+
 Python psuedo-code below:
 
   .. code-block:: python
 
     class Custom_SF_Utils:
       def reformat_df_to_SF_records(self, df):
-        #format records
+        #format records as the author sees fit
         return formatted_df
       def submit_records(self, sf, df, object,
                          dml, success_filename = None,
                          fallout_filename = None, batch_size = 10000,
                          external_id_field=None):
-        #preprocess data: format df records to sf json compatible format and any other the author sees fit
+        #preprocess data: format df records to sf json compatible format
         records_to_submit = self.reformat_df_to_SF_records(df)
-        #upload records to salesforce
+        #upload records to salesforce, add functionality to split upload based on upsert or not.
         results = sf.bulk.submit_dml(object, dml, records_to_submit, external_id_field)
         #add post process reporting: add suffic to the error logging columns appended to the end of the file
         results_df = pd.DataFrame(results).add_prefix('RESULTS_')
