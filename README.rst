@@ -586,7 +586,7 @@ submit_dml - Upsert records:
           {'Email': 'foo@foo.com'}
         ]
 
-    sf.bulk.Contact.upsert(data, 'Id', batch_size=10000, use_serial=True)
+    sf.bulk.submit_dml('Contact','upsert',data, 'Id', batch_size=10000, use_serial=True)
 
 submit_dml - Delete records:
 
@@ -594,7 +594,7 @@ submit_dml - Delete records:
 
     data = [{'Id': '0000000000BBBBB'}]
 
-    sf.bulk('Contact', 'delete', data, batch_size=10000, use_serial=True)
+    sf.bulk.submit_dml('Contact', 'delete', data, batch_size=10000, use_serial=True)
 
 
 Using Bulk 2.0
