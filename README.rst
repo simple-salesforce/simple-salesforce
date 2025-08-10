@@ -559,7 +559,7 @@ Python psuedo-code below:
                          dml, success_filename = None,
                          fallout_filename = None, batch_size = 10000,
                          external_id_field=None):
-        #preprocess data: format df records to sf json compatible format
+        #preprocess data: format df records to sf json compatible format and any other the author sees fit
         records_to_submit = self.reformat_df_to_SF_records(df)
         #upload records to salesforce
         results = sf.bulk.submit_dml(object, dml, records_to_submit, external_id_field)
@@ -569,6 +569,8 @@ Python psuedo-code below:
         passing_df = results_df[results_df['RESULTS_success'] == True]
         #separate the uploaded data results based on success value
         fallout_df = results_df[results_df['RESULTS_success'] == False]
+
+        #Perform any custom action with the resulting data from here as the author sees fit.
 
 submit_dml - Insert records:
 
