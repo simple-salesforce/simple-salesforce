@@ -550,6 +550,7 @@ This helps enables customizable pre-processing and post-load results analysis
 Python psuedo-code below, with actual code example  at the bottom of this file:
 
   .. code-block:: python
+
     class SF_Utils:
       def commit_records(self, sf, df, object, dml, success_filename = None, fallout_filename = None, batch_size = 10000, external_id_field=None):
         records_to_submit = self.reformat_df_to_SF_records(df)#format df records to sf json compatible format
@@ -557,6 +558,7 @@ Python psuedo-code below, with actual code example  at the bottom of this file:
         results_df = pd.DataFrame(results).add_prefix('RESULTS_') #add suffic to the error logging columns appended to the end of the file
         passing_df = passing + len(results_df[results_df['RESULTS_success'] == True]) #separate the uploaded data results based on success value
         fallout_df = fallout + len(results_df[results_df['RESULTS_success'] == False]) #separate the uploaded data results based on success value
+
 submit_dml - Insert records:
 
   .. code-block:: python
