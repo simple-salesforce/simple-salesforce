@@ -85,7 +85,7 @@ class SFBulkHandler:
 
             The main purpose of this function is to
             build customizable reporting functions and reduce code reuse
-            while reducing code in indivual execution scripts mainly with pandas
+            in indivual execution scripts mainly with pandas
 
         Arguments:
 
