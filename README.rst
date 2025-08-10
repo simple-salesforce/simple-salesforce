@@ -552,6 +552,8 @@ Python psuedo-code below:
 
   .. code-block:: python
 
+    import pandas as pd
+    
     class Custom_SF_Utils:
       def reformat_df_to_SF_records(self, df):
         #format records as the author sees fit
@@ -564,7 +566,7 @@ Python psuedo-code below:
         records_to_submit = self.reformat_df_to_SF_records(df)
         #upload records to salesforce, add functionality to split upload based on upsert or not.
         results = sf.bulk.submit_dml(object, dml, records_to_submit, external_id_field)
-        #add post process reporting: add suffic to the error logging columns appended to the end of the file
+        #post process reporting: add suffix to the error logging columns appended to the end of the file
         results_df = pd.DataFrame(results).add_prefix('RESULTS_')
         #separate the uploaded data results based on success value
         passing_df = results_df[results_df['RESULTS_success'] == True]
