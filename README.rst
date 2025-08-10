@@ -552,12 +552,20 @@ Python psuedo-code below, with actual code example  at the bottom of this file:
   .. code-block:: python
 
     class SF_Utils:
-      def commit_records(self, sf, df, object, dml, success_filename = None, fallout_filename = None, batch_size = 10000, external_id_field=None):
-        records_to_submit = self.reformat_df_to_SF_records(df)#format df records to sf json compatible format
-        results = sf.bulk.commit_dml_operation(object_name, dml_operation, data, external_id_field)#upload records to salesforce
-        results_df = pd.DataFrame(results).add_prefix('RESULTS_') #add suffic to the error logging columns appended to the end of the file
-        passing_df = passing + len(results_df[results_df['RESULTS_success'] == True]) #separate the uploaded data results based on success value
-        fallout_df = fallout + len(results_df[results_df['RESULTS_success'] == False]) #separate the uploaded data results based on success value
+      def commit_records(self, sf, df, object,
+                         dml, success_filename = None,
+                         fallout_filename = None, batch_size = 10000,
+                         external_id_field=None):
+        #format df records to sf json compatible format
+        records_to_submit = self.reformat_df_to_SF_records(df)
+        #upload records to salesforce
+        results = sf.bulk.commit_dml_operation(object_name, dml_operation, data, external_id_field)
+        #add suffic to the error logging columns appended to the end of the file
+        results_df = pd.DataFrame(results).add_prefix('RESULTS_')
+        #separate the uploaded data results based on success value
+        passing_df = passing + len(results_df[results_df['RESULTS_success'] == True])
+        #separate the uploaded data results based on success value
+        fallout_df = fallout + len(results_df[results_df['RESULTS_success'] == False])
 
 submit_dml - Insert records:
 
