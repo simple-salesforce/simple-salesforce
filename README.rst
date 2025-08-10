@@ -547,11 +547,14 @@ The main use of the function submit_dml is to modularize
 the usage of the existing insert/upsert/update/delete operations.
 
 This helps enables customizable pre-processing and post-load results analysis
-Python psuedo-code below, with actual code example  at the bottom of this file:
+Python psuedo-code below:
 
   .. code-block:: python
 
-    class SF_Utils:
+    class Custom_SF_Utils:
+      def reformat_df_to_SF_records(self, df):
+        #format records
+        return formatted_df
       def submit_records(self, sf, df, object,
                          dml, success_filename = None,
                          fallout_filename = None, batch_size = 10000,
