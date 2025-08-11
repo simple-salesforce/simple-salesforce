@@ -715,11 +715,12 @@ class SFBulkType:
             on any standard and custom objects in Salesforce."""
         if function_name == 'upsert' and external_id_field != None:
             return getattr(self, function_name)(data,
+                                                external_id_field,
                                                 batch_size,
                                                 use_serial,
                                                 bypass_results,
                                                 include_detailed_results,
-                                                external_id_field)
+                                                )
         else:
             return getattr(self, function_name)(data,
                                                 batch_size,
