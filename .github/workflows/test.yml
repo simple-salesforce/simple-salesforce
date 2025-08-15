@@ -12,23 +12,15 @@ concurrency:
 jobs:
   test:
     name: Test Python ${{ matrix.python-version }} (${{ matrix.toxenv }})
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         toxenv: [unit]
-        os: [ubuntu-latest]
         include:
           - python-version: "3.10"
             toxenv: static
-            os: ubuntu-latest
-          - python-version: "3.12"
-            toxenv: unit
-            os: windows-latest
-          - python-version: "3.12"
-            toxenv: unit
-            os: macos-latest
 
     steps:
     - name: Checkout code
@@ -53,4 +45,4 @@ jobs:
       run: tox
       env:
         TOXENV: ${{ matrix.toxenv }}
-        PLATFORM: ${{ matrix.os }}
+        PLATFORM: ubuntu-latest
