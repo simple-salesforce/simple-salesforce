@@ -1,0 +1,162 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simple-salesforce"
+dynamic = ["version", "readme"]
+description = "A basic Salesforce.com REST API client."
+authors = [{ name = "Nick Catalano", email = "nickcatal@gmail.com" }]
+maintainers = [{ name = "Jonathan Wobken", email = "jonathanwobken@gmail.com" }]
+license = "Apache-2.0"
+requires-python = ">=3.9"
+dependencies = [
+    "requests>=2.22.0",
+    "typing-extensions",
+    "zeep",
+    "pyjwt[crypto]",
+    "more-itertools",
+]
+keywords = ["python", "salesforce", "salesforce.com", "CRM", "API", "REST"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Operating System :: OS Independent",
+    "Topic :: Internet :: WWW/HTTP",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+    "coverage",
+    "pytz>=2014.1.1",
+    "responses>=0.5.1",
+    "cryptography>4.0.0",
+]
+lint = ["pylint", "mypy", "types-requests", "types-pytz"]
+format = ["black", "isort", "flake8", "flake8-docstrings"]
+dev = ["simple-salesforce[test,lint,format]", "tox", "pre-commit"]
+
+[project.urls]
+Homepage = "https://github.com/simple-salesforce/simple-salesforce"
+Documentation = "https://simple-salesforce.readthedocs.io/"
+Repository = "https://github.com/simple-salesforce/simple-salesforce.git"
+"Bug Tracker" = "https://github.com/simple-salesforce/simple-salesforce/issues"
+Changelog = "https://github.com/simple-salesforce/simple-salesforce/blob/master/CHANGES"
+
+[tool.setuptools]
+packages = ["simple_salesforce"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+simple_salesforce = ["metadata.wsdl", "py.typed"]
+
+[tool.setuptools.dynamic]
+version = { attr = "simple_salesforce.__version__.__version__" }
+readme = { file = "README.rst", content-type = "text/x-rst" }
+
+# Black formatting
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+# isort configuration
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["simple_salesforce"]
+
+# pytest configuration
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--disable-warnings",
+    "--tb=short",
+    "--cov=simple_salesforce",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+    "--cov-fail-under=62",
+]
+testpaths = ["simple_salesforce/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Tests that take a long time to run",
+]
+filterwarnings = ["error", "ignore::UserWarning", "ignore::DeprecationWarning"]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["simple_salesforce"]
+branch = true
+omit = ["*/tests/*", "*/test_*", "setup.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+show_missing = true
+precision = 2
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+# MyPy configuration
+[tool.mypy]
+packages = ["simple_salesforce"]
+exclude = ["tests/.*"]
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+strict_equality = true
+extra_checks = true
+check_untyped_defs = true
+disallow_subclassing_any = true
+disallow_untyped_decorators = true
+disallow_any_generics = true
+disallow_untyped_calls = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+no_implicit_reexport = true
+warn_return_any = true
+disallow_any_unimported = true
+warn_no_return = true
+warn_unreachable = true
