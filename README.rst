@@ -2,14 +2,14 @@
 Simple Salesforce
 *****************
 
-.. image:: https://app.travis-ci.com/simple-salesforce/simple-salesforce.svg?branch=master
-   :target: https://travis-ci.org/simple-salesforce/simple-salesforce
+.. image:: https://github.com/simple-salesforce/simple-salesforce/actions/workflows/test.yml/badge.svg
+   :target: https://github.com/simple-salesforce/simple-salesforce/actions
 
 .. image:: https://readthedocs.org/projects/simple-salesforce/badge/?version=latest
    :target: http://simple-salesforce.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.8, 3.9, 3.10, 3.11, and 3.12. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
+Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.9, 3.10, 3.11, 3.12, and 3.13. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
 You can find out more regarding the format of the results in the `Official Salesforce.com REST API Documentation`_
 
 .. _Official Salesforce.com REST API Documentation: http://www.salesforce.com/us/developer/docs/api_rest/index.htm
@@ -816,6 +816,65 @@ This can be a effective way to manage records, and perform simple operations lik
 
 .. _YouTube tutorial: https://youtu.be/nPQFUgsk6Oo?t=282
 
+Development
+--------------------------
+
+Setting up for Development
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To set up a development environment, clone the repository and install the development dependencies:
+
+.. code-block:: bash
+
+    git clone https://github.com/simple-salesforce/simple-salesforce.git
+    cd simple-salesforce
+    pip install -e .[dev]
+
+This will install the package in editable mode along with all development dependencies including ``tox``, ``pytest``, ``pylint``, ``mypy``, and other testing/linting tools.
+
+Running Tests
+~~~~~~~~~~~~~
+
+The project uses ``tox`` for testing across multiple Python versions. To run all tests:
+
+.. code-block:: bash
+
+    tox
+
+To run tests for a specific Python version:
+
+.. code-block:: bash
+
+    tox -e py312-unit  # Run unit tests with Python 3.12
+
+To run static analysis (linting and type checking):
+
+.. code-block:: bash
+
+    tox -e static
+
+To run tests directly with pytest (after installing dev dependencies):
+
+.. code-block:: bash
+
+    pytest
+
+Available tox environments:
+
+* ``py{39,310,311,312,313}-unit`` - Run unit tests with different Python versions
+* ``static`` - Run pylint and mypy for code quality checks  
+* ``docs`` - Build documentation
+* ``clean`` - Clean up coverage files
+
+Contributing
+~~~~~~~~~~~~
+
+Pull requests are welcome! Please make sure to:
+
+1. Run tests with ``tox`` to ensure compatibility across Python versions
+2. Follow the existing code style (enforced by the static analysis tools)
+3. Add tests for any new functionality
+
 Authors & License
 --------------------------
 
@@ -823,10 +882,10 @@ This package is released under an open source Apache 2.0 license. Simple-Salesfo
 
 Authentication mechanisms were adapted from Dave Wingate's `RestForce`_ and licensed under a MIT license
 
-The latest build status can be found at `Travis CI`_
+The latest build status can be found at `GitHub Actions`_
 
 .. _Nick Catalano: https://github.com/nickcatal
 .. _community contributors: https://github.com/simple-salesforce/simple-salesforce/graphs/contributors
 .. _RestForce: http://pypi.python.org/pypi/RestForce/
 .. _GitHub Repo: https://github.com/simple-salesforce/simple-salesforce
-.. _Travis CI: https://travis-ci.com/simple-salesforce/simple-salesforce
+.. _GitHub Actions: https://github.com/simple-salesforce/simple-salesforce/actions

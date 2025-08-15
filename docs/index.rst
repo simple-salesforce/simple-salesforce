@@ -6,7 +6,7 @@
 Welcome to simple-salesforce's documentation!
 =============================================
 
-Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.5, 3.6, 3.7 and 3.8. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
+Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.9, 3.10, 3.11, 3.12, and 3.13. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
 
 You can find out more regarding the format of the results in the `Official Salesforce.com REST API Documentation`_
 
@@ -46,13 +46,13 @@ This package is released under an open source Apache 2.0 license. Simple-Salesfo
 
 Authentication mechanisms were adapted from Dave Wingate's `RestForce`_ and licensed under a MIT license
 
-The latest build status can be found at `Travis CI`_
+The latest build status can be found at `GitHub Actions`_
 
 .. _Nick Catalano: https://github.com/nickcatal
 .. _community contributors: https://github.com/simple-salesforce/simple-salesforce/graphs/contributors
 .. _RestForce: http://pypi.python.org/pypi/RestForce/
 .. _GitHub Repo: https://github.com/simple-salesforce/simple-salesforce
-.. _Travis CI: https://travis-ci.org/simple-salesforce/simple-salesforce
+.. _GitHub Actions: https://github.com/simple-salesforce/simple-salesforce/actions
 
 
 Indices and tables
