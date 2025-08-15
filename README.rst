@@ -548,12 +548,12 @@ the usage of the existing insert/upsert/update/delete operations.
 
 This helps enables customizable pre-processing and post-load results analysis.
 
-Python psuedo-code below:
+Python pseudo-code below:
 
   .. code-block:: python
 
     import pandas as pd
-    
+
     class Custom_SF_Utils:
       def reformat_df_to_SF_records(self, df):
         #format records as the author sees fit
