@@ -13,7 +13,6 @@ jobs:
   test:
     name: Test Python ${{ matrix.python-version }} (${{ matrix.toxenv }})
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.toxenv == 'static' }}
     strategy:
       fail-fast: false
       matrix:
