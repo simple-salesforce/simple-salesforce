@@ -85,7 +85,7 @@ class SFBulkHandler:
 
             The main purpose of this function is to
             build customizable reporting functions and reduce code reuse
-            in indivual execution scripts mainly with pandas
+            in individual execution scripts mainly with pandas
 
         Arguments:
 
@@ -713,7 +713,7 @@ class SFBulkType:
         """ modular bulk dml operations -
             perform insert/upsert/update/delete
             on any standard and custom objects in Salesforce."""
-        if function_name == 'upsert' and external_id_field != None:
+        if function_name == 'upsert' and external_id_field is not None:
             return getattr(self, function_name)(data,
                                                 external_id_field,
                                                 batch_size,
