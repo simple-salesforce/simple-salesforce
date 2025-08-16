@@ -34,14 +34,14 @@ For example:
     from simple_salesforce import Salesforce
     sf = Salesforce(instance='na1.salesforce.com', session_id='')
 
-If you have the full URL of your instance (perhaps including the schema, as is included in the OAuth2 request process), you can pass that in instead using ``instance_url``:
+If you have the full URL of your instance (perhaps including the scheme, as is included in the OAuth2 request process), you can pass that in instead using ``instance_url``:
 
 .. code-block:: python
 
     from simple_salesforce import Salesforce
     sf = Salesforce(instance_url='https://na1.salesforce.com', session_id='')
 
-There are also four means of authentication, one that uses username, password and security token; one that uses IP filtering, username, password  and organizationId, one that uses a private key to sign a JWT, and one for connected apps that uses username, password, consumer key, and consumer secret;
+There are also four means of authentication, one that uses username, password and security token; one that uses IP filtering, username, password and organizationId, one that uses a private key to sign a JWT, and one for connected apps that uses username, password, consumer key, and consumer secret;
 
 To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password or go to profile -> settings -> Reset My Security Token):
 
@@ -417,7 +417,7 @@ To retrieve a description of the record layout of an object by its record layout
 
     sf.Contact.describe_layout('39wmxcw9r23r492')
 
-To retrieve a list of top level description of instance metadata, user:
+To retrieve a list of top level description of instance metadata, use:
 
 .. code-block:: python
 
@@ -801,10 +801,10 @@ To add a Contact using the default version of the API you'd use:
 .. code-block:: python
 
     from simple_salesforce import SFType
-    contact = SFType('Contact','sesssionid','na1.salesforce.com')
+    contact = SFType('Contact','sessionid','na1.salesforce.com')
     contact.create({'LastName':'Smith','Email':'example@example.com'})
 
-To use a proxy server between your client and the SalesForce endpoint, use the proxies argument when creating SalesForce object.
+To use a proxy server between your client and the Salesforce endpoint, use the proxies argument when creating the Salesforce object.
 The proxy argument is the same as what requests uses, a map of scheme to proxy URL:
 
 .. code-block:: python
