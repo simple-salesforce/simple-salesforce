@@ -71,8 +71,8 @@ To login using a connected app, simply include the Salesforce method and pass in
     from simple_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com', password='password', consumer_key='consumer_key', consumer_secret='consumer_secret')
 
-Connected apps may also be configured with a `client_id` and `client_secret` (renamed here as `consumer_key` and `consumer_secret`), and a `domain`.
-The `domain` for the url `https://organization.my.salesforce.com` would be `organization.my`
+Connected apps may also be configured with a ``client_id`` and ``client_secret`` (renamed here as ``consumer_key`` and ``consumer_secret``), and a ``domain``.
+The ``domain`` for the url ``https://organization.my.salesforce.com`` would be ``organization.my``
 
 .. code-block:: python
 
@@ -99,8 +99,8 @@ If you'd like to keep track where your API calls are coming from, simply add ``c
 
 If you view the API calls in your Salesforce instance by Client Id it will be prefixed with ``simple-salesforce/``, for example ``simple-salesforce/My App``.
 
-When instantiating a `Salesforce` object, it's also possible to include an
-instance of `requests.Session`. This is to allow for specialized
+When instantiating a ``Salesforce`` object, it's also possible to include an
+instance of ``requests.Session``. This is to allow for specialized
 session handling not otherwise exposed by simple_salesforce.
 
 For example:
@@ -552,24 +552,25 @@ Python pseudo-code below:
 
     class Custom_SF_Utils:
         def reformat_df_to_SF_records(self, df):
-            #format records as the author sees fit
-        return formatted_df
-      def submit_records(self, sf, df, object,
-                         dml, success_filename = None,
-                         fallout_filename = None, batch_size = 10000,
-                         external_id_field=None):
-        #preprocess data: format df records to sf json compatible format
-        records_to_submit = self.reformat_df_to_SF_records(df)
-        #upload records to salesforce, add functionality to split upload based on upsert or not.
-        results = sf.bulk.submit_dml(object, dml, records_to_submit, external_id_field)
-        #post process reporting: add suffix to the error logging columns appended to the end of the file
-        results_df = pd.DataFrame(results).add_prefix('RESULTS_')
-        #separate the uploaded data results based on success value
-        passing_df = results_df[results_df['RESULTS_success'] == True]
-        #separate the uploaded data results based on success value
-        fallout_df = results_df[results_df['RESULTS_success'] == False]
+            # format records as the author sees fit
+            return formatted_df
 
-        #Perform any custom action with the resulting data from here as the author sees fit.
+        def submit_records(self, sf, df, object,
+                           dml, success_filename=None,
+                           fallout_filename=None, batch_size=10000,
+                           external_id_field=None):
+            # preprocess data: format df records to sf json compatible format
+            records_to_submit = self.reformat_df_to_SF_records(df)
+            # upload records to salesforce, add functionality to split upload based on upsert or not.
+            results = sf.bulk.submit_dml(object, dml, records_to_submit, external_id_field)
+            # post process reporting: add suffix to the error logging columns appended to the end of the file
+            results_df = pd.DataFrame(results).add_prefix('RESULTS_')
+            # separate the uploaded data results based on success value
+            passing_df = results_df[results_df['RESULTS_success'] == True]
+            # separate the uploaded data results based on success value
+            fallout_df = results_df[results_df['RESULTS_success'] == False]
+
+            # Perform any custom action with the resulting data from here as the author sees fit.
 
 submit_dml - Insert records:
 
@@ -778,7 +779,7 @@ Additional Features
 
 There are a few helper classes that are used internally and available to you.
 
-Included in them are ``SalesforceLogin``, which takes in a username, password, security token, optional version and optional domain and returns a tuple of ``(session_id, sf_instance)`` where `session_id` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
+Included in them are ``SalesforceLogin``, which takes in a username, password, security token, optional version and optional domain and returns a tuple of ``(session_id, sf_instance)`` where ``session_id`` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
 
 For example, to use SalesforceLogin for a sandbox account you'd use:
 
@@ -812,7 +813,7 @@ The proxy argument is the same as what requests uses, a map of scheme to proxy U
       "http": "http://10.10.1.10:3128",
       "https": "http://10.10.1.10:1080",
     }
-    SalesForce(instance='na1.salesforce.com', session_id='', proxies=proxies)
+    Salesforce(instance='na1.salesforce.com', session_id='', proxies=proxies)
 
 All results are returned as JSON converted OrderedDict to preserve order of keys from REST responses.
 
@@ -826,16 +827,17 @@ Convert SFDC Datetime to Datetime or Date object
 
     import datetime
     # Formatting to SFDC datetime
-    formatted_datetime =  datetime.datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z")
+    formatted_datetime = datetime.datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z")
 
-    #Formatting to SFDC date
-    formatted_date = datetime.strptime(x, "%Y-%m-%d")
+    # Formatting to SFDC date
+    formatted_date = datetime.datetime.strptime(x, "%Y-%m-%d")
 
 Helpful Pandas Resources
 --------------------------
 A list of helpful resources when working with Pandas and simple-salesforce
 
 Generate list for SFDC Query "IN" operations from a Pandas Dataframe
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -849,21 +851,23 @@ Generate list for SFDC Query "IN" operations from a Pandas Dataframe
         return df_list
 
     sf.query(format_soql(
-        "SELECT Id, Email FROM Contact WHERE Id IN ({})", 
+        "SELECT Id, Email FROM Contact WHERE Id IN ({})",
         dataframe_to_sfdc_list(df, column)
     ))
 
 Generate Pandas Dataframe from SFDC API Query (ex.query,query_all)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
-   import pandas as pd
+    import pandas as pd
 
-   sf.query("SELECT Id, Email FROM Contact")
+    sf.query("SELECT Id, Email FROM Contact")
 
-   df = pd.DataFrame(data['records']).drop(['attributes'],axis=1)
+    df = pd.DataFrame(data['records']).drop(['attributes'],axis=1)
 
 Generate Pandas Dataframe from SFDC API Query (ex.query,query_all) and append related fields from query to data frame
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -880,7 +884,10 @@ Generate Pandas Dataframe from SFDC API Query (ex.query,query_all) and append re
                     listColumns.append(i)
         return df
 
-    df = sf_api_query(sf.query("SELECT Id, Email,ParentAccount.Name FROM Contact"))Generate Pandas Dataframe from SFDC Bulk API Query (ex.bulk.Account.query)
+    df = sf_api_query(sf.query("SELECT Id, Email, ParentAccount.Name FROM Contact"))
+
+Generate Pandas Dataframe from SFDC Bulk API Query (ex.bulk.Account.query)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
