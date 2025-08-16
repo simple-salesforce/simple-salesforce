@@ -38,6 +38,7 @@ def SalesforceLogin(
         consumer_secret: Optional[str] = None,
         privatekey_file: Optional[str] = None,
         privatekey: Optional[str] = None,
+        scratch_url: Optional[str] = None
         ) -> Tuple[str, str]:
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
@@ -69,6 +70,8 @@ def SalesforceLogin(
                          for signing the JWT token.
     * privatekey -- the private key to use
                          for signing the JWT token.
+    * scratch_url -- scratch org URL used in order to avoid waiting
+                         for DNS propagation.
     """
 
     if domain is None:
@@ -127,6 +130,22 @@ def SalesforceLogin(
         return token_login(
             f'https://{domain}.salesforce.com/services/oauth2/token',
             token_data, domain, consumer_key,
+            None, proxies, session)
+
+    elif username is not None and \
+            consumer_key is not None and \
+            consumer_secret is not None:
+        payload = {
+            'grant_type': 'password',
+            'client_id': consumer_key,
+            'client_secret': consumer_secret,
+            'username': username,
+            'password': password
+            }
+
+        return token_login(
+            f'https://{domain}.salesforce.com/services/oauth2/token',
+            payload, domain, consumer_key,
             None, proxies, session)
 
     # Check if IP Filtering is used in conjunction with organizationId
@@ -217,7 +236,10 @@ def SalesforceLogin(
         )
         raise SalesforceAuthenticationFailed(except_code, except_msg)
 
-    soap_url = f'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
+    if scratch_url is not None:
+        soap_url = f'{scratch_url}/services/Soap/u/{sf_version}'
+    else:
+        soap_url = f'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
     login_soap_request_headers = {
         'content-type': 'text/xml',
         'charset': 'UTF-8',
