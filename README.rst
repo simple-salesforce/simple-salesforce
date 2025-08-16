@@ -14,19 +14,15 @@ You can find out more regarding the format of the results in the `Official Sales
 
 .. _Official Salesforce.com REST API Documentation: http://www.salesforce.com/us/developer/docs/api_rest/index.htm
 
-
-
-=============
-
 Documentation
---------------------------------
+=============
 
 .. _Official Simple Salesforce documentation: http://simple-salesforce.readthedocs.io/en/latest/
 
 `Official Simple Salesforce documentation`_
 
 Examples
---------------------------
+--------
 There are two ways to gain access to Salesforce
 
 The first is to simply pass the domain of your Salesforce instance and an access token straight to ``Salesforce()``
@@ -252,7 +248,7 @@ More details about syntax is available on the `Salesforce Query Language Documen
 .. _Salesforce Query Language Documentation Developer Website: http://www.salesforce.com/us/developer/docs/soql_sosl/index.htm
 
 CRUD Metadata API Calls
-_______________________
+-----------------------
 
 You can use simple_salesforce to make CRUD (Create, Read, Update and Delete) API calls to the metadata API.
 
@@ -550,13 +546,13 @@ This helps enables customizable pre-processing and post-load results analysis.
 
 Python pseudo-code below:
 
-  .. code-block:: python
+.. code-block:: python
 
     import pandas as pd
 
     class Custom_SF_Utils:
-      def reformat_df_to_SF_records(self, df):
-        #format records as the author sees fit
+        def reformat_df_to_SF_records(self, df):
+            #format records as the author sees fit
         return formatted_df
       def submit_records(self, sf, df, object,
                          dml, success_filename = None,
@@ -577,51 +573,51 @@ Python pseudo-code below:
 
 submit_dml - Insert records:
 
-  .. code-block:: python
+.. code-block:: python
 
     data = [
-          {'LastName':'Smith','Email':'example@example.com'},
-          {'LastName':'Jones','Email':'test@test.com'}
-        ]
+        {'LastName':'Smith','Email':'example@example.com'},
+        {'LastName':'Jones','Email':'test@test.com'}
+    ]
 
     sf.bulk.submit_dml('Contact','insert',data,batch_size=10000,use_serial=True)
 
 submit_dml - Update existing records:
 
-  .. code-block:: python
+.. code-block:: python
 
     data = [
-          {'Id': '0000000000AAAAA', 'Email': 'examplenew@example.com'},
-          {'Id': '0000000000BBBBB', 'Email': 'testnew@test.com'}
-        ]
+        {'Id': '0000000000AAAAA', 'Email': 'examplenew@example.com'},
+        {'Id': '0000000000BBBBB', 'Email': 'testnew@test.com'}
+    ]
 
     sf.bulk.submit_dml('Contact','update',data,batch_size=10000,use_serial=True)
 
 submit_dml - Update existing records and update lookup fields from an external id field:
 
-  .. code-block:: python
+.. code-block:: python
 
     data = [
-          {'Id': '0000000000AAAAA', 'Custom_Object__r': {'Email__c':'examplenew@example.com'}},
-          {'Id': '0000000000BBBBB', 'Custom_Object__r': {'Email__c': 'testnew@test.com'}}
-        ]
+        {'Id': '0000000000AAAAA', 'Custom_Object__r': {'Email__c':'examplenew@example.com'}},
+        {'Id': '0000000000BBBBB', 'Custom_Object__r': {'Email__c': 'testnew@test.com'}}
+    ]
 
     sf.bulk.submit_dml('Contact','update',data,batch_size=10000,use_serial=True)
 
 submit_dml - Upsert records:
 
-  .. code-block:: python
+.. code-block:: python
 
     data = [
-          {'Id': '0000000000AAAAA', 'Email': 'examplenew2@example.com'},
-          {'Email': 'foo@foo.com'}
-        ]
+        {'Id': '0000000000AAAAA', 'Email': 'examplenew2@example.com'},
+        {'Email': 'foo@foo.com'}
+    ]
 
     sf.bulk.submit_dml('Contact','upsert',data, 'Id', batch_size=10000, use_serial=True)
 
 submit_dml - Delete records:
 
-  .. code-block:: python
+.. code-block:: python
 
     data = [{'Id': '0000000000BBBBB'}]
 
@@ -825,6 +821,7 @@ Helpful Datetime Resources
 A list of helpful resources when working with datetime/dates from Salesforce
 
 Convert SFDC Datetime to Datetime or Date object
+
 .. code-block:: python
 
     import datetime
@@ -842,16 +839,19 @@ Generate list for SFDC Query "IN" operations from a Pandas Dataframe
 
 .. code-block:: python
 
- import pandas as pd
+    import pandas as pd
 
- df = pd.DataFrame([{'Id':1},{'Id':2},{'Id':3}])
-    def dataframe_to_sfdc_list(df,column):
-      df_list = df[column].unique()
-      df_list = [str(x) for x in df_list]
-      df_list = ','.join("'"+item+"'" for item in df_list)
-      return df_list
+    df = pd.DataFrame([{'Id':1},{'Id':2},{'Id':3}])
+    def dataframe_to_sfdc_list(df, column):
+        df_list = df[column].unique()
+        df_list = [str(x) for x in df_list]
+        df_list = ','.join("'" + item + "'" for item in df_list)
+        return df_list
 
-   sf.query(format_soql("SELECT Id, Email FROM Contact WHERE Id IN ({})", dataframe_to_sfdc_list(df,column)))
+    sf.query(format_soql(
+        "SELECT Id, Email FROM Contact WHERE Id IN ({})", 
+        dataframe_to_sfdc_list(df, column)
+    ))
 
 Generate Pandas Dataframe from SFDC API Query (ex.query,query_all)
 
@@ -867,29 +867,27 @@ Generate Pandas Dataframe from SFDC API Query (ex.query,query_all) and append re
 
 .. code-block:: python
 
-   import pandas as pd
+    import pandas as pd
 
-   def sf_api_query(data):
-    df = pd.DataFrame(data['records']).drop('attributes', axis=1)
-    listColumns = list(df.columns)
-    for col in listColumns:
-        if any (isinstance (df[col].values[i], dict) for i in range(0, len(df[col].values))):
-            df = pd.concat([df.drop(columns=[col]),df[col].apply(pd.Series,dtype=df[col].dtype).drop('attributes',axis=1).add_prefix(col+'.')],axis=1)
-            new_columns = np.setdiff1d(df.columns, listColumns)
-            for i in new_columns:
-                listColumns.append(i)
-    return df
+    def sf_api_query(data):
+        df = pd.DataFrame(data['records']).drop('attributes', axis=1)
+        listColumns = list(df.columns)
+        for col in listColumns:
+            if any (isinstance (df[col].values[i], dict) for i in range(0, len(df[col].values))):
+                df = pd.concat([df.drop(columns=[col]),df[col].apply(pd.Series,dtype=df[col].dtype).drop('attributes',axis=1).add_prefix(col+'.')],axis=1)
+                new_columns = np.setdiff1d(df.columns, listColumns)
+                for i in new_columns:
+                    listColumns.append(i)
+        return df
 
-   df = sf_api_query(sf.query("SELECT Id, Email,ParentAccount.Name FROM Contact"))
-
-Generate Pandas Dataframe from SFDC Bulk API Query (ex.bulk.Account.query)
+    df = sf_api_query(sf.query("SELECT Id, Email,ParentAccount.Name FROM Contact"))Generate Pandas Dataframe from SFDC Bulk API Query (ex.bulk.Account.query)
 
 .. code-block:: python
 
-   import pandas as pd
+    import pandas as pd
 
-   sf.bulk.Account.query("SELECT Id, Email FROM Contact")
-   df = pd.DataFrame.from_dict(data,orient='columns').drop('attributes',axis=1)
+    sf.bulk.Account.query("SELECT Id, Email FROM Contact")
+    df = pd.DataFrame.from_dict(data,orient='columns').drop('attributes',axis=1)
 
 
 YouTube Tutorial
@@ -901,7 +899,7 @@ This can be a effective way to manage records, and perform simple operations lik
 .. _YouTube tutorial: https://youtu.be/nPQFUgsk6Oo?t=282
 
 Development
---------------------------
+-----------
 
 Setting up for Development
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
