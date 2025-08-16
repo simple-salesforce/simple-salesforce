@@ -24,9 +24,7 @@ class SalesforceError(Exception):
             resource_name: Name of the Salesforce resource being queried
             content: content of the response
         """
-        # TODO exceptions don't seem to be using parent constructors at all.
-        # this should be fixed.
-        # pylint: disable=super-init-not-called
+        super().__init__(self.message.format(url=url, content=content))
         self.url = url
         self.status = status
         self.resource_name = resource_name
@@ -103,9 +101,7 @@ class SalesforceAuthenticationFailed(SalesforceError):
         code: Union[str, int, None],
         message: str
         ):
-        # TODO exceptions don't seem to be using parent constructors at all.
-        # this should be fixed.
-        # pylint: disable=super-init-not-called
+        super().__init__(message)
         self.code = code
         self.message = message
 
