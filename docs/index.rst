@@ -23,12 +23,16 @@ Contents:
    user_guide/misc
    user_guide/apex
    user_guide/additional_features
+   user_guide/bulk_api_notes
+   user_guide/other_REST_examples
+   user_guide/tooling
 
 API documentation
 -----------------
 .. toctree::
   :maxdepth: 3
 
+  api/modules
   simple_salesforce
 
 Release history
