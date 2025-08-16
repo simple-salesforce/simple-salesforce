@@ -75,7 +75,7 @@ To login using a connected app, simply include the Salesforce method and pass in
     from simple_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com', password='password', consumer_key='consumer_key', consumer_secret='consumer_secret')
 
-Connected apps may also be configured with a `client_id` and `client_secret` (renamed here as `consumer_key` and `consumer_secret`), and a `domain`. 
+Connected apps may also be configured with a `client_id` and `client_secret` (renamed here as `consumer_key` and `consumer_secret`), and a `domain`.
 The `domain` for the url `https://organization.my.salesforce.com` would be `organization.my`
 
 .. code-block:: python
@@ -542,6 +542,90 @@ Hard deletion:
     data = [{'Id': '0000000000BBBBB'}]
 
     sf.bulk.Contact.hard_delete(data,batch_size=10000,use_serial=True)
+
+The main use of the function submit_dml is to modularize
+the usage of the existing insert/upsert/update/delete operations.
+
+This helps enables customizable pre-processing and post-load results analysis.
+
+Python pseudo-code below:
+
+  .. code-block:: python
+
+    import pandas as pd
+
+    class Custom_SF_Utils:
+      def reformat_df_to_SF_records(self, df):
+        #format records as the author sees fit
+        return formatted_df
+      def submit_records(self, sf, df, object,
+                         dml, success_filename = None,
+                         fallout_filename = None, batch_size = 10000,
+                         external_id_field=None):
+        #preprocess data: format df records to sf json compatible format
+        records_to_submit = self.reformat_df_to_SF_records(df)
+        #upload records to salesforce, add functionality to split upload based on upsert or not.
+        results = sf.bulk.submit_dml(object, dml, records_to_submit, external_id_field)
+        #post process reporting: add suffix to the error logging columns appended to the end of the file
+        results_df = pd.DataFrame(results).add_prefix('RESULTS_')
+        #separate the uploaded data results based on success value
+        passing_df = results_df[results_df['RESULTS_success'] == True]
+        #separate the uploaded data results based on success value
+        fallout_df = results_df[results_df['RESULTS_success'] == False]
+
+        #Perform any custom action with the resulting data from here as the author sees fit.
+
+submit_dml - Insert records:
+
+  .. code-block:: python
+
+    data = [
+          {'LastName':'Smith','Email':'example@example.com'},
+          {'LastName':'Jones','Email':'test@test.com'}
+        ]
+
+    sf.bulk.submit_dml('Contact','insert',data,batch_size=10000,use_serial=True)
+
+submit_dml - Update existing records:
+
+  .. code-block:: python
+
+    data = [
+          {'Id': '0000000000AAAAA', 'Email': 'examplenew@example.com'},
+          {'Id': '0000000000BBBBB', 'Email': 'testnew@test.com'}
+        ]
+
+    sf.bulk.submit_dml('Contact','update',data,batch_size=10000,use_serial=True)
+
+submit_dml - Update existing records and update lookup fields from an external id field:
+
+  .. code-block:: python
+
+    data = [
+          {'Id': '0000000000AAAAA', 'Custom_Object__r': {'Email__c':'examplenew@example.com'}},
+          {'Id': '0000000000BBBBB', 'Custom_Object__r': {'Email__c': 'testnew@test.com'}}
+        ]
+
+    sf.bulk.submit_dml('Contact','update',data,batch_size=10000,use_serial=True)
+
+submit_dml - Upsert records:
+
+  .. code-block:: python
+
+    data = [
+          {'Id': '0000000000AAAAA', 'Email': 'examplenew2@example.com'},
+          {'Email': 'foo@foo.com'}
+        ]
+
+    sf.bulk.submit_dml('Contact','upsert',data, 'Id', batch_size=10000, use_serial=True)
+
+submit_dml - Delete records:
+
+  .. code-block:: python
+
+    data = [{'Id': '0000000000BBBBB'}]
+
+    sf.bulk.submit_dml('Contact', 'delete', data, batch_size=10000, use_serial=True)
 
 
 Using Bulk 2.0
