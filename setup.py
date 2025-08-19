@@ -31,7 +31,8 @@ setup(
        'typing-extensions',
        'zeep',
        'pyjwt[crypto]',
-       'more-itertools'
+       'more-itertools',
+       'ijson'
        ],
     tests_require=[
         'pytest',
