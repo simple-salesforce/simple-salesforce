@@ -59,6 +59,7 @@ class Salesforce:
             parse_float: Optional[Callable[[str], Any]] = None,
             object_pairs_hook: Optional[Callable[[List[Tuple[Any, Any]]], Any]]
             = OrderedDict,
+            metadata_wsdl_path: Optional[str] = None
             ):
 
         """Initialize the instance with the given parameters.
@@ -274,6 +275,7 @@ class Salesforce:
         self.api_usage: MutableMapping[str, Union[Usage, PerAppUsage]] = {}
         self._parse_float = parse_float
         self._object_pairs_hook = object_pairs_hook  # type: ignore[assignment]
+        self.metadata_wsdl_path = metadata_wsdl_path
         self._mdapi: Optional[SfdcMetadataApi] = None
 
     @property
@@ -284,6 +286,7 @@ class Salesforce:
                                           session_id=self.session_id,
                                           instance=self.sf_instance,
                                           metadata_url=self.metadata_url,
+                                          metadata_wsdl_path=self.metadata_wsdl_path,
                                           api_version=self.sf_version,
                                           headers=self.headers
                                           )
