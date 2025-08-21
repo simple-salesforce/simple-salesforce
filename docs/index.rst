@@ -24,8 +24,12 @@ Contents:
    user_guide/apex
    user_guide/additional_features
    user_guide/bulk_api_notes
+   user_guide/bulk2_api
+   user_guide/metadata_api
    user_guide/other_REST_examples
    user_guide/tooling
+   user_guide/helpful_resources
+   user_guide/development
 
 API documentation
 -----------------
