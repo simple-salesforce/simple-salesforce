@@ -101,7 +101,6 @@ class SalesforceAuthenticationFailed(SalesforceError):
         code: Union[str, int, None],
         message: str
         ):
-        super().__init__(message)
         self.code = code
         self.message = message
 
