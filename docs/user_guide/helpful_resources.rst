@@ -59,7 +59,11 @@ Generate Pandas Dataframe from SFDC API Query (ex.query,query_all) and append re
         listColumns = list(df.columns)
         for col in listColumns:
             if any (isinstance (df[col].values[i], dict) for i in range(0, len(df[col].values))):
-                df = pd.concat([df.drop(columns=[col]),df[col].apply(pd.Series,dtype=df[col].dtype).drop('attributes',axis=1).add_prefix(col+'.')],axis=1)
+                df_no_col = df.drop(columns=[col])
+                expanded_col = df[col].apply(pd.Series, dtype=df[col].dtype)
+                expanded_col = expanded_col.drop('attributes', axis=1)
+                expanded_col = expanded_col.add_prefix(col + '.')
+                df = pd.concat([df_no_col, expanded_col], axis=1)
                 new_columns = np.setdiff1d(df.columns, listColumns)
                 for i in new_columns:
                     listColumns.append(i)
@@ -80,7 +84,7 @@ Generate Pandas Dataframe from SFDC Bulk API Query (ex.bulk.Account.query)
 
 YouTube Tutorial
 ----------------
-Here is a helpful  `YouTube tutorial`_  which shows how you can manage records in bulk using a jupyter notebook, simple-salesforce and pandas.
+Here is a helpful `YouTube tutorial`_ which shows how you can manage records in bulk using a jupyter notebook, simple-salesforce and pandas.
 
 This can be a effective way to manage records, and perform simple operations like reassigning accounts, deleting test records, inserting new records, etc...
 

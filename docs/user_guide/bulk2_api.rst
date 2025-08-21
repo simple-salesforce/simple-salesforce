@@ -75,7 +75,7 @@ Query records:
         query, max_records=50000, column_delimiter="COMMA", line_ending="LF"
     )
     for i, data in enumerate(results):
-        with open(f"results/part-{1}.csv", "w") as bos:
+        with open(f"results/part-{i}.csv", "w") as bos:
             bos.write(data)
 
 
