@@ -1,3 +1,15 @@
+v1.12.8
+=======
+Bug fixes
+---------
+
+- [#792] Fix issue with exception inheritence
+
+Other
+-----
+
+- [#793] Move README.rst content to the documentation
+
 v1.12.7
 =======
 Features
