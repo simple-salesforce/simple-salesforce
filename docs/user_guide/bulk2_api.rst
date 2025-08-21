@@ -14,14 +14,14 @@ Create new records:
 
 .. code-block:: python
 
-    sf.bulk2.Contact.insert("./sample.csv", batch_size=10000)
+    sf.bulk2.Contact.insert(data="./sample.csv", batch_size=10000)
 
 
 Create new records concurrently:
 
 .. code-block:: python
 
-    sf.bulk2.Contact.insert("./sample.csv", batch_size=10000, concurrency=10)
+    sf.bulk2.Contact.insert(data="./sample.csv", batch_size=10000, concurrency=10)
 
 
 Update existing records:
@@ -35,7 +35,7 @@ Update existing records:
 
 .. code-block:: python
 
-    sf.bulk2.Contact.update("./sample.csv")
+    sf.bulk2.Contact.update(data="./sample.csv")
 
 
 Upsert records from csv:
@@ -49,7 +49,7 @@ Upsert records from csv:
 
 .. code-block:: python
 
-    sf.bulk2.Contact.upsert(csv_file="./sample.csv", external_id_field='Custom_Id__c')
+    sf.bulk2.Contact.upsert(data="./sample.csv", external_id_field='Custom_Id__c')
 
 
 Upsert records from dict:
@@ -62,7 +62,7 @@ Upsert records from dict:
           {'Custom_Id__c': 'CustomID2', 'LastName': 'Y'}
         ]
 
-    sf.bulk2.Contact.upsert(records=df.to_dict(orient='records'), external_id_field='Custom_Id__c')
+    sf.bulk2.Contact.upsert(data=df.to_dict(orient='records'), external_id_field='Custom_Id__c')
 
 
 Query records:
@@ -102,25 +102,25 @@ Delete records (soft deletion):
 
 .. code-block:: python
 
-    sf.bulk2.Contact.delete("./sample.csv")
+    sf.bulk2.Contact.delete(data="./sample.csv")
 
 
 Hard deletion:
 
 .. code-block:: python
 
-    sf.bulk2.Contact.hard_delete("./sample.csv")
+    sf.bulk2.Contact.hard_delete(data="./sample.csv")
 
 
 Retrieve failed/successful/unprocessed records for ingest(insert,update...) job:
 
 .. code-block:: python
 
-    results = sf.bulk2.Contact.insert("./sample.csv")
+    results = sf.bulk2.Contact.insert(data="./sample.csv")
     # [{"numberRecordsFailed": 123, "numberRecordsProcessed": 2000, "numberRecordsTotal": 2000, "job_id": "Job-1"}, ...]
     for result in results:
         job_id = result['job_id']
         # also available: get_unprocessed_records, get_successful_records
         data = sf.bulk2.Contact.get_failed_records(job_id)
         # or save to file
-        sf.bulk2.Contact.get_failed_records(job_id, file=f'{job_id}.csv')
+        sf.bulk2.Contact.get_failed_records(job_id, path=f'{job_id}.csv')

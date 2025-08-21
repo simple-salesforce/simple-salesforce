@@ -99,17 +99,17 @@ Then you can use this to deploy that zipfile:
 
 .. code-block:: python
 
-   result = sf.deploy("path/to/zip", sandbox=False, **kwargs)
+   result = sf.mdapi.deploy("path/to/zip", sandbox=False)
    asyncId = result.get('asyncId')
    state = result.get('state')
 
-Both deploy and checkDeployStatus take keyword arguments. The single package argument is not currently available to be set for deployments. More details on the deploy options can be found at https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_deploy.htm
+Both deploy and check_deploy_status take keyword arguments. The single package argument is not currently available to be set for deployments. More details on the deploy options can be found at https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_deploy.htm
 
 You can check on the progress of the deploy which returns a dictionary with status, state_detail, deployment_detail, unit_test_detail:
 
 .. code-block:: python
 
-   sf.checkDeployStatus(asyncId)
+   sf.mdapi.check_deploy_status(asyncId)
 
 Example of a use-case:
 
@@ -121,10 +121,10 @@ Example of a use-case:
    successful = False
 
    sf = Salesforce(session_id="id", instance="instance")
-   sf.deploy("path/to/zip", sandbox=False ,**kwargs)
+   sf.mdapi.deploy("path/to/zip", sandbox=False)
 
    while not deployment_finished:
-       result = sf.checkDeployStatus(asyncId)
+       result = sf.mdapi.check_deploy_status(asyncId)
        if result.get('status') in ["Succeeded", "Completed", "Error", "Failed", None]:
            deployment_finished = True
        if result.get('status') in ["Succeeded", "Completed"]:

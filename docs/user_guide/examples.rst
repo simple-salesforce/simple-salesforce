@@ -41,7 +41,7 @@ To login using the JWT method, use your Salesforce username, consumer key from y
     from simple_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com', consumer_key='XYZ', privatekey_file='filename.key')
 
-To login using a connected app, simply include the Salesforce method and pass in your Salesforce username, password, consumer_key and consumer_secret (the consumer key and consumer secret are provided when you setup your connected app):
+To login using a connected app, simply include the Salesforce method and pass in your Salesforce username, password, consumer_key and consumer_secret (the consumer key and consumer secret are provided when you setup your connected app and are not used for authentication):
 
 .. code-block:: python
 
