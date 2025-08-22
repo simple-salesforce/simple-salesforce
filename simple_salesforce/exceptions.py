@@ -24,7 +24,7 @@ class SalesforceError(Exception):
             resource_name: Name of the Salesforce resource being queried
             content: content of the response
         """
-        super().__init__(self.message.format(url=url, content=content))
+        super().__init__(self.message)
         self.url = url
         self.status = status
         self.resource_name = resource_name
