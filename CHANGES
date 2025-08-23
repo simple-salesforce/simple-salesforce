@@ -1,3 +1,10 @@
+v1.12.9
+=======
+Bug fixes
+---------
+
+- [#795] Fix key 'name' in exception message
+
 v1.12.8
 =======
 Bug fixes
