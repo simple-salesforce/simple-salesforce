@@ -47,7 +47,7 @@ If you have the full URL of your instance (perhaps including the schema, as is i
 
 There are also four means of authentication, one that uses username, password and security token; one that uses IP filtering, username, password  and organizationId, one that uses a private key to sign a JWT, and one for connected apps that uses username, password, consumer key, and consumer secret;
 
-To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password):
+To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password or go to profile -> settings -> Reset My Security Token):
 
 .. code-block:: python
 
@@ -75,6 +75,13 @@ To login using a connected app, simply include the Salesforce method and pass in
     from simple_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com', password='password', consumer_key='consumer_key', consumer_secret='consumer_secret')
 
+Connected apps may also be configured with a `client_id` and `client_secret` (renamed here as `consumer_key` and `consumer_secret`), and a `domain`. 
+The `domain` for the url `https://organization.my.salesforce.com` would be `organization.my`
+
+.. code-block:: python
+
+    from simple_salesforce import Salesforce
+    sf = Salesforce(consumer_key='sfdc_client_id', consumer_secret='sfdc_client_secret', domain='organization.my')
 
 If you'd like to enter a sandbox, simply add ``domain='test'`` to your ``Salesforce()`` call.
 
@@ -577,7 +584,7 @@ Update existing records:
     sf.bulk2.Contact.update("./sample.csv")
 
 
-Upsert records:
+Upsert records from csv:
 
 .. code-block:: text
 
@@ -588,7 +595,20 @@ Upsert records:
 
 .. code-block:: python
 
-    sf.bulk2.Contact.upsert("./sample.csv", 'Custom_Id__c')
+    sf.bulk2.Contact.upsert(csv_file="./sample.csv", external_id_field='Custom_Id__c')
+
+
+Upsert records from dict:
+
+
+.. code-block:: python
+
+    data = [
+          {'Custom_Id__c': 'CustomID1', 'LastName': 'X'},
+          {'Custom_Id__c': 'CustomID2', 'LastName': 'Y'}
+        ]
+
+    sf.bulk2.Contact.upsert(records=df.to_dict(orient='records'), external_id_field='Custom_Id__c')
 
 
 Query records:
@@ -598,7 +618,7 @@ Query records:
     query = 'SELECT Id, Name FROM Account LIMIT 100000'
 
     results = sf.bulk2.Account.query(
-        query, max_records=50000, column_delimiter="COMM", line_ending="LF"
+        query, max_records=50000, column_delimiter="COMMA", line_ending="LF"
     )
     for i, data in enumerate(results):
         with open(f"results/part-{1}.csv", "w") as bos:
