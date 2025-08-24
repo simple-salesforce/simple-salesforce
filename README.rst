@@ -75,6 +75,13 @@ To login using a connected app, simply include the Salesforce method and pass in
     from simple_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com', password='password', consumer_key='consumer_key', consumer_secret='consumer_secret')
 
+Connected apps may also be configured with a `client_id` and `client_secret` (renamed here as `consumer_key` and `consumer_secret`), and a `domain`. 
+The `domain` for the url `https://organization.my.salesforce.com` would be `organization.my`
+
+.. code-block:: python
+
+    from simple_salesforce import Salesforce
+    sf = Salesforce(consumer_key='sfdc_client_id', consumer_secret='sfdc_client_secret', domain='organization.my')
 
 If you'd like to enter a sandbox, simply add ``domain='test'`` to your ``Salesforce()`` call.
 
