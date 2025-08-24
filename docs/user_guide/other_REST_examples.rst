@@ -5,18 +5,18 @@ In addition to built in functions that allow integrations with the Salesforce Ap
 
 .. _SFDC Submit documentation: https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/dome_process_approvals_submit.htm
 
-1. Import any dependent packages to your script. For this example we use Simple Salesforce, Requests and the built in JSON package:
+1. Import any dependent packages to your script. For this example we use Simple Salesforce and the built in JSON package:
 
 .. code-block:: python
 
-    import json, requests, simple_salesforce
+    import json, simple_salesforce
 
 
 1. Authenticate and create an instance of your Salesforce environment using SalesForceLogin:
 
 .. code-block:: python
 
-    session_id, instance = simple_salesforce.SalesforceLogin(
+    sf = simple_salesforce.Salesforce(
             username=sf_user,
             password=sf_password,
             security_token=sf_token)
@@ -35,24 +35,17 @@ In addition to built in functions that allow integrations with the Salesforce Ap
             "skipEntryCriteria": "true"}]
             }
 
-3. Generate the endpoint url and request headers dynamically using your specific SalesForceLogin instance and session id from above:
+3. Use the `restful` method to send a HTTP request to the REST API:
 
 .. code-block:: python
 
-    url = f"https://{instance}/services/data/v55.0/process/approvals/"
-    headers = {"Content-Type": "application/json", 'Authorization': 'Bearer ' + session_id}
+    result = sf.restful('process/approvals/', method='POST', json=body)
 
-4. Use your favorite libraries, in this example we use Requests and JSON, to send a HTTP request to the REST API:
-
-.. code-block:: python
-
-    response = requests.post(url, data=json.dumps(body), headers=headers)
-
-5. A response will be returned in a JSON string that can be loaded into your script using the following:
+4. A response will be returned in a JSON string that can be loaded into your script using the following:
 
 .. code-block:: python
 
-    resp = response.json()
+    resp = result
 
 This response will match the following format:
 

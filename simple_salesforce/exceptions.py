@@ -24,9 +24,7 @@ class SalesforceError(Exception):
             resource_name: Name of the Salesforce resource being queried
             content: content of the response
         """
-        # TODO exceptions don't seem to be using parent constructors at all.
-        # this should be fixed.
-        # pylint: disable=super-init-not-called
+        super().__init__(self.message)
         self.url = url
         self.status = status
         self.resource_name = resource_name
@@ -96,21 +94,47 @@ class SalesforceResourceNotFound(SalesforceError):
 class SalesforceAuthenticationFailed(SalesforceError):
     """
     Thrown to indicate that authentication with Salesforce failed.
+
+    This exception is raised when authentication with Salesforce fails,
+    typically during login or token validation. It maintains compatibility
+    with the SalesforceError base class while providing a simplified
+    constructor for authentication-specific error reporting.
+
+    Args:
+        code: Error code from Salesforce authentication response
+        message: Descriptive error message from authentication failure
     """
 
-    def __init__(
-        self,
-        code: Union[str, int, None],
-        message: str
-        ):
-        # TODO exceptions don't seem to be using parent constructors at all.
-        # this should be fixed.
-        # pylint: disable=super-init-not-called
+    message = 'Authentication failed. Response content: {content}'
+
+    def __init__(self, code: Union[str, int, None], auth_message: str) -> None:
+        """Initialize SalesforceAuthenticationFailed exception.
+
+        Args:
+            code: Error code from Salesforce (can be string, int, or None)
+            auth_message: Authentication failure message
+
+        Raises:
+            TypeError: If auth_message is not a string
+        """
+        if not isinstance(auth_message, str):
+            raise TypeError("auth_message must be a string")
+
+        # Provide minimal context expected by SalesforceError.__init__
+        url = 'authentication_endpoint'
+        status = 401
+        resource_name = 'Authentication'
+        content = auth_message.encode('utf-8')
+
+        super().__init__(url, status, resource_name, content)
         self.code = code
-        self.message = message
+        self.auth_message = auth_message
 
     def __str__(self) -> str:
-        return f'{self.code}: {self.message}'
+        """Return string representation of the authentication error."""
+        if self.code is not None:
+            return f'Authentication failed (code: {self.code}): {self.auth_message}'
+        return f'Authentication failed: {self.auth_message}'
 
 
 class SalesforceGeneralError(SalesforceError):

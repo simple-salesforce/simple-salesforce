@@ -11,6 +11,7 @@ To format an external ID that could contain non-URL-safe characters, use:
 
 .. code-block:: python
 
+    from simple_salesforce.format import format_external_id
     external_id = format_external_id('customExtIdField__c', 'this/that & the other')
 
 To retrieve basic metadata use:
@@ -31,11 +32,11 @@ To retrieve a description of the record layout of an object by its record layout
 
     sf.Contact.describe_layout('39wmxcw9r23r492')
 
-To retrieve a list of top level description of instance metadata, user:
+To retrieve a list of top level description of instance metadata, use:
 
 .. code-block:: python
 
     sf.describe()
 
     for x in sf.describe()["sobjects"]:
-      print x["label"]
+      print(x["label"])

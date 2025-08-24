@@ -1,5 +1,49 @@
+v1.12.9
+=======
+Bug fixes
+---------
+
+- [#795] Fix key 'name' in exception message
+
+v1.12.8
+=======
+Bug fixes
+---------
+
+- [#792] Fix issue with exception inheritence
+
+Other
+-----
+
+- [#793] Move README.rst content to the documentation
+
+v1.12.7
+=======
+Features
+--------
+- [#787] Add modular DML functionality for pre/post processing around insert/upsert/update/delete in bulk.py
+- [#736] Refine CSV files splitting implementation in bulk2
+- [#764] Add note about Supported OAuth2 Login
+
+Bug Fixes
+---------
+- [#780] Change Content-type to Content-Type so the headers are updated correctly
+- [#771] Fix RESTful to not error out if status code is 204
+- [#740] Fix bulk2 upsert example
+
+Other
+-----
+- [#790] Documentation Update
+- [#789] Fix README.rst formatting
+- [#788] Add GitHub Actions for CI/CD
+- [#767] Update metadata.wsdl
+- [#750] Update README.rst
+- [#736] Various improvements to bulk2 CSV handling
+- [#722] Correct query example in README
+- [#717] Add Bulk API notes
+
 v1.12.6
-======
+=======
 Features
 --------
 - [#771] Add support for Non-Standrad Domain in JWT Token
@@ -8,26 +52,26 @@ Features
 - [#660] Add typing annotations
 
 Bug Fixes
---------
+---------
 - [#680] Remove unused dependency crytography
 - [#683] Fix utf-8 encoding in bulk2
 
 v1.12.5
-======
+=======
 Features
 --------
 - [#648] Add support for bulk2.0
 - [#662] Add OAuth 2.0 client credentials login
 
 v1.12.4
-======
+=======
 Bug Fixes
---------
+---------
 - [#612] Fix unescaped username for JWT claim
 
 
 Other
---------
+-----
 - [#636] Fix README typos
 - [#634] Added object_pairs_hook to SFType
 - [#618] Fixed indentation in setup.py
@@ -35,40 +79,40 @@ Other
 - [#607] Fixed misspellings
 
 v1.12.3
-======
+=======
 Bug Fixes
---------
+---------
 - [#594] Fix infinite refresh session issue
 - [#603] Fix upsert metadata
 - [#604] Fix escaped username and password in connected app
 
 Other
---------
+-----
 - [#585] Additional documentation (README) on using package with Process Approvals rest API
 - [#597] Use f-strings
 - [#599] Use replace os.path with pathlib
 
 v1.12.2
-======
+=======
 Features
 --------
 - Add support for OAuth connected app & update default_client_id_prefix to 'simple_salesforce'
 - [#565] Add wait arguement for bulk
 
 Other
---------
+-----
 - [#563] Remove leftover reference to Python 3.5 support
 
 v1.12.1
-======
+=======
 Fix pylint errors and build errors on Travis-CI
 
 Bugs
---------
+----
 - Issue #557 - SFType arguments were re-arranged from v1.11.5 causing failure for some users explicitly calling SFType and using default arguement position
 
 v1.12.0
-======
+=======
 Drop support for Python 3.5
 
 Features
@@ -79,19 +123,19 @@ Features
 - [#550] Added support for OAuth2 endpoints
 
 v1.11.5
-======
+=======
 Hotfix missing wsdl file
 
 Bugs
---------
+----
 - Issue #533 Fix missing metadata.wsdl file
 
 v1.11.5
-======
+=======
 Changes as of 2022-01-05
 
 Bugs
---------
+----
 - [#518] Fix hanging batch results in bulk api
 
 Features
@@ -100,13 +144,13 @@ Features
 - [#485] Added base64 function to support upload, update, and get
 
 Other
---------
+-----
 - [#495] Add parse_float to allow parsing of floats to decimal.Decimal
 - [#512] Updated README information for JWT Token
 
 
 v1.11.4
-======
+=======
 Changes as of 2021-09-09
 
 Other
@@ -115,19 +159,19 @@ Other
 - [#497] Support non-standard https port number
 
 v1.11.3
-======
+=======
 Bugs
---------
+----
 - [431] Fix timezone handling
 
 v1.11.2
-======
+=======
 Bugs
---------
+----
 - [469] Fix bulk call results returning nested list
 
 v1.11.1
-======
+=======
 Features
 --------
 - [445] Added wrapper for Tooling API
@@ -140,11 +184,11 @@ Bugs
 - [443] Fix to prevent silent failure by preventing NaN in payload
 
 v1.11.0
-======
+=======
 - [375] Added file based metadata deployment
 
 v1.10.1
-======
+=======
 
 Other
 -----
@@ -155,7 +199,7 @@ Other
 - Update readme to remove python 3.3/3.4
 
 v1.10.0
-=====
+=======
 
 Features
 --------

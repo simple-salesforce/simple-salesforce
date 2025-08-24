@@ -2,31 +2,27 @@
 Simple Salesforce
 *****************
 
-.. image:: https://app.travis-ci.com/simple-salesforce/simple-salesforce.svg?branch=master
-   :target: https://travis-ci.org/simple-salesforce/simple-salesforce
+.. image:: https://github.com/simple-salesforce/simple-salesforce/actions/workflows/test.yml/badge.svg
+   :target: https://github.com/simple-salesforce/simple-salesforce/actions
 
 .. image:: https://readthedocs.org/projects/simple-salesforce/badge/?version=latest
    :target: http://simple-salesforce.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.8, 3.9, 3.10, 3.11, and 3.12. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
+Simple Salesforce is a basic Salesforce.com REST API client built for Python 3.9, 3.10, 3.11, 3.12, and 3.13. The goal is to provide a very low-level interface to the REST Resource and APEX API, returning a dictionary of the API JSON response.
 You can find out more regarding the format of the results in the `Official Salesforce.com REST API Documentation`_
 
 .. _Official Salesforce.com REST API Documentation: http://www.salesforce.com/us/developer/docs/api_rest/index.htm
 
-
-
-=============
-
 Documentation
---------------------------------
+=============
 
 .. _Official Simple Salesforce documentation: http://simple-salesforce.readthedocs.io/en/latest/
 
 `Official Simple Salesforce documentation`_
 
 Examples
---------------------------
+--------
 There are two ways to gain access to Salesforce
 
 The first is to simply pass the domain of your Salesforce instance and an access token straight to ``Salesforce()``
@@ -38,14 +34,14 @@ For example:
     from simple_salesforce import Salesforce
     sf = Salesforce(instance='na1.salesforce.com', session_id='')
 
-If you have the full URL of your instance (perhaps including the schema, as is included in the OAuth2 request process), you can pass that in instead using ``instance_url``:
+If you have the full URL of your instance (perhaps including the scheme, as is included in the OAuth2 request process), you can pass that in instead using ``instance_url``:
 
 .. code-block:: python
 
     from simple_salesforce import Salesforce
     sf = Salesforce(instance_url='https://na1.salesforce.com', session_id='')
 
-There are also four means of authentication, one that uses username, password and security token; one that uses IP filtering, username, password  and organizationId, one that uses a private key to sign a JWT, and one for connected apps that uses username, password, consumer key, and consumer secret;
+There are also four means of authentication, one that uses username, password and security token; one that uses IP filtering, username, password and organizationId, one that uses a private key to sign a JWT, and one for connected apps that uses username, password, consumer key, and consumer secret;
 
 To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password or go to profile -> settings -> Reset My Security Token):
 
@@ -75,8 +71,8 @@ To login using a connected app, simply include the Salesforce method and pass in
     from simple_salesforce import Salesforce
     sf = Salesforce(username='myemail@example.com', password='password', consumer_key='consumer_key', consumer_secret='consumer_secret')
 
-Connected apps may also be configured with a `client_id` and `client_secret` (renamed here as `consumer_key` and `consumer_secret`), and a `domain`. 
-The `domain` for the url `https://organization.my.salesforce.com` would be `organization.my`
+Connected apps may also be configured with a ``client_id`` and ``client_secret`` (renamed here as ``consumer_key`` and ``consumer_secret``), and a ``domain``.
+The ``domain`` for the url ``https://organization.my.salesforce.com`` would be ``organization.my``
 
 .. code-block:: python
 
@@ -103,8 +99,8 @@ If you'd like to keep track where your API calls are coming from, simply add ``c
 
 If you view the API calls in your Salesforce instance by Client Id it will be prefixed with ``simple-salesforce/``, for example ``simple-salesforce/My App``.
 
-When instantiating a `Salesforce` object, it's also possible to include an
-instance of `requests.Session`. This is to allow for specialized
+When instantiating a ``Salesforce`` object, it's also possible to include an
+instance of ``requests.Session``. This is to allow for specialized
 session handling not otherwise exposed by simple_salesforce.
 
 For example:
@@ -252,7 +248,7 @@ More details about syntax is available on the `Salesforce Query Language Documen
 .. _Salesforce Query Language Documentation Developer Website: http://www.salesforce.com/us/developer/docs/soql_sosl/index.htm
 
 CRUD Metadata API Calls
-_______________________
+-----------------------
 
 You can use simple_salesforce to make CRUD (Create, Read, Update and Delete) API calls to the metadata API.
 
@@ -421,7 +417,7 @@ To retrieve a description of the record layout of an object by its record layout
 
     sf.Contact.describe_layout('39wmxcw9r23r492')
 
-To retrieve a list of top level description of instance metadata, user:
+To retrieve a list of top level description of instance metadata, use:
 
 .. code-block:: python
 
@@ -542,6 +538,91 @@ Hard deletion:
     data = [{'Id': '0000000000BBBBB'}]
 
     sf.bulk.Contact.hard_delete(data,batch_size=10000,use_serial=True)
+
+The main use of the function submit_dml is to modularize
+the usage of the existing insert/upsert/update/delete operations.
+
+This helps enables customizable pre-processing and post-load results analysis.
+
+Python pseudo-code below:
+
+.. code-block:: python
+
+    import pandas as pd
+
+    class Custom_SF_Utils:
+        def reformat_df_to_SF_records(self, df):
+            # format records as the author sees fit
+            return formatted_df
+
+        def submit_records(self, sf, df, object,
+                           dml, success_filename=None,
+                           fallout_filename=None, batch_size=10000,
+                           external_id_field=None):
+            # preprocess data: format df records to sf json compatible format
+            records_to_submit = self.reformat_df_to_SF_records(df)
+            # upload records to salesforce, add functionality to split upload based on upsert or not.
+            results = sf.bulk.submit_dml(object, dml, records_to_submit, external_id_field)
+            # post process reporting: add suffix to the error logging columns appended to the end of the file
+            results_df = pd.DataFrame(results).add_prefix('RESULTS_')
+            # separate the uploaded data results based on success value
+            passing_df = results_df[results_df['RESULTS_success'] == True]
+            # separate the uploaded data results based on success value
+            fallout_df = results_df[results_df['RESULTS_success'] == False]
+
+            # Perform any custom action with the resulting data from here as the author sees fit.
+
+submit_dml - Insert records:
+
+.. code-block:: python
+
+    data = [
+        {'LastName':'Smith','Email':'example@example.com'},
+        {'LastName':'Jones','Email':'test@test.com'}
+    ]
+
+    sf.bulk.submit_dml('Contact','insert',data,batch_size=10000,use_serial=True)
+
+submit_dml - Update existing records:
+
+.. code-block:: python
+
+    data = [
+        {'Id': '0000000000AAAAA', 'Email': 'examplenew@example.com'},
+        {'Id': '0000000000BBBBB', 'Email': 'testnew@test.com'}
+    ]
+
+    sf.bulk.submit_dml('Contact','update',data,batch_size=10000,use_serial=True)
+
+submit_dml - Update existing records and update lookup fields from an external id field:
+
+.. code-block:: python
+
+    data = [
+        {'Id': '0000000000AAAAA', 'Custom_Object__r': {'Email__c':'examplenew@example.com'}},
+        {'Id': '0000000000BBBBB', 'Custom_Object__r': {'Email__c': 'testnew@test.com'}}
+    ]
+
+    sf.bulk.submit_dml('Contact','update',data,batch_size=10000,use_serial=True)
+
+submit_dml - Upsert records:
+
+.. code-block:: python
+
+    data = [
+        {'Id': '0000000000AAAAA', 'Email': 'examplenew2@example.com'},
+        {'Email': 'foo@foo.com'}
+    ]
+
+    sf.bulk.submit_dml('Contact','upsert',data, 'Id', batch_size=10000, use_serial=True)
+
+submit_dml - Delete records:
+
+.. code-block:: python
+
+    data = [{'Id': '0000000000BBBBB'}]
+
+    sf.bulk.submit_dml('Contact', 'delete', data, batch_size=10000, use_serial=True)
 
 
 Using Bulk 2.0
@@ -698,7 +779,7 @@ Additional Features
 
 There are a few helper classes that are used internally and available to you.
 
-Included in them are ``SalesforceLogin``, which takes in a username, password, security token, optional version and optional domain and returns a tuple of ``(session_id, sf_instance)`` where `session_id` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
+Included in them are ``SalesforceLogin``, which takes in a username, password, security token, optional version and optional domain and returns a tuple of ``(session_id, sf_instance)`` where ``session_id`` is the session ID to use for authentication to Salesforce and ``sf_instance`` is the domain of the instance of Salesforce to use for the session.
 
 For example, to use SalesforceLogin for a sandbox account you'd use:
 
@@ -720,10 +801,10 @@ To add a Contact using the default version of the API you'd use:
 .. code-block:: python
 
     from simple_salesforce import SFType
-    contact = SFType('Contact','sesssionid','na1.salesforce.com')
+    contact = SFType('Contact','sessionid','na1.salesforce.com')
     contact.create({'LastName':'Smith','Email':'example@example.com'})
 
-To use a proxy server between your client and the SalesForce endpoint, use the proxies argument when creating SalesForce object.
+To use a proxy server between your client and the Salesforce endpoint, use the proxies argument when creating the Salesforce object.
 The proxy argument is the same as what requests uses, a map of scheme to proxy URL:
 
 .. code-block:: python
@@ -732,7 +813,7 @@ The proxy argument is the same as what requests uses, a map of scheme to proxy U
       "http": "http://10.10.1.10:3128",
       "https": "http://10.10.1.10:1080",
     }
-    SalesForce(instance='na1.salesforce.com', session_id='', proxies=proxies)
+    Salesforce(instance='na1.salesforce.com', session_id='', proxies=proxies)
 
 All results are returned as JSON converted OrderedDict to preserve order of keys from REST responses.
 
@@ -741,71 +822,79 @@ Helpful Datetime Resources
 A list of helpful resources when working with datetime/dates from Salesforce
 
 Convert SFDC Datetime to Datetime or Date object
+
 .. code-block:: python
 
     import datetime
     # Formatting to SFDC datetime
-    formatted_datetime =  datetime.datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z")
+    formatted_datetime = datetime.datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z")
 
-    #Formatting to SFDC date
-    formatted_date = datetime.strptime(x, "%Y-%m-%d")
+    # Formatting to SFDC date
+    formatted_date = datetime.datetime.strptime(x, "%Y-%m-%d")
 
 Helpful Pandas Resources
 --------------------------
 A list of helpful resources when working with Pandas and simple-salesforce
 
 Generate list for SFDC Query "IN" operations from a Pandas Dataframe
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
- import pandas as pd
+    import pandas as pd
 
- df = pd.DataFrame([{'Id':1},{'Id':2},{'Id':3}])
-    def dataframe_to_sfdc_list(df,column):
-      df_list = df[column].unique()
-      df_list = [str(x) for x in df_list]
-      df_list = ','.join("'"+item+"'" for item in df_list)
-      return df_list
+    df = pd.DataFrame([{'Id':1},{'Id':2},{'Id':3}])
+    def dataframe_to_sfdc_list(df, column):
+        df_list = df[column].unique()
+        df_list = [str(x) for x in df_list]
+        df_list = ','.join("'" + item + "'" for item in df_list)
+        return df_list
 
-   sf.query(format_soql("SELECT Id, Email FROM Contact WHERE Id IN ({})", dataframe_to_sfdc_list(df,column)))
+    sf.query(format_soql(
+        "SELECT Id, Email FROM Contact WHERE Id IN ({})",
+        dataframe_to_sfdc_list(df, column)
+    ))
 
 Generate Pandas Dataframe from SFDC API Query (ex.query,query_all)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
-   import pandas as pd
+    import pandas as pd
 
-   sf.query("SELECT Id, Email FROM Contact")
+    sf.query("SELECT Id, Email FROM Contact")
 
-   df = pd.DataFrame(data['records']).drop(['attributes'],axis=1)
+    df = pd.DataFrame(data['records']).drop(['attributes'],axis=1)
 
 Generate Pandas Dataframe from SFDC API Query (ex.query,query_all) and append related fields from query to data frame
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
-   import pandas as pd
+    import pandas as pd
 
-   def sf_api_query(data):
-    df = pd.DataFrame(data['records']).drop('attributes', axis=1)
-    listColumns = list(df.columns)
-    for col in listColumns:
-        if any (isinstance (df[col].values[i], dict) for i in range(0, len(df[col].values))):
-            df = pd.concat([df.drop(columns=[col]),df[col].apply(pd.Series,dtype=df[col].dtype).drop('attributes',axis=1).add_prefix(col+'.')],axis=1)
-            new_columns = np.setdiff1d(df.columns, listColumns)
-            for i in new_columns:
-                listColumns.append(i)
-    return df
+    def sf_api_query(data):
+        df = pd.DataFrame(data['records']).drop('attributes', axis=1)
+        listColumns = list(df.columns)
+        for col in listColumns:
+            if any (isinstance (df[col].values[i], dict) for i in range(0, len(df[col].values))):
+                df = pd.concat([df.drop(columns=[col]),df[col].apply(pd.Series,dtype=df[col].dtype).drop('attributes',axis=1).add_prefix(col+'.')],axis=1)
+                new_columns = np.setdiff1d(df.columns, listColumns)
+                for i in new_columns:
+                    listColumns.append(i)
+        return df
 
-   df = sf_api_query(sf.query("SELECT Id, Email,ParentAccount.Name FROM Contact"))
+    df = sf_api_query(sf.query("SELECT Id, Email, ParentAccount.Name FROM Contact"))
 
 Generate Pandas Dataframe from SFDC Bulk API Query (ex.bulk.Account.query)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
-   import pandas as pd
+    import pandas as pd
 
-   sf.bulk.Account.query("SELECT Id, Email FROM Contact")
-   df = pd.DataFrame.from_dict(data,orient='columns').drop('attributes',axis=1)
+    sf.bulk.Account.query("SELECT Id, Email FROM Contact")
+    df = pd.DataFrame.from_dict(data,orient='columns').drop('attributes',axis=1)
 
 
 YouTube Tutorial
@@ -816,6 +905,65 @@ This can be a effective way to manage records, and perform simple operations lik
 
 .. _YouTube tutorial: https://youtu.be/nPQFUgsk6Oo?t=282
 
+Development
+-----------
+
+Setting up for Development
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To set up a development environment, clone the repository and install the development dependencies:
+
+.. code-block:: bash
+
+    git clone https://github.com/simple-salesforce/simple-salesforce.git
+    cd simple-salesforce
+    pip install -e .[dev]
+
+This will install the package in editable mode along with all development dependencies including ``tox``, ``pytest``, ``pylint``, ``mypy``, and other testing/linting tools.
+
+Running Tests
+~~~~~~~~~~~~~
+
+The project uses ``tox`` for testing across multiple Python versions. To run all tests:
+
+.. code-block:: bash
+
+    tox
+
+To run tests for a specific Python version:
+
+.. code-block:: bash
+
+    tox -e py312-unit  # Run unit tests with Python 3.12
+
+To run static analysis (linting and type checking):
+
+.. code-block:: bash
+
+    tox -e static
+
+To run tests directly with pytest (after installing dev dependencies):
+
+.. code-block:: bash
+
+    pytest
+
+Available tox environments:
+
+* ``py{39,310,311,312,313}-unit`` - Run unit tests with different Python versions
+* ``static`` - Run pylint and mypy for code quality checks  
+* ``docs`` - Build documentation
+* ``clean`` - Clean up coverage files
+
+Contributing
+~~~~~~~~~~~~
+
+Pull requests are welcome! Please make sure to:
+
+1. Run tests with ``tox`` to ensure compatibility across Python versions
+2. Follow the existing code style (enforced by the static analysis tools)
+3. Add tests for any new functionality
+
 Authors & License
 --------------------------
 
@@ -823,10 +971,10 @@ This package is released under an open source Apache 2.0 license. Simple-Salesfo
 
 Authentication mechanisms were adapted from Dave Wingate's `RestForce`_ and licensed under a MIT license
 
-The latest build status can be found at `Travis CI`_
+The latest build status can be found at `GitHub Actions`_
 
 .. _Nick Catalano: https://github.com/nickcatal
 .. _community contributors: https://github.com/simple-salesforce/simple-salesforce/graphs/contributors
 .. _RestForce: http://pypi.python.org/pypi/RestForce/
 .. _GitHub Repo: https://github.com/simple-salesforce/simple-salesforce
-.. _Travis CI: https://travis-ci.com/simple-salesforce/simple-salesforce
+.. _GitHub Actions: https://github.com/simple-salesforce/simple-salesforce/actions

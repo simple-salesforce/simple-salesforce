@@ -384,7 +384,7 @@ class SfdcMetadataApi:
             }
         mt_request = CHECK_DEPLOY_STATUS_MSG.format(**attributes)
         headers = {
-            'Content-type': 'text/xml', 'SOAPAction': 'checkDeployStatus'
+            'Content-Type': 'text/xml', 'SOAPAction': 'checkDeployStatus'
             }
 
         res = call_salesforce(
@@ -540,7 +540,7 @@ class SfdcMetadataApi:
             }
         request = RETRIEVE_MSG.format(**attributes)
         # Submit request
-        headers = {'Content-type': 'text/xml', 'SOAPAction': 'retrieve'}
+        headers = {'Content-Type': 'text/xml', 'SOAPAction': 'retrieve'}
 
         res = call_salesforce(
             url=self.metadata_url + 'deployRequest/' + async_process_id,
@@ -578,7 +578,7 @@ class SfdcMetadataApi:
             }
         mt_request = CHECK_RETRIEVE_STATUS_MSG.format(**attributes)
         headers = {
-            'Content-type': 'text/xml', 'SOAPAction': 'checkRetrieveStatus'
+            'Content-Type': 'text/xml', 'SOAPAction': 'checkRetrieveStatus'
             }
         res = call_salesforce(
             url=self.metadata_url + 'deployRequest/' + async_process_id,
