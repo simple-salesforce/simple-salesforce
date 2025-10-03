@@ -299,5 +299,5 @@ class TestSalesforceLogin(unittest.TestCase):
             'instance_url': 'https://myorg.my.salesforce.com:8443/'
             }
         self._test_login_success(
-            re.compile(r'^https://myorg.my.salesforce.com:8443/.*$'), login_args,
+            re.compile(r'^https://myorg\.my\.salesforce\.com:8443/.*$'), login_args,
             response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
