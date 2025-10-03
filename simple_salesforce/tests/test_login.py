@@ -271,3 +271,33 @@ class TestSalesforceLogin(unittest.TestCase):
         self._test_login_success(
             re.compile(rf'^{tests.INSTANCE_URL}/.*$'), login_args,
             response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
+
+    @responses.activate
+    def test_token_login_success_with_instance_url(self):
+        """Test a successful JWT Token login with instance_url as full URL"""
+        pkey_path = Path(__file__).parent / 'sample-key.pem'
+        key = pkey_path.read_bytes().decode()
+
+        login_args = {
+            'consumer_key': '12345.abcde',
+            'privatekey': key,
+            'instance_url': 'https://login.salesforce.com/'
+            }
+        self._test_login_success(
+            re.compile(r'^https://login.salesforce.com/.*$'), login_args,
+            response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
+
+    @responses.activate
+    def test_token_login_success_with_instance_url_and_port(self):
+        """Test a successful JWT Token login with instance_url containing port"""
+        pkey_path = Path(__file__).parent / 'sample-key.pem'
+        key = pkey_path.read_bytes().decode()
+
+        login_args = {
+            'consumer_key': '12345.abcde',
+            'privatekey': key,
+            'instance_url': 'https://myorg.my.salesforce.com:8443/'
+            }
+        self._test_login_success(
+            re.compile(r'^https://myorg.my.salesforce.com:8443/.*$'), login_args,
+            response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
