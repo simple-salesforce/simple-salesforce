@@ -76,7 +76,7 @@ class TestSalesforceLogin(unittest.TestCase):
             'domain': 'testdomain.my'
             }
         self._test_login_success(
-            re.compile(r'^https://testdomain.my.salesforce.com/.*$'),
+            re.compile(r'^https://testdomain\.my\.salesforce\.com/.*$'),
             login_args)
 
     @responses.activate
@@ -140,7 +140,7 @@ class TestSalesforceLogin(unittest.TestCase):
             'privatekey_file': str(pkey_path)
             }
         self._test_login_success(
-            re.compile(r'^https://login.salesforce.com/.*$'), login_args,
+            re.compile(r'^https://login\.salesforce\.com/.*$'), login_args,
             response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
 
     @responses.activate
@@ -154,7 +154,7 @@ class TestSalesforceLogin(unittest.TestCase):
             'privatekey': key
             }
         self._test_login_success(
-            re.compile(r'^https://login.salesforce.com/.*$'), login_args,
+            re.compile(r'^https://login\.salesforce\.com/.*$'), login_args,
             response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
 
     @responses.activate
@@ -168,7 +168,7 @@ class TestSalesforceLogin(unittest.TestCase):
             'privatekey': key_bytes
             }
         self._test_login_success(
-            re.compile(r'^https://login.salesforce.com/.*$'), login_args,
+            re.compile(r'^https://login\.salesforce\.com/.*$'), login_args,
             response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
 
     def test_token_login_failure(self):
@@ -237,7 +237,7 @@ class TestSalesforceLogin(unittest.TestCase):
             'consumer_secret': '12345.abcde'
             }
         self._test_login_success(
-            re.compile(r'^https://login.salesforce.com/.*$'), login_args,
+            re.compile(r'^https://login\.salesforce\.com/.*$'), login_args,
             response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
 
     def test_connected_app_login_failure(self):
@@ -284,7 +284,7 @@ class TestSalesforceLogin(unittest.TestCase):
             'instance_url': 'https://login.salesforce.com/'
             }
         self._test_login_success(
-            re.compile(r'^https://login.salesforce.com/.*$'), login_args,
+            re.compile(r'^https://login\.salesforce\.com/.*$'), login_args,
             response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
 
     @responses.activate
