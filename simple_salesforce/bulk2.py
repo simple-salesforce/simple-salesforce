@@ -1260,7 +1260,7 @@ class SFBulk2Type:
         Arguments:
         * query -- SOQL query
         * max_records -- max records to retrieve per batch, default 50000
-        * include_deleted -- when True retrieves archived or deleted records in results, default False
+        * include_deleted -- when True, retrieves archived or deleted records in results, default False
 
         Returns:
         * locator  -- the locator for the next set of results
