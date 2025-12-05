@@ -1,6 +1,7 @@
 """Tests for login.py"""
 
 import http.client as http
+import json
 import re
 import unittest
 import warnings
@@ -171,14 +172,30 @@ class TestSalesforceLogin(unittest.TestCase):
             re.compile(r'^https://login.salesforce.com/.*$'), login_args,
             response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
 
+    @responses.activate
+    def test_token_login_success_with_full_instance_url(self):
+        """Test a successful JWT Token login with a full instance_url"""
+        pkey_path = Path(__file__).parent / 'sample-key.pem'
+        key_bytes = pkey_path.read_bytes()
+
+        login_args = {
+            'consumer_key': '12345.abcde',
+            'privatekey': key_bytes,
+            'instance_url': 'https://login.salesforce.com/'
+            }
+        self._test_login_success(
+            re.compile(r'^https://login.salesforce.com/.*$'), login_args,
+            response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
+
     def test_token_login_failure(self):
         """Test a failed JWT Token login"""
         return_mock = Mock()
         return_mock.status_code = 400
         # pylint: disable=line-too-long
-        return_mock.content = '{"error": "invalid_client_id", ' \
-                              '"error_description": "client identifier ' \
-                              'invalid"}'
+        return_mock.json.return_value = {
+            'error': 'invalid_client_id',
+            'error_description': 'client identifier invalid'
+        }
         self.mockrequest.post.return_value = return_mock
 
         with self.assertRaises(SalesforceAuthenticationFailed):
@@ -195,10 +212,12 @@ class TestSalesforceLogin(unittest.TestCase):
         responses.add(
             responses.POST,
             re.compile(r'^https://login.*$'),
-            # pylint: disable=line-too-long
-            body='{"error": "invalid_grant", "error_description": "user '
-                 'hasn\'t approved this consumer"}',
-            status=400
+            body=json.dumps({
+                'error': 'invalid_grant',
+                'error_description': "user hasn't approved this consumer"
+            }),
+            status=400,
+            content_type='application/json'
             )
         session_state = {
             'used': False,
@@ -213,6 +232,7 @@ class TestSalesforceLogin(unittest.TestCase):
             'response': on_response,
             }
         with warnings.catch_warnings(record=True) as warning:
+            warnings.simplefilter("always")
             with self.assertRaises(SalesforceAuthenticationFailed):
                 # pylint: disable=unused-variable
                 session_id, instance = SalesforceLogin(
@@ -244,10 +264,10 @@ class TestSalesforceLogin(unittest.TestCase):
         """Test a failed connected app login"""
         return_mock = Mock()
         return_mock.status_code = 400
-        # pylint: disable=line-too-long
-        return_mock.content = '{"error": "invalid_client_id", ' \
-                              '"error_description": "client identifier ' \
-                              'invalid"}'
+        return_mock.json.return_value = {
+            'error': 'invalid_client_id',
+            'error_description': 'client identifier invalid'
+        }
         self.mockrequest.post.return_value = return_mock
 
         with self.assertRaises(SalesforceAuthenticationFailed):
