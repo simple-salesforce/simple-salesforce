@@ -212,8 +212,16 @@ def SalesforceLogin(
             'assertion': assertion
             }
 
+        if instance_url is not None and (
+                instance_url.startswith('http://') or
+                instance_url.startswith('https://')):
+            token_url = f'{instance_url.rstrip("/")}/services/oauth2/token'
+        else:
+            token_url = (f'https://{token_domain}.salesforce.com/'
+                         f'services/oauth2/token')
+
         return token_login(
-            f'https://{token_domain}.salesforce.com/services/oauth2/token',
+            token_url,
             token_data, domain, consumer_key,
             None, proxies, session)
     elif consumer_key is not None and consumer_secret is not None and \
