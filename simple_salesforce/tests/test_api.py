@@ -494,7 +494,111 @@ class TestSFType(unittest.TestCase):
         result = sf_type.get(record_id='444')
         self.assertIsInstance(result['currency'], decimal.Decimal)
         self.assertEqual(result, {"currency": decimal.Decimal("42.0")})
+        
+    @responses.activate
+    def test_listview_get_listviews(self):
+        """Ensure custom headers are used for get requests"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/Case/listviews$'),
+            body='{"done": "true", "listviews": [], "size": 0}',
+            status=http.OK
+        )
 
+        sf_type = SFType(
+            object_name='Case',
+            session_id='5',
+            sf_instance='my.salesforce.com',
+            session=requests.Session(),
+            parse_float=decimal.Decimal
+        )
+        result = sf_type.listviews()
+        
+        self.assertEqual(result, {"done": "true", "listviews": [], "size": 0})
+        
+    @responses.activate
+    def test_listview_get_listview_results(self):
+        """Ensure custom headers are used for get requests"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/Case/listviews/someid/results$'),
+            body='{"done": "true", "columns": [], "id": "someid"}',
+            status=http.OK
+        )
+
+        sf_type = SFType(
+            object_name='Case',
+            session_id='5',
+            sf_instance='my.salesforce.com',
+            session=requests.Session(),
+            parse_float=decimal.Decimal
+        )
+        result = sf_type.listview_results(listview_id='someid')
+        
+        self.assertEqual(result, {"done": "true", "columns": [], "id": "someid"})
+        
+    @responses.activate
+    def test_listview_get_listview_results(self):
+        """Ensure custom headers are used for get requests"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/Case/listviews/someid/results$'),
+            body='{"done": "true", "columns": [], "id": "someid"}',
+            status=http.OK
+        )
+
+        sf_type = SFType(
+            object_name='Case',
+            session_id='5',
+            sf_instance='my.salesforce.com',
+            session=requests.Session(),
+            parse_float=decimal.Decimal
+        )
+        result = sf_type.listview_results(listview_id='someid')
+        
+        self.assertEqual(result, {"done": "true", "columns": [], "id": "someid"})
+
+    @responses.activate
+    def test_listview_get_listview_describe(self):
+        """Ensure custom headers are used for get requests"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/Case/listviews/someid/describe$'),
+            body='{"scope": "everything", "columns": [], "id": "someid"}',
+            status=http.OK
+        )
+
+        sf_type = SFType(
+            object_name='Case',
+            session_id='5',
+            sf_instance='my.salesforce.com',
+            session=requests.Session(),
+            parse_float=decimal.Decimal
+        )
+        result = sf_type.listview_describe(listview_id='someid')
+        
+        self.assertEqual(result, {"scope": "everything", "columns": [], "id": "someid"})
+        
+    @responses.activate
+    def test_listview_get_listview_basicinfo(self):
+        """Ensure custom headers are used for get requests"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/Case/listviews/someid$'),
+            body='{"url": "", "id": "someid"}',
+            status=http.OK
+        )
+
+        sf_type = SFType(
+            object_name='Case',
+            session_id='5',
+            sf_instance='my.salesforce.com',
+            session=requests.Session(),
+            parse_float=decimal.Decimal
+        )
+        result = sf_type.listview_basicinfo(listview_id='someid')
+        
+        self.assertEqual(result, {"url": "","id": "someid"})
 
 class TestSalesforce(unittest.TestCase):
     """Tests for the Salesforce instance"""
