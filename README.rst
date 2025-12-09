@@ -177,6 +177,36 @@ Make sure to have all the required fields for any entry. The `Salesforce API`_ h
 .. _Salesforce HTTP Status Code: http://www.salesforce.com/us/developer/docs/api_rest/Content/errorcodes.htm
 .. _Salesforce API: https://www.salesforce.com/developer/docs/api/
 
+Record Management - Listviews
+--------------------------
+
+
+To view available listviews for a given salesforce object use  
+
+.. code-block:: python
+
+    sf.Contact.listviews({'LastName':'Smith','Email':'example@example.com'})
+
+This will return a dictionary such as ``{'done': 'true', 'listviews':[{'id': 'someid', 'url': 'etc'}], 'success': True}``
+
+To get some information for a given listview, you can get basic info using `listview_basicinfo` and for more detailed info use `listview_detailed`:
+.. code-block:: python
+
+    contact = sf.Contact.listview_basicinfo('003e0000003GuNXAA0')
+
+    and 
+
+    contact = sf.Contact.listview_detailed('003e0000003GuNXAA0')
+
+To get the records for a given listview, use `listview_results`:
+
+.. code-block:: python
+
+    contact = sf.Contact.listview_results('003e0000003GuNXAA0')
+
+This will return a dictionary such as `` { 'results': '[]', 'records': [] , 'id', 'someid', 'size': 10}``. parse through the dictionary to get the records and columns.
+
+
 Queries
 --------------------------
 
