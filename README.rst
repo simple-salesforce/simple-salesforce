@@ -198,14 +198,25 @@ To get some information for a given listview, you can get basic info using `list
 
     contact = sf.Contact.listview_detailed('003e0000003GuNXAA0')
 
-To get the records for a given listview, use `listview_results`:
+To get the records, sans listview metadata, use the convenience `listview_results_standard` method:
+.. code-block:: python
+
+    contact_listview_records = sf.Contact.listview_results_standard('003e0000003GuNXAA0')
+
+To get the full results for a given listview, including the listview metadata, use `listview_results`:
 
 .. code-block:: python
 
-    contact = sf.Contact.listview_results('003e0000003GuNXAA0')
+    contact_listview_results = sf.Contact.listview_results('003e0000003GuNXAA0')
 
-This will return a dictionary such as `` { 'results': '[]', 'records': [] , 'id', 'someid', 'size': 10}``. parse through the dictionary to get the records and columns.
+This will return a dictionary such as `` { 'results': '[]', 'records': [] , 'id', 'someid', 'size': 10}``. parse through the dictionary to get the rows and columns.
+A standard parsing approach, used in the convenience `listview_results_standard` method is below. This parses through the nested records and 
+gives you the rows closer to tabular format. 
 
+.. code-block:: python
+
+    r = list(map(lambda x: x["columns"], contact_listview_results["records"]))
+    records = list(map(lambda x: {e["fieldNameOrPath"]: e["value"] for e in x}, r))   
 
 Queries
 --------------------------

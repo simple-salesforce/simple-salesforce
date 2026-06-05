@@ -1040,6 +1040,39 @@ class SFType:
             **kwargs
             )
         return self.parse_result_to_json(result)
+    
+    def listview_results_standard(
+       self,
+        listview_id: str,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        headers: Optional[Headers] = None,
+        **kwargs: Any
+    ) -> Any:
+        """Return non-nested listview results without listview metadata from the given listview ID and associated Salesforce object.
+        
+        Available in REST API 32.0 and later.
+        
+        Salesforce dev documentation: 
+        https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_listviewresults.htm
+        
+        Arguments:
+        * listview_id -- the listview id to get results from
+        * limit -- total number of records to return in one go, 25 by default if None provided, 2000 max.
+        * offset -- starting record to return data for. Use this param to paginate results. 0 by default if None provided.
+        * headers (Optional[Headers], optional): _description_. Defaults to None.
+        * kwargs -- Additional kwargs to pass to `requests.request` 
+        """
+        results = self.listview_results(
+            listview_id=listview_id,
+            limit=limit,
+            offset=offset,
+            headers=headers,
+            **kwargs
+        )
+        results = list(map(lambda x: x["columns"], results["records"]))
+        results = list(map(lambda x: {e["fieldNameOrPath"]: e["value"] for e in x}, results))
+        return results
 
     def listview_results(
         self,
@@ -1049,7 +1082,8 @@ class SFType:
         headers: Optional[Headers] = None,
         **kwargs: Any
     ) -> Any:
-        """Return results from the given listview ID and associated Salesforce object.
+        """Return full detailed listview construct, metadata and results from the given listview ID and associated Salesforce object. 
+        These results require further processing to get to the data. Use :py:meth:`listview_results_standard` to get results in a standard format.
         
         Available in REST API 32.0 and later.
         
