@@ -937,6 +937,16 @@ Generate Pandas Dataframe from SFDC Bulk API Query (ex.bulk.Account.query)
     sf.bulk.Account.query("SELECT Id, Email FROM Contact")
     df = pd.DataFrame.from_dict(data,orient='columns').drop('attributes',axis=1)
 
+Generate Pandas Dataframe from Listview 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    import pandas as pd
+    listview_id = '<your_listview_id_here>'
+    contact_listview_records = sf.Contact.listview_results_standard(listview_id)
+    df = pd.DataFrame(contact_listview_records)
+
 
 YouTube Tutorial
 --------------------------
