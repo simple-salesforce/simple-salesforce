@@ -1295,3 +1295,44 @@ class TestSalesforce(unittest.TestCase):
         self.assertNotIsInstance(result, OrderedDict)
         self.assertIsInstance(result, dict)
         self.assertEqual(result, {"currency": 1.0})
+
+    """Tests for the Salesforce CLI authentication integration in api.py"""
+
+    # We patch 'simple_salesforce.api.get_cli_session' because api.py imports it.
+    # We are testing that api.py calls the helper correctly.
+    
+    @patch('simple_salesforce.api.get_cli_session')
+    def test_cli_auth_default(self, mock_get_session):
+        """Test authentication using the default CLI org (no alias provided)"""
+        
+        # 1. SETUP: Tell the helper what to return (Token, URL)
+        mock_get_session.return_value = ('FAKE_DEFAULT_TOKEN', 'https://default.salesforce.com')
+
+        # 2. RUN: Initialize Salesforce with use_cli=True
+        sf = Salesforce(use_cli=True)
+
+        # 3. VERIFY: 
+        # Did api.py correctly assign the values from the helper?
+        self.assertEqual(sf.session_id, 'FAKE_DEFAULT_TOKEN')
+        self.assertEqual(sf.sf_instance, 'default.salesforce.com')
+        self.assertEqual(sf.auth_type, 'direct') # It should behave like a direct login
+        
+        # Did api.py call the helper with None (since no target_org was passed)?
+        mock_get_session.assert_called_once_with(None)
+
+    @patch('simple_salesforce.api.get_cli_session')
+    def test_cli_auth_with_alias(self, mock_get_session):
+        """Test authentication using a specific target_org alias"""
+        
+        # 1. SETUP
+        mock_get_session.return_value = ('FAKE_ALIAS_TOKEN', 'https://alias.salesforce.com')
+
+        # 2. RUN: Initialize with an alias
+        sf = Salesforce(use_cli=True, target_org='UAT_Sandbox')
+
+        # 3. VERIFY
+        self.assertEqual(sf.session_id, 'FAKE_ALIAS_TOKEN')
+        self.assertEqual(sf.sf_instance, 'alias.salesforce.com')
+        
+        # Did api.py pass the alias string to the helper?
+        mock_get_session.assert_called_once_with('UAT_Sandbox')

@@ -41,6 +41,20 @@ If you have the full URL of your instance (perhaps including the scheme, as is i
     from simple_salesforce import Salesforce
     sf = Salesforce(instance_url='https://na1.salesforce.com', session_id='')
 
+**Salesforce CLI Authentication**
+
+You can authenticate using the Salesforce CLI (sf or sfdx) if you have already logged in via your terminal. This is useful for local development and scripts running in environments with the CLI installed.
+
+.. code-block:: python
+
+    from simple_salesforce import Salesforce
+
+    # Login using the default CLI org
+    sf = Salesforce(use_cli=True)
+
+    # Login using a specific org alias
+    sf = Salesforce(use_cli=True, target_org='MySandboxAlias')
+    
 There are also four means of authentication, one that uses username, password and security token; one that uses IP filtering, username, password and organizationId, one that uses a private key to sign a JWT, and one for connected apps that uses username, password, consumer key, and consumer secret;
 
 To login using the security token method, simply include the Salesforce method and pass in your Salesforce username, password and token (this is usually provided when you change your password or go to profile -> settings -> Reset My Security Token):

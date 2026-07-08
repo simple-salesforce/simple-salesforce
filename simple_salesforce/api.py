@@ -22,7 +22,7 @@ from .exceptions import SalesforceGeneralError
 from .login import SalesforceLogin
 from .metadata import SfdcMetadataApi
 from .util import Headers, PerAppUsage, Proxies, Usage, date_to_iso8601, \
-    exception_handler
+    exception_handler, get_cli_session
 
 # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
@@ -59,6 +59,8 @@ class Salesforce:
             parse_float: Optional[Callable[[str], Any]] = None,
             object_pairs_hook: Optional[Callable[[List[Tuple[Any, Any]]], Any]]
             = OrderedDict,
+            use_cli: bool = False,
+            target_org: Optional[str] = None,
             ):
 
         """Initialize the instance with the given parameters.
@@ -97,6 +99,13 @@ class Salesforce:
         * instance_url -- Full URL of your instance i.e.
           `https://na1.salesforce.com
 
+        Salesforce CLI Authentication:
+        * use_cli -- If set to True, attempts to retrieve session details
+                     from the Salesforce CLI (sf or sfdx).
+        * target_org -- (Optional) The alias or username of the org to use
+                        when use_cli is True. If not provided, uses the
+                        CLI's default org.
+
         Universal Kwargs:
         * version -- the version of the Salesforce API to use, for example
                      `29.0`
@@ -130,6 +139,11 @@ class Salesforce:
                     'ignoring proxies: %s',
                     proxies
                     )
+
+        # If CLI is requested, fetch the Session ID and URL immediately.
+        # so the existing logic below (auth_type = "direct") processes them as if they were passed in explicitly.
+        if use_cli:
+            session_id, instance_url = get_cli_session(target_org)
 
         # Determine if the user wants to use our username/password auth or pass
         # in their own information
