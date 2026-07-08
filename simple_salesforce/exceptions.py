@@ -1,5 +1,5 @@
 """All exceptions for Simple Salesforce"""
-from typing import Union
+from typing import Optional, Union
 
 
 class SalesforceError(Exception):
@@ -107,18 +107,19 @@ class SalesforceAuthenticationFailed(SalesforceError):
 
     message = 'Authentication failed. Response content: {content}'
 
-    def __init__(self, code: Union[str, int, None], auth_message: str) -> None:
+    def __init__(self, code: Union[str, int, None],
+                 auth_message: Optional[str]) -> None:
         """Initialize SalesforceAuthenticationFailed exception.
 
         Args:
             code: Error code from Salesforce (can be string, int, or None)
-            auth_message: Authentication failure message
-
-        Raises:
-            TypeError: If auth_message is not a string
+            auth_message: Authentication failure message. Salesforce error
+                responses may omit ``error_description``, so a non-string
+                (e.g. None) is coerced rather than rejected — raising
+                TypeError here would mask the authentication failure.
         """
         if not isinstance(auth_message, str):
-            raise TypeError("auth_message must be a string")
+            auth_message = '' if auth_message is None else str(auth_message)
 
         # Provide minimal context expected by SalesforceError.__init__
         url = 'authentication_endpoint'

@@ -1,3 +1,22 @@
+v1.12.10
+========
+Features
+--------
+
+- [#825] Add Python 3.14 support
+
+Bug fixes
+---------
+
+- [#825] Fix SalesforceAuthenticationFailed raising TypeError when the
+  Salesforce error response has no error_description
+
+Other
+-----
+
+- [#824] Publish to PyPI via GitHub Actions trusted publishing
+- [#825] Fix CI so the tox test envs actually run the test suite
+
 v1.12.9
 =======
 Bug fixes
