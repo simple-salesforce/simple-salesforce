@@ -10,3 +10,20 @@ from .exceptions import (SalesforceAuthenticationFailed, SalesforceError,
                          SalesforceResourceNotFound)
 from .login import SalesforceLogin
 from .format import format_soql, format_external_id
+
+__all__ = [
+    "Salesforce",
+    "SFType",
+    "SFBulkHandler",
+    "SalesforceAuthenticationFailed",
+    "SalesforceError",
+    "SalesforceExpiredSession",
+    "SalesforceGeneralError",
+    "SalesforceMalformedRequest",
+    "SalesforceMoreThanOneRecord",
+    "SalesforceRefusedRequest",
+    "SalesforceResourceNotFound",
+    "SalesforceLogin",
+    "format_soql",
+    "format_external_id",
+]
