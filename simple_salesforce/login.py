@@ -3,7 +3,7 @@
 Heavily Modified from RestForce 1.0.0
 """
 from typing import Any, Dict, Optional, Tuple, Union, cast
-import base64
+import base64,logging
 
 DEFAULT_CLIENT_ID_PREFIX = 'simple-salesforce'
 
@@ -21,6 +21,8 @@ from .api import DEFAULT_API_VERSION
 from .exceptions import SalesforceAuthenticationFailed
 from .util import Headers, Proxies, getUniqueElementValueFromXmlString
 
+logging.basicConfig
+logger = logging.getLogger(__name__)
 
 # pylint: disable=invalid-name,too-many-arguments,too-many-locals,too-many-branches
 def SalesforceLogin(
@@ -119,7 +121,7 @@ def SalesforceLogin(
     elif username is not None and \
             password is not None and \
             consumer_key is not None and \
-            consumer_secret is not None:
+            consumer_secret is not None and instance_url is None:
         token_data = {
             'grant_type': 'password',
             'client_id': consumer_key,
@@ -216,6 +218,19 @@ def SalesforceLogin(
             f'https://{token_domain}.salesforce.com/services/oauth2/token',
             token_data, domain, consumer_key,
             None, proxies, session)
+    elif instance_url is not None and \
+            consumer_key is not None and \
+            consumer_secret is not None:
+        token_data = {'grant_type': 'client_credentials',
+                      'client_id': consumer_key,
+                      'client_secret': consumer_secret}
+        headers = {'content-type': 'application/x-www-form-urlencoded'}
+        
+        return token_login(
+            f'{instance_url}/services/oauth2/token',
+            token_data, instance_url, consumer_key,
+            headers, proxies, session)
+
     elif consumer_key is not None and consumer_secret is not None and \
             domain is not None and domain not in ('login', 'test'):
         token_data = {'grant_type': 'client_credentials'}
@@ -229,6 +244,16 @@ def SalesforceLogin(
             token_data, domain, consumer_key,
             headers, proxies, session)
     else:
+
+        logger.debug('token data: %s',
+                    {'grant_type': 'client_credentials',
+                      'client_id': consumer_key,
+                      'client_secret': consumer_secret,
+                      'username': username,
+                      'password': password,
+                      'instance_url': instance_url,
+                        'domain': domain})
+        
         except_code = 'INVALID AUTH'
         except_msg = (
             'You must submit either a security token or organizationId for '
