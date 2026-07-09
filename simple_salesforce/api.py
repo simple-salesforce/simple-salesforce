@@ -59,6 +59,7 @@ class Salesforce:
             parse_float: Optional[Callable[[str], Any]] = None,
             object_pairs_hook: Optional[Callable[[List[Tuple[Any, Any]]], Any]]
             = OrderedDict,
+            login_tld: Optional[str] = 'salesforce.com'
             ):
 
         """Initialize the instance with the given parameters.
@@ -103,11 +104,13 @@ class Salesforce:
         * proxies -- the optional map of scheme to proxy server
         * session -- Custom requests session, created in calling code. This
                      enables the use of requests Session features not otherwise
-                     exposed by simple_salesforce.
+                     exposed by py_salesforce.
         * parse_float -- Function to parse float values with. Is passed along to
                          https://docs.python.org/3/library/json.html#json.load
         * object_pairs_hook -- Function to parse ordered list of pairs in json.
                                To use python 'dict' change it to None or dict.
+        * login_tld -- The top-level domain for Salesforce URLs
+                    (default 'salesforce.com', use 'sfcrmproducts.cn' for Salesforce on Alibaba Cloud).
         """
 
         if domain is None:
@@ -148,7 +151,8 @@ class Salesforce:
                 sf_version=self.sf_version,
                 proxies=self.proxies,
                 client_id=client_id,
-                domain=self.domain
+                domain=self.domain,
+                login_tld=login_tld
                 )
             self._refresh_session()
 
@@ -192,7 +196,8 @@ class Salesforce:
                 sf_version=self.sf_version,
                 proxies=self.proxies,
                 client_id=client_id,
-                domain=self.domain
+                domain=self.domain,
+                login_tld=login_tld
                 )
             self._refresh_session()
 
@@ -210,7 +215,8 @@ class Salesforce:
                 consumer_key=consumer_key,
                 consumer_secret=consumer_secret,
                 proxies=self.proxies,
-                domain=self.domain
+                domain=self.domain,
+                login_tld=login_tld
                 )
             self._refresh_session()
 
@@ -229,7 +235,8 @@ class Salesforce:
                 privatekey_file=privatekey_file,
                 privatekey=privatekey,
                 proxies=self.proxies,
-                domain=self.domain
+                domain=self.domain,
+                login_tld=login_tld
                 )
             self._refresh_session()
         elif all(arg is not None for arg in (
@@ -243,7 +250,8 @@ class Salesforce:
                 consumer_key=consumer_key,
                 consumer_secret=consumer_secret,
                 proxies=self.proxies,
-                domain=self.domain
+                domain=self.domain,
+                login_tld=login_tld
                 )
             self._refresh_session()
         else:
