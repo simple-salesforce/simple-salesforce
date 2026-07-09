@@ -717,6 +717,17 @@ Download records(low memory usage):
     )
 
 
+Download records in parallel (faster for large datasets):
+
+.. code-block:: python
+
+    query = 'SELECT Id, Name FROM Account'
+
+    sf.bulk2.Account.download_parallel(
+        query, path="results/", max_workers=4
+    )
+
+
 Delete records (soft deletion):
 
 .. code-block:: text

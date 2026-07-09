@@ -649,6 +649,63 @@ class _Bulk2Client:
             "records": self.filter_null_bytes(result.content.decode('utf-8')),
             }
 
+    def get_query_result_locators(
+            self,
+            job_id: str
+            ) -> List[str]:
+        """Get result locators for a query job"""
+        url = self._construct_request_url(job_id,
+                                          True
+                                          ) + "/resultPages"
+        headers = self._get_headers(
+            self.JSON_CONTENT_TYPE,
+            self.JSON_CONTENT_TYPE
+            )
+
+        locators = []
+        done = False
+        while not done:
+            result = call_salesforce(
+                url=url,
+                method="GET",
+                session=self.session,
+                headers=headers,
+                )
+            data = result.json()
+            
+            # Validate response structure
+            if "resultPages" not in data:
+                raise SalesforceBulkV2ExtractError(
+                    f"Invalid response: missing 'resultPages' field"
+                    )
+            
+            for page in data.get("resultPages", []):
+                # Extract locator from resultUrl
+                # resultUrl format: .../results?locator=LOCATOR
+                result_url = page.get("resultUrl")
+                if result_url:
+                    match = re.search(r"locator=([^&]+)", result_url)
+                    if match:
+                        locators.append(match.group(1))
+                    else:
+                        raise SalesforceBulkV2ExtractError(
+                            f"Invalid resultUrl format: {result_url}"
+                            )
+            
+            done = data.get("done", True)
+            if not done:
+                next_records_url = data.get("nextRecordsUrl")
+                if next_records_url:
+                    # Parse the base URL from bulk2_url and join with relative path
+                    from urllib.parse import urljoin, urlparse
+                    parsed = urlparse(self.bulk2_url)
+                    base_url = f"{parsed.scheme}://{parsed.netloc}"
+                    url = urljoin(base_url, next_records_url)
+                else:
+                    done = True
+
+        return locators
+
     def download_job_data(
             self,
             path: str,
@@ -1293,6 +1350,59 @@ class SFBulk2Type:
                 )
             locator = result["locator"]
             results.append(result)
+        return results
+
+    def download_parallel(
+            self,
+            query: str,
+            path: str,
+            max_records: int = DEFAULT_QUERY_PAGE_SIZE,
+            column_delimiter: ColumnDelimiter = ColumnDelimiter.COMMA,
+            line_ending: LineEnding = LineEnding.LF,
+            wait: int = 5,
+            chunk_size: int = 1024,
+            max_workers: Optional[int] = None
+            ) -> List[QueryResult]:
+        """bulk 2.0 query parallel download to file
+
+        Arguments:
+        * query -- SOQL query
+        * path -- destination directory
+        * max_records -- max records to retrieve per batch, default 50000
+        * max_workers -- max parallel downloads, default None (auto)
+
+        Returns:
+        * List of QueryResult objects
+        """
+        if not os.path.exists(path):
+            raise SalesforceBulkV2LoadError(f"Path does not exist: {path}")
+
+        res = self._client.create_job(
+            Operation.query,
+            query,
+            column_delimiter,
+            line_ending
+            )
+        job_id = res["id"]
+        self._client.wait_for_job(job_id,
+                                  True,
+                                  wait
+                                  )
+
+        locators = self._client.get_query_result_locators(job_id)
+        results = []
+
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            download_worker = partial(
+                self._client.download_job_data,
+                path,
+                job_id,
+                max_records=max_records,
+                chunk_size=chunk_size
+                )
+            _results = pool.map(download_worker, locators)
+            results.extend(list(_results))
+
         return results
 
     def _retrieve_ingest_records(
