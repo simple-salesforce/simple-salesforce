@@ -954,6 +954,9 @@ class SFType:
         self.base_url = (
             f'https://{sf_instance}/services/data/v{sf_version}/sobjects'
             f'/{object_name}/')
+        self.listviews_url = self.base_url + 'listviews'
+        self.listview_url = self.listviews_url + '/' # to be used with a listview id
+        
 
     @property
     def session_id(self) -> str:
@@ -1015,7 +1018,180 @@ class SFType:
             headers=headers
             )
         return self.parse_result_to_json(result)
+    
+    def listviews(self, 
+                  headers: Optional[Headers] = None,
+                  **kwargs: Any
+                  ) -> Any: 
+        """Returns any listviews associated with the object.
+        
+        Returns the result of a GET to `.../{object_name}/listviews`. Available in REST API 32.0 and later.
+        Salesforce dev documentation:
+        https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_listviews.htm
+        
+        Arguments:
+        * headers (Optional[Headers], optional): _description_. Defaults to None.
+        
+        """
+        result = self._call_salesforce(
+            method='GET',
+            url=self.listviews_url,
+            headers=headers,
+            **kwargs
+            )
+        return self.parse_result_to_json(result)
+    
+    def listview_results_standard(
+       self,
+        listview_id: str,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        headers: Optional[Headers] = None,
+        **kwargs: Any
+    ) -> Any:
+        """Return non-nested listview results without listview metadata from the given listview ID and associated Salesforce object.
+        
+        Available in REST API 32.0 and later.
+        
+        Salesforce dev documentation: 
+        https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_listviewresults.htm
+        
+        Arguments:
+        * listview_id -- the listview id to get results from
+        * limit -- total number of records to return in one go, 25 by default if None provided, 2000 max.
+        * offset -- starting record to return data for. Use this param to paginate results. 0 by default if None provided.
+        * headers (Optional[Headers], optional): _description_. Defaults to None.
+        * kwargs -- Additional kwargs to pass to `requests.request` 
+        """
+        results = self.listview_results(
+            listview_id=listview_id,
+            limit=limit,
+            offset=offset,
+            headers=headers,
+            **kwargs
+        )
+        results = list(map(lambda x: x["columns"], results["records"]))
+        results = list(map(lambda x: {e["fieldNameOrPath"]: e["value"] for e in x}, results))
+        return results
 
+    def listview_results(
+        self,
+        listview_id: str,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        headers: Optional[Headers] = None,
+        **kwargs: Any
+    ) -> Any:
+        """Return full detailed listview construct, metadata and results from the given listview ID and associated Salesforce object. 
+        These results require further processing to get to the data. Use :py:meth:`listview_results_standard` to get results in a standard format.
+        
+        Available in REST API 32.0 and later.
+        
+        Salesforce dev documentation: 
+        https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_listviewresults.htm
+        
+        Arguments:
+        * listview_id -- the listview id to get results from
+        * limit -- total number of records to return in one go, 25 by default if None provided, 2000 max.
+        * offset -- starting record to return data for. Use this param to paginate results. 0 by default if None provided.
+        * headers (Optional[Headers], optional): _description_. Defaults to None.
+        * kwargs -- Additional kwargs to pass to `requests.request` 
+        """
+        # If data is None, we should send an empty body, not "null", which is
+        # None in json.
+        params = []
+        if limit is not None:
+            params.append(f'limit={limit}')
+            
+        if offset is not None:
+            params.append(f'offset={offset}')
+        param_string = '?' + '&'.join(params) if params else ''
+        url = self.listview_url + f"{listview_id}/results{param_string}"
+
+        result = self._call_salesforce(
+            method='GET',
+            url=url,
+            headers=headers,
+            **kwargs
+            )
+        try:
+            response_content = self.parse_result_to_json(result)
+        # pylint: disable=broad-except
+        except Exception:
+            response_content = result.text
+
+        return response_content
+    
+    def listview_describe(
+        self,
+        listview_id: str,
+        headers: Optional[Headers] = None,
+        **kwargs: Any
+    ) -> Any:
+        """Returns detailed information about a list view, including the ID, the columns, and the SOQL query.
+        
+        Available in REST API 32.0 and later.
+        
+        Salesforce dev documentation: 
+        https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_listviewdescribe.htm
+        
+        Arguments:
+        * listview_id -- the listview id to get results from
+        * headers (Optional[Headers], optional): _description_. Defaults to None.
+        * kwargs -- Additional kwargs to pass to `requests.request` 
+        """
+
+        url = self.listview_url + f"{listview_id}/describe"
+
+        result = self._call_salesforce(
+            method='GET',
+            url=url,
+            headers=headers,
+            **kwargs
+            )
+        try:
+            response_content = self.parse_result_to_json(result)
+        # pylint: disable=broad-except
+        except Exception:
+            response_content = result.text
+
+        return response_content
+    
+    def listview_basicinfo(
+        self,
+        listview_id: str,
+        headers: Optional[Headers] = None,
+        **kwargs: Any
+    ) -> Any:
+        """Returns basic information about a list view, including the label, API name, and ID.
+        
+        Available in REST API 32.0 and later.
+        
+        Salesforce dev documentation: 
+        https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_listview.htm
+        
+        Arguments:
+        * listview_id -- the listview id to get results from
+        * headers (Optional[Headers], optional): _description_. Defaults to None.
+        * kwargs -- Additional kwargs to pass to `requests.request` 
+        """
+
+        url = self.listview_url + f"{listview_id}"
+
+        result = self._call_salesforce(
+            method='GET',
+            url=url,
+            headers=headers,
+            **kwargs
+            )
+        try:
+            response_content = self.parse_result_to_json(result)
+        # pylint: disable=broad-except
+        except Exception:
+            response_content = result.text
+
+        return response_content
+    
     def get(
             self,
             record_id: str,
