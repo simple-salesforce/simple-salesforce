@@ -4,6 +4,7 @@ Heavily Modified from RestForce 1.0.0
 """
 from typing import Any, Dict, Optional, Tuple, Union, cast
 import base64
+from urllib.parse import urlparse
 
 DEFAULT_CLIENT_ID_PREFIX = 'simple-salesforce'
 
@@ -193,7 +194,16 @@ def SalesforceLogin(
     elif username is not None and \
             consumer_key is not None and \
             (privatekey_file is not None or privatekey is not None):
-        token_domain = instance_url if instance_url is not None else domain
+        # Handle instance_url properly - extract hostname if it's a full URL
+        if instance_url is not None:
+            parsed_url = urlparse(instance_url)
+            token_domain = parsed_url.hostname
+            # Handle non-standard ports if present
+            if parsed_url.port is not None and parsed_url.port != 443:
+                token_domain += f':{parsed_url.port}'
+            token_url = f'https://{token_domain}/services/oauth2/token'
+        else:
+            token_url = f'https://{domain}.salesforce.com/services/oauth2/token'
         expiration = datetime.now(timezone.utc) + timedelta(minutes=3)
         payload = {
             'iss': consumer_key,
@@ -213,7 +223,7 @@ def SalesforceLogin(
             }
 
         return token_login(
-            f'https://{token_domain}.salesforce.com/services/oauth2/token',
+            token_url,
             token_data, domain, consumer_key,
             None, proxies, session)
     elif consumer_key is not None and consumer_secret is not None and \
