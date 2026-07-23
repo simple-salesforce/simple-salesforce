@@ -114,7 +114,7 @@ For example:
    # manipulate the session instance (optional)
    sf = Salesforce(
       username='user@example.com', password='password', organizationId='OrgId',
-      session=session)
+      session=session, max_retries=5, backoff_factor=0.5, request_timeout=30.0)
 
 Record Management
 --------------------------

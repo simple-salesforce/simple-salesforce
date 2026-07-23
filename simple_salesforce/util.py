@@ -100,8 +100,18 @@ def call_salesforce(
     Returns a `requests.result` object.
     """
 
+    if 'timeout' not in kwargs:
+        # Option A: if api methods pass self._request_timeout
+        timeout = kwargs.pop('_default_timeout', None)
+        if timeout is not None:
+            kwargs['timeout'] = timeout
+        # Option B: if you attached it to the Session
+        elif hasattr(session, '_default_timeout'):
+            kwargs['timeout'] = session._default_timeout
+
     additional_headers = kwargs.pop('additional_headers', {})
     headers.update(additional_headers or {})
+
     result = session.request(method, url, headers=headers, **kwargs)
 
     if result.status_code >= 300:

@@ -23,8 +23,23 @@ from .login import SalesforceLogin
 from .metadata import SfdcMetadataApi
 from .util import Headers, PerAppUsage, Proxies, Usage, date_to_iso8601, \
     exception_handler
+from requests import Session
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
-# pylint: disable=invalid-name
+def _build_session(max_retries, backoff_factor, status_forcelist):
+    s = Session()
+    retry = Retry(
+        total=max_retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+        allowed_methods=None,  # retry on all (GET/POST/etc)
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    s.mount("https://", adapter)
+    s.mount("http://", adapter)
+    return s
+
 logger = logging.getLogger(__name__)
 
 
@@ -59,6 +74,8 @@ class Salesforce:
             parse_float: Optional[Callable[[str], Any]] = None,
             object_pairs_hook: Optional[Callable[[List[Tuple[Any, Any]]], Any]]
             = OrderedDict,
+            request_timeout=None, max_retries=None,
+            backoff_factor=0.5, status_forcelist=(429, 500, 502, 503, 504)
             ):
 
         """Initialize the instance with the given parameters.
@@ -109,6 +126,13 @@ class Salesforce:
         * object_pairs_hook -- Function to parse ordered list of pairs in json.
                                To use python 'dict' change it to None or dict.
         """
+        if session is None:
+            if max_retries is not None:
+                session = _build_session(max_retries, backoff_factor, status_forcelist)
+            else:
+                session = Session()
+        self.session = session
+        self._request_timeout = request_timeout
 
         if domain is None:
             domain = 'login'
