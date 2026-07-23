@@ -213,6 +213,7 @@ class TestSalesforceLogin(unittest.TestCase):
             'response': on_response,
             }
         with warnings.catch_warnings(record=True) as warning:
+            warnings.simplefilter("always", UserWarning)
             with self.assertRaises(SalesforceAuthenticationFailed):
                 # pylint: disable=unused-variable
                 session_id, instance = SalesforceLogin(
