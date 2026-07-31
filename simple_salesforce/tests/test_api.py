@@ -234,6 +234,28 @@ class TestSFType(unittest.TestCase):
         self.assertEqual(result, {})
 
     @responses.activate
+    def test_get_by_custom_id_with_spaces(self):
+        """Ensure spaces in custom_id are encoded as %20, not +"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/Case/some-field/My%20Job%20Name$'),
+            body='{}',
+            status=http.OK
+            )
+
+        sf_type = _create_sf_type()
+        result = sf_type.get_by_custom_id(
+            custom_id_field='some-field',
+            custom_id='My Job Name'
+            )
+
+        self.assertEqual(result, {})
+        # Verify the URL contains %20, not +
+        request_url = responses.calls[0].request.url
+        self.assertIn('%20', request_url)
+        self.assertNotIn('+', request_url.split('/')[-1])
+
+    @responses.activate
     def test_create_with_additional_request_headers(self):
         """Ensure custom headers are used for create requests"""
         responses.add(
