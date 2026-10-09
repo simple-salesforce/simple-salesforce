@@ -210,7 +210,8 @@ class SfdcMetadataApi:
             instance: str,
             metadata_url: str,
             headers: Headers,
-            api_version: Optional[str]):
+            api_version: Optional[str],
+            metadata_wsdl_path: Optional[str]):
         """ Initialize and check session """
         self.session = session
         self._session_id = session_id
@@ -219,7 +220,12 @@ class SfdcMetadataApi:
         self.headers = headers
         self._api_version = api_version
         self._deploy_zip = None
-        wsdl_path = Path(__file__).parent / 'metadata.wsdl'
+
+        if not metadata_wsdl_path:
+            wsdl_path = Path(__file__).parent / 'metadata.wsdl'
+        else:
+            wsdl_path = Path(metadata_wsdl_path)
+
         self._client = Client(
             wsdl_path.absolute().as_uri(),
             settings=Settings(
