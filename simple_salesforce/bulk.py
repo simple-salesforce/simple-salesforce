@@ -419,7 +419,7 @@ class SFBulkType:
                 record_count, char_count = 0, 0
             char_count += additional_chars
             record_count += 1
-        if last_break < len(data) - 1:
+        if last_break < len(data):
             batches.append(data[last_break:])
 
         return [self._add_batch(job_id=job,
