@@ -65,6 +65,55 @@ class SFBulkHandler:
                           session=self.session
                           )
 
+    def submit_dml(self,
+                   object_name: str,
+                   dml: str,
+                   data: BulkDataAny,
+                   external_id_field: str = None,
+                   batch_size: int = 10000,
+                   use_serial: bool = False,
+                   bypass_results: bool = False,
+                   include_detailed_results: bool = False
+                   ):
+        """ Perform any DML operation on any custom or
+            standard object in Salesforce
+            i.e. insert/upsert/update/delete
+
+            Required to put this function in this class due to error:
+            TypeError: 'SFBulkType' object is not callable
+            - this makes SFBulkType callable for this specific function
+
+            The main purpose of this function is to
+            build customizable reporting functions and reduce code reuse
+            in individual execution scripts mainly with pandas
+
+        Arguments:
+
+        * object_name       -- SF object
+        * dml               -- insert, upsert, update, delete
+        * data              -- JSON formatted salesforce records.
+
+        Data is batched by 10,000 records by default. To pick a lower size
+        pass smaller integer to `batch_size`. to let simple-salesforce pick
+        the appropriate limit dynamically, enter `batch_size='auto'`
+
+        * batch_size        -- default to 10,000
+        * use_serial        -- default: bool = False
+        * bypass_results    -- default: bool = False,
+        * include_detailed_results  --default: bool = False,
+        * external_id_field -- unique identifier field for upsert operations.
+        """
+        return SFBulkType(object_name=object_name,
+                          bulk_url=self.bulk_url,
+                          headers=self.headers,
+                          session=self.session).submit_dml(dml,
+                                                           data,
+                                                           external_id_field,
+                                                           batch_size,
+                                                           use_serial,
+                                                           bypass_results,
+                                                           include_detailed_results)
+
 
 class SFBulkType:
     """ Interface to Bulk/Async API functions"""
@@ -481,8 +530,8 @@ class SFBulkType:
                                            )
 
             while batch_status['state'] not in [
-                'Completed', 'Failed', 'NotProcessed'
-                ]:
+                    'Completed', 'Failed', 'NotProcessed'
+                    ]:
                 sleep(wait)
                 batch_status = self._get_batch(job_id=batch['jobId'],
                                                batch_id=batch['id']
@@ -520,8 +569,7 @@ class SFBulkType:
                                        data=data,
                                        batch_size=batch_size,
                                        bypass_results=bypass_results,
-                                       include_detailed_results=
-                                       include_detailed_results
+                                       include_detailed_results=include_detailed_results
                                        )
         return results
 
@@ -544,8 +592,7 @@ class SFBulkType:
                                        data=data,
                                        batch_size=batch_size,
                                        bypass_results=bypass_results,
-                                       include_detailed_results=
-                                       include_detailed_results
+                                       include_detailed_results=include_detailed_results
                                        )
         return results
 
@@ -570,8 +617,7 @@ class SFBulkType:
                                        data=data,
                                        batch_size=batch_size,
                                        bypass_results=bypass_results,
-                                       include_detailed_results=
-                                       include_detailed_results
+                                       include_detailed_results=include_detailed_results
                                        )
         return results
 
@@ -594,8 +640,7 @@ class SFBulkType:
                                        data=data,
                                        batch_size=batch_size,
                                        bypass_results=bypass_results,
-                                       include_detailed_results=
-                                       include_detailed_results
+                                       include_detailed_results=include_detailed_results
                                        )
         return results
 
@@ -618,8 +663,7 @@ class SFBulkType:
                                        data=data,
                                        batch_size=batch_size,
                                        bypass_results=bypass_results,
-                                       include_detailed_results=
-                                       include_detailed_results
+                                       include_detailed_results=include_detailed_results
                                        )
         return results
 
@@ -655,3 +699,31 @@ class SFBulkType:
         if lazy_operation:
             return results
         return list_from_generator(results)
+
+    def submit_dml(
+                self,
+                function_name: str,
+                data: BulkDataAny,
+                external_id_field: str = None,
+                batch_size: int = 10000,
+                use_serial: bool = False,
+                bypass_results: bool = False,
+                include_detailed_results: bool = False
+                ):
+        """ modular bulk dml operations -
+            perform insert/upsert/update/delete
+            on any standard and custom objects in Salesforce."""
+        if function_name == 'upsert' and external_id_field is not None:
+            return getattr(self, function_name)(data,
+                                                external_id_field,
+                                                batch_size,
+                                                use_serial,
+                                                bypass_results,
+                                                include_detailed_results,
+                                                )
+        else:
+            return getattr(self, function_name)(data,
+                                                batch_size,
+                                                use_serial,
+                                                bypass_results,
+                                                include_detailed_results)

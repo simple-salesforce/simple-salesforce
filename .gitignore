@@ -20,3 +20,8 @@ docs/modules.rst
 venv
 .mypy_cache
 .python-version
+.claude
+.roo
+.cursor
+.venv
+coverage.xml

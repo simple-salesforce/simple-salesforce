@@ -6,7 +6,6 @@ You can also use this library to call custom Tooling methods:
 Retrieve objects:
 .. code-block:: python
 
-
     result = sf.toolingexecute('sobjects/GlobalValueSet/ABCDEFG')
 
 This would retrieve data from the endpoint ``https://<instance>.salesforce.com/data/v{version}}/tooling/sobjects/GlobalValueSet``
