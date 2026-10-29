@@ -1,0 +1,24 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "Simple Salesforce",
+  "description": "A very simple Salesforce.com REST API client for Python",
+  "folders": [
+    "docs"
+  ],
+  "excludeFolders": [
+    "simple_salesforce/tests",
+    "docs/_build",
+    "docs/_static",
+    ".pytest_cache",
+    ".github"
+  ],
+  "excludeFiles": [
+    "LICENSE.txt",
+    "MANIFEST.in"
+  ],
+  "rules": [
+    "Prefer using the documented high-level API wrappers",
+    "Docs under docs/ are authoritative"
+  ],
+  "previousVersions": []
+}

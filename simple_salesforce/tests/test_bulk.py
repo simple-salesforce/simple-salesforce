@@ -273,7 +273,7 @@ class TestSFBulkType(unittest.TestCase):
     @responses.activate
     def test_update(self):
         """Test bulk update records"""
-        operation = 'upsert'
+        operation = 'update'
         responses.add(
             responses.POST,
             re.compile(r'^https://[^/job].*/job$'),
@@ -335,6 +335,266 @@ class TestSFBulkType(unittest.TestCase):
                             instance_url=tests.SERVER_URL,
                             session=session)
         contact = client.bulk.Contact.update(data)
+        self.assertEqual(self.expected, contact)
+
+    @responses.activate
+    def test_submit_dml_using_delete(self):
+        """Test bulk delete records using the submit_dml function"""
+        operation = 'delete'
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job$'),
+            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
+            '"contentType": "JSON","id": "Job-1","object": "Contact",'
+            f'"operation": "{operation}","state": "Open"}}',
+            status=http.OK)
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "Queued"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1$'),
+            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
+            '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
+            f'"operation" : "{operation}","state" : "Closed"}}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-1$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "InProgress"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-1$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "Completed"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(
+                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result$'),
+            body='[{"success": true,"created": true,"id": "001xx000003DHP0AAO",'
+            '"errors": []},{"success": true,"created": true,'
+            '"id": "001xx000003DHP1AAO","errors": []}]',
+            status=http.OK
+        )
+        data = [{
+            'id': 'ID-1',
+        }, {
+            'id': 'ID-2',
+        }]
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+        contact = client.bulk.submit_dml('Contact', 'delete', data)
+        self.assertEqual(self.expected, contact)
+
+    @responses.activate
+    def test_submit_dml_using_insert(self):
+        """Test bulk insert records using the submit_dml function"""
+        operation = 'insert'
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job$'),
+            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
+            '"contentType": "JSON","id": "Job-1","object": "Contact",'
+            f'"operation": "{operation}","state": "Open"}}',
+            status=http.OK)
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "Queued"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1$'),
+            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
+            '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
+            f'"operation" : "{operation}","state" : "Closed"}}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-1$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "InProgress"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-1$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "Completed"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(
+                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result$'),
+            body='[{"success": true,"created": true,"id": "001xx000003DHP0AAO",'
+            '"errors": []},{"success": true,"created": true,'
+            '"id": "001xx000003DHP1AAO","errors": []}]',
+            status=http.OK
+        )
+
+        data = [{
+            'AccountId': 'ID-1',
+            'Email': 'contact1@example.com',
+            'FirstName': 'Bob',
+            'LastName': 'x'
+        }, {
+            'AccountId': 'ID-2',
+            'Email': 'contact2@example.com',
+            'FirstName': 'Alice',
+            'LastName': 'y'
+        }]
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+        contact = client.bulk.submit_dml('Contact', 'insert', data)
+        self.assertEqual(self.expected, contact)
+
+    @responses.activate
+    def test_submit_dml_using_upsert(self):
+        """Test bulk upsert records using submit_dml function"""
+        operation = 'upsert'
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job$'),
+            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
+            '"contentType": "JSON","id": "Job-1","object": "Contact",'
+            f'"operation": "{operation}","state": "Open"}}',
+            status=http.OK)
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "Queued"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1$'),
+            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
+            '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
+            f'"operation" : "{operation}","state" : "Closed"}}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-1$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "InProgress"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-1$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "Completed"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(
+                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result$'),
+            body='[{"success": true,"created": true,"id": "001xx000003DHP0AAO",'
+            '"errors": []},{"success": true,"created": true,'
+            '"id": "001xx000003DHP1AAO","errors": []}]',
+            status=http.OK
+        )
+
+        data = [{
+            'Custom_Id__c': 'CustomID1',
+            'AccountId': 'ID-13',
+            'Email': 'contact1@example.com',
+            'FirstName': 'Bob',
+            'LastName': 'x'
+        }, {
+            'Custom_Id__c': 'CustomID2',
+            'AccountId': 'ID-24',
+            'Email': 'contact2@example.com',
+            'FirstName': 'Alice',
+            'LastName': 'y'
+        }]
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+        contact = client.bulk.submit_dml('Contact',
+                                         'upsert',
+                                         data,
+                                         'Custom_Id__c')
+        self.assertEqual(self.expected, contact)
+
+    @responses.activate
+    def test_submit_dml_using_update(self):
+        """Test bulk update records using submit_dml function"""
+        operation = 'update'
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job$'),
+            body='{"apiVersion": 42.0, "concurrencyMode": "Parallel",'
+            '"contentType": "JSON","id": "Job-1","object": "Contact",'
+            f'"operation": "{operation}","state": "Open"}}',
+            status=http.OK)
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "Queued"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.POST,
+            re.compile(r'^https://[^/job].*/job/Job-1$'),
+            body='{"apiVersion" : 42.0, "concurrencyMode" : "Parallel",'
+            '"contentType" : "JSON","id" : "Job-1","object" : "Contact",'
+            f'"operation" : "{operation}","state" : "Closed"}}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-1$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "InProgress"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://[^/job].*/job/Job-1/batch/Batch-1$'),
+            body='{"id": "Batch-1","jobId": "Job-1","state": "Completed"}',
+            status=http.OK
+        )
+        responses.add(
+            responses.GET,
+            re.compile(
+                r'^https://[^/job].*/job/Job-1/batch/Batch-1/result$'),
+            body='[{"success": true,"created": true,"id": "001xx000003DHP0AAO",'
+            '"errors": []},{"success": true,"created": true,'
+            '"id": "001xx000003DHP1AAO","errors": []}]',
+            status=http.OK
+        )
+
+        data = [{
+            'Id': '001xx000003DHP0AAO',
+            'AccountId': 'ID-13',
+            'Email': 'contact1@example.com',
+            'FirstName': 'Bob',
+            'LastName': 'x'
+        }, {
+            'Id': '001xx000003DHP1AAO',
+            'AccountId': 'ID-24',
+            'Email': 'contact2@example.com',
+            'FirstName': 'Alice',
+            'LastName': 'y'
+        }]
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+        contact = client.bulk.submit_dml('Contact', 'update', data)
         self.assertEqual(self.expected, contact)
 
     @responses.activate
@@ -413,7 +673,6 @@ class TestSFBulkType(unittest.TestCase):
                             session=session)
         contact = client.bulk.Contact.query(data)
         self.assertEqual(self.expected_query, contact)
-
 
     @responses.activate
     def test_query_fail(self):
@@ -691,8 +950,8 @@ class TestSFBulkType(unittest.TestCase):
             # ... and that - except for the last batch - all batches have maxed
             # out one of the two limits
             self.assertTrue(
-                is_last_batch or
-                record_count == 10_000 or
-                (size_in_bytes + len(json.dumps(result[i + 1][0])) + 2
+                is_last_batch
+                or record_count == 10_000
+                or (size_in_bytes + len(json.dumps(result[i + 1][0])) + 2
                     > 10_000_000)
             )

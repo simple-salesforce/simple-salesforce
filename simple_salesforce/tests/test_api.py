@@ -9,9 +9,10 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
 import requests
 import responses
-from simple_salesforce import tests
+from simple_salesforce import tests, exceptions
 from simple_salesforce.api import PerAppUsage, Salesforce, SFType, Usage
 
 
@@ -196,6 +197,23 @@ class TestSFType(unittest.TestCase):
         additional_request_header = request_headers['Sforce-Auto-Assign']
         self.assertEqual(additional_request_header, 'FALSE')
         self.assertEqual(result, {})
+
+    @responses.activate
+    def test_get_by_custom_id_404(self):
+        """Ensure API responds with a 404 for get_by_custom_id requests"""
+        responses.add(
+            responses.GET,
+            re.compile(r'^https://.*/Case/some-field/444$'),
+            body='{}',
+            status=http.NOT_FOUND
+            )
+
+        sf_type = _create_sf_type()
+        with pytest.raises(exceptions.SalesforceResourceNotFound):
+            sf_type.get_by_custom_id(
+                custom_id_field='some-field',
+                custom_id='444',
+                )
 
     @responses.activate
     def test_get_by_custom_id_without_additional_request_headers(self):

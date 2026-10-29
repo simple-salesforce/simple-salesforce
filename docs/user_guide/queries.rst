@@ -34,6 +34,7 @@ Values used in SOQL queries can be quoted and escaped using ``format_soql``:
 
 .. code-block:: python
 
+    from simple_salesforce.format import format_soql
     sf.query(format_soql("SELECT Id, Email FROM Contact WHERE LastName = {}", "Jones"))
     sf.query(format_soql("SELECT Id, Email FROM Contact WHERE LastName = {last_name}", last_name="Jones"))
     sf.query(format_soql("SELECT Id, Email FROM Contact WHERE LastName IN {names}", names=["Smith", "Jones"]))
