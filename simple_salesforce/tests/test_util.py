@@ -44,6 +44,20 @@ class TestXMLParser(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertFalse(result.endswith('%3A'))
 
+        # A tzinfo whose utcoffset() is None (e.g. unlocalized pytz timezone)
+        # also yields an empty %z and must get the same UTC treatment.
+        class _NoneOffsetTz(datetime.tzinfo):
+            def utcoffset(self, dt):
+                return None
+
+            def dst(self, dt):
+                return None
+
+        result = date_to_iso8601(
+            datetime.datetime(2014, 3, 22, 0, 0, 0, 0, tzinfo=_NoneOffsetTz()))
+        self.assertEqual(result, expected)
+        self.assertFalse(result.endswith('%3A'))
+
 
 class TestExceptionHandler(unittest.TestCase):
     """Test the exception router"""
