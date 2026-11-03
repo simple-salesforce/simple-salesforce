@@ -36,6 +36,28 @@ class TestXMLParser(unittest.TestCase):
         expected = '2014-03-22T00%3A00%3A00-07%3A00'
         self.assertEqual(result, expected)
 
+        # Naive datetimes have no UTC offset; they must not produce a
+        # dangling ':' (malformed for Salesforce). They are treated as UTC.
+        naive = datetime.datetime(2014, 3, 22, 0, 0, 0, 0)
+        result = date_to_iso8601(naive)
+        expected = '2014-03-22T00%3A00%3A00%2B00%3A00'
+        self.assertEqual(result, expected)
+        self.assertFalse(result.endswith('%3A'))
+
+        # A tzinfo whose utcoffset() is None (e.g. unlocalized pytz timezone)
+        # also yields an empty %z and must get the same UTC treatment.
+        class _NoneOffsetTz(datetime.tzinfo):
+            def utcoffset(self, dt):
+                return None
+
+            def dst(self, dt):
+                return None
+
+        result = date_to_iso8601(
+            datetime.datetime(2014, 3, 22, 0, 0, 0, 0, tzinfo=_NoneOffsetTz()))
+        self.assertEqual(result, expected)
+        self.assertFalse(result.endswith('%3A'))
+
 
 class TestExceptionHandler(unittest.TestCase):
     """Test the exception router"""

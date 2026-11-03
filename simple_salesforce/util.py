@@ -60,6 +60,12 @@ def date_to_iso8601(date: datetime.date) -> str:
     """Returns an ISO8601 string from a date"""
     datetimestr = date.strftime('%Y-%m-%dT%H:%M:%S')
     timezonestr = date.strftime('%z')
+    if not timezonestr:
+        # Naive datetimes carry no UTC offset. Without this, the offset
+        # slices below are empty and the result ends with a dangling ':'
+        # (e.g. '2014-03-22T00:00:00:'), which Salesforce rejects as a
+        # malformed dateTime. Treat naive datetimes as UTC instead.
+        timezonestr = '+0000'
     return (
         f'{datetimestr}{timezonestr[0:3]}:{timezonestr[3:5]}'
         .replace(':', '%3A')
