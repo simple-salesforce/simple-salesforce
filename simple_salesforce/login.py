@@ -4,6 +4,9 @@ Heavily Modified from RestForce 1.0.0
 """
 from typing import Any, Dict, Optional, Tuple, Union, cast
 import base64
+import hashlib
+import secrets
+from urllib.parse import urlencode
 
 DEFAULT_CLIENT_ID_PREFIX = 'simple-salesforce'
 
@@ -38,7 +41,10 @@ def SalesforceLogin(
         consumer_secret: Optional[str] = None,
         privatekey_file: Optional[str] = None,
         privatekey: Optional[str] = None,
-        scratch_url: Optional[str] = None
+        scratch_url: Optional[str] = None,
+        authorization_code: Optional[str] = None,
+        redirect_uri: Optional[str] = None,
+        code_verifier: Optional[str] = None
         ) -> Tuple[str, str]:
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
@@ -72,6 +78,11 @@ def SalesforceLogin(
                          for signing the JWT token.
     * scratch_url -- scratch org URL used in order to avoid waiting
                          for DNS propagation.
+    * authorization_code -- the code returned to the redirect_uri after the
+                         user authorized the app (OAuth 2.0 Web Server flow).
+    * redirect_uri -- the callback URL used when requesting the code.
+    * code_verifier -- the PKCE code verifier whose challenge was sent when
+                         requesting the code. See `generate_pkce_pair`.
     """
 
     if domain is None:
@@ -93,8 +104,30 @@ def SalesforceLogin(
     username = escape(username) if username else None
     password = escape(password) if password else None
 
+    # OAuth 2.0 authorization code flow (optionally with PKCE)
+    if authorization_code is not None:
+        if consumer_key is None or redirect_uri is None:
+            raise SalesforceAuthenticationFailed(
+                'INVALID AUTH',
+                'authorization_code requires consumer_key and redirect_uri')
+        token_data = {
+            'grant_type': 'authorization_code',
+            'code': authorization_code,
+            'client_id': consumer_key,
+            'redirect_uri': redirect_uri
+            }
+        if consumer_secret is not None:
+            token_data['client_secret'] = consumer_secret
+        if code_verifier is not None:
+            token_data['code_verifier'] = code_verifier
+        return token_login(
+            f'https://{instance_url or domain}.salesforce.com'
+            '/services/oauth2/token',
+            token_data, domain, consumer_key,
+            None, proxies, session)
+
     # Check if token authentication is used
-    if security_token is not None:
+    elif security_token is not None:
         # Security Token Soap request body
         login_soap_request_body = f"""<?xml version="1.0" encoding="utf-8" ?>
 <env:Envelope
@@ -294,6 +327,37 @@ def soap_login(
                    .replace('-api', ''))
 
     return session_id, sf_instance
+
+
+def generate_pkce_pair() -> Tuple[str, str]:
+    """Return a `(code_verifier, code_challenge)` pair for PKCE (S256)."""
+    code_verifier = base64.urlsafe_b64encode(
+        secrets.token_bytes(64)).decode().rstrip('=')
+    digest = hashlib.sha256(code_verifier.encode('ascii')).digest()
+    code_challenge = base64.urlsafe_b64encode(digest).decode().rstrip('=')
+    return code_verifier, code_challenge
+
+
+def get_authorization_url(
+        consumer_key: str,
+        redirect_uri: str,
+        code_challenge: Optional[str] = None,
+        domain: Optional[str] = None,
+        state: Optional[str] = None) -> str:
+    """Build the URL the user must visit to authorize the app. Pass the
+    `code_challenge` from `generate_pkce_pair` to use PKCE."""
+    params = {
+        'response_type': 'code',
+        'client_id': consumer_key,
+        'redirect_uri': redirect_uri
+        }
+    if code_challenge is not None:
+        params['code_challenge'] = code_challenge
+        params['code_challenge_method'] = 'S256'
+    if state is not None:
+        params['state'] = state
+    return (f'https://{domain or "login"}.salesforce.com'
+            f'/services/oauth2/authorize?{urlencode(params)}')
 
 
 def token_login(
