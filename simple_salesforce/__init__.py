@@ -8,5 +8,6 @@ from .exceptions import (SalesforceAuthenticationFailed, SalesforceError,
                          SalesforceMalformedRequest,
                          SalesforceMoreThanOneRecord, SalesforceRefusedRequest,
                          SalesforceResourceNotFound)
-from .login import SalesforceLogin
+from .login import (SalesforceLogin, generate_pkce_pair,
+                    get_authorization_url)
 from .format import format_soql, format_external_id
