@@ -69,6 +69,7 @@ class SFBulkHandler:
                    object_name: str,
                    dml: str,
                    data: BulkDataAny,
+                   *,
                    external_id_field: str = None,
                    batch_size: int = 10000,
                    use_serial: bool = False,
@@ -106,13 +107,13 @@ class SFBulkHandler:
         return SFBulkType(object_name=object_name,
                           bulk_url=self.bulk_url,
                           headers=self.headers,
-                          session=self.session).submit_dml(dml,
-                                                           data,
-                                                           external_id_field,
-                                                           batch_size,
-                                                           use_serial,
-                                                           bypass_results,
-                                                           include_detailed_results)
+                          session=self.session).submit_dml(dml = dml,
+                                                           data = data,
+                                                           external_id_field = external_id_field,
+                                                           batch_size = batch_size,
+                                                           use_serial = use_serial,
+                                                           bypass_results = bypass_results,
+                                                           include_detailed_results = include_detailed_results)
 
 
 class SFBulkType:
@@ -288,15 +289,15 @@ class SFBulkType:
                                               batch_id: str,
                                               ) -> Iterable[Any]:
         """ retrieve a set of results from a completed job """
- 
+
         url = f'{self.bulk_url}job/{job_id}/batch/{batch_id}/request'
- 
+
         batch_request = call_salesforce(url=url,
                                         method='GET',
                                         session=self.session,
                                         headers=self.headers
                                         )
- 
+
         batch_results = self._get_batch_results(job_id,
                                                batch_id,
                                                operation='batch_results'
@@ -704,6 +705,7 @@ class SFBulkType:
                 self,
                 function_name: str,
                 data: BulkDataAny,
+                *,
                 external_id_field: str = None,
                 batch_size: int = 10000,
                 use_serial: bool = False,
@@ -713,17 +715,20 @@ class SFBulkType:
         """ modular bulk dml operations -
             perform insert/upsert/update/delete
             on any standard and custom objects in Salesforce."""
-        if function_name == 'upsert' and external_id_field is not None:
-            return getattr(self, function_name)(data,
-                                                external_id_field,
-                                                batch_size,
-                                                use_serial,
-                                                bypass_results,
-                                                include_detailed_results,
-                                                )
+        if function_name not in ('insert', 'upsert', 'update', 'delete'):
+            raise ValueError(f'Unsupported DML: {function_name}. function_name must be one of:  insert, upsert, update, delete.')
+        if function_name == 'upsert':
+            if external_id_field is None:
+                raise ValueError('upsert operation requires external_id_field.')
+            return getattr(self, function_name)(data = data,
+                                                external_id_field = external_id_field,
+                                                batch_size = batch_size,
+                                                use_serial = use_serial,
+                                                bypass_results = bypass_results,
+                                                include_detailed_results = include_detailed_results)
         else:
-            return getattr(self, function_name)(data,
-                                                batch_size,
-                                                use_serial,
-                                                bypass_results,
-                                                include_detailed_results)
+            return getattr(self, function_name)(data = data,
+                                                batch_size = batch_size,
+                                                use_serial = use_serial,
+                                                bypass_results = bypass_results,
+                                                include_detailed_results = include_detailed_results)
