@@ -67,7 +67,7 @@ class SFBulkHandler:
 
     def submit_dml(self,
                    object_name: str,
-                   dml: str,
+                   function_name: str,
                    data: BulkDataAny,
                    *,
                    external_id_field: str = None,
@@ -91,7 +91,7 @@ class SFBulkHandler:
         Arguments:
 
         * object_name       -- SF object
-        * dml               -- insert, upsert, update, delete
+        * function_name     -- insert, upsert, update, delete
         * data              -- JSON formatted salesforce records.
 
         Data is batched by 10,000 records by default. To pick a lower size
@@ -107,7 +107,7 @@ class SFBulkHandler:
         return SFBulkType(object_name=object_name,
                           bulk_url=self.bulk_url,
                           headers=self.headers,
-                          session=self.session).submit_dml(dml = dml,
+                          session=self.session).submit_dml(function_name = function_name,
                                                            data = data,
                                                            external_id_field = external_id_field,
                                                            batch_size = batch_size,
