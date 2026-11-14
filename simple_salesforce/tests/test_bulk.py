@@ -527,7 +527,7 @@ class TestSFBulkType(unittest.TestCase):
         contact = client.bulk.submit_dml('Contact',
                                          'upsert',
                                          data,
-                                         'Custom_Id__c')
+                                         external_id_field = 'Custom_Id__c')
         self.assertEqual(self.expected, contact)
 
     @responses.activate
