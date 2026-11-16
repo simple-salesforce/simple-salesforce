@@ -30,6 +30,9 @@ class SalesforceError(Exception):
         self.resource_name = resource_name
         self.content = content
 
+    def __reduce__(self) -> tuple:
+        return (self.__class__, (self.url, self.status, self.resource_name, self.content))
+
     def __str__(self) -> str:
         return self.message.format(url=self.url, content=self.content)
 
