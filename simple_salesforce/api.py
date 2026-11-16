@@ -56,6 +56,9 @@ class Salesforce:
             consumer_secret: Optional[str] = None,
             privatekey_file: Optional[str] = None,
             privatekey: Optional[str] = None,
+            authorization_code: Optional[str] = None,
+            redirect_uri: Optional[str] = None,
+            code_verifier: Optional[str] = None,
             parse_float: Optional[Callable[[str], Any]] = None,
             object_pairs_hook: Optional[Callable[[List[Tuple[Any, Any]]], Any]]
             = OrderedDict,
@@ -85,6 +88,15 @@ class Salesforce:
         OR
         * privatekey -- the private key to use
                          for signing the JWT token
+
+        OAuth 2.0 Authorization Code Authentication (with optional PKCE):
+        * consumer_key -- the consumer key of the app
+        * consumer_secret -- the consumer secret (optional with PKCE)
+        * authorization_code -- the code returned to your redirect URI
+        * redirect_uri -- the callback URL used to obtain the code
+        * code_verifier -- the PKCE verifier (see `generate_pkce_pair`)
+        NOTE: authorization codes are single use, so the session cannot be
+        refreshed automatically.
 
         Direct Session and Instance Access:
 
@@ -176,6 +188,23 @@ class Salesforce:
 
             # Only generate the headers wihtout logging in first
             self._generate_headers()
+
+        elif all(arg is not None for arg in (
+                authorization_code, consumer_key, redirect_uri)
+                 ):
+            self.auth_type = "authorization-code"
+            self._salesforce_login_partial = partial(
+                SalesforceLogin,
+                session=self.session,
+                consumer_key=consumer_key,
+                consumer_secret=consumer_secret,
+                authorization_code=authorization_code,
+                redirect_uri=redirect_uri,
+                code_verifier=code_verifier,
+                proxies=self.proxies,
+                domain=self.domain
+                )
+            self._refresh_session()
 
         elif all(arg is not None for arg in (
                 username, password, organizationId)

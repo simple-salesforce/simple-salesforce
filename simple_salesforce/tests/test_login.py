@@ -13,7 +13,8 @@ import responses
 
 from simple_salesforce import tests
 from simple_salesforce.exceptions import SalesforceAuthenticationFailed
-from simple_salesforce.login import SalesforceLogin
+from simple_salesforce.login import (SalesforceLogin, generate_pkce_pair,
+                                     get_authorization_url)
 
 
 class TestSalesforceLogin(unittest.TestCase):
@@ -259,6 +260,34 @@ class TestSalesforceLogin(unittest.TestCase):
                 consumer_secret='12345.abcde'
                 )
         self.assertTrue(self.mockrequest.post.called)
+
+    @responses.activate
+    def test_authorization_code_pkce_login_success(self):
+        """Test authorization code login sends the PKCE code_verifier"""
+        verifier, challenge = generate_pkce_pair()
+        self.assertNotEqual(verifier, challenge)
+        login_args = {
+            'consumer_key': '12345.abcde',
+            'authorization_code': 'the-code',
+            'redirect_uri': 'https://localhost/callback',
+            'code_verifier': verifier,
+            'domain': urlparse(tests.INSTANCE_URL).hostname.split(
+                '.salesforce.com')[0],
+            }
+        self._test_login_success(
+            re.compile(rf'^{tests.INSTANCE_URL}/.*$'), login_args,
+            response_body=tests.TOKEN_LOGIN_RESPONSE_SUCCESS)
+        body = responses.calls[0].request.body
+        self.assertIn('grant_type=authorization_code', body)
+        self.assertIn(f'code_verifier={verifier}', body)
+
+    def test_authorization_url_contains_pkce_challenge(self):
+        """Test the authorize URL includes the S256 challenge"""
+        _, challenge = generate_pkce_pair()
+        url = get_authorization_url(
+            '12345.abcde', 'https://localhost/callback', challenge)
+        self.assertIn(f'code_challenge={challenge}', url)
+        self.assertIn('code_challenge_method=S256', url)
 
     @responses.activate
     def test_connected_app_client_credentials_login_success(self):
