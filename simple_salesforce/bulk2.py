@@ -171,6 +171,24 @@ def _split_csv(
     dl = _delimiter_char[column_delimiter]
     le = _line_ending_char[line_ending]
 
+    # Measure rows the way _flush will actually write them. Joining the fields
+    # ignores the quotes csv adds, the doubling of quotes inside a field and the
+    # line terminator, so the estimate ran under and chunks could pass the check
+    # here only to be rejected by upload_job_data, which measures the real size.
+    _size_buffer = io.StringIO()
+    _size_writer = csv.writer(
+        _size_buffer,
+        delimiter=dl,
+        lineterminator=le,
+        quoting=quoting,
+    )
+
+    def _row_size(row) -> int:
+        _size_buffer.seek(0)
+        _size_buffer.truncate(0)
+        _size_writer.writerow(row)
+        return len(_size_buffer.getvalue().encode("utf-8"))
+
     def _flush(header, records):
         buffer = io.StringIO()
         writer = csv.writer(
@@ -185,18 +203,19 @@ def _split_csv(
 
     def _split(csv_reader) -> Generator[Tuple[int, str], None, None]:
         fieldnames = next(csv_reader)
+        header_size = _row_size(fieldnames)
         records_size = 0
-        bytes_size = 0
+        bytes_size = header_size
         buff: List[List[str]] = []
         for line in csv_reader:
-            line_data_size = len(f"{dl}".join(line).encode("utf-8"))  # rough estimate
+            line_data_size = _row_size(line)
             records_size += 1
             bytes_size += line_data_size
             if records_size > _max_records or bytes_size > max_bytes:
                 if buff:
                     yield records_size - 1, _flush(fieldnames, buff).getvalue()
                 records_size = 1
-                bytes_size = line_data_size
+                bytes_size = header_size + line_data_size
                 buff = [line]
             else:
                 buff.append(line)

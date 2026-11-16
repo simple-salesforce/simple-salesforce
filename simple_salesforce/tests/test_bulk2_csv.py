@@ -1,6 +1,7 @@
 import random
 import string
 import csv
+import io
 import math
 
 import pytest
@@ -274,3 +275,33 @@ def test_split_csv_large_data(
     )
     assert sum(count for count, _ in split_results) == record_count
     assert len(split_results) == math.ceil(large_csv_data_size / PART_SIZE)
+
+
+def test_split_csv_chunks_fit_the_size_limit():
+    """Chunks must not exceed the size upload_job_data enforces.
+
+    The rows carry commas, so csv quotes them and the serialised chunk is
+    bigger than the raw field lengths suggest.
+    """
+    from unittest.mock import patch
+
+    from simple_salesforce import bulk2
+
+    rows = [
+        [f"Acme, Inc. #{i}", "123 Main St, Suite 4", f"note {i}, urgent", "x"]
+        for i in range(8000)
+    ]
+    buffer = io.StringIO()
+    writer = csv.writer(buffer, delimiter=",", lineterminator="\n")
+    writer.writerow(["account", "address", "note", "flag"])
+    writer.writerows(rows)
+
+    budget = 200 * 1024
+    with patch.object(
+        bulk2, "MAX_INGEST_JOB_FILE_SIZE", 1 * 1024 * 1024 + budget
+    ):
+        chunks = list(_split_csv(records=buffer.getvalue()))
+
+    assert len(chunks) > 1, "the data should have been split"
+    for _, chunk in chunks:
+        assert len(chunk.encode("utf-8")) <= budget
