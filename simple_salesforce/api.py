@@ -56,6 +56,7 @@ class Salesforce:
             consumer_secret: Optional[str] = None,
             privatekey_file: Optional[str] = None,
             privatekey: Optional[str] = None,
+            auth_type: Optional[str] = None,
             parse_float: Optional[Callable[[str], Any]] = None,
             object_pairs_hook: Optional[Callable[[List[Tuple[Any, Any]]], Any]]
             = OrderedDict,
@@ -109,6 +110,8 @@ class Salesforce:
         * object_pairs_hook -- Function to parse ordered list of pairs in json.
                                To use python 'dict' change it to None or dict.
         """
+        if auth_type not in ('password', 'jwt-bearer', 'direct','ipfilter','client-credentials'):
+            raise ValueError("Invalid auth_type specified")
 
         if domain is None:
             domain = 'login'
@@ -120,6 +123,7 @@ class Salesforce:
         self.session = session or requests.Session()
         self.proxies = self.session.proxies
         self._salesforce_login_partial = None
+        self.auth_type = auth_type
         # override custom session proxies dance
         if proxies is not None:
             if not session:
@@ -135,8 +139,7 @@ class Salesforce:
         # in their own information
         if all(arg is not None for arg in (
                 username, password, security_token)
-               ):
-            self.auth_type = "password"
+               ) and self.auth_type == "password":
 
             # Pass along the username/password to our login helper
             self._salesforce_login_partial = partial(
@@ -154,8 +157,7 @@ class Salesforce:
 
         elif all(arg is not None for arg in (
                 session_id, instance or instance_url)
-                 ):
-            self.auth_type = "direct"
+                 ) and self.auth_type == "direct":
             self.session_id: str = cast(str,
                                         session_id
                                         )
@@ -179,8 +181,7 @@ class Salesforce:
 
         elif all(arg is not None for arg in (
                 username, password, organizationId)
-                 ):
-            self.auth_type = 'ipfilter'
+                 ) and self.auth_type == 'ipfilter':
 
             # Pass along the username/password to our login helper
             self._salesforce_login_partial = partial(
@@ -198,8 +199,7 @@ class Salesforce:
 
         elif all(arg is not None for arg in (
                 username, password, consumer_key, consumer_secret)
-                 ):
-            self.auth_type = "password"
+                 ) and self.auth_type == "password":
 
             # Pass along the username/password to our login helper
             self._salesforce_login_partial = partial(
@@ -216,8 +216,8 @@ class Salesforce:
 
         elif all(arg is not None for arg in (
                 username, consumer_key, privatekey_file or privatekey)
-                 ):
-            self.auth_type = "jwt-bearer"
+                 ) and self.auth_type == 'jwt-bearer':
+            
 
             # Pass along the username/password to our login helper
             self._salesforce_login_partial = partial(
@@ -234,16 +234,16 @@ class Salesforce:
             self._refresh_session()
         elif all(arg is not None for arg in (
                 consumer_key, consumer_secret, domain
-                )
-                 ):
-            self.auth_type = "client-credentials"
+                )) and self.auth_type == 'client-credentials':
+            
             self._salesforce_login_partial = partial(
                 SalesforceLogin,
                 session=self.session,
                 consumer_key=consumer_key,
                 consumer_secret=consumer_secret,
                 proxies=self.proxies,
-                domain=self.domain
+                domain=self.domain,
+                instance_url=instance_url
                 )
             self._refresh_session()
         else:
