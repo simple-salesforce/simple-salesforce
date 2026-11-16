@@ -723,6 +723,45 @@ class TestSalesforce(unittest.TestCase):
         self.assertEqual(result, {})
 
     @responses.activate
+    def test_query_more_url(self):
+        """
+        Test fetching additional results by nextRecordsUrl path
+        """
+        responses.add(
+            responses.GET,
+            'https://na15.salesforce.com/services/data/v59.0/query/01gxx-2000',
+            body='{}',
+            status=http.OK)
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        result = client.query_more('/services/data/v59.0/query/01gxx-2000',
+                                   identifier_is_url=True)
+        self.assertEqual(result, {})
+
+    @responses.activate
+    def test_query_more_url_rejects_other_hosts(self):
+        """
+        Test that a URL identifier cannot change the host the session token
+        is sent to (GHSA-hqqq-335j-8p77)
+        """
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        for identifier in ('@attacker.example/capture',
+                           ':@attacker.example/capture',
+                           '.attacker.example/capture',
+                           'https://attacker.example/capture'):
+            with self.subTest(identifier=identifier):
+                with self.assertRaises(ValueError):
+                    client.query_more(identifier, identifier_is_url=True)
+        self.assertEqual(len(responses.calls), 0)
+
+    @responses.activate
     def test_query_all_iter(self):
         """
         Test that we get data only once we ask for them (lazily).
@@ -731,7 +770,7 @@ class TestSalesforce(unittest.TestCase):
             responses.GET,
             re.compile(r'^https://.*/query/\?q=SELECT\+ID\+FROM\+Account$'),
             body='{"records": [{"ID": "1"}], "done": false, "nextRecordsUrl": '
-                 '"https://example.com/query/next-records-id", "totalSize": 2}',
+                 '"/services/data/v59.0/query/next-records-id", "totalSize": 2}',
             status=http.OK)
         responses.add(
             responses.GET,
@@ -758,7 +797,7 @@ class TestSalesforce(unittest.TestCase):
             responses.GET,
             re.compile(r'^https://.*/query/\?q=SELECT\+ID\+FROM\+Account$'),
             body='{"records": [{"ID": "1"}], "done": false, "nextRecordsUrl": '
-                 '"https://example.com/query/next-records-id", "totalSize": 2}',
+                 '"/services/data/v59.0/query/next-records-id", "totalSize": 2}',
             status=http.OK)
         responses.add(
             responses.GET,
@@ -787,7 +826,7 @@ class TestSalesforce(unittest.TestCase):
             responses.GET,
             re.compile(r'^https://.*/queryAll/\?q=SELECT\+ID\+FROM\+Account$'),
             body='{"records": [{"ID": "1"}], "done": false, "nextRecordsUrl": '
-                 '"https://example.com/queryAll/next-records-id",'
+                 '"/services/data/v59.0/queryAll/next-records-id",'
                  '"totalSize": 2}',
             status=http.OK)
         responses.add(

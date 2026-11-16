@@ -597,7 +597,12 @@ class Salesforce:
                              `identifier_is_url` is False
         """
         if identifier_is_url:
-            # Don't use `self.base_url` here because the full URI is provided
+            # Don't use `self.base_url` here because the full URI is provided.
+            # It must be a path, or it could change the host the session
+            # token is sent to (e.g. '@attacker.example/').
+            if not next_records_identifier.startswith('/'):
+                raise ValueError(f'{next_records_identifier!r} is not a URL '
+                                 f'path on the Salesforce instance')
             url = f'https://{self.sf_instance}{next_records_identifier}'
         else:
             endpoint = 'queryAll' if include_deleted else 'query'
