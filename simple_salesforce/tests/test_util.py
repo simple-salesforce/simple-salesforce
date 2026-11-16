@@ -11,7 +11,8 @@ from simple_salesforce.exceptions import (SalesforceExpiredSession,
                                           SalesforceRefusedRequest,
                                           SalesforceResourceNotFound)
 from simple_salesforce.util import (date_to_iso8601, exception_handler,
-                                    getUniqueElementValueFromXmlString)
+                                    getUniqueElementValueFromXmlString,
+                                    safe_urljoin)
 
 
 class TestXMLParser(unittest.TestCase):
@@ -105,3 +106,32 @@ class TestExceptionHandler(unittest.TestCase):
         self.assertEqual(str(cm.exception), (
             'Error Code 500. Response content'
             ': Example Content'))
+
+
+class TestSafeUrljoin(unittest.TestCase):
+    """Test joining caller-supplied paths onto a Salesforce resource URL"""
+    BASE = 'https://my.salesforce.com/services/data/v59.0/sobjects/Case/'
+
+    def test_relative_paths_are_joined(self):
+        """Record ids, external id paths and query strings are allowed"""
+        for path, expected in (
+                ('500xx000000AbCd', self.BASE + '500xx000000AbCd'),
+                ('ExtId__c/123', self.BASE + 'ExtId__c/123'),
+                ('500xx?fields=Id', self.BASE + '500xx?fields=Id'),
+                ('describe', self.BASE + 'describe'),
+                ):
+            with self.subTest(path=path):
+                self.assertEqual(safe_urljoin(self.BASE, path), expected)
+
+    def test_paths_escaping_base_are_rejected(self):
+        """Absolute URLs, network paths and traversal raise ValueError"""
+        for path in ('https://attacker.example/leak',
+                     'HTTPS://attacker.example/leak',
+                     '//attacker.example/leak',
+                     '\t//attacker.example/leak',
+                     '/services/data/v59.0/limits',
+                     '../Account/001',
+                     'a/../../Account/001'):
+            with self.subTest(path=path):
+                with self.assertRaises(ValueError):
+                    safe_urljoin(self.BASE, path)

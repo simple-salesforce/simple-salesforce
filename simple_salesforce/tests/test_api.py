@@ -1295,3 +1295,85 @@ class TestSalesforce(unittest.TestCase):
         self.assertNotIsInstance(result, OrderedDict)
         self.assertIsInstance(result, dict)
         self.assertEqual(result, {"currency": 1.0})
+
+
+class TestRecordUrlInjection(unittest.TestCase):
+    """Caller-supplied identifiers must not redirect authenticated requests
+    away from the Salesforce instance (GHSA-x99m-vxr3-6j4w)"""
+
+    MALICIOUS_PATHS = (
+        'https://attacker.example/leak',
+        'http://attacker.example/leak',
+        '//attacker.example/leak',
+        ' https://attacker.example/leak',
+        '/services/data/v59.0/sobjects/Account/001',
+        '../Account/001',
+        )
+
+    def _assert_rejected(self, call):
+        for path in self.MALICIOUS_PATHS:
+            with self.subTest(path=path):
+                with self.assertRaises(ValueError):
+                    call(path)
+        self.assertEqual(len(responses.calls), 0)
+
+    @responses.activate
+    def test_get(self):
+        """get refuses record ids that escape the sobject url"""
+        self._assert_rejected(_create_sf_type().get)
+
+    @responses.activate
+    def test_get_by_custom_id(self):
+        """get_by_custom_id refuses field names that escape the sobject url"""
+        sf_type = _create_sf_type()
+        self._assert_rejected(
+            lambda path: sf_type.get_by_custom_id(path, 'value'))
+
+    @responses.activate
+    def test_upsert(self):
+        """upsert refuses record ids that escape the sobject url"""
+        sf_type = _create_sf_type()
+        self._assert_rejected(lambda path: sf_type.upsert(path, {}))
+
+    @responses.activate
+    def test_update(self):
+        """update refuses record ids that escape the sobject url"""
+        sf_type = _create_sf_type()
+        self._assert_rejected(lambda path: sf_type.update(path, {}))
+
+    @responses.activate
+    def test_delete(self):
+        """delete refuses record ids that escape the sobject url"""
+        self._assert_rejected(_create_sf_type().delete)
+
+    @responses.activate
+    def test_describe_layout(self):
+        """describe_layout refuses record ids that escape the sobject url"""
+        sf_type = _create_sf_type()
+        self._assert_rejected(
+            lambda path: sf_type.describe_layout('../../../../' + path))
+
+    @responses.activate
+    def test_update_base64(self):
+        """update_base64 refuses record ids that escape the sobject url"""
+        sf_type = _create_sf_type()
+        file_path = Path(__file__).parent / 'sample-key.pem'
+        self._assert_rejected(
+            lambda path: sf_type.update_base64(path, file_path))
+
+    @responses.activate
+    def test_get_base64(self):
+        """get_base64 refuses record ids that escape the sobject url"""
+        self._assert_rejected(_create_sf_type().get_base64)
+
+    @responses.activate
+    def test_upsert_external_id_still_allowed(self):
+        """External id paths containing a slash keep working"""
+        responses.add(
+            responses.PATCH,
+            'https://my.salesforce.com/services/data/v59.0/sobjects/Case/'
+            'ExtId__c/123',
+            status=http.NO_CONTENT
+            )
+        self.assertEqual(
+            _create_sf_type().upsert('ExtId__c/123', {}), http.NO_CONTENT)
