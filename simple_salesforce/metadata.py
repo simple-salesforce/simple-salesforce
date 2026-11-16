@@ -14,6 +14,7 @@ from .util import Headers, call_salesforce
 from .messages import DEPLOY_MSG, CHECK_DEPLOY_STATUS_MSG, \
     CHECK_RETRIEVE_STATUS_MSG, RETRIEVE_MSG
 from zeep import Client, Settings
+from zeep.transports import Transport
 
 
 class MetadataType:
@@ -220,8 +221,10 @@ class SfdcMetadataApi:
         self._api_version = api_version
         self._deploy_zip = None
         wsdl_path = Path(__file__).parent / 'metadata.wsdl'
+        transport = Transport(session=self.session)  # type: ignore[no-untyped-call]
         self._client = Client(
             wsdl_path.absolute().as_uri(),
+            transport=transport,
             settings=Settings(
                 strict=False,
                 xsd_ignore_sequence_order=True
