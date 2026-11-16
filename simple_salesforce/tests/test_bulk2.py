@@ -178,6 +178,11 @@ class TestSFBulk2Type(unittest.TestCase):
         request_patcher = patch("simple_salesforce.api.requests")
         self.mockrequest = request_patcher.start()
         self.addCleanup(request_patcher.stop)
+        
+        sleep_patcher = patch("simple_salesforce.bulk2.sleep")
+        self.mocksleep = sleep_patcher.start()
+        self.addCleanup(sleep_patcher.stop)
+
         self.expected_results = [
             {
                 "numberRecordsFailed": 0,
@@ -611,3 +616,217 @@ class TestSFBulk2Type(unittest.TestCase):
             client.bulk2.Contact.get_unprocessed_records("Job-1", file=csv_file)
             with open(csv_file, "r", encoding="utf-8") as bis:
                 self.assertEqual(expected_results, bis.read())
+
+    @responses.activate
+    def test_download_parallel(self):
+        """Test bulk2 parallel download"""
+        operation = Operation.query
+        responses.add(
+            responses.POST,
+            re.compile(r"^https://.*/jobs/query$"),
+            body=to_body(
+                {
+                    "apiVersion": 52.0,
+                    "columnDelimiter": "COMMA",
+                    "concurrencyMode": "Parallel",
+                    "contentType": "CSV",
+                    "id": "Job-1",
+                    "lineEnding": "LF",
+                    "object": "Contact",
+                    "operation": operation,
+                    "state": JobState.upload_complete,
+                }
+            ),
+            status=http.OK,
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r"^https://.*/jobs/query/Job-1$"),
+            body=to_body(
+                {
+                    "apiVersion": 52.0,
+                    "columnDelimiter": "COMMA",
+                    "concurrencyMode": "Parallel",
+                    "contentType": "CSV",
+                    "id": "Job-1",
+                    "jobType": "V2Query",
+                    "lineEnding": "LF",
+                    "numberRecordsProcessed": 4,
+                    "object": "Contact",
+                    "operation": operation,
+                    "state": JobState.job_complete,
+                }
+            ),
+            status=http.OK,
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r"^https://.*/jobs/query/Job-1/resultPages$"),
+            body=to_body({
+                "resultPages": [
+                    {"resultUrl": "/services/data/v52.0/jobs/query/Job-1/results?locator=locator1"},
+                    {"resultUrl": "/services/data/v52.0/jobs/query/Job-1/results?locator=locator2"}
+                ],
+                "done": True
+            }),
+            status=http.OK,
+        )
+        
+        # Mock result page downloads
+        responses.add(
+            responses.GET,
+            re.compile(r"^https://.*/jobs/query/Job-1/results\?maxRecords=\d+&locator=locator1$"),
+            body=textwrap.dedent(
+                """
+                "Id","Name"
+                "001xx000003DHP0AAO","Account1"
+                """
+            ),
+            headers={
+                "Sforce-NumberOfRecords": "1",
+                "Sforce-Locator": "locator1",
+            },
+            status=http.OK,
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r"^https://.*/jobs/query/Job-1/results\?maxRecords=\d+&locator=locator2$"),
+            body=textwrap.dedent(
+                """
+                "Id","Name"
+                "001xx000003DHP1AAO","Account2"
+                """
+            ),
+            headers={
+                "Sforce-NumberOfRecords": "1",
+                "Sforce-Locator": "locator2",
+            },
+            status=http.OK,
+        )
+
+        query = "SELECT Id, Name FROM Account"
+        session = requests.Session()
+        client = Salesforce(
+            session_id=tests.SESSION_ID,
+            instance_url=tests.SERVER_URL,
+            session=session,
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            results = client.bulk2.Contact.download_parallel(
+                query, path=tmpdirname, max_records=100
+            )
+            self.assertEqual(len(results), 2)
+            self.assertEqual(results[0]["number_of_records"], 1)
+            self.assertEqual(results[1]["number_of_records"], 1)
+            
+            # Verify files were created
+            self.assertTrue(os.path.exists(results[0]["file"]))
+            self.assertTrue(os.path.exists(results[1]["file"]))
+
+    @responses.activate
+    def test_download_parallel_with_pagination(self):
+        """Test bulk2 parallel download with pagination (done=false)"""
+        operation = Operation.query
+        responses.add(
+            responses.POST,
+            re.compile(r"^https://.*/jobs/query$"),
+            body=to_body(
+                {
+                    "apiVersion": 52.0,
+                    "columnDelimiter": "COMMA",
+                    "concurrencyMode": "Parallel",
+                    "contentType": "CSV",
+                    "id": "Job-1",
+                    "lineEnding": "LF",
+                    "object": "Contact",
+                    "operation": operation,
+                    "state": JobState.upload_complete,
+                }
+            ),
+            status=http.OK,
+        )
+        responses.add(
+            responses.GET,
+            re.compile(r"^https://.*/jobs/query/Job-1$"),
+            body=to_body(
+                {
+                    "apiVersion": 52.0,
+                    "columnDelimiter": "COMMA",
+                    "concurrencyMode": "Parallel",
+                    "contentType": "CSV",
+                    "id": "Job-1",
+                    "jobType": "V2Query",
+                    "lineEnding": "LF",
+                    "numberRecordsProcessed": 6,
+                    "object": "Contact",
+                    "operation": operation,
+                    "state": JobState.job_complete,
+                }
+            ),
+            status=http.OK,
+        )
+        
+        # First page of results - done=false
+        responses.add(
+            responses.GET,
+            re.compile(r"^https://.*/jobs/query/Job-1/resultPages$"),
+            body=to_body({
+                "resultPages": [
+                    {"resultUrl": "/services/data/v52.0/jobs/query/Job-1/results?locator=locator1"},
+                    {"resultUrl": "/services/data/v52.0/jobs/query/Job-1/results?locator=locator2"}
+                ],
+                "nextRecordsUrl": "/services/data/v52.0/jobs/query/Job-1/resultPages?locator=page2",
+                "done": False
+            }),
+            status=http.OK,
+        )
+        
+        # Second page of results - done=true
+        responses.add(
+            responses.GET,
+            re.compile(r"^https://.*/jobs/query/Job-1/resultPages\?locator=page2$"),
+            body=to_body({
+                "resultPages": [
+                    {"resultUrl": "/services/data/v52.0/jobs/query/Job-1/results?locator=locator3"}
+                ],
+                "done": True
+            }),
+            status=http.OK,
+        )
+        
+        # Mock result page downloads for all 3 locators
+        for i, locator in enumerate(["locator1", "locator2", "locator3"], 1):
+            responses.add(
+                responses.GET,
+                re.compile(rf"^https://.*/jobs/query/Job-1/results\?maxRecords=\d+&locator={locator}$"),
+                body=textwrap.dedent(
+                    f"""
+                    "Id","Name"
+                    "00{i}xx000003DHP0AAO","Account{i}"
+                    """
+                ),
+                headers={
+                    "Sforce-NumberOfRecords": "1",
+                    "Sforce-Locator": locator,
+                },
+                status=http.OK,
+            )
+
+        query = "SELECT Id, Name FROM Account"
+        session = requests.Session()
+        client = Salesforce(
+            session_id=tests.SESSION_ID,
+            instance_url=tests.SERVER_URL,
+            session=session,
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            results = client.bulk2.Contact.download_parallel(
+                query, path=tmpdirname, max_records=100
+            )
+            # Should have 3 total results (2 from first page, 1 from second page)
+            self.assertEqual(len(results), 3)
+            for result in results:
+                self.assertEqual(result["number_of_records"], 1)
+                self.assertTrue(os.path.exists(result["file"]))
