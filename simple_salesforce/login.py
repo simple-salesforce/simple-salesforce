@@ -38,7 +38,8 @@ def SalesforceLogin(
         consumer_secret: Optional[str] = None,
         privatekey_file: Optional[str] = None,
         privatekey: Optional[str] = None,
-        scratch_url: Optional[str] = None
+        scratch_url: Optional[str] = None,
+        login_tld: Optional[str] = 'salesforce.com'
         ) -> Tuple[str, str]:
     """Return a tuple of `(session_id, sf_instance)` where `session_id` is the
     session ID to use for authentication to Salesforce and `sf_instance` is
@@ -72,6 +73,9 @@ def SalesforceLogin(
                          for signing the JWT token.
     * scratch_url -- scratch org URL used in order to avoid waiting
                          for DNS propagation.
+    * login_tld -- The top-level domain for Salesforce URLs 
+                (default 'salesforce.com', use 'sfcrmproducts.cn' 
+                        for  Salesforce on Alibaba Cloud).
     """
 
     if domain is None:
@@ -92,6 +96,8 @@ def SalesforceLogin(
     # pylint: disable=E0012,deprecated-method
     username = escape(username) if username else None
     password = escape(password) if password else None
+
+    full_domain = f"{domain}.{login_tld}"
 
     # Check if token authentication is used
     if security_token is not None:
@@ -128,7 +134,7 @@ def SalesforceLogin(
             'password': unescape(password) if password else None
             }
         return token_login(
-            f'https://{domain}.salesforce.com/services/oauth2/token',
+            f'https://{full_domain}/services/oauth2/token',
             token_data, domain, consumer_key,
             None, proxies, session)
 
@@ -144,7 +150,7 @@ def SalesforceLogin(
             }
 
         return token_login(
-            f'https://{domain}.salesforce.com/services/oauth2/token',
+            f'https://{full_domain}/services/oauth2/token',
             payload, domain, consumer_key,
             None, proxies, session)
 
@@ -194,11 +200,18 @@ def SalesforceLogin(
             consumer_key is not None and \
             (privatekey_file is not None or privatekey is not None):
         token_domain = instance_url if instance_url is not None else domain
+        full_token_domain = f"{token_domain}.{login_tld}"
+        # Dynamic Calculate aud：if it's sandbox/test, use 'test', else use 'login'
+        if any(x in domain.lower() for x in ['test', 'sandbox', '--']):
+            aud_base = 'test'
+        else:
+            aud_base = 'login'
+        aud = f'https://{aud_base}.{login_tld}'
         expiration = datetime.now(timezone.utc) + timedelta(minutes=3)
         payload = {
             'iss': consumer_key,
             'sub': unescape(username),
-            'aud': f'https://{domain}.salesforce.com',
+            'aud': aud,
             'exp': f'{expiration.timestamp():.0f}'
             }
         if privatekey_file is not None:
@@ -213,7 +226,7 @@ def SalesforceLogin(
             }
 
         return token_login(
-            f'https://{token_domain}.salesforce.com/services/oauth2/token',
+            f'https://{full_token_domain}/services/oauth2/token',
             token_data, domain, consumer_key,
             None, proxies, session)
     elif consumer_key is not None and consumer_secret is not None and \
@@ -225,7 +238,7 @@ def SalesforceLogin(
             'Authorization': f'Basic {encoded}'
         }
         return token_login(
-            f'https://{domain}.salesforce.com/services/oauth2/token',
+            f'https://{full_domain}/services/oauth2/token',
             token_data, domain, consumer_key,
             headers, proxies, session)
     else:
@@ -239,7 +252,7 @@ def SalesforceLogin(
     if scratch_url is not None:
         soap_url = f'{scratch_url}/services/Soap/u/{sf_version}'
     else:
-        soap_url = f'https://{domain}.salesforce.com/services/Soap/u/{sf_version}'
+        soap_url = f'https://{full_domain}/services/Soap/u/{sf_version}'
     login_soap_request_headers = {
         'content-type': 'text/xml',
         'charset': 'UTF-8',
