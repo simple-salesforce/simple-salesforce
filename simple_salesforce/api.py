@@ -456,6 +456,25 @@ class Salesforce:
             return None
 
         return json_result
+    
+    def restful_raw(self, path, params=None, method='GET', **kwargs):
+        """Allows you to make a direct REST call to get the raw data if you know the path
+        Added this method to support ApexLog Object Body restapi call.
+        https://developer.salesforce.com/docs/atlas.en-us.api_tooling.meta/api_tooling/tooling_api_objects_apexlog.htm
+
+        Arguments:
+
+        * path: The path of the request
+            Example: sobjects/User/ABC123/password'
+        * params: dict of parameters to pass to the path
+        * method: HTTP request method, default GET
+        * other arguments supported by requests.request (e.g. json, timeout)
+        """
+
+        url = self.base_url + path
+        result = self._call_salesforce(method, url, name=path, params=params,
+                                       **kwargs)
+        return result
 
     # OAuth Endpoints Function
     def oauth2(
