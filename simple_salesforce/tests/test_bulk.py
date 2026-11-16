@@ -919,6 +919,89 @@ class TestSFBulkType(unittest.TestCase):
         )
 
     @mock.patch('simple_salesforce.bulk.SFBulkType._add_batch')
+    def test_add_autosized_batches_record_boundaries(self, add_batch):
+        """Keep every record, including a single-record final batch."""
+        add_batch.side_effect = lambda job_id, data, operation: data
+        sf_bulk_type = SFBulkType(None, None, None, None)
+        for count, expected_sizes in [
+            (0, []),
+            (1, [1]),
+            (2, [2]),
+            (9999, [9999]),
+            (10000, [10000]),
+            (10001, [10000, 1]),
+            (20000, [10000, 10000]),
+            (20001, [10000, 10000, 1]),
+            (20002, [10000, 10000, 2]),
+        ]:
+            with self.subTest(count=count):
+                data = [{'Id': str(i)} for i in range(count)]
+                batches = sf_bulk_type._add_autosized_batches(  # pylint: disable=protected-access
+                    data=data, operation='update', job='Job-1'
+                )
+                self.assertEqual([len(batch) for batch in batches],
+                                 expected_sizes)
+                self.assertEqual(list(itertools.chain.from_iterable(batches)),
+                                 data)
+                for batch in batches:
+                    self.assertTrue(batch)
+                    self.assertLessEqual(len(batch), 10_000)
+                    self.assertLessEqual(len(json.dumps(batch)), 10_000_000)
+
+    @mock.patch('simple_salesforce.bulk.SFBulkType._add_batch')
+    def test_add_autosized_batches_character_boundaries(self, add_batch):
+        """Respect JSON size limits and keep tails after size-based splits."""
+        add_batch.side_effect = lambda job_id, data, operation: data
+        sf_bulk_type = SFBulkType(None, None, None, None)
+        for count, extra_chars, expected_sizes in [
+            (100, -1, [100]),
+            (100, 0, [100]),
+            (100, 1, [99, 1]),
+            (101, 0, [100, 1]),
+            (201, 0, [100, 100, 1]),
+        ]:
+            with self.subTest(count=count, extra_chars=extra_chars):
+                data = []
+                for i in range(count):
+                    record = {'Id': f'{i:03}', 'value': ''}
+                    # Each record contributes 100,000 serialized characters,
+                    # including its list brackets or separator. Non-ASCII
+                    # text expands to six characters per JSON escape.
+                    value_size = 100_000 - len(json.dumps(record)) - 2
+                    if i == count - 1:
+                        value_size += extra_chars
+                    record['value'] = ('\u00e9' * (value_size // 6)
+                                       + 'x' * (value_size % 6))
+                    data.append(record)
+                self.assertEqual(len(json.dumps(data)),
+                                 count * 100_000 + extra_chars)
+                batches = sf_bulk_type._add_autosized_batches(  # pylint: disable=protected-access
+                    data=data, operation='update', job='Job-1'
+                )
+                self.assertEqual([len(batch) for batch in batches],
+                                 expected_sizes)
+                self.assertEqual(list(itertools.chain.from_iterable(batches)),
+                                 data)
+                for batch in batches:
+                    self.assertTrue(batch)
+                    self.assertLessEqual(len(batch), 10_000)
+                    payload = json.dumps(batch, allow_nan=False)
+                    self.assertLessEqual(len(payload), 10_000_000)
+                    self.assertLessEqual(len(payload.encode('utf-8')),
+                                         10_000_000)
+
+    @mock.patch('simple_salesforce.bulk.SFBulkType._create_job')
+    def test_bulk_operation_auto_empty_data(self, create_job):
+        """Reject empty automatic operations before creating a job."""
+        sf_bulk_type = SFBulkType(None, None, None, None)
+        with self.assertRaisesRegex(ValueError,
+                                    'data should not be empty for update'):
+            sf_bulk_type._bulk_operation(  # pylint: disable=protected-access
+                'update', [], batch_size='auto'
+            )
+        create_job.assert_not_called()
+
+    @mock.patch('simple_salesforce.bulk.SFBulkType._add_batch')
     def test_add_autosized_batches(self, add_batch):
         """Test that _add_autosized_batches batches all records correctly"""
         # _add_autosized_batches passes the return values from add_batch, so we
