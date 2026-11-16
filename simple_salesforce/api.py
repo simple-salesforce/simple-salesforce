@@ -1277,6 +1277,8 @@ class SFType:
 
                 return self._call_salesforce(method,
                                              url,
+                                             retries=retries,
+                                             max_retries=max_retries,
                                              **kwargs
                                              )
 
