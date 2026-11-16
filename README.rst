@@ -177,6 +177,47 @@ Make sure to have all the required fields for any entry. The `Salesforce API`_ h
 .. _Salesforce HTTP Status Code: http://www.salesforce.com/us/developer/docs/api_rest/Content/errorcodes.htm
 .. _Salesforce API: https://www.salesforce.com/developer/docs/api/
 
+Record Management - Listviews
+--------------------------
+
+
+To view available listviews for a given salesforce object use  
+
+.. code-block:: python
+
+    sf.Contact.listviews({'LastName':'Smith','Email':'example@example.com'})
+
+This will return a dictionary such as ``{'done': 'true', 'listviews':[{'id': 'someid', 'url': 'etc'}], 'success': True}``
+
+To get some information for a given listview, you can get basic info using `listview_basicinfo` and for more detailed info use `listview_detailed`:
+.. code-block:: python
+
+    contact = sf.Contact.listview_basicinfo('003e0000003GuNXAA0')
+
+    and 
+
+    contact = sf.Contact.listview_detailed('003e0000003GuNXAA0')
+
+To get the records, sans listview metadata, use the convenience `listview_results_standard` method:
+.. code-block:: python
+
+    contact_listview_records = sf.Contact.listview_results_standard('003e0000003GuNXAA0')
+
+To get the full results for a given listview, including the listview metadata, use `listview_results`:
+
+.. code-block:: python
+
+    contact_listview_results = sf.Contact.listview_results('003e0000003GuNXAA0')
+
+This will return a dictionary such as `` { 'results': '[]', 'records': [] , 'id', 'someid', 'size': 10}``. parse through the dictionary to get the rows and columns.
+A standard parsing approach, used in the convenience `listview_results_standard` method is below. This parses through the nested records and 
+gives you the rows closer to tabular format. 
+
+.. code-block:: python
+
+    r = list(map(lambda x: x["columns"], contact_listview_results["records"]))
+    records = list(map(lambda x: {e["fieldNameOrPath"]: e["value"] for e in x}, r))   
+
 Queries
 --------------------------
 
@@ -895,6 +936,16 @@ Generate Pandas Dataframe from SFDC Bulk API Query (ex.bulk.Account.query)
 
     sf.bulk.Account.query("SELECT Id, Email FROM Contact")
     df = pd.DataFrame.from_dict(data,orient='columns').drop('attributes',axis=1)
+
+Generate Pandas Dataframe from Listview 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    import pandas as pd
+    listview_id = '<your_listview_id_here>'
+    contact_listview_records = sf.Contact.listview_results_standard(listview_id)
+    df = pd.DataFrame(contact_listview_records)
 
 
 YouTube Tutorial
