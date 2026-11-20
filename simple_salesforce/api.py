@@ -3,7 +3,7 @@
 from datetime import datetime
 
 # has to be defined prior to login import
-DEFAULT_API_VERSION = '59.0'
+DEFAULT_API_VERSION = '68.0'
 import base64
 import json
 import logging
@@ -14,7 +14,7 @@ from typing import Any, Callable, Dict, IO, Iterator, List, Mapping, \
 from collections import OrderedDict
 from functools import partial
 from pathlib import Path
-from urllib.parse import urljoin, urlparse, quote_plus
+from urllib.parse import urlparse, quote_plus
 import requests
 from .bulk import SFBulkHandler
 from .bulk2 import SFBulk2Handler
@@ -22,7 +22,7 @@ from .exceptions import SalesforceGeneralError
 from .login import SalesforceLogin
 from .metadata import SfdcMetadataApi
 from .util import Headers, PerAppUsage, Proxies, Usage, date_to_iso8601, \
-    exception_handler
+    exception_handler, safe_urljoin
 
 # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
@@ -597,7 +597,12 @@ class Salesforce:
                              `identifier_is_url` is False
         """
         if identifier_is_url:
-            # Don't use `self.base_url` here because the full URI is provided
+            # Don't use `self.base_url` here because the full URI is provided.
+            # It must be a path, or it could change the host the session
+            # token is sent to (e.g. '@attacker.example/').
+            if not next_records_identifier.startswith('/'):
+                raise ValueError(f'{next_records_identifier!r} is not a URL '
+                                 f'path on the Salesforce instance')
             url = f'https://{self.sf_instance}{next_records_identifier}'
         else:
             endpoint = 'queryAll' if include_deleted else 'query'
@@ -986,9 +991,9 @@ class SFType:
         """
         result = self._call_salesforce(
             method='GET',
-            url=urljoin(self.base_url,
-                        'describe'
-                        ),
+            url=safe_urljoin(self.base_url,
+                             'describe'
+                             ),
             headers=headers
             )
         return self.parse_result_to_json(result)
@@ -1009,9 +1014,9 @@ class SFType:
         custom_url_part = f'describe/layouts/{record_id}'
         result = self._call_salesforce(
             method='GET',
-            url=urljoin(self.base_url,
-                        custom_url_part
-                        ),
+            url=safe_urljoin(self.base_url,
+                             custom_url_part
+                             ),
             headers=headers
             )
         return self.parse_result_to_json(result)
@@ -1030,7 +1035,7 @@ class SFType:
         """
         result = self._call_salesforce(
             method='GET',
-            url=urljoin(self.base_url, record_id),
+            url=safe_urljoin(self.base_url, record_id),
             headers=headers,
             **kwargs
             )
@@ -1053,9 +1058,9 @@ class SFType:
         * custom_id - the External ID value of the SObject to get
         * headers -- a dict with additional request headers.
         """
-        custom_url = urljoin(self.base_url,
-                             f'{custom_id_field}/{quote_plus(custom_id)}'
-                             )
+        custom_url = safe_urljoin(self.base_url,
+                                  f'{custom_id_field}/{quote_plus(custom_id)}'
+                                  )
         result = self._call_salesforce(
             method='GET',
             url=custom_url,
@@ -1107,9 +1112,9 @@ class SFType:
         """
         result = self._call_salesforce(
             method='PATCH',
-            url=urljoin(self.base_url,
-                        record_id
-                        ),
+            url=safe_urljoin(self.base_url,
+                             record_id
+                             ),
             data=json.dumps(data),
             headers=headers
             )
@@ -1139,9 +1144,9 @@ class SFType:
         """
         result = self._call_salesforce(
             method='PATCH',
-            url=urljoin(self.base_url,
-                        record_id
-                        ),
+            url=safe_urljoin(self.base_url,
+                             record_id
+                             ),
             data=json.dumps(data),
             headers=headers
             )
@@ -1168,9 +1173,9 @@ class SFType:
         """
         result = self._call_salesforce(
             method='DELETE',
-            url=urljoin(self.base_url,
-                        record_id
-                        ),
+            url=safe_urljoin(self.base_url,
+                             record_id
+                             ),
             headers=headers
             )
         return self._raw_response(result,
@@ -1193,7 +1198,7 @@ class SFType:
         * end -- end datetime object
         * headers -- a dict with additional request headers.
         """
-        url = urljoin(
+        url = safe_urljoin(
             self.base_url,
             f'deleted/?start={date_to_iso8601(start)}&end='
             f'{date_to_iso8601(end)}'
@@ -1220,7 +1225,7 @@ class SFType:
         * end -- end datetime object
         * headers -- a dict with additional request headers.
         """
-        url = urljoin(
+        url = safe_urljoin(
             self.base_url,
             f'updated/?start={date_to_iso8601(start)}&end='
             f'{date_to_iso8601(end)}'
@@ -1343,9 +1348,9 @@ class SFType:
         body = base64.b64encode(Path(file_path).read_bytes()).decode()
         data[base64_field] = body
         result = self._call_salesforce(method='PATCH',
-                                       url=urljoin(self.base_url,
-                                                   record_id
-                                                   ),
+                                       url=safe_urljoin(self.base_url,
+                                                        record_id
+                                                        ),
                                        json=data,
                                        headers=headers,
                                        **kwargs
@@ -1372,7 +1377,7 @@ class SFType:
                      sobjects/ContentVersion/ABC123/VersionData
         """
         result = self._call_salesforce(method='GET',
-                                       url=urljoin(
+                                       url=safe_urljoin(
                                            self.base_url,
                                            f'{record_id}/{base64_field}'
                                            ),

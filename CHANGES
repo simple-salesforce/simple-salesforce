@@ -1,3 +1,23 @@
+v1.12.11
+========
+Security
+--------
+
+- [GHSA-x99m-vxr3-6j4w] ``SFType`` methods (``get``, ``get_by_custom_id``,
+  ``upsert``, ``update``, ``delete``, ``describe_layout``,
+  ``update_base64``, ``get_base64``) now raise ``ValueError`` when a record
+  Id, external Id field or other caller-supplied path segment resolves to a
+  URL outside the SObject's REST endpoint, such as an absolute URL, a
+  ``//host`` reference, or ``..`` traversal. Previously such values could
+  redirect the request, including the ``Authorization: Bearer`` session
+  token, to an arbitrary host. Reported by EQSTLab.
+- [GHSA-hqqq-335j-8p77] ``Salesforce.query_more`` with
+  ``identifier_is_url=True`` now requires the identifier to be a path
+  beginning with ``/`` and raises ``ValueError`` otherwise. Previously an
+  identifier such as ``@attacker.example/`` changed the host the request,
+  including the ``Authorization: Bearer`` session token, was sent to. Found
+  with OpenAI's Project Daybreak.
+
 v1.12.10
 ========
 Features

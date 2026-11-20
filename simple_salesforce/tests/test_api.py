@@ -723,6 +723,45 @@ class TestSalesforce(unittest.TestCase):
         self.assertEqual(result, {})
 
     @responses.activate
+    def test_query_more_url(self):
+        """
+        Test fetching additional results by nextRecordsUrl path
+        """
+        responses.add(
+            responses.GET,
+            'https://na15.salesforce.com/services/data/v59.0/query/01gxx-2000',
+            body='{}',
+            status=http.OK)
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        result = client.query_more('/services/data/v59.0/query/01gxx-2000',
+                                   identifier_is_url=True)
+        self.assertEqual(result, {})
+
+    @responses.activate
+    def test_query_more_url_rejects_other_hosts(self):
+        """
+        Test that a URL identifier cannot change the host the session token
+        is sent to (GHSA-hqqq-335j-8p77)
+        """
+        session = requests.Session()
+        client = Salesforce(session_id=tests.SESSION_ID,
+                            instance_url=tests.SERVER_URL,
+                            session=session)
+
+        for identifier in ('@attacker.example/capture',
+                           ':@attacker.example/capture',
+                           '.attacker.example/capture',
+                           'https://attacker.example/capture'):
+            with self.subTest(identifier=identifier):
+                with self.assertRaises(ValueError):
+                    client.query_more(identifier, identifier_is_url=True)
+        self.assertEqual(len(responses.calls), 0)
+
+    @responses.activate
     def test_query_all_iter(self):
         """
         Test that we get data only once we ask for them (lazily).
@@ -731,7 +770,7 @@ class TestSalesforce(unittest.TestCase):
             responses.GET,
             re.compile(r'^https://.*/query/\?q=SELECT\+ID\+FROM\+Account$'),
             body='{"records": [{"ID": "1"}], "done": false, "nextRecordsUrl": '
-                 '"https://example.com/query/next-records-id", "totalSize": 2}',
+                 '"/services/data/v59.0/query/next-records-id", "totalSize": 2}',
             status=http.OK)
         responses.add(
             responses.GET,
@@ -758,7 +797,7 @@ class TestSalesforce(unittest.TestCase):
             responses.GET,
             re.compile(r'^https://.*/query/\?q=SELECT\+ID\+FROM\+Account$'),
             body='{"records": [{"ID": "1"}], "done": false, "nextRecordsUrl": '
-                 '"https://example.com/query/next-records-id", "totalSize": 2}',
+                 '"/services/data/v59.0/query/next-records-id", "totalSize": 2}',
             status=http.OK)
         responses.add(
             responses.GET,
@@ -787,7 +826,7 @@ class TestSalesforce(unittest.TestCase):
             responses.GET,
             re.compile(r'^https://.*/queryAll/\?q=SELECT\+ID\+FROM\+Account$'),
             body='{"records": [{"ID": "1"}], "done": false, "nextRecordsUrl": '
-                 '"https://example.com/queryAll/next-records-id",'
+                 '"/services/data/v59.0/queryAll/next-records-id",'
                  '"totalSize": 2}',
             status=http.OK)
         responses.add(
@@ -1295,3 +1334,85 @@ class TestSalesforce(unittest.TestCase):
         self.assertNotIsInstance(result, OrderedDict)
         self.assertIsInstance(result, dict)
         self.assertEqual(result, {"currency": 1.0})
+
+
+class TestRecordUrlInjection(unittest.TestCase):
+    """Caller-supplied identifiers must not redirect authenticated requests
+    away from the Salesforce instance (GHSA-x99m-vxr3-6j4w)"""
+
+    MALICIOUS_PATHS = (
+        'https://attacker.example/leak',
+        'http://attacker.example/leak',
+        '//attacker.example/leak',
+        ' https://attacker.example/leak',
+        '/services/data/v59.0/sobjects/Account/001',
+        '../Account/001',
+        )
+
+    def _assert_rejected(self, call):
+        for path in self.MALICIOUS_PATHS:
+            with self.subTest(path=path):
+                with self.assertRaises(ValueError):
+                    call(path)
+        self.assertEqual(len(responses.calls), 0)
+
+    @responses.activate
+    def test_get(self):
+        """get refuses record ids that escape the sobject url"""
+        self._assert_rejected(_create_sf_type().get)
+
+    @responses.activate
+    def test_get_by_custom_id(self):
+        """get_by_custom_id refuses field names that escape the sobject url"""
+        sf_type = _create_sf_type()
+        self._assert_rejected(
+            lambda path: sf_type.get_by_custom_id(path, 'value'))
+
+    @responses.activate
+    def test_upsert(self):
+        """upsert refuses record ids that escape the sobject url"""
+        sf_type = _create_sf_type()
+        self._assert_rejected(lambda path: sf_type.upsert(path, {}))
+
+    @responses.activate
+    def test_update(self):
+        """update refuses record ids that escape the sobject url"""
+        sf_type = _create_sf_type()
+        self._assert_rejected(lambda path: sf_type.update(path, {}))
+
+    @responses.activate
+    def test_delete(self):
+        """delete refuses record ids that escape the sobject url"""
+        self._assert_rejected(_create_sf_type().delete)
+
+    @responses.activate
+    def test_describe_layout(self):
+        """describe_layout refuses record ids that escape the sobject url"""
+        sf_type = _create_sf_type()
+        self._assert_rejected(
+            lambda path: sf_type.describe_layout('../../../../' + path))
+
+    @responses.activate
+    def test_update_base64(self):
+        """update_base64 refuses record ids that escape the sobject url"""
+        sf_type = _create_sf_type()
+        file_path = Path(__file__).parent / 'sample-key.pem'
+        self._assert_rejected(
+            lambda path: sf_type.update_base64(path, file_path))
+
+    @responses.activate
+    def test_get_base64(self):
+        """get_base64 refuses record ids that escape the sobject url"""
+        self._assert_rejected(_create_sf_type().get_base64)
+
+    @responses.activate
+    def test_upsert_external_id_still_allowed(self):
+        """External id paths containing a slash keep working"""
+        responses.add(
+            responses.PATCH,
+            'https://my.salesforce.com/services/data/v68.0/sobjects/Case/'
+            'ExtId__c/123',
+            status=http.NO_CONTENT
+            )
+        self.assertEqual(
+            _create_sf_type().upsert('ExtId__c/123', {}), http.NO_CONTENT)

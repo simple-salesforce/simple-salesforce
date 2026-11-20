@@ -6,6 +6,7 @@ from typing import Any, Iterable, List, Mapping, MutableMapping, NamedTuple, \
     NoReturn, \
     Optional, \
     TypeVar, Union
+from urllib.parse import urljoin
 
 import requests
 
@@ -54,6 +55,21 @@ def getUniqueElementValueFromXmlString(
             .replace('</' + elementName + '>', '')
         )
     return elementValue
+
+
+def safe_urljoin(base: str, path: str) -> str:
+    """Join ``path`` onto ``base``, refusing any result outside ``base``.
+
+    ``urljoin`` discards ``base`` when ``path`` is an absolute URL or a
+    network-path reference (``//host``), and resolves ``..`` segments. A
+    caller-supplied record Id could otherwise send an authenticated request,
+    including its bearer token, to an arbitrary host.
+    """
+    url = urljoin(base, path)
+    if not url.startswith(base):
+        raise ValueError(f'{path!r} is not a path relative to the Salesforce '
+                         f'resource URL')
+    return url
 
 
 def date_to_iso8601(date: datetime.date) -> str:
